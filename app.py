@@ -1,7 +1,18 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from groq import Groq
 import os
+import uuid
+import requests
+
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
+
+try:
+    from supabase import create_client
+except ImportError:
+    create_client = None
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
@@ -19,9 +30,13 @@ CORS(app)
 def images(filename):
     return send_from_directory(IMAGES_DIR, filename)
 
-client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
-)
+api_key = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=api_key) if Groq and api_key else None
+
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+supabase = create_client(supabase_url, supabase_key) if create_client and supabase_url and supabase_key else None
 
 @app.route("/")
 def home():
@@ -31,28 +46,71 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-
     try:
-
-        data = request.get_json()
-        user_message = data.get("message","")
-
+        data = request.get_json() or {}
+        user_message = data.get("message", "")
+        session_id = data.get("session_id") or str(uuid.uuid4())
+        conversation_id = data.get("conversation_id")
+        user_id = data.get("user_id")
+        user_email = data.get("user_email")
+        user_agent = request.headers.get("User-Agent")
+        ip_address = request.headers.get("X-Forwarded-For", request.remote_addr)
 
         if not user_message:
-            return jsonify({
-                "reply":"Please type a message."
-            })
+            return jsonify({"reply": "Please type a message."}), 400
 
+        if not client:
+            return jsonify({
+                "reply": "The AI service is currently unavailable. Please add a valid GROQ_API_KEY to enable replies."
+            }), 503
+
+        if not conversation_id:
+            conversation_id = str(uuid.uuid4())
+
+        if supabase:
+            if user_id or user_email:
+                try:
+                    supabase.table("users").upsert({
+                        "id": user_id or user_email,
+                        "email": user_email,
+                    }).execute()
+                except Exception as db_err:
+                    app.logger.error("Supabase user upsert failed: %s", db_err)
+
+            try:
+                supabase.table("conversations").upsert({
+                    "id": conversation_id,
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "status": "active",
+                    "title": None,
+                }).execute()
+            except Exception as db_err:
+                app.logger.error("Supabase conversation upsert failed: %s", db_err)
+
+            try:
+                supabase.table("messages").insert({
+                    "conversation_id": conversation_id,
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "role": "user",
+                    "content": user_message,
+                    "model": "llama-3.3-70b-versatile",
+                    "token_usage": None,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                }).execute()
+            except Exception as db_err:
+                app.logger.error("Supabase user message insert failed: %s", db_err)
 
         response = client.chat.completions.create(
-
             model="llama-3.3-70b-versatile",
-
             messages=[
-
                 {
-                "role":"system",
-                "content":"""
+                    "role": "system",
+                    "content": """
 
 You are MI AI.
 
@@ -293,27 +351,49 @@ You can help with:
                 },
 
                 {
-                "role":"user",
-                "content":user_message
+                    "role": "user",
+                    "content": user_message
                 }
 
             ]
 
         )
 
+        answer = response.choices[0].message.content
+        token_usage = None
+        if hasattr(response, "usage") and response.usage:
+            token_usage = response.usage.get("total_tokens") if isinstance(response.usage, dict) else None
 
-        answer=response.choices[0].message.content
-
+        if supabase:
+            try:
+                supabase.table("messages").insert({
+                    "conversation_id": conversation_id,
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "role": "assistant",
+                    "content": answer,
+                    "model": "llama-3.3-70b-versatile",
+                    "token_usage": token_usage,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                }).execute()
+            except Exception as db_err:
+                app.logger.error("Supabase assistant message insert failed: %s", db_err)
 
         return jsonify({
-            "reply":answer
+            "reply": answer,
+            "conversation_id": conversation_id,
+            "session_id": session_id,
+            "user_id": user_id,
+            "user_email": user_email,
+            "token_usage": token_usage,
         })
-
 
     except Exception as e:
 
         return jsonify({
-            "reply":"MI AI Error: "+str(e)
+            "reply":"The AI service is currently unavailable right now. Please try again in a moment."
         })
 
 
