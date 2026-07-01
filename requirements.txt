@@ -1,6 +1,0 @@
-Flask
-groq
-python-dotenv
-requests
-flask-cors
-gunicorn
