@@ -275,15 +275,24 @@ border-radius:10px;
 overflow:hidden;
 z-index:999;
 min-width:120px;
+pointer-events:auto;
+box-shadow:0 4px 12px rgba(0,0,0,0.4);
 }
 
 #menu div{
-padding:10px;
+padding:12px 14px;
 cursor:pointer;
+transition:background .15s ease;
+user-select:none;
 }
 
 #menu div:hover{
 background:var(--main);
+}
+
+#menu div:active {
+background:var(--main);
+opacity:0.8;
 }
 
 #sidebar,
@@ -1170,7 +1179,42 @@ div.innerText=(chats[id].pin ? "📌 " : "")+"💬 "+id;
 
 div.onclick=()=>openChat(id);
 
-/* RIGHT CLICK */
+let touchStartTime = 0;
+let touchStartX = 0;
+let touchStartY = 0;
+
+/* LONG PRESS FOR MOBILE */
+div.ontouchstart=(e)=>{
+  touchStartTime = Date.now();
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+};
+
+div.ontouchend=(e)=>{
+  const duration = Date.now() - touchStartTime;
+  const moved = Math.abs(e.changedTouches[0].clientX - touchStartX) + Math.abs(e.changedTouches[0].clientY - touchStartY);
+  if (duration > 500 && moved < 30) {
+    e.preventDefault();
+    selectedChat=id;
+    document.getElementById("pinOption").innerHTML = chats[id].pin ? "📍 Unpin" : "📌 Pin";
+    menu.style.display="block";
+    let x = e.changedTouches[0].clientX;
+    let y = e.changedTouches[0].clientY;
+    menu.style.left=x+"px";
+    menu.style.top=y+"px";
+    setTimeout(()=>{
+      const rect = menu.getBoundingClientRect();
+      if(rect.right > window.innerWidth) {
+        menu.style.left = (window.innerWidth - rect.width - 10) + "px";
+      }
+      if(rect.bottom > window.innerHeight) {
+        menu.style.top = (window.innerHeight - rect.height - 10) + "px";
+      }
+    }, 0);
+  }
+};
+
+/* RIGHT CLICK FOR DESKTOP */
 div.oncontextmenu=(e)=>{
 
 e.preventDefault();
@@ -1448,7 +1492,11 @@ function save(){
 /* SETTINGS */
 function toggleSettings(){
 let s=document.getElementById("settingsPanel");
+if(!s) return;
 s.style.display=s.style.display==="block"?"none":"block";
+if(s.style.display==="block"){
+closeMobileMenu();
+}
 }
 
 /* THEME */
