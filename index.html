@@ -1737,54 +1737,55 @@ async function loginEmail() {
   }
 
   try {
-
-    const result = await auth.createUserWithEmailAndPassword(
-    email,
-    password
-);
-
-const firebaseUser = result.user;
-
-// SEND VERIFICATION EMAIL
-await firebaseUser.sendEmailVerification();
-
-await auth.signOut();
-
-setAuthMessage("Verification email sent. Please check your inbox.", false);
-
-alert("Verification email sent. Please check your inbox.");
-
-return;
+    const auth = await initFirebase();
+    const result = await auth.signInWithEmailAndPassword(email, password);
+    const firebaseUser = result.user;
+    if (!firebaseUser) {
+      throw new Error('Unable to sign in.');
+    }
 
     user = {
       id: firebaseUser.uid,
-      email: firebaseUser.email
+      email: firebaseUser.email,
     };
 
     const idToken = await firebaseUser.getIdToken();
-
-localStorage.setItem("mi_supabase_token", idToken);
-localStorage.setItem("mi_user_id", firebaseUser.uid);
-localStorage.setItem("mi_user_email", firebaseUser.email);
-    
+    localStorage.setItem("mi_supabase_token", idToken);
+    localStorage.setItem("mi_user_id", firebaseUser.uid);
+    localStorage.setItem("mi_user_email", firebaseUser.email || '');
     updateAuthControls();
 
-    document.getElementById("loginBox").style.display = "none";
+    const loginBox = document.getElementById("loginBox");
+    if (loginBox) loginBox.style.display = "none";
 
     await loadUserChats();
+  } catch (err) {
+    const message = err?.message || 'Authentication failed.';
+    if (err?.code === 'auth/wrong-password') {
+      try {
+        const auth = await initFirebase();
+        await auth.sendPasswordResetEmail(email);
+        const resetMessage = 'Incorrect password. A password reset email has been sent to your inbox.';
+        setAuthMessage(resetMessage, false);
+        alert(resetMessage);
+        return;
+      } catch (resetError) {
+        const resetMessage = 'Unable to send password reset email. Please try again.';
+        setAuthMessage(resetMessage, true);
+        alert(resetMessage);
+        return;
+      }
+    }
 
+    if (err?.code === 'auth/user-not-found') {
+      setAuthMessage('No account was found for that email. Please register first.', true);
+      alert('No account was found for that email. Please register first.');
+      return;
+    }
+
+    setAuthMessage(message, true);
+    alert(message);
   }
-
-  catch(err){
-
-    setAuthMessage(err.message);
-
-    alert(err.message);
-
-  }
-
-}
-
 </script>
 
 </body>
