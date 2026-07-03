@@ -1692,10 +1692,43 @@ async function registerEmail() {
 
   try {
     const auth = await initFirebase();
-    const result = await auth.createUserWithEmailAndPassword(
-email,
-password
+
+const result = await auth.signInWithEmailAndPassword(
+    email,
+    password
 );
+
+const firebaseUser = result.user;
+
+if (!firebaseUser.emailVerified) {
+
+    await firebaseUser.sendEmailVerification();
+
+    await auth.signOut();
+
+    setAuthMessage("Please verify your email. A new verification email has been sent.", true);
+
+    alert("Please verify your email. Check your inbox.");
+
+    return;
+}
+const idToken = await firebaseUser.getIdToken();
+
+localStorage.setItem("mi_supabase_token", idToken);
+localStorage.setItem("mi_user_id", firebaseUser.uid);
+localStorage.setItem("mi_user_email", firebaseUser.email);
+
+user = {
+    id: firebaseUser.uid,
+    email: firebaseUser.email
+};
+
+updateAuthControls();
+
+document.getElementById("loginBox").style.display = "none";
+
+await loadUserChats();
+
       console.log(result.user);
       const firebaseUser = result.user;
 
