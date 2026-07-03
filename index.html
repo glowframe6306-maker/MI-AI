@@ -1752,7 +1752,7 @@ async function loginEmail() {
     const idToken = await firebaseUser.getIdToken();
     localStorage.setItem("mi_supabase_token", idToken);
     localStorage.setItem("mi_user_id", firebaseUser.uid);
-    localStorage.setItem("mi_user_email", firebaseUser.email || '');
+    localStorage.setItem("mi_user_email", firebaseUser.email || "%");
     updateAuthControls();
 
     const loginBox = document.getElementById("loginBox");
@@ -1761,28 +1761,6 @@ async function loginEmail() {
     await loadUserChats();
   } catch (err) {
     const message = err?.message || 'Authentication failed.';
-    if (err?.code === 'auth/wrong-password') {
-      try {
-        const auth = await initFirebase();
-        await auth.sendPasswordResetEmail(email);
-        const resetMessage = 'Incorrect password. A password reset email has been sent to your inbox.';
-        setAuthMessage(resetMessage, false);
-        alert(resetMessage);
-        return;
-      } catch (resetError) {
-        const resetMessage = 'Unable to send password reset email. Please try again.';
-        setAuthMessage(resetMessage, true);
-        alert(resetMessage);
-        return;
-      }
-    }
-
-    if (err?.code === 'auth/user-not-found') {
-      setAuthMessage('No account was found for that email. Please register first.', true);
-      alert('No account was found for that email. Please register first.');
-      return;
-    }
-
     setAuthMessage(message, true);
     alert(message);
   }
