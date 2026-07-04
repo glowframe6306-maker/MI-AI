@@ -1713,7 +1713,7 @@ function validateRegisterForm() {
   if (!fullName) return 'Full Name cannot be empty.';
   if (!ageValue) return 'Age is required.';
   const age = Number(ageValue);
-  if (!Number.isInteger(age) ||100 < age < 1) return 'Age must be a valid number.';
+  if (!Number.isInteger(age) ||100 > age > 1) return 'Age must be a valid number.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Please enter a valid email address.';
   if (!password) return 'Password cannot be empty.';
   if (!confirmPassword) return 'Confirm Password cannot be empty.';
