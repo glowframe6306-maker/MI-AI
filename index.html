@@ -871,6 +871,7 @@ let chatList = document.getElementById("chatList");
 let input = document.getElementById("msg");
 let menu = document.getElementById("menu");
 let authReminder = document.getElementById("authReminder");
+let loginPromptBox = null;
 
 let guestId = localStorage.getItem("mi_guest_id");
 if (!guestId) {
@@ -891,6 +892,85 @@ let selectedChat = null;
 
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
+}
+
+function getDismissedLoginPromptChats() {
+    try {
+        return JSON.parse(localStorage.getItem('mi_login_prompt_dismissed_chats') || '[]');
+    } catch {
+        return [];
+    }
+}
+
+function saveDismissedLoginPromptChats(chatsList) {
+    localStorage.setItem('mi_login_prompt_dismissed_chats', JSON.stringify(chatsList));
+}
+
+function dismissLoginPrompt(chatId) {
+    if (!chatId) return;
+    const dismissed = getDismissedLoginPromptChats();
+    if (!dismissed.includes(chatId)) {
+        dismissed.push(chatId);
+        saveDismissedLoginPromptChats(dismissed);
+    }
+    removeLoginPrompt();
+}
+
+function removeLoginPrompt() {
+    if (loginPromptBox && loginPromptBox.parentNode) {
+        loginPromptBox.parentNode.removeChild(loginPromptBox);
+    }
+    loginPromptBox = null;
+}
+
+function shouldShowLoginPrompt(chatId) {
+    if (!chatId || isAuthenticated()) return false;
+    return !getDismissedLoginPromptChats().includes(chatId);
+}
+
+function showLoginPrompt(chatId) {
+    if (!chatId || !shouldShowLoginPrompt(chatId)) return;
+    removeLoginPrompt();
+
+    const box = document.createElement('div');
+    box.style.position = 'fixed';
+    box.style.top = '50%';
+    box.style.left = '50%';
+    box.style.transform = 'translate(-50%, -50%)';
+    box.style.zIndex = '9999';
+    box.style.width = 'min(92vw, 360px)';
+    box.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98))';
+    box.style.border = '1px solid rgba(255,255,255,0.14)';
+    box.style.borderRadius = '18px';
+    box.style.padding = '18px 18px 16px';
+    box.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.35)';
+    box.style.color = '#f8fafc';
+
+    box.innerHTML = `
+      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">Login to unlock more</div>
+      <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">Enjoy these benefits when you sign in:</div>
+      <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
+        <li>Save and restore your chats</li>
+        <li>Sync your history across devices</li>
+        <li>Get faster, more personal replies</li>
+      </ul>
+      <div style="display:flex;justify-content:center;">
+        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">Log in</button>
+      </div>
+    `;
+
+    document.body.appendChild(box);
+    loginPromptBox = box;
+}
+
+function maybeShowLoginPrompt(chatId) {
+    if (!chatId || isAuthenticated()) return;
+    const messages = chats[chatId] || [];
+    const userTurns = messages.filter((m) => m.role === 'me').length;
+    if (userTurns === 4) {
+        showLoginPrompt(chatId);
+    }
 }
 
 function getGuestStorageKey() {
@@ -1102,6 +1182,7 @@ if (input) {
 
 /* NEW CHAT */
 async function newChat(){
+    removeLoginPrompt();
     let token = localStorage.getItem('mi_supabase_token');
     if (token) {
         // create conversation on server
@@ -1142,6 +1223,7 @@ async function newChat(){
 
 /* OPEN */
 function openChat(id){
+removeLoginPrompt();
 currentChat=id;
 if (!chatBox) {
     console.error('Chat container not found');
@@ -1429,6 +1511,7 @@ if(i>=text.length){
 clearInterval(timer);
 chats[currentChat].push({role:"ai",text});
 save();
+maybeShowLoginPrompt(currentChat);
 }
 },20);
 }
