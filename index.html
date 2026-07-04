@@ -103,6 +103,38 @@ padding:10px;
 font-weight:bold;
 }
 
+#header .headerActions{
+margin-left:auto;
+display:flex;
+align-items:center;
+gap:8px;
+}
+
+#header #loginBtn,
+#header #logoutBtn{
+margin:0;
+padding:8px 14px;
+border-radius:999px;
+font-weight:700;
+font-size:13px;
+min-width:92px;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(135deg,var(--main),#38bdf8);
+box-shadow:0 8px 18px rgba(30,136,229,0.22);
+color:#fff;
+}
+
+#header #logoutBtn{
+background:linear-gradient(135deg,#0f766e,#14b8a6);
+}
+
+#header #loginBtn:hover,
+#header #logoutBtn:hover{
+transform:translateY(-1px);
+}
+
 #header #headerLogo{
 width:52px;
 height:52px;
@@ -665,14 +697,6 @@ body.force-mobile-layout #settingsPanel {
   <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">✕</button>
 </div>
 
-<button id="loginBtn" onclick="openLogin()" type="button" style="width:100%;font-weight:700;background:linear-gradient(135deg,#1e88e5,#38bdf8);box-shadow:0 10px 24px rgba(30,136,229,0.28);">
-📥Login
-</button>
-
-<button id="logoutBtn" onclick="logout()" style="display:none;">
-📴 Logout
-</button>
-
 <button onclick="newChat()">➕ New Chat</button>
 
 <button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
@@ -692,6 +716,10 @@ ___________________________
     src="/MIAI.svg"
     alt="MI AI Logo">
   <span>MI AI ChatBOT</span>
+  <div class="headerActions">
+    <button id="loginBtn" onclick="openLogin()" type="button">📥 Login</button>
+    <button id="logoutBtn" onclick="logout()" style="display:none;">📴 Logout</button>
+  </div>
 </div>
 
 <div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
@@ -942,11 +970,11 @@ function updateAuthControls(){
     const hasSession = Boolean(user || localStorage.getItem('mi_supabase_token'));
 
     if (loginBtn) {
-        loginBtn.style.display = hasSession ? 'none' : 'block';
+        loginBtn.style.display = hasSession ? 'none' : 'inline-flex';
     }
 
     if (logoutBtn) {
-        logoutBtn.style.display = hasSession ? 'block' : 'none';
+        logoutBtn.style.display = hasSession ? 'inline-flex' : 'none';
     }
 
     updateAuthReminder();
@@ -1468,8 +1496,11 @@ function save(){
 
 /* SETTINGS */
 function toggleSettings(){
-let s=document.getElementById("settingsPanel");
-s.style.display=s.style.display==="block"?"none":"block";
+  closeMobileMenu();
+  const s=document.getElementById("settingsPanel");
+  if (s) {
+    s.style.display = s.style.display === "block" ? "none" : "block";
+  }
 }
 
 /* THEME */
