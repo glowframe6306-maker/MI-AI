@@ -1762,7 +1762,14 @@ async function registerEmail() {
     }, 2000);
   } catch (error) {
     const message = error?.message || 'Authentication failed.';
-    setAuthMessage(message, true);
+    const normalized = String(message || '').toLowerCase();
+    const duplicateMessage = 'YOUR ACCOUNT WAS ALREADY REGISTERED BY Google.SO GO TO SIGN IN AND CREATE NEW PASSWORD AND CONFIRM ACCOUNT.';
+
+    if (normalized.includes('email-already-in-use') || normalized.includes('already in use')) {
+      setAuthMessage(duplicateMessage, true);
+    } else {
+      setAuthMessage(message, true);
+    }
   }
 }
 
