@@ -718,7 +718,7 @@ ___________________________
   <span>MI AI ChatBOT</span>
   <div class="headerActions">
     <button id="loginBtn" onclick="openLogin()" type="button">📥 Login</button>
-    <button id="logoutBtn" onclick="logout()" style="display:none;">📴 Logout</button>
+    <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">📴 Logout</button>
   </div>
 </div>
 
@@ -1061,6 +1061,100 @@ function loadGuestChats() {
     currentChat = retainedChat;
 }
 
+function getProfileData() {
+    return {
+        name: localStorage.getItem('mi_profile_name') || '',
+        age: localStorage.getItem('mi_profile_age') || '',
+        email: localStorage.getItem('mi_user_email') || ''
+    };
+}
+
+function saveProfileData(profile) {
+    if (!profile) return;
+    if (profile.name !== undefined) localStorage.setItem('mi_profile_name', profile.name);
+    if (profile.age !== undefined) localStorage.setItem('mi_profile_age', profile.age);
+    if (profile.email !== undefined) localStorage.setItem('mi_user_email', profile.email);
+}
+
+function closeProfilePanel() {
+    const box = document.getElementById('profilePanel');
+    if (box) box.remove();
+}
+
+function openProfilePanel() {
+    closeProfilePanel();
+    const profile = getProfileData();
+    const box = document.createElement('div');
+    box.id = 'profilePanel';
+    box.style.position = 'fixed';
+    box.style.top = '50%';
+    box.style.left = '50%';
+    box.style.transform = 'translate(-50%, -50%)';
+    box.style.width = 'min(92vw, 380px)';
+    box.style.maxHeight = '90vh';
+    box.style.overflowY = 'auto';
+    box.style.background = 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(30,41,59,0.98))';
+    box.style.border = '1px solid rgba(255,255,255,0.14)';
+    box.style.borderRadius = '18px';
+    box.style.padding = '18px';
+    box.style.boxShadow = '0 24px 60px rgba(0,0,0,0.36)';
+    box.style.zIndex = '10000';
+    box.style.color = '#f8fafc';
+
+    box.innerHTML = `
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      <div style="font-size:18px;font-weight:700;margin-bottom:14px;">Your profile</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="font-size:13px;color:#cbd5e1;">Name</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
+          <span>🏛️</span>
+          <input id="profileName" value="${(profile.name || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
+        </div>
+        <label style="font-size:13px;color:#cbd5e1;">Age</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
+          <span>🎂</span>
+          <input id="profileAge" value="${(profile.age || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
+        </div>
+        <label style="font-size:13px;color:#cbd5e1;">Email</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
+          <span>📧</span>
+          <input id="profileEmail" value="${(profile.email || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" readonly />
+        </div>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;display:flex;flex-direction:column;gap:10px;">
+        <button type="button" onclick="saveProfileAndStay()" style="padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">Save changes</button>
+        <button type="button" onclick="confirmLogout()" style="padding:10px 12px;border:none;border-radius:12px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Logout</button>
+      </div>
+    `;
+
+    document.body.appendChild(box);
+    const nameInput = document.getElementById('profileName');
+    const ageInput = document.getElementById('profileAge');
+    if (nameInput) nameInput.addEventListener('input', () => saveProfileData({ name: nameInput.value }));
+    if (ageInput) ageInput.addEventListener('input', () => saveProfileData({ age: ageInput.value }));
+}
+
+function saveProfileAndStay() {
+    const nameInput = document.getElementById('profileName');
+    const ageInput = document.getElementById('profileAge');
+    if (nameInput) saveProfileData({ name: nameInput.value });
+    if (ageInput) saveProfileData({ age: ageInput.value });
+    closeProfilePanel();
+}
+
+function confirmLogout() {
+    const box = document.getElementById('profilePanel');
+    if (!box) return;
+    box.innerHTML = `
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Are you sure you want to logout?</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+        <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">Cancel</button>
+        <button type="button" onclick="logout()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Logout</button>
+      </div>
+    `;
+}
+
 async function logout() {
     try {
         const auth = await initFirebase();
@@ -1085,6 +1179,7 @@ async function logout() {
     }
     localStorage.removeItem('last_chat');
     renderList();
+    closeProfilePanel();
     updateAuthControls();
     window.dispatchEvent(new Event('mi-chat-user-changed'));
 }
