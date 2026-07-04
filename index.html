@@ -1763,10 +1763,13 @@ async function registerEmail() {
   } catch (error) {
     const message = error?.message || 'Authentication failed.';
     const normalized = String(message || '').toLowerCase();
-    const duplicateMessage = 'YOUR ACCOUNT WAS ALREADY REGISTERED BY Google.SO GO TO SIGN IN AND CREATE NEW PASSWORD AND CONFIRM ACCOUNT.';
+    const duplicateMessage = 'YOUR ACCOUNT WAS ALREADY REGISTERED BY GOOGLE.SO GO TO SIGN IN AND CREATE NEW PASSWORD AND CONFIRM ACCOUNT.';
+    const invalidCredentialMessage = 'INVALID EMAIL OR PASSWORD. TRY AGAIN.';
 
     if (normalized.includes('email-already-in-use') || normalized.includes('already in use')) {
       setAuthMessage(duplicateMessage, true);
+    } else if (normalized.includes('invalid-credential') || normalized.includes('invalid email') || normalized.includes('wrong-password')) {
+      setAuthMessage(invalidCredentialMessage, true);
     } else {
       setAuthMessage(message, true);
     }
