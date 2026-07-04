@@ -1061,20 +1061,30 @@ function loadGuestChats() {
     currentChat = retainedChat;
 }
 
+function getCurrentProfileEmail() {
+    return (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+}
+
+function getProfileStorageKey(field) {
+    const email = getCurrentProfileEmail();
+    return email ? `mi_profile_${field}_${email}` : null;
+}
+
 function getProfileData() {
+    const email = getCurrentProfileEmail();
     return {
-        name: localStorage.getItem('mi_profile_name') || '',
-        age: localStorage.getItem('mi_profile_age') || '',
-        birthday: localStorage.getItem('mi_profile_birthday') || '',
-        email: localStorage.getItem('mi_user_email') || ''
+        name: email ? localStorage.getItem(getProfileStorageKey('name')) || '' : '',
+        age: email ? localStorage.getItem(getProfileStorageKey('age')) || '' : '',
+        email
     };
 }
 
 function saveProfileData(profile) {
     if (!profile) return;
-    if (profile.name !== undefined) localStorage.setItem('mi_profile_name', profile.name);
-    if (profile.age !== undefined) localStorage.setItem('mi_profile_age', profile.age);
-    if (profile.email !== undefined) localStorage.setItem('mi_user_email', profile.email);
+    const email = getCurrentProfileEmail();
+    if (!email) return;
+    if (profile.name !== undefined) localStorage.setItem(`mi_profile_name_${email}`, profile.name);
+    if (profile.age !== undefined) localStorage.setItem(`mi_profile_age_${email}`, profile.age);
 }
 
 function closeProfilePanel() {
