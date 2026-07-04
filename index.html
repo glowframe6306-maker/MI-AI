@@ -1829,7 +1829,14 @@ async function loginEmail() {
     await loadUserChats();
   } catch (err) {
     const message = err?.message || 'Authentication failed.';
-    setAuthMessage(message, true);
+    const normalized = String(message || '').toLowerCase();
+    const invalidCredentialMessage = 'INVALID EMAIL OR PASSWORD. TRY AGAIN.';
+
+    if (normalized.includes('invalid-credential') || normalized.includes('invalid email') || normalized.includes('wrong-password')) {
+      setAuthMessage(invalidCredentialMessage, true);
+    } else {
+      setAuthMessage(message, true);
+    }
   }
 }
 
