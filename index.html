@@ -2,11 +2,9 @@
 <html>
 <head>
 <title>MI AI ChatBOT Pro</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <style>
 
@@ -32,18 +30,6 @@ transition:.3s;
 }
 
 body{display:flex;}
-
-#mobileMenuBackdrop{
-  display:none;
-}
-
-#mobileMenuToggle{
-  display:none;
-}
-
-#mobileMenuClose{
-  display:none;
-}
 
 /* SIDEBAR */
 #sidebar{
@@ -103,78 +89,11 @@ padding:10px;
 font-weight:bold;
 }
 
-#header .headerActions{
-margin-left:auto;
-display:flex;
-align-items:center;
-gap:8px;
-}
-
-#header #loginBtn,
-#header #logoutBtn{
-margin:0;
-padding:8px 14px;
-border-radius:999px;
-font-weight:700;
-font-size:13px;
-min-width:92px;
-display:inline-flex;
-align-items:center;
-justify-content:center;
-background:linear-gradient(135deg,var(--main),#38bdf8);
-box-shadow:0 8px 18px rgba(30,136,229,0.22);
-color:#fff;
-}
-
-#header #logoutBtn{
-background:linear-gradient(135deg,#0f766e,#14b8a6);
-}
-
-#header #loginBtn:hover,
-#header #logoutBtn:hover{
-transform:translateY(-1px);
-}
-
-#header #headerLogo{
-width:52px;
-height:52px;
-flex-shrink:0;
-border-radius:14px;
-overflow:hidden;
-
-border:2px solid rgba(255,255,255,0.24);
-background:#000;
-
-padding:4px;
-margin-right:10px;
-
-display:block;
-object-fit:contain;
-
-box-shadow:
-0 8px 24px rgba(0,0,0,0.25);
-transition:transform .2s ease, box-shadow .2s ease;
-}
-
-#header #headerLogo:hover {
-  transform:translateY(-1px) scale(1.02);
-  box-shadow:0 12px 28px rgba(0,0,0,0.32);
-}
-
-@keyframes logoPulse{
-
-0%{
-transform:scale(1);
-}
-
-50%{
-transform:scale(1.08);
-}
-
-100%{
-transform:scale(1);
-}
-
+#header img{
+width:40px;
+height:40px;
+border-radius:50%;
+border:2px solid var(--main);
 }
 
 /* CHAT */
@@ -307,401 +226,26 @@ cursor:pointer;
 background:var(--main);
 }
 
-#sidebar,
-#main {
-  opacity: 1;
-  transform: none;
-}
-
-#chatList {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 8px;
-    flex: 1;
-    min-height: 0;
-}
-
-#chatList.scrollable {
-    overflow-y: auto;
-    padding-right: 4px;
-}
-
-#chatList.scrollable::-webkit-scrollbar {
-    width: 6px;
-}
-
-#chatList.scrollable::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.24);
-    border-radius: 999px;
-}
-
-#watermark {
-  text-align: center;
-  font-size: 12px;
-  color: rgba(255,255,255,0.58);
-  padding: 6px 10px 10px;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  user-select: none;
-  pointer-events: none;
-  background: var(--panel);
-}
-
-#authReminder {
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 10px;
-    background: rgba(30,136,229,0.16);
-    border: 1px solid rgba(30,136,229,0.24);
-    color: #dce8ff;
-    font-size: 12px;
-    line-height: 1.4;
-}
-
-#authReminder button {
-    width: 100%;
-    margin-top: 8px;
-    font-size: 12px;
-}
-
-@media (max-width: 900px) {
-  body {
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  #mobileMenuBackdrop {
-    display:block;
-    position:fixed;
-    inset:0;
-    background:rgba(2,6,23,0.72);
-    backdrop-filter:blur(8px);
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .25s ease;
-    z-index:1999;
-  }
-
-  #mobileMenuBackdrop.mobile-open {
-    opacity:1;
-    pointer-events:auto;
-  }
-
-  #sidebar {
-    position:fixed;
-    inset:0;
-    width:100vw;
-    height:100dvh;
-    z-index:2000;
-    padding:16px 14px 20px;
-    transform:translateX(-100%);
-    transition:transform .25s ease;
-    display:flex;
-    overflow-y:auto;
-  }
-
-  #sidebar.mobile-open {
-    transform:translateX(0);
-  }
-
-  #mobileMenuToggle {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:44px;
-    height:44px;
-    border-radius:14px;
-    background:rgba(255,255,255,0.12);
-    color:#fff;
-    font-size:20px;
-    position:absolute;
-    left:10px;
-    top:50%;
-    transform:translateY(-50%);
-    z-index:2;
-  }
-
-  #mobileMenuClose {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:40px;
-    height:40px;
-    border-radius:12px;
-    background:rgba(255,255,255,0.08);
-    color:#fff;
-    margin-left:auto;
-    margin-bottom:6px;
-  }
-
-  #main {
-    width:100%;
-    min-width:0;
-    min-height:0;
-  }
-
-  #header {
-    height:72px;
-    padding:12px 16px 12px 62px;
-    justify-content:center;
-    position:sticky;
-    top:0;
-    z-index:1100;
-    border-bottom:1px solid rgba(255,255,255,0.08);
-  }
-
-  #header #headerLogo {
-    width:44px;
-    height:44px;
-    margin-right:8px;
-  }
-
-  #header span {
-    font-size:1rem;
-    letter-spacing:0.03em;
-  }
-
-  #chat {
-    padding:12px 12px 120px;
-    overscroll-behavior:contain;
-  }
-
-  .me, .ai {
-    max-width:92%;
-    padding:11px 12px;
-    font-size:15px;
-    line-height:1.48;
-    border-radius:16px;
-  }
-
-  #inputBox {
-    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-    gap:8px;
-    align-items:flex-end;
-  }
-
-  textarea {
-    min-height:48px;
-    max-height:132px;
-    padding:12px 14px;
-    border-radius:16px;
-    font-size:15px;
-  }
-
-  #inputBox button {
-    min-width:48px;
-    height:48px;
-    padding:0;
-    border-radius:14px;
-  }
-
-  #sidebar h3 {
-    margin:4px 0 8px;
-    font-size:18px;
-  }
-
-  #chatList {
-    margin-top:10px;
-  }
-
-  #chatList .chatItem {
-    padding:12px;
-    border-radius:12px;
-  }
-
-  #authReminder {
-    font-size:13px;
-  }
-
-  #settingsPanel {
-    left:12px;
-    right:12px;
-    width:auto;
-    top:76px;
-  }
-}
-
-@media (min-width: 901px) {
-  #mobileMenuToggle,
-  #mobileMenuClose {
-    display:none !important;
-  }
-}
-
-body.force-mobile-layout {
-  flex-direction: column;
-  overflow: hidden;
-}
-
-body.force-mobile-layout #mobileMenuBackdrop {
-  display:block;
-  position:fixed;
-  inset:0;
-  background:rgba(2,6,23,0.72);
-  backdrop-filter:blur(8px);
-  opacity:0;
-  pointer-events:none;
-  transition:opacity .25s ease;
-  z-index:1999;
-}
-
-body.force-mobile-layout #mobileMenuBackdrop.mobile-open {
-  opacity:1;
-  pointer-events:auto;
-}
-
-body.force-mobile-layout #sidebar {
-  position:fixed;
-  inset:0;
-  width:100vw;
-  height:100dvh;
-  z-index:2000;
-  padding:16px 14px 20px;
-  transform:translateX(-100%);
-  transition:transform .25s ease;
-  display:flex;
-  overflow-y:auto;
-}
-
-body.force-mobile-layout #sidebar.mobile-open {
-  transform:translateX(0);
-}
-
-body.force-mobile-layout #mobileMenuToggle {
-  display:flex !important;
-  align-items:center;
-  justify-content:center;
-  width:44px;
-  height:44px;
-  border-radius:14px;
-  background:rgba(255,255,255,0.12);
-  color:#fff;
-  font-size:20px;
-  position:absolute;
-  left:10px;
-  top:50%;
-  transform:translateY(-50%);
-  z-index:2;
-}
-
-body.force-mobile-layout #mobileMenuClose {
-  display:flex !important;
-  align-items:center;
-  justify-content:center;
-  width:40px;
-  height:40px;
-  border-radius:12px;
-  background:rgba(255,255,255,0.08);
-  color:#fff;
-  margin-left:auto;
-  margin-bottom:6px;
-}
-
-body.force-mobile-layout #main {
-  width:100%;
-  min-width:0;
-  min-height:0;
-}
-
-body.force-mobile-layout #header {
-  height:72px;
-  padding:12px 16px 12px 62px;
-  justify-content:center;
-  position:sticky;
-  top:0;
-  z-index:1100;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-}
-
-body.force-mobile-layout #header #headerLogo {
-  width:44px;
-  height:44px;
-  margin-right:8px;
-}
-
-body.force-mobile-layout #header span {
-  font-size:1rem;
-  letter-spacing:0.03em;
-}
-
-body.force-mobile-layout #chat {
-  padding:12px 12px 120px;
-  overscroll-behavior:contain;
-}
-
-body.force-mobile-layout .me,
-body.force-mobile-layout .ai {
-  max-width:92%;
-  padding:11px 12px;
-  font-size:15px;
-  line-height:1.48;
-  border-radius:16px;
-}
-
-body.force-mobile-layout #inputBox {
-  padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-  gap:8px;
-  align-items:flex-end;
-}
-
-body.force-mobile-layout textarea {
-  min-height:48px;
-  max-height:132px;
-  padding:12px 14px;
-  border-radius:16px;
-  font-size:15px;
-}
-
-body.force-mobile-layout #inputBox button {
-  min-width:48px;
-  height:48px;
-  padding:0;
-  border-radius:14px;
-}
-
-body.force-mobile-layout #sidebar h3 {
-  margin:4px 0 8px;
-  font-size:18px;
-}
-
-body.force-mobile-layout #chatList {
-  margin-top:10px;
-}
-
-body.force-mobile-layout #chatList .chatItem {
-  padding:12px;
-  border-radius:12px;
-}
-
-body.force-mobile-layout #authReminder {
-  font-size:13px;
-}
-
-body.force-mobile-layout #settingsPanel {
-  left:12px;
-  right:12px;
-  width:auto;
-  top:76px;
-}
-
 </style>
 </head>
 
 <body>
-<div id="mobileMenuBackdrop" onclick="closeMobileMenu()"></div>
+
 <!-- SIDEBAR -->
 <div id="sidebar">
-<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-  <h3 style="margin:0;text-align:left;flex:1;">MI AI ChatBOT</h3>
-  <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">✕</button>
-</div>
+<h3>MI AI ChatBOT</h3>
+
+<button id="loginBtn" onclick="openLogin()">📧 Email Login</button>
+
+<button id="logoutBtn" onclick="logout()" style="display:none;">
+🚪 Logout
+</button>
 
 <button onclick="newChat()">➕ New Chat</button>
 
-<button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
-___________________________
-<button id="supportBtn" onclick="customerSupport()">🎧 Customer Support</button>
+<button onclick="toggleSettings()">⚙ Settings</button>
+
+<button onclick="customerSupport()">🎧 Customer Support</button>
 
 <div id="chatList"></div>
 
@@ -710,28 +254,41 @@ ___________________________
 <!-- MAIN -->
 <div id="main">
 <div id="header">
-<button id="mobileMenuToggle" type="button" onclick="toggleMobileMenu()" aria-label="Open menu">☰</button>
-<img
-    id="headerLogo"
-    src="/MIAI.svg"
-    alt="MI AI Logo">
-  <span>MI AI ChatBOT</span>
-  <div class="headerActions">
-    <button id="loginBtn" onclick="openLogin()" type="button">📥 Login</button>
-    <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">📴 Logout</button>
-  </div>
+<img src="logo.png">
+MI AI ChatBOT
 </div>
 
-<div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
-  <div style="display:flex;gap:6px;margin-bottom:18px;">
-    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">Sign In</button>
-    <button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#cbd5e1;font-weight:700;">Register</button>
-  </div>
-  <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
-  <div id="authForm"></div>
-</div>
+<div id="loginBox" style="
+display:none;
+position:absolute;
+top:70px;
+left:50%;
+transform:translateX(-50%);
+background:#111a2b;
+padding:20px;
+border-radius:15px;
+z-index:999;
+width:280px;
+">
 
-<div id="authReminder" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.08);padding:12px 16px;border-radius:16px;color:#f8fafc;z-index:999;max-width:90vw;text-align:center;font-size:13px;"></div>
+<h3>Email Login</h3>
+
+<input id="email" 
+placeholder="Email"
+style="width:100%;padding:10px;margin:5px">
+
+
+<input id="password"
+type="password"
+placeholder="Password"
+style="width:100%;padding:10px;margin:5px">
+
+
+<button onclick="loginEmail()">
+Login / Create
+</button>
+
+</div>
 
 <div id="chat"></div>
 
@@ -750,10 +307,8 @@ ___________________________
 <!-- INPUT -->
 <div id="inputBox">
 <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
-<button onclick="send()">↑</button>
+<button onclick="send()">Send</button>
 </div>
-<div id="watermark">MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION. </div>
-<div id="watermark">CREATED AND POWERED BY M.I.MUHAMMADH</div>
 
 </div>
 
@@ -779,520 +334,56 @@ ___________________________
 </div>
 
 <script>
-window.FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
-  authDomain: "mi-ai-99e6a.firebaseapp.com",
-  projectId: "mi-ai-99e6a",
-  appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
+
+const firebaseConfig = {
+
+apiKey:"AIzaSyDDsWFgmELXQBeupafAU6bGeQjvMmnSzGI",
+
+authDomain:"mi-ai-b3a57.firebaseapp.com",
+
+projectId:"mi-ai-b3a57"
+
 };
 
-let firebaseAuth = null;
-let authMode = 'signin';
-let user = null;
 
-function getFirebaseConfig() {
-  if (window.FIREBASE_CONFIG && typeof window.FIREBASE_CONFIG === 'object') {
-    return window.FIREBASE_CONFIG;
-  }
-  return FIREBASE_CONFIG;
-}
+firebase.initializeApp(firebaseConfig);
 
-async function initFirebase() {
 
-    if (firebaseAuth) return firebaseAuth;
+const auth = firebase.auth();
 
-    const config = getFirebaseConfig();
 
-    if (!config || !config.apiKey) {
-        throw new Error("Firebase configuration is missing.");
-    }
+let user=null;
 
-    if (!window.firebase || !window.firebase.apps) {
-        throw new Error("Firebase SDK failed to load.");
-    }
-
-    if (!window.firebase.apps.length) {
-        window.firebase.initializeApp(config);
-    }
-
-    firebaseAuth = window.firebase.auth();
-
-    return firebaseAuth;
-}
-
-async function loadUserChats() {
-  const token = localStorage.getItem('mi_supabase_token');
-  const userId = localStorage.getItem('mi_user_id');
-  const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-  if (!token || !userId) return;
-
-  try {
-    const res = await fetch('/conversations', {
-      headers: { Authorization: 'Bearer ' + token },
-    });
-    const json = await res.json();
-    if (res.ok && Array.isArray(json.conversations)) {
-      chats = {};
-      for (const conversation of json.conversations) {
-        chats[conversation.id] = [];
-        try {
-          const messagesRes = await fetch('/messages?conversation_id=' + encodeURIComponent(conversation.id), {
-            headers: { Authorization: 'Bearer ' + token },
-          });
-          const messagesJson = await messagesRes.json();
-          if (messagesRes.ok && Array.isArray(messagesJson.messages)) {
-            chats[conversation.id] = messagesJson.messages.map((message) => ({
-              role: message.role === 'me' ? 'me' : 'ai',
-              text: message.content,
-            }));
-          }
-        } catch (e) {
-          // ignore individual fetch failures
-        }
-      }
-    } else {
-      const storageKey = email ? `mi_chats_${email}` : `mi_chats_${userId}`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        try { chats = JSON.parse(saved) || {}; } catch { chats = {}; }
-      } else {
-        chats = {};
-      }
-    }
-
-    accountId = userId;
-    localStorage.setItem('mi_account', accountId);
-    currentChat = Object.keys(chats)[0] ?? null;
-    save();
-    renderList();
-    if (currentChat) {
-      openChat(currentChat);
-    }
-  } catch (e) {
-    const storageKey = email ? `mi_chats_${email}` : `mi_chats_${userId}`;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try { chats = JSON.parse(saved) || {}; } catch { chats = {}; }
-      currentChat = Object.keys(chats)[0] ?? null;
-      renderList();
-      if (currentChat) {
-        openChat(currentChat);
-      }
-    }
-  }
-}
-
-let chatBox = document.getElementById("chat");
-let chatList = document.getElementById("chatList");
-let input = document.getElementById("msg");
-let menu = document.getElementById("menu");
-let authReminder = document.getElementById("authReminder");
-let loginPromptBox = null;
-
-let guestId = localStorage.getItem("mi_guest_id");
-if (!guestId) {
-    guestId = "guest_" + crypto.randomUUID();
-    localStorage.setItem("mi_guest_id", guestId);
-}
+let chatBox=document.getElementById("chat");
+let chatList=document.getElementById("chatList");
+let input=document.getElementById("msg");
+let menu=document.getElementById("menu");
 
 let accountId = localStorage.getItem("mi_account");
 
-if (!accountId) {
-    accountId = guestId;
+// if no account exists → create automatically
+if(!accountId){
+    accountId = "acc_" + crypto.randomUUID();
     localStorage.setItem("mi_account", accountId);
 }
 
-let chats = {};
-let currentChat = null;
-let selectedChat = null;
+let chats={};
+let currentChat=null;
+let selectedChat=null;
 
-function isAuthenticated() {
-    return Boolean(user && localStorage.getItem('mi_supabase_token'));
+/* LOAD */
+window.onload=function(){
+
+let saved=localStorage.getItem("mi_chats_" + accountId);
+
+if(saved){
+    chats=JSON.parse(saved);
+
+    localStorage.setItem("mi_last_account", accountId);
+}else{
+    chats={};
 }
 
-function getDismissedLoginPromptChats() {
-    try {
-        return JSON.parse(localStorage.getItem('mi_login_prompt_dismissed_chats') || '[]');
-    } catch {
-        return [];
-    }
-}
-
-function saveDismissedLoginPromptChats(chatsList) {
-    localStorage.setItem('mi_login_prompt_dismissed_chats', JSON.stringify(chatsList));
-}
-
-function getShownLoginPromptChats() {
-    try {
-        return JSON.parse(localStorage.getItem('mi_login_prompt_shown_chats') || '[]');
-    } catch {
-        return [];
-    }
-}
-
-function saveShownLoginPromptChats(chatsList) {
-    localStorage.setItem('mi_login_prompt_shown_chats', JSON.stringify(chatsList));
-}
-
-function markLoginPromptShown(chatId) {
-    if (!chatId) return;
-    const shown = getShownLoginPromptChats();
-    if (!shown.includes(chatId)) {
-        shown.push(chatId);
-        saveShownLoginPromptChats(shown);
-    }
-}
-
-function dismissLoginPrompt(chatId) {
-    if (!chatId) return;
-    const dismissed = getDismissedLoginPromptChats();
-    if (!dismissed.includes(chatId)) {
-        dismissed.push(chatId);
-        saveDismissedLoginPromptChats(dismissed);
-    }
-    removeLoginPrompt();
-}
-
-function removeLoginPrompt() {
-    if (loginPromptBox && loginPromptBox.parentNode) {
-        loginPromptBox.parentNode.removeChild(loginPromptBox);
-    }
-    loginPromptBox = null;
-}
-
-function shouldShowLoginPrompt(chatId) {
-    if (!chatId || isAuthenticated()) return false;
-    const dismissed = getDismissedLoginPromptChats();
-    const shown = getShownLoginPromptChats();
-    return !dismissed.includes(chatId) && !shown.includes(chatId);
-}
-
-function showLoginPrompt(chatId) {
-    if (!chatId || !shouldShowLoginPrompt(chatId)) return;
-    removeLoginPrompt();
-
-    const box = document.createElement('div');
-    box.style.position = 'fixed';
-    box.style.top = '50%';
-    box.style.left = '50%';
-    box.style.transform = 'translate(-50%, -50%)';
-    box.style.zIndex = '9999';
-    box.style.width = 'min(92vw, 360px)';
-    box.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98))';
-    box.style.border = '1px solid rgba(255,255,255,0.14)';
-    box.style.borderRadius = '18px';
-    box.style.padding = '18px 18px 16px';
-    box.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.35)';
-    box.style.color = '#f8fafc';
-
-    box.innerHTML = `
-      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-      <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">Login to unlock more</div>
-      <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">Enjoy these benefits when you sign in:</div>
-      <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
-        <li>Save and restore your chats</li>
-        <li>Sync your history across devices</li>
-        <li>Get faster, more personal replies</li>
-      </ul>
-      <div style="display:flex;justify-content:center;">
-        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">Log in</button>
-      </div>
-    `;
-
-    document.body.appendChild(box);
-    loginPromptBox = box;
-    markLoginPromptShown(chatId);
-}
-
-function maybeShowLoginPrompt(chatId) {
-    if (!chatId || isAuthenticated()) return;
-    const messages = chats[chatId] || [];
-    const aiReplies = messages.filter((m) => m.role === 'ai').length;
-    const totalMessages = messages.length;
-
-    if (aiReplies >= 3 && totalMessages >= 4 && shouldShowLoginPrompt(chatId)) {
-        showLoginPrompt(chatId);
-    }
-}
-
-function getGuestStorageKey() {
-    return "mi_chats_" + guestId;
-}
-
-function getUserChatStorageKey() {
-    const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-    const userId = (localStorage.getItem('mi_user_id') || '').trim().toLowerCase();
-    const identity = email || userId || guestId;
-    return identity ? `mi_chats_${identity}` : getGuestStorageKey();
-}
-
-function getActiveStorageKey() {
-    return isAuthenticated() ? getUserChatStorageKey() : getGuestStorageKey();
-}
-
-function getSessionId() {
-    return isAuthenticated() ? user.id : guestId;
-}
-
-function loadGuestChats() {
-    let saved = localStorage.getItem(getGuestStorageKey());
-    if (saved) {
-        try {
-            chats = JSON.parse(saved) || {};
-        } catch {
-            chats = {};
-        }
-    } else {
-        chats = {};
-    }
-
-    if (typeof chats !== 'object' || chats === null) {
-        chats = {};
-    }
-
-    const lastChat = localStorage.getItem('last_chat');
-    const ids = Object.keys(chats);
-    if (ids.length === 0) {
-        return;
-    }
-
-    let retainedChat = lastChat && chats[lastChat] ? lastChat : ids[ids.length - 1];
-    chats = { [retainedChat]: chats[retainedChat] || [] };
-    currentChat = retainedChat;
-}
-
-function getCurrentProfileEmail() {
-    return (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-}
-
-function getProfileStorageKey(field) {
-    const email = getCurrentProfileEmail();
-    return email ? `mi_profile_${field}_${email}` : null;
-}
-
-function getProfileData() {
-    const email = getCurrentProfileEmail();
-    return {
-        name: email ? localStorage.getItem(getProfileStorageKey('name')) || '' : '',
-        age: email ? localStorage.getItem(getProfileStorageKey('age')) || '' : '',
-        email
-    };
-}
-
-function saveProfileData(profile) {
-    if (!profile) return;
-    const email = getCurrentProfileEmail();
-    if (!email) return;
-    if (profile.name !== undefined) localStorage.setItem(`mi_profile_name_${email}`, profile.name);
-    if (profile.age !== undefined) localStorage.setItem(`mi_profile_age_${email}`, profile.age);
-}
-
-function closeProfilePanel() {
-    const box = document.getElementById('profilePanel');
-    if (box) box.remove();
-}
-
-function openProfilePanel() {
-    closeProfilePanel();
-    const profile = getProfileData();
-    const box = document.createElement('div');
-    box.id = 'profilePanel';
-    box.style.position = 'fixed';
-    box.style.top = '50%';
-    box.style.left = '50%';
-    box.style.transform = 'translate(-50%, -50%)';
-    box.style.width = 'min(92vw, 380px)';
-    box.style.maxHeight = '90vh';
-    box.style.overflowY = 'auto';
-    box.style.background = 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(30,41,59,0.98))';
-    box.style.border = '1px solid rgba(255,255,255,0.14)';
-    box.style.borderRadius = '18px';
-    box.style.padding = '18px';
-    box.style.boxShadow = '0 24px 60px rgba(0,0,0,0.36)';
-    box.style.zIndex = '10000';
-    box.style.color = '#f8fafc';
-
-    box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-      <div style="font-size:18px;font-weight:700;margin-bottom:14px;">Your profile</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <label style="font-size:13px;color:#cbd5e1;">Name</label>
-        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>🏛️</span>
-          <input id="profileName" value="${(profile.name || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
-        </div>
-        <label style="font-size:13px;color:#cbd5e1;">Age</label>
-        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>🎂</span>
-          <input id="profileAge" value="${(profile.age || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
-        </div>
-        <label style="font-size:13px;color:#cbd5e1;">Email</label>
-        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>📧</span>
-          <input id="profileEmail" value="${(profile.email || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" readonly />
-        </div>
-      </div>
-      <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;display:flex;flex-direction:column;gap:10px;">
-        <button type="button" onclick="saveProfileAndStay()" style="padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">Save changes</button>
-        <button type="button" onclick="confirmLogout()" style="padding:10px 12px;border:none;border-radius:12px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Logout</button>
-      </div>
-    `;
-
-    document.body.appendChild(box);
-    const nameInput = document.getElementById('profileName');
-    const ageInput = document.getElementById('profileAge');
-    if (nameInput) nameInput.addEventListener('input', () => saveProfileData({ name: nameInput.value }));
-    if (ageInput) ageInput.addEventListener('input', () => saveProfileData({ age: ageInput.value }));
-}
-
-function saveProfileAndStay() {
-    const nameInput = document.getElementById('profileName');
-    const ageInput = document.getElementById('profileAge');
-    if (nameInput) saveProfileData({ name: nameInput.value });
-    if (ageInput) saveProfileData({ age: ageInput.value });
-    closeProfilePanel();
-}
-
-function confirmLogout() {
-    const box = document.getElementById('profilePanel');
-    if (!box) return;
-    box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Are you sure you want to logout?</div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
-        <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">Cancel</button>
-        <button type="button" onclick="logout()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Logout</button>
-      </div>
-    `;
-}
-
-async function logout() {
-    try {
-        const auth = await initFirebase();
-        await auth.signOut();
-    } catch (e) {
-        console.error('Logout error:', e);
-    }
-
-    localStorage.removeItem('mi_supabase_token');
-    localStorage.removeItem('mi_user_id');
-    localStorage.removeItem('mi_user_email');
-    user = null;
-    accountId = guestId;
-    localStorage.setItem('mi_account', accountId);
-
-    chats = {};
-    selectedChat = null;
-    currentChat = null;
-
-    if (chatBox) {
-        chatBox.innerHTML = '';
-    }
-    localStorage.removeItem('last_chat');
-    renderList();
-    closeProfilePanel();
-    updateAuthControls();
-    window.dispatchEvent(new Event('mi-chat-user-changed'));
-}
-
-function updateAuthControls(){
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const hasSession = Boolean(user || localStorage.getItem('mi_supabase_token'));
-
-    if (loginBtn) {
-        loginBtn.style.display = hasSession ? 'none' : 'inline-flex';
-    }
-
-    if (logoutBtn) {
-        logoutBtn.style.display = hasSession ? 'inline-flex' : 'none';
-    }
-
-    updateAuthReminder();
-}
-
-function updateAuthReminder(){
-    if (authReminder) {
-        authReminder.style.display = 'none';
-        authReminder.innerHTML = '';
-    }
-}
-
-async function initChat(){
-
-const urlParams = new URLSearchParams(window.location.search);
-const verified = urlParams.get('verified');
-if (verified === '1') {
-    const authMessage = document.getElementById('authMessage');
-    if (authMessage) {
-        authMessage.textContent = 'Email verified! Your device is now trusted. Please sign in with your password.';
-        authMessage.style.color = '#86efac';
-    }
-} else if (verified === '0') {
-    const authMessage = document.getElementById('authMessage');
-    if (authMessage) {
-        authMessage.textContent = 'Email verification failed or link expired. Please try again.';
-        authMessage.style.color = '#fda4af';
-    }
-}
-
-chatBox = document.getElementById("chat");
-chatList = document.getElementById("chatList");
-input = document.getElementById("msg");
-menu = document.getElementById("menu");
-authReminder = document.getElementById("authReminder");
-
-let token = localStorage.getItem('mi_supabase_token');
-let userId = localStorage.getItem('mi_user_id');
-let storedEmail = localStorage.getItem('mi_user_email');
-
-if (token && userId) {
-    user = { id: userId, email: storedEmail || null };
-    // authenticated — load conversations from server
-    try {
-        const res = await fetch('/conversations', { headers: { 'Authorization': 'Bearer ' + token } });
-        const json = await res.json();
-        if (res.ok && Array.isArray(json.conversations)) {
-            chats = {};
-            for (const c of json.conversations) {
-                chats[c.id] = [];
-                // fetch messages for each conversation (lightweight)
-                try {
-                    const mres = await fetch('/messages?conversation_id=' + encodeURIComponent(c.id), { headers: { 'Authorization': 'Bearer ' + token } });
-                    const mjson = await mres.json();
-                    if (mres.ok && Array.isArray(mjson.messages)) {
-                        chats[c.id] = mjson.messages.map(m => ({ role: m.role === 'me' ? 'me' : 'ai', text: m.content }));
-                    }
-                } catch (e) {
-                    // ignore per-conversation failures
-                }
-            }
-
-            accountId = userId;
-            localStorage.setItem('mi_account', accountId);
-            currentChat = Object.keys(chats)[0] ?? null;
-        }
-        if (!currentChat) {
-            const newConversation = await createServerConversation();
-            if (newConversation) {
-                const id = newConversation.id;
-                chats[id] = [];
-                currentChat = id;
-            } else {
-                const id = "chat_" + Date.now();
-                chats[id] = [];
-                currentChat = id;
-            }
-        }
-    } catch (e) {
-        // fallback to local storage
-    }
-}
-
-// Guest users only
-if (!user) {
-    loadGuestChats();
-}
 
 let theme=localStorage.getItem("theme");
 
@@ -1303,90 +394,48 @@ document.documentElement.style.setProperty("--main",theme);
 
 // AUTO NEW CHAT OPEN
 
-if(Object.keys(chats).length===0){
-    let id="chat_"+Date.now();
-    chats[id]=[];
-    currentChat=id;
-} else {
-    currentChat = currentChat || Object.keys(chats)[0];
-}
+let id="chat_"+Date.now();
+
+chats[id]=[];
+
+currentChat=id;
+
 
 save();
-renderList();
-openChat(currentChat);
-updateAuthControls();
 
-if (input) {
-    input.focus();
-    input.addEventListener("keydown", e => {
-        if (e.key === "Enter") {
-            if (e.shiftKey) return;
-            e.preventDefault();
-            send();
-        }
-    });
-} else {
-    console.warn('Chat input element not found');
-}
+renderList();
+
+openChat(id);
+
+
+input.focus();
 
 };
 
+/* ENTER */
+input.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+if(e.shiftKey) return;
+e.preventDefault();
+send();
+}
+});
+
 /* NEW CHAT */
-async function newChat(){
-    removeLoginPrompt();
-    let token = localStorage.getItem('mi_supabase_token');
-    if (token) {
-        // create conversation on server
-        try {
-            const res = await fetch('/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ title: 'New chat', session_id: accountId }) });
-            const json = await res.json();
-            if (res.ok && json.conversation && json.conversation.id) {
-                const id = json.conversation.id;
-                chats[id] = [];
-                currentChat = id;
-                save();
-                renderList();
-                openChat(id);
-                return;
-            }
-        } catch (e) {
-            // fallback to local new chat for guest behavior only
-        }
-    }
-
-    // Guest mode: only one temporary guest chat may exist at a time.
-    if (!isAuthenticated()) {
-        const existingGuestChatIds = Object.keys(chats);
-        if (existingGuestChatIds.length > 0) {
-            for (const chatId of existingGuestChatIds) {
-                delete chats[chatId];
-            }
-        }
-    }
-
-    let id="chat_"+Date.now();
-    chats[id]=[];
-    currentChat=id;
-    save();
-    renderList();
-    openChat(id);
+function newChat(){
+let id="chat_"+Date.now();
+chats[id]=[];
+currentChat=id;
+save();
+renderList();
+openChat(id);
 }
 
 /* OPEN */
 function openChat(id){
-removeLoginPrompt();
 currentChat=id;
-if (!chatBox) {
-    console.error('Chat container not found');
-    return;
-}
 chatBox.innerHTML="";
-(chats[id] || []).forEach(m => {
-    let d = document.createElement("div");
-    d.className = m.role;
-    d.innerText = m.text;
-    chatBox.appendChild(d);
-});
+chats[id].forEach(m=>add(m.role,m.text));
 localStorage.setItem("last_chat",id);
 }
 
@@ -1395,14 +444,6 @@ function renderList(){
 chatList.innerHTML="";
 
 let ids = Object.keys(chats);
-
-if(ids.length > 9){
-    chatList.classList.add('scrollable');
-    chatList.style.maxHeight='calc(100vh - 260px)';
-} else {
-    chatList.classList.remove('scrollable');
-    chatList.style.maxHeight='none';
-}
 
 
 ids.sort((a,b)=>{
@@ -1432,7 +473,7 @@ selectedChat=id;
 
 
 document.getElementById("pinOption").innerHTML =
-chats[id].pin ? "❌ Unpin" : "📌 Pin";
+chats[id].pin ? "📍 Unpin" : "📌 Pin";
 
 
 menu.style.display="block";
@@ -1445,35 +486,8 @@ chatList.appendChild(div);
 });
 }
 
-/* CLOSE OVERLAYS */
-function closeAllOverlays(target) {
-  const settingsPanel = document.getElementById("settingsPanel");
-  const loginBox = document.getElementById("loginBox");
-  const supportOverlay = document.getElementById("supportOverlay");
-
-  if (menu.style.display === "block" && !menu.contains(target)) {
-    menu.style.display = "none";
-  }
-
-  if (settingsPanel && settingsPanel.style.display === "block" &&
-      !settingsPanel.contains(target) && target.id !== "settingsBtn") {
-    settingsPanel.style.display = "none";
-  }
-
-  if (loginBox && loginBox.style.display === "block" &&
-      !loginBox.contains(target) && target.id !== "loginBtn") {
-    loginBox.style.display = "none";
-  }
-
-  if (supportOverlay && !supportOverlay.contains(target) && target.id !== "supportBtn") {
-    supportOverlay.remove();
-  }
-}
-
-document.addEventListener("pointerdown", e => {
-  const target = e.target;
-  closeAllOverlays(target);
-}, true);
+/* CLOSE MENU */
+document.addEventListener("click",()=>menu.style.display="none");
 
 /* RENAME */
 function renameChat(){
@@ -1554,16 +568,12 @@ copyText += "MI AI ChatBOT -: "+m.text+"\n\n";
 navigator.clipboard.writeText(copyText)
 .then(()=>{
 
-    if(user){
-        alert("Your Chat copied successfully ✅. So you can paste  it anywhere");
-    } else {
-        alert("Please sign in to copy your chat history safely. 📧");
-    }
+alert("Login Success ✅");
 
-    const loginBox = document.getElementById("loginBox");
-    if (loginBox) {
-        loginBox.style.display = "none";
-    }
+// 👉 මෙන්න add කරන්න
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
 
 })
 
@@ -1576,15 +586,7 @@ menu.style.display="none";
 async function send(){
 
 let msg=input.value.trim();
-if(!msg) return;
-
-if(!currentChat){
-    const fallbackId="chat_"+Date.now();
-    chats[fallbackId]=[];
-    currentChat=fallbackId;
-    save();
-    renderList();
-}
+if(!msg || !currentChat) return;
 
 input.value="";
 
@@ -1604,45 +606,20 @@ chatBox.appendChild(t);
 scroll();
 
 try{
-    const API_URL = "/api/chat";
-    let res = await fetch(API_URL, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            message: msg,
-            conversation_id: currentChat,
-            session_id: accountId,
-            user_id: accountId,
-            user_email: user ? user.email : null,
-        }),
-    });
+let res=await fetch("http://127.0.0.1:5000/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({message:msg})
+});
 
-    if (!res.ok) {
-        throw new Error("Server returned " + res.status);
-    }
+let data=await res.json();
 
-    const text = await res.text();
+t.remove();
+type(data.reply);
 
-    let data;
-
-    try {
-        data = JSON.parse(text);
-    } catch {
-        data = { reply: text || "No response received." };
-    }
-
-    t.remove();
-    type(data.reply || "No response received.");
-} catch (e) {
-
-    console.error(e);
-
-    t.remove();
-
-    add("ai",
-        "❌ Error : " + (e.message || "Unable to reach the assistant")
-    );
-
+}catch(e){
+t.remove();
+add("ai","Server Error ❌");
 }
 }
 
@@ -1662,7 +639,6 @@ if(i>=text.length){
 clearInterval(timer);
 chats[currentChat].push({role:"ai",text});
 save();
-maybeShowLoginPrompt(currentChat);
 }
 },20);
 }
@@ -1674,20 +650,10 @@ d.className=role;
 d.innerText=text;
 chatBox.appendChild(d);
 
+if(role==="me"){
 chats[currentChat].push({role,text});
 save();
-
-// If the user is authenticated, persist the message to the server as well
-try {
-    const token = localStorage.getItem('mi_supabase_token');
-    if (token) {
-        fetch('/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ conversation_id: currentChat, session_id: accountId, role: role === 'me' ? 'me' : 'ai', content: text })
-        }).catch(() => {});
-    }
-} catch (e) {}
+}
 
 scroll();
 }
@@ -1697,40 +663,16 @@ function scroll(){
 chatBox.scrollTop=chatBox.scrollHeight;
 }
 
-async function createServerConversation() {
-    const token = localStorage.getItem('mi_supabase_token');
-    if (!token) return null;
-    try {
-        const res = await fetch('/conversations', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token,
-            },
-            body: JSON.stringify({ title: 'New chat', session_id: accountId }),
-        });
-        const json = await res.json();
-        return res.ok && json.conversation ? json.conversation : null;
-    } catch {
-        return null;
-    }
-}
-
 /* SAVE */
 function save(){
-    const storageKey = getActiveStorageKey();
-    if (storageKey) {
-        localStorage.setItem(storageKey, JSON.stringify(chats));
-    }
+localStorage.setItem("mi_chats_" + accountId, JSON.stringify(chats));
+localStorage.setItem("mi_last_account", accountId);
 }
 
 /* SETTINGS */
 function toggleSettings(){
-  closeMobileMenu();
-  const s=document.getElementById("settingsPanel");
-  if (s) {
-    s.style.display = s.style.display === "block" ? "none" : "block";
-  }
+let s=document.getElementById("settingsPanel");
+s.style.display=s.style.display==="block"?"none":"block";
 }
 
 /* THEME */
@@ -1750,7 +692,6 @@ chatBox.style.fontSize=v+"px";
 function customerSupport(){
 
 let box=document.createElement("div");
-box.id = "supportOverlay";
 
 box.style.position="fixed";
 box.style.left="50%";
@@ -1773,14 +714,14 @@ box.innerHTML=`
 <p>📧 Email</p>
 
 <button onclick="openEmail()">
-REQUEST VIA EMAIL
+miai.customerservice@gmail.com
 </button>
 
 
-<p>💬 WhatsApp</p>
+<p>📱 WhatsApp</p>
 
 <button onclick="openWhatsApp()">
-VIA WHATSAPP
+0756390621
 </button>
 
 
@@ -1813,293 +754,107 @@ window.open(
 
 function openWhatsApp(){
 
-location.href="https://wa.me/94756390621";
+window.open(
+"https://wa.me/94756390621",
+"_blank"
+);
+
 }
 
 function openLogin(){
-  const box = document.getElementById('loginBox');
-  if (!box) return;
-  box.style.display = box.style.display === 'block' ? 'none' : 'block';
-  if (box.style.display === 'block') {
-    setAuthMode(authMode);
-  }
-  closeMobileMenu();
+
+let box=document.getElementById("loginBox");
+
+box.style.display =
+box.style.display=="block"
+?"none"
+:"block";
+
 }
 
-function toggleMobileMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const backdrop = document.getElementById('mobileMenuBackdrop');
-  const toggle = document.getElementById('mobileMenuToggle');
-  if (!sidebar || !backdrop) return;
 
-  const shouldOpen = !sidebar.classList.contains('mobile-open');
-  sidebar.classList.toggle('mobile-open', shouldOpen);
-  backdrop.classList.toggle('mobile-open', shouldOpen);
-  document.body.style.overflow = shouldOpen ? 'hidden' : '';
-  if (toggle) toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-}
+function loginEmail(){
 
-function closeMobileMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const backdrop = document.getElementById('mobileMenuBackdrop');
-  const toggle = document.getElementById('mobileMenuToggle');
-  if (!sidebar || !backdrop) return;
-  sidebar.classList.remove('mobile-open');
-  backdrop.classList.remove('mobile-open');
-  document.body.style.overflow = '';
-  if (toggle) toggle.setAttribute('aria-expanded', 'false');
-}
+let email=document.getElementById("email").value;
 
-function shouldForceMobileLayout() {
-  const ua = navigator.userAgent || '';
-  const platform = navigator.platform || '';
-  const maxTouchPoints = navigator.maxTouchPoints || 0;
-  const isTouchDevice = 'ontouchstart' in window || maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
-  const isMobilePhoneUA = /(android|iphone|ipod|windows phone|mobile|opera mini|blackberry)/i.test(ua);
-  const isMobilePlatform = /(android|iphone|ipod)/i.test(platform);
-  const isSmallViewport = window.innerWidth <= 900 || window.screen.width <= 900 || window.innerHeight <= 900;
-  const isTabletLike = /(ipad|tablet)/i.test(ua) && maxTouchPoints > 1;
+let password=document.getElementById("password").value;
 
-  if (isMobilePhoneUA || isMobilePlatform) {
-    return true;
-  }
 
-  return Boolean(isTouchDevice && isSmallViewport && !isTabletLike);
-}
+auth.signInWithEmailAndPassword(email,password)
 
-function applyForcedLayout() {
-  const shouldUseMobile = shouldForceMobileLayout();
-  document.body.classList.toggle('force-mobile-layout', shouldUseMobile);
-  document.documentElement.classList.toggle('force-mobile-layout', shouldUseMobile);
-  if (!shouldUseMobile) {
-    closeMobileMenu();
-  }
-}
+.then(()=>{
 
-window.addEventListener("load", async () => {
-    applyForcedLayout();
-    await initChat();
+alert("Login Success ✅");
+
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
+
+})
+
+
+.catch(()=>{
+
+auth.createUserWithEmailAndPassword(email,password)
+
+.then(()=>{
+
+alert("New Account Created ✅");
+
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
+
+})
+.catch(e=>alert(e.message));
+
 });
 
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') {
-    closeMobileMenu();
-  }
+
+}
+
+
+
+function logout(){
+
+auth.signOut();
+
+alert("Logout");
+
+location.reload();
+
+}
+
+auth.onAuthStateChanged(function(currentUser){
+
+let loginBtn = document.getElementById("loginBtn");
+let logoutBtn = document.getElementById("logoutBtn");
+
+
+if(currentUser){
+
+    user = currentUser;
+
+    loginBtn.style.display="none";
+
+    logoutBtn.style.display="block";
+
+    console.log(
+    "Logged Account : " + user.email
+    );
+
+
+}else{
+
+    user=null;
+
+    loginBtn.style.display="block";
+
+    logoutBtn.style.display="none";
+
+}
+
 });
-
-function setAuthMode(mode) {
-  authMode = mode;
-  const signInTab = document.getElementById('signInTab');
-  const registerTab = document.getElementById('registerTab');
-  const form = document.getElementById('authForm');
-  const message = document.getElementById('authMessage');
-
-  if (signInTab && registerTab) {
-    signInTab.style.background = mode === 'signin' ? '#38bdf8' : 'rgba(255,255,255,0.08)';
-    signInTab.style.color = mode === 'signin' ? '#0f172a' : '#cbd5e1';
-    registerTab.style.background = mode === 'register' ? '#38bdf8' : 'rgba(255,255,255,0.08)';
-    registerTab.style.color = mode === 'register' ? '#0f172a' : '#cbd5e1';
-  }
-
-  if (!form) return;
-  if (message) message.textContent = '';
-
-  if (mode === 'register') {
-    form.innerHTML = `
-      <div style="margin-bottom:12px;">
-        <input id="fullName" placeholder="Full Name" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="age" type="number" placeholder="Age" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="registerEmail" type="email" placeholder="Email Address" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="registerPassword" type="password" placeholder="New Password" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="confirmPassword" type="password" placeholder="Confirm Password" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-      </div>
-      <button onclick="handleRegister()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">Register</button>
-    `;
-  } else {
-    form.innerHTML = `
-      <div style="margin-bottom:12px;">
-        <input id="loginEmail" type="email" placeholder="Email" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="loginPassword" type="password" placeholder="Password" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <div style="text-align:right;margin-top:4px;">
-          <button type="button" onclick="handlePasswordReset()" style="background:none;border:none;color:#7dd3fc;padding:0;font-size:12px;cursor:pointer;">Reset password</button>
-        </div>
-      </div>
-      <button onclick="handleSignIn()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">Sign In</button>
-    `;
-  }
-}
-
-function handleSignIn() {
-    loginEmail();
-}
-
-function handleRegister() {
-    registerEmail();
-}
-
-async function handlePasswordReset() {
-  const email = document.getElementById('loginEmail')?.value.trim().toLowerCase();
-  if (!email) {
-    setAuthMessage('Please enter your email address first.', true);
-    return;
-  }
-
-  try {
-    const auth = await initFirebase();
-    await auth.sendPasswordResetEmail(email, {
-      url: window.location.origin || window.location.href,
-    });
-    document.getElementById('loginPassword').value = '';
-    setAuthMessage('A password reset email has been sent. Open it and choose a new password.', false);
-  } catch (error) {
-    const message = error?.message || 'Unable to send the reset email.';
-    setAuthMessage(message, true);
-  }
-}
-
-function setAuthMessage(text, isError = true) {
-  const message = document.getElementById('authMessage');
-  if (!message) return;
-  message.textContent = text;
-  message.style.color = isError ? '#fda4af' : '#86efac';
-}
-
-function validateRegisterForm() {
-  const fullName = document.getElementById('fullName')?.value.trim() || '';
-  const ageValue = document.getElementById('age')?.value.trim() || '';
-  const email = document.getElementById('registerEmail')?.value.trim() || '';
-  const password = document.getElementById('registerPassword')?.value || '';
-  const confirmPassword = document.getElementById('confirmPassword')?.value || '';
-
-  if (!fullName) return 'Full Name cannot be empty.';
-  if (!ageValue) return 'Age is required.';
-  const age = Number(ageValue);
-  if (!Number.isInteger(age) ||100 > age > 1) return 'Age must be a valid number.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Please enter a valid email address.';
-  if (!password) return 'Password cannot be empty.';
-  if (!confirmPassword) return 'Confirm Password cannot be empty.';
-  if (password !== confirmPassword) return 'Passwords do not match.';
-  return '';
-}
-
-async function registerEmail() {
-  setAuthMessage('');
-  const validation = validateRegisterForm();
-  if (validation) {
-    setAuthMessage(validation, true);
-    return;
-  }
-
-  const fullName = document.getElementById('fullName')?.value.trim();
-  const age = Number(document.getElementById('age')?.value.trim());
-  const email = document.getElementById('registerEmail')?.value.trim().toLowerCase();
-  const password = document.getElementById('registerPassword')?.value;
-
-  try {
-    const auth = await initFirebase();
-    
-    // Create Firebase user
-    const result = await auth.createUserWithEmailAndPassword(email, password);
-    const firebaseUser = result.user;
-    
-    // Send verification email
-    await firebaseUser.sendEmailVerification();
-    
-    // Sign out the user immediately
-    await auth.signOut();
-    
-    // Clear any stored auth data
-    user = null;
-    localStorage.removeItem('mi_supabase_token');
-    localStorage.removeItem('mi_user_id');
-    localStorage.removeItem('mi_user_email');
-    
-    // Show success message
-    setAuthMessage('Registration successful! A verification email has been sent. Please check your spam Folder or inbox and verify your email before signing in.', True);
-    
-    // Switch to sign in mode after a brief delay
-    setTimeout(() => {
-      setAuthMode('signin');
-    }, 2000);
-  } catch (error) {
-    const message = error?.message || 'Authentication failed.';
-    const normalized = String(message || '').toLowerCase();
-    const duplicateMessage = 'YOUR ACCOUNT WAS ALREADY REGISTERED BY GOOGLE.SO GO TO SIGN IN AND CREATE NEW PASSWORD AND CONFIRM ACCOUNT.';
-    const invalidCredentialMessage = 'INVALID EMAIL OR PASSWORD. TRY AGAIN.';
-
-    if (normalized.includes('email-already-in-use') || normalized.includes('already in use')) {
-      setAuthMessage(duplicateMessage, true);
-    } else if (normalized.includes('invalid-credential') || normalized.includes('invalid email') || normalized.includes('wrong-password')) {
-      setAuthMessage(invalidCredentialMessage, true);
-    } else {
-      setAuthMessage(message, true);
-    }
-  }
-}
-
-async function loginEmail() {
-  setAuthMessage('');
-
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-  const password = document.getElementById('loginPassword').value;
-
-  if (!email || !password) {
-    setAuthMessage('Please enter your email and password.');
-    return;
-  }
-
-  try {
-    const auth = await initFirebase();
-    
-    // Sign in with Firebase
-    const result = await auth.signInWithEmailAndPassword(email, password);
-    const firebaseUser = result.user;
-    
-    // Check if email is verified
-    if (!firebaseUser.emailVerified) {
-      // Email not verified - send verification email and sign out
-      await firebaseUser.sendEmailVerification();
-      await auth.signOut();
-      
-      // Clear any stored auth data
-      user = null;
-      localStorage.removeItem('mi_supabase_token');
-      localStorage.removeItem('mi_user_id');
-      localStorage.removeItem('mi_user_email');
-      
-      setAuthMessage('Your email is not verified. A new verification email has been sent. Please verify your email first.Please check your Spam Folder or inbox', true);
-      return;
-    }
-    
-    // Email is verified - continue with login
-    user = {
-      id: firebaseUser.uid,
-      email: firebaseUser.email
-    };
-    
-    const idToken = await firebaseUser.getIdToken();
-    localStorage.setItem('mi_supabase_token', idToken);
-    localStorage.setItem('mi_user_id', firebaseUser.uid);
-    localStorage.setItem('mi_user_email', firebaseUser.email || '');
-    window.dispatchEvent(new Event('mi-chat-user-changed'));
-    
-    updateAuthControls();
-    const loginBox = document.getElementById('loginBox');
-    if (loginBox) loginBox.style.display = 'none';
-    setAuthMessage('Signed in successfully.', false);
-    await loadUserChats();
-  } catch (err) {
-    const message = err?.message || 'Authentication failed.';
-    const normalized = String(message || '').toLowerCase();
-    const invalidCredentialMessage = 'INVALID EMAIL OR PASSWORD. TRY AGAIN.';
-
-    if (normalized.includes('invalid-credential') || normalized.includes('invalid email') || normalized.includes('wrong-password')) {
-      setAuthMessage(invalidCredentialMessage, true);
-    } else {
-      setAuthMessage(message, true);
-    }
-  }
-}
 
 </script>
 
