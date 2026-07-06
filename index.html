@@ -1604,7 +1604,7 @@ chatBox.appendChild(t);
 scroll();
 
 try{
-    const API_URL="https://mi-ai-assistant-of-mi.vercel.app/api/chat";
+    const API_URL = "/api/chat";
     let res = await fetch(API_URL, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
