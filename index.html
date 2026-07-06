@@ -205,6 +205,35 @@ margin-left:auto;
 background:var(--ai);
 }
 
+.image-bubble,
+.image-message{
+background:var(--ai);
+max-width:min(360px, 88%);
+padding:10px;
+border-radius:14px;
+margin:8px 8px 8px 8px;
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+
+.image-bubble img,
+.image-message img{
+width:100%;
+max-width:100%;
+border-radius:10px;
+display:block;
+}
+
+.image-bubble .download-link,
+.image-message .download-link{
+color:#7dd3fc;
+font-size:13px;
+font-weight:700;
+text-decoration:none;
+align-self:flex-start;
+}
+
 /* ANIMATION */
 @keyframes pop{
 from{opacity:0;transform:scale(.8);}
@@ -1382,6 +1411,17 @@ if (!chatBox) {
 }
 chatBox.innerHTML="";
 (chats[id] || []).forEach(m => {
+    if (m.type === 'image' && m.imageDataUrl) {
+        let d = document.createElement("div");
+        d.className = "image-message";
+        d.innerHTML = `
+          <img src="${m.imageDataUrl}" alt="Generated image" />
+          <a class="download-link" href="${m.imageDataUrl}" download="mi-ai-image.png">Download</a>
+        `;
+        chatBox.appendChild(d);
+        return;
+    }
+
     let d = document.createElement("div");
     d.className = m.role;
     d.innerText = m.text;
@@ -1572,6 +1612,52 @@ menu.style.display="none";
 
 }
 
+function isImageGenerationRequest(text){
+    const prompt = String(text || '').trim().toLowerCase();
+    if (!prompt) return false;
+
+    const hasImageVerb = /\b(draw|generate|create|make|show|render|illustrate|paint|design)\b/i.test(prompt);
+    const hasImageNoun = /\b(image|picture|photo|art|illustration|drawing|scene|portrait|poster|avatar|logo|icon|cover)\b/i.test(prompt);
+    const hasImageSubject = /\b(cat|car|robot|sunset|dog|house|city|mountain|flower|landscape|animal|ship|boat|monster|face|girl|boy|sky|space|forest|beach)\b/i.test(prompt);
+
+    return hasImageVerb && (hasImageNoun || hasImageSubject);
+}
+
+function createImageLoadingBubble(){
+    const bubble = document.createElement('div');
+    bubble.className = 'image-bubble';
+    bubble.innerHTML = '<div style="font-weight:700;color:#e2e8f0;">Generating image...</div>';
+    return bubble;
+}
+
+function arrayBufferToDataUrl(buffer){
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+
+    return 'data:image/png;base64,' + btoa(binary);
+}
+
+async function requestImageGeneration(prompt){
+    const res = await fetch('/api/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text().catch(() => '');
+        throw new Error(errorText || 'Unable to generate image right now.');
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    return arrayBufferToDataUrl(arrayBuffer);
+}
+
 /* SEND */
 async function send(){
 
@@ -1589,6 +1675,45 @@ if(!currentChat){
 input.value="";
 
 add("me",msg);
+
+if (isImageGenerationRequest(msg)) {
+    const loadingBubble = createImageLoadingBubble();
+    chatBox.appendChild(loadingBubble);
+    scroll();
+
+    try {
+        const imageDataUrl = await requestImageGeneration(msg);
+        loadingBubble.remove();
+
+        const bubble = document.createElement('div');
+        bubble.className = 'image-bubble';
+        bubble.innerHTML = `
+          <img src="${imageDataUrl}" alt="Generated image" />
+          <a class="download-link" href="${imageDataUrl}" download="mi-ai-image.png">Download</a>
+        `;
+        chatBox.appendChild(bubble);
+
+        chats[currentChat].push({
+            role: 'ai',
+            type: 'image',
+            text: 'Generated image',
+            imageDataUrl,
+            prompt: msg,
+        });
+        save();
+        scroll();
+        maybeShowLoginPrompt(currentChat);
+        return;
+    } catch (e) {
+        loadingBubble.remove();
+        const errorBubble = document.createElement('div');
+        errorBubble.className = 'image-bubble';
+        errorBubble.innerHTML = '<div style="color:#fecaca;">Unable to generate the image right now. Please try again.</div>';
+        chatBox.appendChild(errorBubble);
+        scroll();
+        return;
+    }
+}
 
 /* THINKING */
 let t=document.createElement("div");
