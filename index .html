@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MI AI Assistant</title>
+  <style>
+    :root { color-scheme: dark; --bg:#085bcf; --panel:#101b2c; --accent:#1e88e5; --muted:#8fa0b6; }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:#fff;height:100vh;display:flex;}
+    .sidebar{width:280px;background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:12px;border-right:1px solid rgba(255,255,255,.08)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+    .brand img{width:44px;height:44px;border-radius:12px}
+    button{border:0;border-radius:12px;padding:10px 12px;background:var(--accent);color:white;font-weight:600;cursor:pointer}
+    .ghost{background:rgba(255,255,255,.08);color:#dfe7f5}
+    .chat-list{flex:1;overflow:auto;margin-top:8px;display:flex;flex-direction:column;gap:8px}
+    .chat-item{padding:10px;border-radius:10px;background:rgba(255,255,255,.06);cursor:pointer}
+    .main{flex:1;display:flex;flex-direction:column}
+    .topbar{height:64px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)}
+    .chat{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+    .bubble{max-width:78%;padding:12px 14px;border-radius:16px;line-height:1.45;white-space:pre-wrap}
+    .bubble.me{background:var(--accent);margin-left:auto}
+    .bubble.ai{background:rgba(255,255,255,.08)}
+    .composer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:10px;align-items:flex-end}
+    textarea{flex:1;min-height:48px;max-height:140px;border:0;border-radius:14px;background:#0e1727;color:white;padding:12px 14px;resize:none}
+    .hint{font-size:12px;color:var(--muted);padding:0 16px 12px}
+    @media (max-width: 760px){ body{flex-direction:column}.sidebar{width:100%;border-right:0;border-bottom:1px solid rgba(255,255,255,.08)} .bubble{max-width:92%}}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><img src="/MIAI.svg" alt="MI AI logo" /><span>MI AI Assistant</span></div>
+    <button onclick="newChat()">➕ New Chat</button>
+    <button class="ghost" onclick="openSupport()">🎧 Support</button>
+    <div class="chat-list" id="chatList"></div>
+  </aside>
+  <section class="main">
+    <div class="topbar"><strong>Public AI Chat</strong><span id="status">Ready</span></div>
+    <div class="chat" id="chat"></div>
+    <div class="hint">Ask anything. The assistant will reply here using the live chat endpoint.</div>
+    <div class="composer">
+      <textarea id="msg" placeholder="Write your message..."></textarea>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </section>
+  <script>
+    const chatEl = document.getElementById('chat');
+    const inputEl = document.getElementById('msg');
+    const chatListEl = document.getElementById('chatList');
+    const statusEl = document.getElementById('status');
+    const sessionId = 'public-' + Math.random().toString(36).slice(2, 10);
+    let currentUserScope = '';
+    let conversationId = 'chat_' + Date.now();
+    let chats = {};
+
+    function getUserScope() {
+      const userEmail = window.localStorage.getItem('mi_user_email') || '';
+      const userId = window.localStorage.getItem('mi_user_id') || '';
+      const identity = (userEmail || userId || 'guest').trim().toLowerCase();
+      return identity ? `mia_user_chats:${identity}` : 'mia_user_chats:guest';
+    }
+
+    function getStorageKeys() {
+      const scope = getUserScope();
+      return {
+        scope,
+        chatsKey: `${scope}:chats`,
+        conversationKey: `${scope}:conversation`,
+      };
+    }
+
+    function getAuthToken() {
+      return window.localStorage.getItem('mi_supabase_token') || '';
+    }
+
+    function isAuthenticatedUser() {
+      const token = getAuthToken();
+      const userId = window.localStorage.getItem('mi_user_id') || '';
+      const userEmail = window.localStorage.getItem('mi_user_email') || '';
+      return Boolean(token && (userId || userEmail));
+    }
+
+    async function createServerConversation() {
+      const token = getAuthToken();
+      if (!token) return null;
+      try {
+        const res = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ title: 'New chat', session_id: sessionId })
+        });
+        const json = await res.json().catch(() => null);
+        return res.ok && json?.conversation ? json.conversation : null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function loadUserChatsFromSupabase() {
+      const token = getAuthToken();
+      if (!token) return false;
+      try {
+        const res = await fetch('/api/conversations', { headers: { Authorization: `Bearer ${token}` } });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !Array.isArray(json?.conversations)) return false;
+
+        chats = {};
+        let firstId = null;
+
+        for (const conversation of json.conversations) {
+          const id = conversation?.id;
+          if (!id) continue;
+          const messagesRes = await fetch(`/api/messages?conversation_id=${encodeURIComponent(id)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const messagesJson = await messagesRes.json().catch(() => null);
+          chats[id] = [];
+          if (messagesRes.ok && Array.isArray(messagesJson?.messages)) {
+            chats[id] = messagesJson.messages.map((msg) => ({ role: msg.role === 'me' ? 'me' : 'ai', text: msg.content || '' }));
+          }
+          if (!firstId) firstId = id;
+        }
+
+        if (!firstId) {
+          const created = await createServerConversation();
+          firstId = created?.id || 'chat_' + Date.now();
+          chats[firstId] = [];
+        }
+
+        conversationId = firstId;
+        renderList();
+        renderCurrentConversation();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function persistConversation() {
+      if (isAuthenticatedUser()) {
+        return;
+      }
+      const { chatsKey, conversationKey } = getStorageKeys();
+      window.localStorage.setItem(chatsKey, JSON.stringify(chats));
+      window.localStorage.setItem(conversationKey, conversationId);
+      window.localStorage.removeItem('mia_public_conversation');
+    }
+
+    function clearConversation({ preserveStorage = false } = {}) {
+      const { chatsKey, conversationKey } = getStorageKeys();
+      if (!preserveStorage && !isAuthenticatedUser()) {
+        window.localStorage.removeItem(chatsKey);
+        window.localStorage.removeItem(conversationKey);
+      }
+      window.localStorage.removeItem('mia_public_conversation');
+      chats = {};
+      conversationId = 'chat_' + Date.now();
+      chatEl.innerHTML = '';
+      renderList();
+      if (!preserveStorage) {
+        initialMessage();
+      }
+    }
+
+    function appendMessage(role, text) {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ' + role;
+      bubble.textContent = text;
+      chatEl.appendChild(bubble);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function addMessage(role, text) {
+      if (!chats[conversationId]) chats[conversationId] = [];
+      chats[conversationId].push({ role, text });
+      appendMessage(role, text);
+      persistConversation();
+
+      if (isAuthenticatedUser()) {
+        const token = getAuthToken();
+        if (token && conversationId) {
+          fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ conversation_id: conversationId, session_id: sessionId, role, content: text })
+          }).catch(() => {});
+        }
+      }
+    }
+
+    function renderCurrentConversation() {
+      chatEl.innerHTML = '';
+      const items = chats[conversationId] || [];
+      items.forEach((msg) => appendMessage(msg.role, msg.text));
+      if (!items.length) {
+        initialMessage();
+      }
+    }
+
+    function renderList() {
+      chatListEl.innerHTML = '';
+      const ids = Object.keys(chats);
+      if (!ids.length) {
+        chatListEl.innerHTML = '<div class="chat-item">No chats yet</div>';
+        return;
+      }
+      ids.forEach((id) => {
+        const item = document.createElement('div');
+        item.className = 'chat-item';
+        item.textContent = '💬 ' + (id === conversationId ? 'Current chat' : id);
+        item.onclick = () => {
+          conversationId = id;
+          renderCurrentConversation();
+          persistConversation();
+        };
+        chatListEl.appendChild(item);
+      });
+    }
+
+    async function loadStoredState() {
+      const { chatsKey, conversationKey } = getStorageKeys();
+      const userEmail = window.localStorage.getItem('mi_user_email') || '';
+      const userId = window.localStorage.getItem('mi_user_id') || '';
+
+      if (isAuthenticatedUser()) {
+        const synced = await loadUserChatsFromSupabase();
+        if (synced) return;
+      }
+
+      if (!userEmail && !userId) {
+        clearConversation({ preserveStorage: true });
+        return;
+      }
+
+      const storedChats = window.localStorage.getItem(chatsKey);
+      const storedConversation = window.localStorage.getItem(conversationKey);
+      try {
+        chats = storedChats ? JSON.parse(storedChats) : {};
+      } catch (_) {
+        chats = {};
+      }
+
+      if (!chats || typeof chats !== 'object' || Array.isArray(chats)) {
+        chats = {};
+      }
+
+      if (storedConversation && chats[storedConversation]) {
+        conversationId = storedConversation;
+      } else if (Object.keys(chats).length) {
+        conversationId = Object.keys(chats)[0];
+      } else {
+        conversationId = 'chat_' + Date.now();
+        chats[conversationId] = [];
+      }
+
+      if (!chats[conversationId]) chats[conversationId] = [];
+      renderList();
+      renderCurrentConversation();
+    }
+
+    function initialMessage() {
+      if (!chatEl.children.length && !chats[conversationId]?.length) {
+        addMessage('ai', 'Hello! I am MI AI. Ask me anything.');
+      }
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      inputEl.value = '';
+      if (isAuthenticatedUser() && (!conversationId || !chats[conversationId])) {
+        const created = await createServerConversation();
+        if (created?.id) {
+          conversationId = created.id;
+          chats[conversationId] = [];
+        }
+      }
+      addMessage('me', text);
+      statusEl.textContent = 'Thinking...';
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, conversation_id: conversationId, session_id: sessionId })
+        });
+        const data = await res.json().catch(() => ({ reply: 'The assistant is unavailable right now.' }));
+        addMessage('ai', data.reply || 'The assistant is unavailable right now.');
+      } catch (_) {
+        addMessage('ai', 'The assistant is unavailable right now.');
+      } finally {
+        statusEl.textContent = 'Ready';
+      }
+    }
+
+    async function newChat() {
+      if (isAuthenticatedUser()) {
+        const created = await createServerConversation();
+        if (created?.id) {
+          conversationId = created.id;
+          chats[conversationId] = [];
+          renderList();
+          renderCurrentConversation();
+          return;
+        }
+      }
+      conversationId = 'chat_' + Date.now();
+      chats[conversationId] = [];
+      persistConversation();
+      renderList();
+      renderCurrentConversation();
+    }
+
+    function openSupport() {
+      window.open('mailto:miai.customerservice@gmail.com?subject=MI%20AI%20Support', '_blank');
+    }
+
+    async function syncChatState() {
+      const userScope = getUserScope();
+      if (currentUserScope === userScope) {
+        return;
+      }
+      currentUserScope = userScope;
+      await loadStoredState();
+    }
+
+    inputEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    window.addEventListener('storage', () => {
+      syncChatState();
+    });
+
+    window.addEventListener('mi-chat-user-changed', () => {
+      void syncChatState();
+    });
+
+    window.addEventListener('load', () => {
+      void syncChatState();
+      inputEl.focus();
+    });
+  </script>
+</body>
+</html>
