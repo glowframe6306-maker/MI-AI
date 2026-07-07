@@ -717,6 +717,7 @@ ___________________________
     alt="MI AI Logo">
   <span>MI AI ChatBOT</span>
   <div class="headerActions">
+    <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
     <button id="loginBtn" onclick="openLogin()" type="button">📥 Login</button>
     <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">📴 Logout</button>
   </div>
@@ -1203,6 +1204,7 @@ async function logout() {
 function updateAuthControls(){
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const alertBox = document.getElementById('approvalAlert');
     const hasSession = Boolean(user || localStorage.getItem('mi_supabase_token'));
 
     if (loginBtn) {
@@ -1211,6 +1213,12 @@ function updateAuthControls(){
 
     if (logoutBtn) {
         logoutBtn.style.display = hasSession ? 'inline-flex' : 'none';
+    }
+
+    if (alertBox) {
+        const pending = getPendingApprovalRequests();
+        alertBox.style.display = pending.length ? 'inline-flex' : 'none';
+        alertBox.textContent = pending.length ? `Alert (${pending.length})` : 'Alert';
     }
 
     updateAuthReminder();
@@ -1246,6 +1254,32 @@ function generateShortShareId() {
   return id;
 }
 
+function getSharedLinkState(sharedId) {
+  try {
+    const raw = localStorage.getItem(`mi_shared_link_state_${sharedId}`);
+    return raw ? JSON.parse(raw) : { openCount: 0, lastOpenedAt: 0 };
+  } catch (error) {
+    return { openCount: 0, lastOpenedAt: 0 };
+  }
+}
+
+function saveSharedLinkState(sharedId, state) {
+  localStorage.setItem(`mi_shared_link_state_${sharedId}`, JSON.stringify(state));
+}
+
+function getPendingApprovalRequests() {
+  try {
+    const raw = localStorage.getItem('mi_shared_approval_requests');
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function savePendingApprovalRequests(requests) {
+  localStorage.setItem('mi_shared_approval_requests', JSON.stringify(requests));
+}
+
 function getSharedChatPayloadFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const sharedValue = params.get('s') || params.get('share');
@@ -1266,7 +1300,7 @@ function getSharedChatPayloadFromUrl() {
   }
 }
 
-function applySharedChatUi(permission) {
+function applySharedChatUi(permission, reason) {
   const inputField = document.getElementById('msg');
   const sendButton = document.querySelector('#inputBox button');
   const notice = document.getElementById('sharedRestrictionMessage');
@@ -1276,8 +1310,240 @@ function applySharedChatUi(permission) {
   if (sendButton) sendButton.disabled = isViewOnly;
   if (notice) {
     notice.style.display = isViewOnly ? 'block' : 'none';
-    notice.textContent = isViewOnly ? 'RESTRICTED BY CHAT OWNER' : '';
+    notice.textContent = isViewOnly ? (reason || 'RESTRICTED BY CHAT OWNER') : '';
   }
+}
+
+function showSharedSecurityBanner(payload) {
+  const security = payload.security || {};
+  const notices = [];
+  if (security.openLimitMode && security.openLimitMode !== 'no-expiry') {
+    notices.push(`Open limit: ${security.openLimitMode === 'custom' ? security.openLimitCustom : security.openLimitMode}`);
+  }
+  if (security.timeLimitUnit && security.timeLimitUnit !== 'no-expiry') {
+    notices.push(`Time limit: ${security.timeLimitValue || 1} ${security.timeLimitUnit}`);
+  }
+  if (security.password) {
+    notices.push('Password protected');
+  }
+  if (security.screenshot === 'on') {
+    notices.push('Screenshot warning enabled');
+  }
+  if (security.notification === 'on') {
+    notices.push('Notification enabled');
+  }
+  if (security.approval === 'on') {
+    notices.push('Owner approval required');
+  }
+
+  if (!notices.length) return;
+
+  const banner = document.createElement('div');
+  banner.style.marginBottom = '10px';
+  banner.style.padding = '10px 12px';
+  banner.style.borderRadius = '12px';
+  banner.style.background = 'rgba(30,136,229,0.16)';
+  banner.style.border = '1px solid rgba(30,136,229,0.24)';
+  banner.style.fontSize = '12px';
+  banner.style.color = '#dce8ff';
+  banner.innerHTML = `<div style="font-weight:700;margin-bottom:4px;">Shared privacy settings</div><div>${notices.join('<br>')}</div>`;
+  if (chatBox) chatBox.insertBefore(banner, chatBox.firstChild);
+}
+
+function showSharedAccessMessage(message, isError = true) {
+  const notice = document.getElementById('sharedRestrictionMessage');
+  if (notice) {
+    notice.style.display = 'block';
+    notice.textContent = message;
+    notice.style.color = isError ? '#fda4af' : '#86efac';
+  }
+}
+
+function blockSharedScreenshot() {
+  if (document.getElementById('sharedScreenshotOverlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'sharedScreenshotOverlay';
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(2,6,23,0.72)';
+  overlay.style.backdropFilter = 'blur(6px)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '10002';
+  overlay.style.color = '#fff';
+  overlay.style.fontSize = '16px';
+  overlay.style.fontWeight = '700';
+  overlay.innerHTML = '<div style="padding:18px 20px;border-radius:14px;background:rgba(15,23,42,0.96);border:1px solid rgba(255,255,255,0.12);">Screenshot warning enabled for this shared chat.</div>';
+  document.body.appendChild(overlay);
+}
+
+function removeSharedScreenshotOverlay() {
+  const overlay = document.getElementById('sharedScreenshotOverlay');
+  if (overlay) overlay.remove();
+}
+
+function convertTimeValue(value, unit) {
+  const amount = Number(value || 0);
+  if (!amount) return 0;
+  if (unit === 'hour') return amount * 3600 * 1000;
+  if (unit === 'minute') return amount * 60 * 1000;
+  if (unit === 'second') return amount * 1000;
+  return 0;
+}
+
+function getViewerEmail() {
+  return (localStorage.getItem('mi_user_email') || 'viewer@unknown').trim().toLowerCase();
+}
+
+function sendSharedNotification(payload) {
+  const security = payload.security || {};
+  if (security.notification !== 'on') return;
+  const ownerEmail = (payload.ownerEmail || '').trim().toLowerCase();
+  if (!ownerEmail) return;
+  const viewerEmail = getViewerEmail();
+  const time = new Date().toLocaleString();
+  const subject = encodeURIComponent('MI AI shared chat opened');
+  const body = encodeURIComponent(`A shared chat was opened.\nViewer email: ${viewerEmail}\nTime: ${time}`);
+  window.location.href = `mailto:${ownerEmail}?subject=${subject}&body=${body}`;
+}
+
+function createApprovalRequest(payload, viewerEmail) {
+  const requests = getPendingApprovalRequests();
+  const existing = requests.find((item) => item.sharedId === payload.id && item.status === 'pending');
+  if (existing) return;
+  requests.push({
+    sharedId: payload.id,
+    chatId: payload.chatId,
+    viewerEmail,
+    requestedAt: new Date().toLocaleString(),
+    status: 'pending'
+  });
+  savePendingApprovalRequests(requests);
+  updateAuthControls();
+}
+
+function approveSharedLinkRequest(sharedId) {
+  const requests = getPendingApprovalRequests();
+  const match = requests.find((item) => item.sharedId === sharedId && item.status === 'pending');
+  if (!match) return;
+  match.status = 'approved';
+  savePendingApprovalRequests(requests);
+  const state = getSharedLinkState(sharedId);
+  state.status = 'approved';
+  saveSharedLinkState(sharedId, state);
+  updateAuthControls();
+}
+
+function declineSharedLinkRequest(sharedId) {
+  const requests = getPendingApprovalRequests();
+  const match = requests.find((item) => item.sharedId === sharedId && item.status === 'pending');
+  if (!match) return;
+  match.status = 'declined';
+  savePendingApprovalRequests(requests);
+  const state = getSharedLinkState(sharedId);
+  state.status = 'declined';
+  saveSharedLinkState(sharedId, state);
+  updateAuthControls();
+}
+
+function showApprovalRequestsPanel() {
+  const requests = getPendingApprovalRequests().filter((item) => item.status === 'pending');
+  const panel = document.getElementById('approvalRequestsPanel');
+  if (panel) panel.remove();
+
+  const box = document.createElement('div');
+  box.id = 'approvalRequestsPanel';
+  box.style.position = 'fixed';
+  box.style.top = '50%';
+  box.style.left = '50%';
+  box.style.transform = 'translate(-50%, -50%)';
+  box.style.width = 'min(92vw, 420px)';
+  box.style.maxHeight = '80vh';
+  box.style.overflowY = 'auto';
+  box.style.background = 'rgba(15,23,42,0.98)';
+  box.style.border = '1px solid rgba(255,255,255,0.14)';
+  box.style.borderRadius = '18px';
+  box.style.padding = '18px';
+  box.style.zIndex = '10003';
+  box.style.color = '#f8fafc';
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:16px;font-weight:700;">Approval requests</div>
+      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    ${requests.length ? requests.map((req) => `
+      <div style="margin-bottom:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
+        <div style="font-size:13px;color:#cbd5e1;">${req.viewerEmail || 'Unknown viewer'}</div>
+        <div style="font-size:12px;color:#94a3b8;">${req.requestedAt || ''}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button type="button" onclick="approveSharedLinkRequest('${req.sharedId}'); this.parentElement.parentElement.remove();" style="flex:1;padding:8px 10px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer;">Approve</button>
+          <button type="button" onclick="declineSharedLinkRequest('${req.sharedId}'); this.parentElement.parentElement.remove();" style="flex:1;padding:8px 10px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Decline</button>
+        </div>
+      </div>
+    `).join('') : '<div style="font-size:13px;color:#cbd5e1;">No pending requests.</div>'}
+  `;
+  document.body.appendChild(box);
+}
+
+async function initSharedAccess(payload) {
+  const sharedId = payload.id || payload.chatId || 'shared';
+  const state = getSharedLinkState(sharedId);
+  const security = payload.security || {};
+  const viewerEmail = getViewerEmail();
+  const ownerEmail = (payload.ownerEmail || '').trim().toLowerCase();
+  const isOwner = Boolean(ownerEmail && viewerEmail && viewerEmail === ownerEmail);
+
+  if (security.approval === 'on' && !isOwner) {
+    if (state.status === 'declined') {
+      showSharedAccessMessage('Declined by owner.');
+      return false;
+    }
+    if (state.status !== 'approved') {
+      state.status = 'pending';
+      state.requesterEmail = viewerEmail;
+      state.requestedAt = new Date().toLocaleString();
+      saveSharedLinkState(sharedId, state);
+      createApprovalRequest(payload, viewerEmail);
+      showSharedAccessMessage('Waiting for owner approval.');
+      return false;
+    }
+  }
+
+  if (security.password) {
+    const entered = prompt('Enter the shared chat password');
+    if (entered !== security.password) {
+      showSharedAccessMessage('Incorrect password.');
+      return false;
+    }
+  }
+
+  const now = Date.now();
+  const openLimit = security.openLimitMode === 'custom' ? Number(security.openLimitCustom || 0) : Number(security.openLimitMode || 0);
+  const timeLimitValue = Number(security.timeLimitValue || 0);
+  const timeLimitUnit = security.timeLimitUnit || 'no-expiry';
+  const expiresAt = timeLimitValue && timeLimitUnit !== 'no-expiry' ? (state.lastOpenedAt || state.createdAt || payload.createdAt || now) + convertTimeValue(timeLimitValue, timeLimitUnit) : null;
+
+  if (security.openLimitMode && security.openLimitMode !== 'no-expiry' && state.openCount >= openLimit) {
+    showSharedAccessMessage('This shared link has expired.');
+    return false;
+  }
+
+  if (expiresAt && now >= expiresAt) {
+    showSharedAccessMessage('This shared link has expired.');
+    return false;
+  }
+
+  state.openCount = (state.openCount || 0) + 1;
+  state.lastOpenedAt = now;
+  state.status = state.status === 'approved' ? 'approved' : 'active';
+  saveSharedLinkState(sharedId, state);
+
+  if (security.notification === 'on') {
+    sendSharedNotification(payload);
+  }
+
+  return true;
 }
 
 async function initChat(){
@@ -1307,9 +1573,26 @@ authReminder = document.getElementById("authReminder");
 const sharedPayload = getSharedChatPayloadFromUrl();
 if (sharedPayload) {
     sharedChatData = sharedPayload;
-    const sharedId = sharedPayload.chatId || 'shared_' + Date.now();
+    const sharedId = sharedPayload.id || sharedPayload.chatId || 'shared_' + Date.now();
     chats = { [sharedId]: Array.isArray(sharedPayload.messages) ? sharedPayload.messages : [] };
     currentChat = sharedId;
+
+    const allowed = await initSharedAccess(sharedPayload);
+    if (!allowed) {
+        applySharedChatUi(sharedPayload.permission === 'view' ? 'view' : 'edit', sharedPayload.permission === 'view' ? 'RESTRICTED BY CHAT OWNER' : 'Access restricted');
+        renderList();
+        openChat(currentChat);
+        updateAuthControls();
+        if (sharedPayload.security && sharedPayload.security.screenshot === 'on') {
+          blockSharedScreenshot();
+        }
+        return;
+    }
+
+    showSharedSecurityBanner(sharedPayload);
+    if (sharedPayload.security && sharedPayload.security.screenshot === 'on') {
+      blockSharedScreenshot();
+    }
     applySharedChatUi(sharedPayload.permission === 'view' ? 'view' : 'edit');
     renderList();
     openChat(currentChat);
@@ -1691,27 +1974,176 @@ function showLinkShareOptions(chatId) {
       <option value="edit">Can edit</option>
       <option value="view">View only</option>
     </select>
+
+    <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
+      <button type="button" onclick="toggleMoreSecurityPanel()" style="width:100%;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#fff;font-weight:700;cursor:pointer;">More security</button>
+      <div id="moreSecurityPanel" style="display:none;margin-top:10px;">
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">How many times can I open it?</div>
+          <select id="shareOpenLimitSelect" onchange="toggleCustomOpenLimitInput()" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+            <option value="no-expiry">No Expiry</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input id="shareOpenLimitCustom" type="number" min="1" placeholder="Custom number" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">After how many times, how many hours can it be used next time?</div>
+          <div style="display:flex;gap:8px;">
+            <input id="shareTimeLimitValue" type="number" min="1" placeholder="Value" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+            <select id="shareTimeLimitUnit" onchange="toggleTimeLimitValueInput()" style="padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+              <option value="no-expiry">No Expiry</option>
+              <option value="hour">Hour</option>
+              <option value="minute">Minute</option>
+              <option value="second">Second</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;">
+            <input id="sharePasswordEnabled" type="checkbox" />
+            Password
+          </label>
+          <input id="sharePassword" type="password" placeholder="Password" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+          <input id="sharePasswordConfirm" type="password" placeholder="Confirm password" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Screenshot warning</div>
+          <select id="shareScreenshotSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Get notification</div>
+          <select id="shareNotificationSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Approve for open chat</div>
+          <select id="shareApprovalSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <button type="button" onclick="generateSharedChatLink('${chatId}')" style="width:100%;margin-top:12px;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">Generate a link</button>
   `;
+
+  const passwordToggle = document.getElementById('sharePasswordEnabled');
+  if (passwordToggle) {
+    passwordToggle.addEventListener('change', () => {
+      const password = document.getElementById('sharePassword');
+      const confirm = document.getElementById('sharePasswordConfirm');
+      if (password && confirm) {
+        const visible = passwordToggle.checked;
+        password.style.display = visible ? 'block' : 'none';
+        confirm.style.display = visible ? 'block' : 'none';
+      }
+    });
+  }
+}
+
+function toggleMoreSecurityPanel() {
+  const panel = document.getElementById('moreSecurityPanel');
+  if (panel) {
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  }
+}
+
+function toggleCustomOpenLimitInput() {
+  const select = document.getElementById('shareOpenLimitSelect');
+  const custom = document.getElementById('shareOpenLimitCustom');
+  if (!select || !custom) return;
+  custom.style.display = select.value === 'custom' ? 'block' : 'none';
+}
+
+function toggleTimeLimitValueInput() {
+  const select = document.getElementById('shareTimeLimitUnit');
+  const input = document.getElementById('shareTimeLimitValue');
+  if (!select || !input) return;
+  input.style.display = select.value === 'no-expiry' ? 'none' : 'block';
 }
 
 async function generateSharedChatLink(chatId) {
   const permissionSelect = document.getElementById('sharePermissionSelect');
   const permission = permissionSelect && permissionSelect.value === 'view' ? 'view' : 'edit';
+  const openLimitSelect = document.getElementById('shareOpenLimitSelect');
+  const openLimitCustom = document.getElementById('shareOpenLimitCustom');
+  const timeLimitValue = document.getElementById('shareTimeLimitValue');
+  const timeLimitUnit = document.getElementById('shareTimeLimitUnit');
+  const passwordEnabled = document.getElementById('sharePasswordEnabled');
+  const passwordField = document.getElementById('sharePassword');
+  const passwordConfirmField = document.getElementById('sharePasswordConfirm');
+  const screenshotSelect = document.getElementById('shareScreenshotSelect');
+  const notificationSelect = document.getElementById('shareNotificationSelect');
+  const approvalSelect = document.getElementById('shareApprovalSelect');
+
+  const openLimitMode = openLimitSelect ? openLimitSelect.value : 'no-expiry';
+  const customOpenCount = openLimitCustom && openLimitCustom.value ? Number(openLimitCustom.value) : '';
+  const timeLimitUnitValue = timeLimitUnit ? timeLimitUnit.value : 'no-expiry';
+  const timeLimitValueNumber = timeLimitValue && timeLimitValue.value ? Number(timeLimitValue.value) : '';
+  const passwordEnabledValue = Boolean(passwordEnabled && passwordEnabled.checked);
+  const password = passwordEnabledValue ? (passwordField ? passwordField.value : '') : '';
+  const passwordConfirm = passwordEnabledValue ? (passwordConfirmField ? passwordConfirmField.value : '') : '';
+
+  if (passwordEnabledValue && password !== passwordConfirm) {
+    showShareFeedback('Passwords do not match.');
+    return;
+  }
+
+  if (openLimitMode === 'custom' && (!customOpenCount || !Number.isInteger(customOpenCount) || customOpenCount < 1)) {
+    showShareFeedback('Enter a valid open count.');
+    return;
+  }
+
+  if (timeLimitUnitValue !== 'no-expiry' && (!timeLimitValueNumber || !Number.isInteger(timeLimitValueNumber) || timeLimitValueNumber < 1)) {
+    showShareFeedback('Enter a valid time value.');
+    return;
+  }
+
   const messages = (chats[chatId] || []).map((message) => ({ role: message.role, text: message.text }));
   const payload = {
+    id: generateShortShareId(),
     chatId,
     messages,
     permission,
-    createdAt: Date.now()
+    ownerEmail: (localStorage.getItem('mi_user_email') || '').trim().toLowerCase(),
+    createdAt: Date.now(),
+    security: {
+      openLimitMode,
+      openLimitCustom: openLimitMode === 'custom' ? customOpenCount : '',
+      timeLimitUnit: timeLimitUnitValue,
+      timeLimitValue: timeLimitUnitValue === 'no-expiry' ? '' : timeLimitValueNumber,
+      password: passwordEnabledValue ? password : '',
+      screenshot: screenshotSelect ? screenshotSelect.value : 'off',
+      notification: notificationSelect ? notificationSelect.value : 'off',
+      approval: approvalSelect ? approvalSelect.value : 'off'
+    }
   };
 
-  const shortId = generateShortShareId();
   const store = getSharedLinkStore();
-  store[shortId] = payload;
+  store[payload.id] = payload;
   saveSharedLinkStore(store);
 
-  const shareLink = `?s=${shortId}`;
+  const shareLink = `?s=${payload.id}`;
 
   await copyTextToClipboard(shareLink);
   showShareFeedback('Copied to the clipboard.');
