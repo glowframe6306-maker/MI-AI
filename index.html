@@ -1223,19 +1223,46 @@ function updateAuthReminder(){
     }
 }
 
+function encodeSharedChatPayload(payload) {
+  try {
+    const json = JSON.stringify(payload);
+    const bytes = new TextEncoder().encode(json);
+    let binary = '';
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary);
+  } catch (error) {
+    console.error('Unable to encode shared chat payload', error);
+    return null;
+  }
+}
+
+function decodeSharedChatPayload(value) {
+  try {
+    const binary = atob(value);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
+    const parsed = JSON.parse(json);
+    if (!parsed || !Array.isArray(parsed.messages)) return null;
+    return parsed;
+  } catch (error) {
+    try {
+      const parsed = JSON.parse(value);
+      if (!parsed || !Array.isArray(parsed.messages)) return null;
+      return parsed;
+    } catch (fallbackError) {
+      console.error('Unable to decode shared chat payload', fallbackError);
+      return null;
+    }
+  }
+}
+
 function getSharedChatPayloadFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const sharedValue = params.get('share');
   if (!sharedValue) return null;
-
-  try {
-    const parsed = JSON.parse(sharedValue);
-    if (!parsed || !Array.isArray(parsed.messages)) return null;
-    return parsed;
-  } catch (error) {
-    console.error('Unable to parse shared chat payload', error);
-    return null;
-  }
+  return decodeSharedChatPayload(sharedValue);
 }
 
 function applySharedChatUi(permission) {
@@ -1678,9 +1705,10 @@ async function generateSharedChatLink(chatId) {
     createdAt: Date.now()
   };
 
-  const url = new URL(window.location.href);
-  url.searchParams.set('share', JSON.stringify(payload));
-  const shareLink = url.toString();
+  const encodedPayload = encodeSharedChatPayload(payload);
+  const shareLink = encodedPayload
+    ? `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(encodedPayload)}`
+    : `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(JSON.stringify(payload))}`;
 
   await copyTextToClipboard(shareLink);
   showShareFeedback('Copied to the clipboard.');
