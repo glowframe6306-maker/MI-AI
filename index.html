@@ -834,23 +834,42 @@ async function loadUserChats() {
 
   try {
     const res = await fetch('/api/conversations', {
-      headers: { Authorization: 'Bearer ' + token },
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'X-User-Id': userId,
+        'X-User-Email': email,
+      },
     });
     const json = await res.json();
     if (res.ok && Array.isArray(json.conversations)) {
       chats = {};
       for (const conversation of json.conversations) {
-        chats[conversation.id] = [];
+        const chatMessages = [];
+        chatMessages.title = conversation.title || 'New chat';
+        chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
+        chatMessages.lastPreview = conversation.last_preview || '';
+        chatMessages.messageCount = conversation.message_count || 0;
+        chats[conversation.id] = chatMessages;
         try {
           const messagesRes = await fetch('/api/messages?conversation_id=' + encodeURIComponent(conversation.id), {
-            headers: { Authorization: 'Bearer ' + token },
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'X-User-Id': userId,
+              'X-User-Email': email,
+            },
           });
           const messagesJson = await messagesRes.json();
           if (messagesRes.ok && Array.isArray(messagesJson.messages)) {
-            chats[conversation.id] = messagesJson.messages.map((message) => ({
+            const mappedMessages = messagesJson.messages.map((message) => ({
               role: message.role === 'me' ? 'me' : 'ai',
               text: message.content,
+              createdAt: message.created_at,
             }));
+            chats[conversation.id] = mappedMessages;
+            chats[conversation.id].title = conversation.title || 'New chat';
+            chats[conversation.id].updatedAt = conversation.updated_at || conversation.created_at || Date.now();
+            chats[conversation.id].lastPreview = mappedMessages[mappedMessages.length - 1]?.text || '';
+            chats[conversation.id].messageCount = mappedMessages.length;
           }
         } catch (e) {
           // ignore individual fetch failures
@@ -868,7 +887,8 @@ async function loadUserChats() {
 
     accountId = userId;
     localStorage.setItem('mi_account', accountId);
-    currentChat = Object.keys(chats)[0] ?? null;
+    const lastChatId = localStorage.getItem('last_chat');
+    currentChat = lastChatId && chats[lastChatId] ? lastChatId : Object.keys(chats)[0] ?? null;
     save();
     renderList();
     if (currentChat) {
@@ -1939,13 +1959,28 @@ document.addEventListener("pointerdown", e => {
 /* RENAME */
 function renameChat(){
 if(!selectedChat) return;
-let name=prompt("Rename chat:",selectedChat);
+let name=prompt("Rename chat:", chats[selectedChat]?.title || selectedChat);
 if(!name) return;
 
-chats[name]=chats[selectedChat];
-delete chats[selectedChat];
+const chat = chats[selectedChat];
+if (chat) {
+  chat.title = name;
+  chat.updatedAt = Date.now();
+}
 
-if(currentChat===selectedChat) currentChat=name;
+const token = localStorage.getItem('mi_supabase_token');
+if (token && isAuthenticated()) {
+  fetch('/api/conversations/' + encodeURIComponent(selectedChat), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+      'X-User-Id': localStorage.getItem('mi_user_id') || '',
+      'X-User-Email': localStorage.getItem('mi_user_email') || '',
+    },
+    body: JSON.stringify({ title: name }),
+  }).catch(() => {});
+}
 
 save();
 renderList();
@@ -1955,18 +1990,24 @@ menu.style.display="none";
 /* DELETE */
 function deleteChat(){
 if(!selectedChat) return;
-
-if (isAuthenticated()) {
-  showShareFeedback('Protected chats cannot be deleted.');
-  menu.style.display = 'none';
-  return;
-}
-
 if(!confirm("Delete this chat?")) return;
 
-delete chats[selectedChat];
+const chatId = selectedChat;
+const token = localStorage.getItem('mi_supabase_token');
+if (token && isAuthenticated()) {
+  fetch('/api/conversations/' + encodeURIComponent(chatId), {
+    method: 'DELETE',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'X-User-Id': localStorage.getItem('mi_user_id') || '',
+      'X-User-Email': localStorage.getItem('mi_user_email') || '',
+    },
+  }).catch(() => {});
+}
 
-if(currentChat===selectedChat){
+delete chats[chatId];
+
+if(currentChat===chatId){
 currentChat=null;
 chatBox.innerHTML="";
 }
@@ -2393,11 +2434,16 @@ d.innerText=text;
 chatBox.appendChild(d);
 
 chats[currentChat].push({role,text});
+chats[currentChat].updatedAt = Date.now();
+chats[currentChat].messageCount = (chats[currentChat].messageCount || 0) + 1;
+chats[currentChat].lastPreview = text;
 save();
 
 // If the user is authenticated, persist the message to the server as well
 try {
     const token = localStorage.getItem('mi_supabase_token');
+    const userId = localStorage.getItem('mi_user_id') || '';
+    const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
     if (token) {
         fetch('/api/messages', {
             method: 'POST',
@@ -2424,6 +2470,8 @@ async function createServerConversation() {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token,
+                'X-User-Id': localStorage.getItem('mi_user_id') || '',
+                'X-User-Email': localStorage.getItem('mi_user_email') || '',
             },
             body: JSON.stringify({ title: 'New chat', session_id: accountId }),
         });
