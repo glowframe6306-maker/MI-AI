@@ -751,10 +751,13 @@ ___________________________
 <!-- INPUT -->
 <div id="inputBox">
   <div style="display:flex;flex:1;flex-direction:column;gap:8px;">
-    <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
+      <button id="sendBtn" type="button" onclick="send()">↑</button>
+      <button id="replyControlBtn" type="button" onclick="stopReply()" style="min-width:90px;">Auto Stop</button>
+    </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
-  <button onclick="send()">↑</button>
 </div>
 <div id="watermark">MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION. </div>
 <div id="watermark">CREATED AND POWERED BY M.I.MUHAMMADH</div>
@@ -911,6 +914,9 @@ let currentChat = null;
 let selectedChat = null;
 let shareOverlay = null;
 let sharedChatData = null;
+let replyAbortController = null;
+let replyTypingTimer = null;
+let replyInProgress = false;
 
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
@@ -1285,18 +1291,36 @@ function getSharedChatPayloadFromUrl() {
   const sharedValue = params.get('s') || params.get('share');
   if (!sharedValue) return null;
 
+  const store = getSharedLinkStore();
   if (sharedValue.length <= 8 && /^[a-z0-9]+$/i.test(sharedValue)) {
-    const store = getSharedLinkStore();
     return store[sharedValue] || null;
   }
 
+  if (sharedValue.startsWith('http')) {
+    try {
+      const parsedUrl = new URL(sharedValue);
+      const shortId = parsedUrl.searchParams.get('s') || parsedUrl.searchParams.get('share');
+      if (shortId) {
+        return store[shortId] || null;
+      }
+    } catch (error) {
+      console.error('Unable to parse shared link URL', error);
+    }
+  }
+
   try {
-    const parsed = JSON.parse(sharedValue);
+    const parsed = JSON.parse(decodeURIComponent(sharedValue));
     if (!parsed || !Array.isArray(parsed.messages)) return null;
     return parsed;
   } catch (error) {
-    console.error('Unable to parse shared chat payload', error);
-    return null;
+    try {
+      const parsed = JSON.parse(sharedValue);
+      if (!parsed || !Array.isArray(parsed.messages)) return null;
+      return parsed;
+    } catch (fallbackError) {
+      console.error('Unable to parse shared chat payload', fallbackError);
+      return null;
+    }
   }
 }
 
@@ -2143,7 +2167,7 @@ async function generateSharedChatLink(chatId) {
   store[payload.id] = payload;
   saveSharedLinkStore(store);
 
-  const shareLink = `?s=${payload.id}`;
+  const shareLink = `${window.location.origin}${window.location.pathname}?s=${payload.id}`;
 
   await copyTextToClipboard(shareLink);
   showShareFeedback('Copied to the clipboard.');
@@ -2153,6 +2177,11 @@ async function generateSharedChatLink(chatId) {
 function shareChat(){
   const chatId = selectedChat || currentChat;
   if (!chatId || !chats[chatId]) return;
+
+  if (!isAuthenticated()) {
+    showLoginPrompt(chatId);
+    return;
+  }
 
   removeShareOverlay();
   closeMobileMenu();
@@ -2190,6 +2219,8 @@ function shareChat(){
 /* SEND */
 async function send(){
 
+if (replyInProgress) return;
+
 if (sharedChatData && sharedChatData.permission === 'view') {
     applySharedChatUi('view');
     return;
@@ -2207,6 +2238,8 @@ if(!currentChat){
 }
 
 input.value="";
+replyInProgress = true;
+setReplyControlState(true);
 
 add("me",msg);
 
@@ -2225,9 +2258,11 @@ scroll();
 
 try{
     const API_URL = "http://127.0.0.1:5000/chat";
+    replyAbortController = new AbortController();
     let res = await fetch(API_URL, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
+        signal: replyAbortController.signal,
         body: JSON.stringify({
     message: msg
 }),
@@ -2242,17 +2277,22 @@ try{
     t.remove();
     type(data.reply);
 } catch (e) {
+    if (e && e.name === 'AbortError') {
+        replyInProgress = false;
+        setReplyControlState(false);
+        return;
+    }
 
     console.error(e);
 
     t.remove();
+    replyInProgress = false;
+    setReplyControlState(false);
 
-   console.error(e);
-
-add(
-    "ai",
-    "Server Error ❌"
-);0
+    add(
+        "ai",
+        "Server Error ❌"
+    );
 
 }
 }
@@ -2264,13 +2304,22 @@ d.className="ai";
 chatBox.appendChild(d);
 
 let i=0;
-let timer=setInterval(()=>{
+replyTypingTimer=setInterval(()=>{
+if(!replyInProgress){
+clearInterval(replyTypingTimer);
+replyTypingTimer=null;
+return;
+}
+
 d.innerText+=text[i];
 i++;
 scroll();
 
 if(i>=text.length){
-clearInterval(timer);
+clearInterval(replyTypingTimer);
+replyTypingTimer=null;
+replyInProgress=false;
+setReplyControlState(false);
 chats[currentChat].push({role:"ai",text});
 save();
 maybeShowLoginPrompt(currentChat);
@@ -2333,6 +2382,39 @@ function save(){
     if (storageKey) {
         localStorage.setItem(storageKey, JSON.stringify(chats));
     }
+    if (currentChat) {
+        localStorage.setItem('last_chat', currentChat);
+    }
+}
+
+function persistChats() {
+    save();
+}
+
+function setReplyControlState(isActive) {
+    const button = document.getElementById('replyControlBtn');
+    if (!button) return;
+    button.textContent = isActive ? 'Stop' : 'Auto Stop';
+    button.disabled = false;
+}
+
+function stopReply() {
+    if (replyAbortController) {
+        replyAbortController.abort();
+        replyAbortController = null;
+    }
+    if (replyTypingTimer) {
+        clearInterval(replyTypingTimer);
+        replyTypingTimer = null;
+    }
+    if (replyInProgress) {
+        replyInProgress = false;
+    }
+    const thinking = document.querySelector('.thinking');
+    if (thinking) {
+        thinking.remove();
+    }
+    setReplyControlState(false);
 }
 
 /* SETTINGS */
@@ -2490,6 +2572,14 @@ function applyForcedLayout() {
 window.addEventListener("load", async () => {
     applyForcedLayout();
     await initChat();
+});
+
+window.addEventListener('beforeunload', persistChats);
+window.addEventListener('pagehide', persistChats);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    persistChats();
+  }
 });
 
 document.addEventListener('keydown', (event) => {
