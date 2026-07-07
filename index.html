@@ -1352,14 +1352,8 @@ function getSharedPrivacySummaryItems(payload) {
   if (security.password) {
     items.push('Password protected');
   }
-  if (security.screenshot === 'on') {
-    items.push('Screenshot warning enabled');
-  }
   if (security.notification === 'on') {
     items.push('Notification enabled');
-  }
-  if (security.approval === 'on') {
-    items.push('Owner approval required');
   }
 
   return items;
@@ -1610,22 +1604,6 @@ async function initSharedAccess(payload) {
   const ownerEmail = (payload.ownerEmail || '').trim().toLowerCase();
   const isOwner = Boolean(ownerEmail && viewerEmail && viewerEmail === ownerEmail);
 
-  if (security.approval === 'on' && !isOwner) {
-    if (state.status === 'declined') {
-      showSharedAccessMessage('Declined by owner.');
-      return false;
-    }
-    if (state.status !== 'approved') {
-      state.status = 'pending';
-      state.requesterEmail = viewerEmail;
-      state.requestedAt = new Date().toLocaleString();
-      saveSharedLinkState(sharedId, state);
-      createApprovalRequest(payload, viewerEmail);
-      showSharedAccessMessage('Waiting for owner approval.');
-      return false;
-    }
-  }
-
   const gateAllowed = await showSharedPrivacyGate(payload);
   if (!gateAllowed) {
     showSharedAccessMessage('Access cancelled.');
@@ -1697,16 +1675,10 @@ if (sharedPayload) {
         renderList();
         openChat(currentChat);
         updateAuthControls();
-        if (sharedPayload.security && sharedPayload.security.screenshot === 'on') {
-          blockSharedScreenshot();
-        }
         return;
     }
 
     showSharedSecurityBanner(sharedPayload);
-    if (sharedPayload.security && sharedPayload.security.screenshot === 'on') {
-      blockSharedScreenshot();
-    }
     applySharedChatUi(sharedPayload.permission === 'view' ? 'view' : 'edit');
     renderList();
     openChat(currentChat);
@@ -2133,24 +2105,8 @@ function showLinkShareOptions(chatId) {
         </div>
 
         <div style="margin-bottom:10px;">
-          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Screenshot warning</div>
-          <select id="shareScreenshotSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
-            <option value="off">Off</option>
-            <option value="on">On</option>
-          </select>
-        </div>
-
-        <div style="margin-bottom:10px;">
           <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Get notification</div>
           <select id="shareNotificationSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
-            <option value="off">Off</option>
-            <option value="on">On</option>
-          </select>
-        </div>
-
-        <div style="margin-bottom:10px;">
-          <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Approve for open chat</div>
-          <select id="shareApprovalSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
             <option value="off">Off</option>
             <option value="on">On</option>
           </select>
@@ -2206,9 +2162,7 @@ async function generateSharedChatLink(chatId) {
   const passwordEnabled = document.getElementById('sharePasswordEnabled');
   const passwordField = document.getElementById('sharePassword');
   const passwordConfirmField = document.getElementById('sharePasswordConfirm');
-  const screenshotSelect = document.getElementById('shareScreenshotSelect');
   const notificationSelect = document.getElementById('shareNotificationSelect');
-  const approvalSelect = document.getElementById('shareApprovalSelect');
 
   const openLimitMode = openLimitSelect ? openLimitSelect.value : 'no-expiry';
   const customOpenCount = openLimitCustom && openLimitCustom.value ? Number(openLimitCustom.value) : '';
@@ -2247,9 +2201,7 @@ async function generateSharedChatLink(chatId) {
       timeLimitUnit: timeLimitUnitValue,
       timeLimitValue: timeLimitUnitValue === 'no-expiry' ? '' : timeLimitValueNumber,
       password: passwordEnabledValue ? password : '',
-      screenshot: screenshotSelect ? screenshotSelect.value : 'off',
-      notification: notificationSelect ? notificationSelect.value : 'off',
-      approval: approvalSelect ? approvalSelect.value : 'off'
+      notification: notificationSelect ? notificationSelect.value : 'off'
     }
   };
 
