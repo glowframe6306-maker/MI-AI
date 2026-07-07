@@ -897,6 +897,7 @@ ___________________________
 
 <label data-i18n="settings.language">Language</label>
 <select id="languageSelect" onchange="changeLanguage(this.value)"></select>
+<button type="button" onclick="saveLanguageSelection()" data-i18n="settings.save">Save</button>
 
 <label data-i18n="settings.theme">Theme</label>
 <input type="color" id="themeColor">
@@ -957,6 +958,7 @@ let firebaseAuth = null;
 let authMode = 'signin';
 let user = null;
 let currentLanguage = 'en';
+let pendingLanguageCode = null;
 let translations = {};
 const translationCache = {};
 const RTL_LANGUAGE_CODES = new Set(['ar', 'fa', 'he', 'ur']);
@@ -1128,6 +1130,9 @@ function updateTranslatedUi() {
   const applyButton = document.querySelector('#settingsPanel button[onclick="applyTheme()"]');
   if (applyButton) applyButton.textContent = t('settings.apply', 'Apply');
 
+  const saveLanguageButton = document.querySelector('#settingsPanel button[data-i18n="settings.save"]');
+  if (saveLanguageButton) saveLanguageButton.textContent = t('settings.save', 'Save');
+
   const chatInput = document.getElementById('msg');
   if (chatInput) chatInput.placeholder = t('chat.placeholder', 'Ask from MI AI...');
 
@@ -1144,7 +1149,7 @@ function updateTranslatedUi() {
   if (resetButton) resetButton.textContent = t('auth.resetPassword', 'Reset password');
 
   const languageSelect = document.getElementById('languageSelect');
-  if (languageSelect) languageSelect.value = currentLanguage;
+  if (languageSelect) languageSelect.value = pendingLanguageCode || currentLanguage;
 
   document.documentElement.setAttribute('lang', currentLanguage);
   document.documentElement.setAttribute('dir', RTL_LANGUAGE_CODES.has(currentLanguage) ? 'rtl' : 'ltr');
@@ -1160,6 +1165,7 @@ async function applyLanguage(langCode, persist = true) {
   const fallback = translationCache.en || {};
   translations = { ...fallback, ...(localeData || {}) };
   currentLanguage = normalized;
+  pendingLanguageCode = normalized;
 
   updateTranslatedUi();
 
@@ -1175,8 +1181,15 @@ async function applyLanguage(langCode, persist = true) {
   }
 }
 
-async function changeLanguage(langCode) {
+function changeLanguage(langCode) {
   const normalized = normalizeLanguageCode(langCode);
+  pendingLanguageCode = normalized;
+  const languageSelect = document.getElementById('languageSelect');
+  if (languageSelect) languageSelect.value = normalized;
+}
+
+async function saveLanguageSelection() {
+  const normalized = normalizeLanguageCode(pendingLanguageCode || currentLanguage);
   await applyLanguage(normalized, true);
 }
 
@@ -1671,6 +1684,7 @@ function closeProfilePanel() {
 }
 
 function openProfilePanel() {
+    if (!requireLoginForFeature()) return;
     closeProfilePanel();
     const profile = getProfileData();
     const box = document.createElement('div');
@@ -1745,6 +1759,9 @@ function confirmLogout() {
 }
 
 async function logout() {
+    closeLoginRequiredDialog();
+    const settingsPanel = document.getElementById('settingsPanel');
+    if (settingsPanel) settingsPanel.style.display = 'none';
     try {
         const auth = await initFirebase();
         await auth.signOut();
@@ -2690,6 +2707,7 @@ document.addEventListener("pointerdown", e => {
 
 /* RENAME */
 function renameChat(){
+if (!requireLoginForFeature()) return;
 if(!selectedChat) return;
 let name=prompt("Rename chat:", chats[selectedChat]?.title || selectedChat);
 if(!name) return;
@@ -2721,6 +2739,7 @@ menu.style.display="none";
 
 /* DELETE */
 function deleteChat(){
+if (!requireLoginForFeature()) return;
 if(!selectedChat) return;
 if(!confirm("Delete this chat?")) return;
 
@@ -2751,6 +2770,7 @@ menu.style.display="none";
 
 function pinChat(){
 
+if (!requireLoginForFeature()) return;
 if(!selectedChat)return;
 
 chats[selectedChat].pin =
@@ -3000,11 +3020,7 @@ function shareChat(){
   const chatId = selectedChat || currentChat;
   if (!chatId || !chats[chatId]) return;
 
-  if (!isAuthenticated()) {
-    showShareFeedback('Please log in to share chats.');
-    openLogin();
-    return;
-  }
+  if (!requireLoginForFeature()) return;
 
   removeShareOverlay();
   closeMobileMenu();
@@ -3473,7 +3489,46 @@ function stopReply() {
 }
 
 /* SETTINGS */
+function closeLoginRequiredDialog() {
+  const dialog = document.getElementById('loginRequiredDialog');
+  if (dialog) dialog.remove();
+}
+
+function showLoginRequiredDialog() {
+  closeLoginRequiredDialog();
+  const box = document.createElement('div');
+  box.id = 'loginRequiredDialog';
+  box.style.position = 'fixed';
+  box.style.top = '50%';
+  box.style.left = '50%';
+  box.style.transform = 'translate(-50%, -50%)';
+  box.style.width = 'min(92vw, 340px)';
+  box.style.background = 'rgba(15,23,42,0.98)';
+  box.style.border = '1px solid rgba(255,255,255,0.14)';
+  box.style.borderRadius = '18px';
+  box.style.padding = '18px';
+  box.style.zIndex = '10000';
+  box.style.boxShadow = '0 24px 60px rgba(0,0,0,0.36)';
+  box.style.color = '#f8fafc';
+  box.innerHTML = `
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px;">${t('auth.loginRequired.title', 'Login Required')}</div>
+    <div style="font-size:14px;color:#cbd5e1;margin-bottom:16px;">${t('auth.loginRequired.message', 'Please log in to access this feature.')}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button type="button" onclick="closeLoginRequiredDialog()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.loginRequired.cancel', 'Cancel')}</button>
+      <button type="button" onclick="closeLoginRequiredDialog(); openLogin();" style="padding:8px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">${t('auth.loginRequired.login', 'Login')}</button>
+    </div>
+  `;
+  document.body.appendChild(box);
+}
+
+function requireLoginForFeature() {
+  if (isAuthenticated()) return true;
+  showLoginRequiredDialog();
+  return false;
+}
+
 function toggleSettings(){
+  if (!requireLoginForFeature()) return;
   closeMobileMenu();
   const s=document.getElementById("settingsPanel");
   if (s) {
@@ -4058,7 +4113,7 @@ async function verifyEnteredAppLockPin() {
 }
 
 async function openAppLockSettings() {
-  if (!isAuthenticated()) return;
+  if (!requireLoginForFeature()) return;
   const settings = await loadAppLockSettings();
   appLockSettings = settings;
   if (settings.enabled) {
