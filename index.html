@@ -754,11 +754,9 @@ ___________________________
     <div id="attachmentPreview" style="display:none;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#e2e8f0;font-size:13px;"></div>
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
-      <button id="attachBtn" type="button" onclick="triggerFileUpload()" style="padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.12);color:#fff;cursor:pointer;">📎</button>
       <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
       <button id="sendBtn" type="button" onclick="sendOrStop()">↑</button>
     </div>
-    <input id="fileInput" type="file" accept=".pdf,.docx,.doc,.txt,.xlsx,.xls,.csv,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.svg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,image/png,image/jpeg,image/webp,image/svg+xml" style="display:none" multiple onchange="handleFileSelection(event)">
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
 </div>
@@ -1059,156 +1057,6 @@ async function uploadPendingAttachments() {
   return { attachments: uploadedAttachments, errors };
 }
 
-async function loadUserChats() {
-  const token = localStorage.getItem('mi_supabase_token');
-  const userId = localStorage.getItem('mi_user_id');
-  const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-  if (!token || !userId) return;
-
-  const previousChats = chats && typeof chats === 'object' && !Array.isArray(chats) ? chats : {};
-  const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
-
-  try {
-    const res = await fetch('/api/conversations', {
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'X-User-Id': userId,
-        'X-User-Email': email,
-      },
-    });
-    const json = await res.json();
-
-    let loadedChats = {};
-    if (res.ok && Array.isArray(json.conversations)) {
-      for (const conversation of json.conversations) {
-        const conversationId = conversation.id;
-        const chatMessages = [];
-        chatMessages.title = conversation.title || 'New chat';
-        chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
-        chatMessages.lastPreview = conversation.last_preview || '';
-        chatMessages.messageCount = conversation.message_count || 0;
-        chatMessages.attachments = [];
-
-        try {
-          const messagesRes = await fetch('/api/messages?conversation_id=' + encodeURIComponent(conversationId), {
-            headers: {
-              Authorization: 'Bearer ' + token,
-              'X-User-Id': userId,
-              'X-User-Email': email,
-            },
-          });
-          const messagesJson = await messagesRes.json();
-          if (messagesRes.ok && Array.isArray(messagesJson.messages)) {
-            const mappedMessages = messagesJson.messages.map((message) => ({
-              role: message.role === 'me' ? 'me' : 'ai',
-              text: message.content,
-              createdAt: message.created_at,
-            }));
-            chatMessages.splice(0, chatMessages.length, ...mappedMessages);
-            chatMessages.title = conversation.title || 'New chat';
-            chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
-            chatMessages.lastPreview = mappedMessages[mappedMessages.length - 1]?.text || conversation.last_preview || '';
-            chatMessages.messageCount = mappedMessages.length;
-          }
-        } catch (e) {
-          // keep the conversation with whatever metadata we already have
-        }
-
-        try {
-          const attachmentsRes = await fetch('/api/conversations/' + encodeURIComponent(conversationId) + '/attachments', {
-            headers: {
-              Authorization: 'Bearer ' + token,
-              'X-User-Id': userId,
-              'X-User-Email': email,
-            },
-          });
-          const attachmentsJson = await attachmentsRes.json();
-          if (attachmentsRes.ok && Array.isArray(attachmentsJson.attachments)) {
-            chatMessages.attachments = attachmentsJson.attachments;
-          }
-        } catch (e) {
-          // ignore attachment fetch failures
-        }
-
-        loadedChats[conversationId] = chatMessages;
-      }
-    }
-
-    if (Object.keys(loadedChats).length > 0) {
-      chats = loadedChats;
-    } else if (Object.keys(previousChats).length > 0) {
-      chats = previousChats;
-    } else {
-      const storageKey = email ? `mi_chats_${email}` : `mi_chats_${userId}`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            chats = parsed;
-          } else {
-            chats = {};
-          }
-        } catch {
-          chats = {};
-        }
-      } else {
-        chats = {};
-      }
-    }
-
-    accountId = userId;
-    localStorage.setItem('mi_account', accountId);
-
-    const availableChatIds = Object.keys(chats || {});
-    if (availableChatIds.length > 0) {
-      currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : availableChatIds[0];
-    } else {
-      currentChat = null;
-    }
-
-    save();
-    renderList();
-    if (currentChat) {
-      openChat(currentChat);
-    } else if (chatBox) {
-      chatBox.innerHTML = '';
-    }
-  } catch (e) {
-    if (!chats || typeof chats !== 'object' || Array.isArray(chats)) {
-      chats = previousChats;
-    }
-    if (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0) {
-      const storageKey = email ? `mi_chats_${email}` : `mi_chats_${userId}`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            chats = parsed;
-          } else {
-            chats = {};
-          }
-        } catch {
-          chats = {};
-        }
-      } else {
-        chats = {};
-      }
-    }
-
-    const availableChatIds = Object.keys(chats || {});
-    currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : availableChatIds[0] || null;
-    save();
-    renderList();
-    if (currentChat) {
-      openChat(currentChat);
-    } else if (chatBox) {
-      chatBox.innerHTML = '';
-    }
-  }
-}
-
 let chatBox = document.getElementById("chat");
 let chatList = document.getElementById("chatList");
 let input = document.getElementById("msg");
@@ -1356,11 +1204,16 @@ function getGuestStorageKey() {
     return "mi_chats_" + guestId;
 }
 
+function getAccountScopedChatStorageKey(identity) {
+    const normalizedIdentity = (identity || '').trim().toLowerCase();
+    return normalizedIdentity ? `mi_chats_${normalizedIdentity}` : getGuestStorageKey();
+}
+
 function getUserChatStorageKey() {
     const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
     const userId = (localStorage.getItem('mi_user_id') || '').trim().toLowerCase();
     const identity = email || userId || guestId;
-    return identity ? `mi_chats_${identity}` : getGuestStorageKey();
+    return getAccountScopedChatStorageKey(identity);
 }
 
 function getActiveStorageKey() {
@@ -1371,31 +1224,55 @@ function getSessionId() {
     return isAuthenticated() ? user.id : guestId;
 }
 
+function createSingleGuestChat() {
+    const id = `chat_${Date.now()}`;
+    chats = { [id]: [] };
+    currentChat = id;
+    localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
+    localStorage.setItem('last_chat', id);
+    return id;
+}
+
+function resetChatStateForAuthChange() {
+    chats = {};
+    currentChat = null;
+    selectedChat = null;
+    sharedChatData = null;
+    pendingAttachment = null;
+    pendingAttachments = [];
+    attachmentUploadInProgress = false;
+    attachmentProgress = 0;
+    attachmentStatusText = '';
+    if (chatBox) chatBox.innerHTML = '';
+    renderList();
+}
+
 function loadGuestChats() {
     let saved = localStorage.getItem(getGuestStorageKey());
+    let parsed = {};
     if (saved) {
         try {
-            chats = JSON.parse(saved) || {};
+            parsed = JSON.parse(saved) || {};
         } catch {
-            chats = {};
+            parsed = {};
         }
-    } else {
-        chats = {};
     }
 
-    if (typeof chats !== 'object' || chats === null) {
-        chats = {};
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        parsed = {};
     }
 
-    const lastChat = localStorage.getItem('last_chat');
-    const ids = Object.keys(chats);
+    const ids = Object.keys(parsed);
     if (ids.length === 0) {
+        createSingleGuestChat();
         return;
     }
 
-    let retainedChat = lastChat && chats[lastChat] ? lastChat : ids[ids.length - 1];
-    chats = { [retainedChat]: chats[retainedChat] || [] };
-    currentChat = retainedChat;
+    const lastChat = localStorage.getItem('last_chat') && parsed[localStorage.getItem('last_chat')] ? localStorage.getItem('last_chat') : ids[ids.length - 1];
+    chats = { [lastChat]: parsed[lastChat] || [] };
+    currentChat = lastChat;
+    localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
+    localStorage.setItem('last_chat', currentChat);
 }
 
 function getCurrentProfileEmail() {
@@ -1511,25 +1388,26 @@ async function logout() {
         console.error('Logout error:', e);
     }
 
+    const previousEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+    const previousUserId = (localStorage.getItem('mi_user_id') || '').trim().toLowerCase();
     localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
+    if (previousEmail) {
+        localStorage.removeItem(getAccountScopedChatStorageKey(previousEmail));
+    }
+    if (previousUserId) {
+        localStorage.removeItem(getAccountScopedChatStorageKey(previousUserId));
+    }
     user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
 
-    selectedChat = null;
-    if (!currentChat || !chats[currentChat]) {
-        currentChat = Object.keys(chats || {}).find(Boolean) || null;
-    }
-
-    if (chatBox && currentChat) {
-        openChat(currentChat);
-    } else if (chatBox) {
-        chatBox.innerHTML = '';
-    }
+    resetChatStateForAuthChange();
+    createSingleGuestChat();
     save();
     renderList();
+    openChat(currentChat);
     closeProfilePanel();
     updateAuthControls();
     window.dispatchEvent(new Event('mi-chat-user-changed'));
@@ -1972,6 +1850,137 @@ async function initSharedAccess(payload) {
   return true;
 }
 
+let chatLoadSequence = 0;
+
+async function loadUserChats() {
+  const token = localStorage.getItem('mi_supabase_token');
+  const userId = localStorage.getItem('mi_user_id');
+  const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+  if (!token || !userId) {
+    resetChatStateForAuthChange();
+    loadGuestChats();
+    save();
+    renderList();
+    if (currentChat) {
+      openChat(currentChat);
+    } else if (chatBox) {
+      chatBox.innerHTML = '';
+    }
+    return;
+  }
+
+  const requestId = ++chatLoadSequence;
+  resetChatStateForAuthChange();
+  const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
+
+  try {
+    const res = await fetch('/api/conversations', {
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'X-User-Id': userId,
+        'X-User-Email': email,
+      },
+    });
+    const json = await res.json();
+
+    let loadedChats = {};
+    if (requestId !== chatLoadSequence) return;
+
+    if (res.ok && Array.isArray(json.conversations)) {
+      for (const conversation of json.conversations) {
+        const conversationId = conversation.id;
+        const chatMessages = [];
+        chatMessages.title = conversation.title || 'New chat';
+        chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
+        chatMessages.lastPreview = conversation.last_preview || '';
+        chatMessages.messageCount = conversation.message_count || 0;
+        chatMessages.attachments = [];
+
+        try {
+          const messagesRes = await fetch('/api/messages?conversation_id=' + encodeURIComponent(conversationId), {
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'X-User-Id': userId,
+              'X-User-Email': email,
+            },
+          });
+          const messagesJson = await messagesRes.json();
+          if (messagesRes.ok && Array.isArray(messagesJson.messages)) {
+            const mappedMessages = messagesJson.messages.map((message) => ({
+              role: message.role === 'me' ? 'me' : 'ai',
+              text: message.content,
+              createdAt: message.created_at,
+            }));
+            chatMessages.splice(0, chatMessages.length, ...mappedMessages);
+            chatMessages.title = conversation.title || 'New chat';
+            chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
+            chatMessages.lastPreview = mappedMessages[mappedMessages.length - 1]?.text || conversation.last_preview || '';
+            chatMessages.messageCount = mappedMessages.length;
+          }
+        } catch (e) {
+          // keep the conversation metadata
+        }
+
+        try {
+          const attachmentsRes = await fetch('/api/conversations/' + encodeURIComponent(conversationId) + '/attachments', {
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'X-User-Id': userId,
+              'X-User-Email': email,
+            },
+          });
+          const attachmentsJson = await attachmentsRes.json();
+          if (attachmentsRes.ok && Array.isArray(attachmentsJson.attachments)) {
+            chatMessages.attachments = attachmentsJson.attachments;
+          }
+        } catch (e) {
+          // ignore attachment fetch failures
+        }
+
+        loadedChats[conversationId] = chatMessages;
+      }
+    }
+
+    if (requestId !== chatLoadSequence) return;
+    chats = loadedChats;
+    currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : Object.keys(chats || {})[0] || null;
+
+    const storageKey = getUserChatStorageKey();
+    localStorage.setItem(storageKey, JSON.stringify(chats));
+    save();
+    renderList();
+    if (currentChat) {
+      openChat(currentChat);
+    } else if (chatBox) {
+      chatBox.innerHTML = '';
+    }
+  } catch (e) {
+    if (requestId !== chatLoadSequence) return;
+    chats = {};
+    currentChat = null;
+    const storageKey = getUserChatStorageKey();
+    const cached = localStorage.getItem(storageKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          chats = parsed;
+          currentChat = Object.keys(chats || {})[0] || null;
+        }
+      } catch {
+        chats = {};
+      }
+    }
+    save();
+    renderList();
+    if (currentChat) {
+      openChat(currentChat);
+    } else if (chatBox) {
+      chatBox.innerHTML = '';
+    }
+  }
+}
+
 async function initChat(){
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -2045,6 +2054,48 @@ let token = localStorage.getItem('mi_supabase_token');
 let userId = localStorage.getItem('mi_user_id');
 let storedEmail = localStorage.getItem('mi_user_email');
 
+try {
+    const auth = await initFirebase();
+    if (typeof auth.onAuthStateChanged === 'function') {
+        auth.onAuthStateChanged(async (firebaseUser) => {
+            if (!firebaseUser) {
+                user = null;
+                localStorage.removeItem('mi_supabase_token');
+                localStorage.removeItem('mi_user_id');
+                localStorage.removeItem('mi_user_email');
+                accountId = guestId;
+                localStorage.setItem('mi_account', accountId);
+                resetChatStateForAuthChange();
+                loadGuestChats();
+                save();
+                renderList();
+                if (currentChat) {
+                    openChat(currentChat);
+                } else if (chatBox) {
+                    chatBox.innerHTML = '';
+                }
+                updateAuthControls();
+                window.dispatchEvent(new Event('mi-chat-user-changed'));
+                return;
+            }
+
+            const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
+            const nextToken = await firebaseUser.getIdToken();
+            user = nextUser;
+            localStorage.setItem('mi_supabase_token', nextToken);
+            localStorage.setItem('mi_user_id', firebaseUser.uid);
+            localStorage.setItem('mi_user_email', firebaseUser.email || '');
+            accountId = firebaseUser.uid;
+            localStorage.setItem('mi_account', accountId);
+            await loadUserChats();
+            updateAuthControls();
+            window.dispatchEvent(new Event('mi-chat-user-changed'));
+        });
+    }
+} catch (e) {
+    console.error('Auth listener setup failed', e);
+}
+
 if (token && userId) {
     user = { id: userId, email: storedEmail || null };
     await loadUserChats();
@@ -2093,39 +2144,50 @@ if (input) {
 /* NEW CHAT */
 async function newChat(){
     removeLoginPrompt();
-    let token = localStorage.getItem('mi_supabase_token');
-    if (token) {
-        // create conversation on server
-        try {
-            const res = await fetch('/api/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' }, body: JSON.stringify({ title: 'New chat', session_id: accountId }) });
-            const json = await res.json();
-            if (res.ok && json.conversation && json.conversation.id) {
-                const id = json.conversation.id;
-                chats[id] = [];
-                currentChat = id;
-                save();
-                renderList();
-                openChat(id);
-                return;
-            }
-        } catch (e) {
-            // fallback to local new chat for guest behavior only
-        }
-    }
-
-    // Guest mode: only one temporary guest chat may exist at a time.
     if (!isAuthenticated()) {
-        const existingGuestChatIds = Object.keys(chats);
-        if (existingGuestChatIds.length > 0) {
-            for (const chatId of existingGuestChatIds) {
-                delete chats[chatId];
-            }
-        }
+        const guestChatId = `chat_${Date.now()}`;
+        chats = { [guestChatId]: [] };
+        currentChat = guestChatId;
+        localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
+        localStorage.setItem('last_chat', guestChatId);
+        save();
+        renderList();
+        openChat(guestChatId);
+        return;
     }
 
-    let id="chat_"+Date.now();
-    chats[id]=[];
-    currentChat=id;
+    const token = localStorage.getItem('mi_supabase_token');
+    const userId = localStorage.getItem('mi_user_id') || '';
+    const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+    try {
+        const res = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'X-Session-Id': accountId || userId || '',
+                'X-User-Id': userId || '',
+                'X-User-Email': storedEmail || ''
+            },
+            body: JSON.stringify({ title: 'New chat', session_id: accountId || userId || guestId })
+        });
+        const json = await res.json();
+        if (res.ok && json.conversation && json.conversation.id) {
+            const id = json.conversation.id;
+            chats[id] = [];
+            currentChat = id;
+            save();
+            renderList();
+            openChat(id);
+            return;
+        }
+    } catch (e) {
+        // fallback to local chat creation
+    }
+
+    const id = `chat_${Date.now()}`;
+    chats[id] = [];
+    currentChat = id;
     save();
     renderList();
     openChat(id);
