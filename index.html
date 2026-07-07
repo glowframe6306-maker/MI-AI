@@ -754,7 +754,6 @@ ___________________________
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
       <button id="sendBtn" type="button" onclick="sendOrStop()">↑</button>
-      <button id="replyControlBtn" type="button" onclick="stopReply()" style="display:none;min-width:90px;">Stop</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -2402,13 +2401,9 @@ function persistChats() {
 
 function setReplyControlState(isActive) {
     const sendButton = document.getElementById('sendBtn');
-    const stopButton = document.getElementById('replyControlBtn');
     if (sendButton) {
         sendButton.innerHTML = isActive ? '⏹' : '↑';
         sendButton.title = isActive ? 'Stop reply' : 'Send message';
-    }
-    if (stopButton) {
-        stopButton.style.display = isActive ? 'inline-flex' : 'none';
     }
 }
 
