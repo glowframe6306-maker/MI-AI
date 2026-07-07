@@ -889,7 +889,7 @@ async function loadUserChats() {
     localStorage.setItem('mi_account', accountId);
     const lastChatId = localStorage.getItem('last_chat');
     currentChat = lastChatId && chats[lastChatId] ? lastChatId : Object.keys(chats)[0] ?? null;
-    save();
+    await save();
     renderList();
     if (currentChat) {
       openChat(currentChat);
@@ -1787,7 +1787,7 @@ if(Object.keys(chats).length===0){
     currentChat = currentChat || Object.keys(chats)[0];
 }
 
-save();
+await save();
 renderList();
 openChat(currentChat);
 updateAuthControls();
@@ -1820,7 +1820,7 @@ async function newChat(){
                 const id = json.conversation.id;
                 chats[id] = [];
                 currentChat = id;
-                save();
+                await save();
                 renderList();
                 openChat(id);
                 return;
@@ -1843,7 +1843,7 @@ async function newChat(){
     let id="chat_"+Date.now();
     chats[id]=[];
     currentChat=id;
-    save();
+    await save();
     renderList();
     openChat(id);
 }
@@ -1982,7 +1982,7 @@ if (token && isAuthenticated()) {
   }).catch(() => {});
 }
 
-save();
+await save();
 renderList();
 menu.style.display="none";
 }
@@ -2012,7 +2012,7 @@ currentChat=null;
 chatBox.innerHTML="";
 }
 
-save();
+await save();
 renderList();
 menu.style.display="none";
 }
@@ -2025,7 +2025,7 @@ chats[selectedChat].pin =
 !chats[selectedChat].pin;
 
 
-save();
+await save();
 renderList();
 
 menu.style.display="none";
@@ -2332,7 +2332,7 @@ if(!currentChat){
     const fallbackId="chat_"+Date.now();
     chats[fallbackId]=[];
     currentChat=fallbackId;
-    save();
+    await save();
     renderList();
 }
 
@@ -2357,13 +2357,18 @@ scroll();
 
 try{
     const API_URL = "http://127.0.0.1:5000/chat";
+    const history = (chats[currentChat] || []).map((message) => ({
+        role: message.role === 'me' ? 'user' : 'assistant',
+        content: message.text || ''
+    }));
     replyAbortController = new AbortController();
     let res = await fetch(API_URL, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         signal: replyAbortController.signal,
         body: JSON.stringify({
-    message: msg
+    message: msg,
+    history: history
 }),
     });
 
@@ -2420,7 +2425,7 @@ replyTypingTimer=null;
 replyInProgress=false;
 setReplyControlState(false);
 chats[currentChat].push({role:"ai",text});
-save();
+await save();
 maybeShowLoginPrompt(currentChat);
 }
 },20);
@@ -2437,7 +2442,7 @@ chats[currentChat].push({role,text});
 chats[currentChat].updatedAt = Date.now();
 chats[currentChat].messageCount = (chats[currentChat].messageCount || 0) + 1;
 chats[currentChat].lastPreview = text;
-save();
+await save();
 
 // If the user is authenticated, persist the message to the server as well
 try {
@@ -2483,18 +2488,48 @@ async function createServerConversation() {
 }
 
 /* SAVE */
-function save(){
+async function save() {
+
     const storageKey = getActiveStorageKey();
+
     if (storageKey) {
         localStorage.setItem(storageKey, JSON.stringify(chats));
     }
+
     if (currentChat) {
-        localStorage.setItem('last_chat', currentChat);
+        localStorage.setItem("last_chat", currentChat);
     }
+
+    // Logged-in users only
+    if (!isAuthenticated()) return;
+
+    const token = localStorage.getItem("mi_supabase_token");
+
+    if (!token || !currentChat) return;
+
+    try {
+
+        await fetch("/api/conversations/" + encodeURIComponent(currentChat), {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token,
+                "X-User-Id": localStorage.getItem("mi_user_id") || "",
+                "X-User-Email": localStorage.getItem("mi_user_email") || ""
+            },
+            body: JSON.stringify({
+                messages: chats[currentChat]
+            })
+        });
+
+    } catch (err) {
+        console.error("Save failed:", err);
+    }
+
 }
 
 function persistChats() {
-    save();
+    await save();
 }
 
 function setReplyControlState(isActive) {
