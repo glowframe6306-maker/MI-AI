@@ -738,13 +738,16 @@ ___________________________
 
 <!-- SETTINGS -->
 <div id="settingsPanel">
-<h3>Settings</h3>
+<h3 data-i18n="settings.title">Settings</h3>
 
-<label>Theme</label>
+<label data-i18n="settings.language">Language</label>
+<select id="languageSelect" onchange="changeLanguage(this.value)"></select>
+
+<label data-i18n="settings.theme">Theme</label>
 <input type="color" id="themeColor">
-<button onclick="applyTheme()">Apply</button>
+<button onclick="applyTheme()" data-i18n="settings.apply">Apply</button>
 
-<label>Font Size</label>
+<label data-i18n="settings.fontSize">Font Size</label>
 <input type="range" min="12" max="25" value="15" oninput="setFont(this.value)">
 </div>
 
@@ -797,6 +800,60 @@ window.FIREBASE_CONFIG = {
 let firebaseAuth = null;
 let authMode = 'signin';
 let user = null;
+let currentLanguage = 'en';
+let translations = {};
+const translationCache = {};
+const RTL_LANGUAGE_CODES = new Set(['ar', 'fa', 'he', 'ur']);
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', file: 'en', label: 'English' },
+  { code: 'si', file: 'si', label: 'Sinhala' },
+  { code: 'ta', file: 'ta', label: 'Tamil' },
+  { code: 'ar', file: 'ar', label: 'Arabic' },
+  { code: 'hi', file: 'hi', label: 'Hindi' },
+  { code: 'ur', file: 'ur', label: 'Urdu' },
+  { code: 'zh-cn', file: 'zh-cn', label: 'Chinese (Simplified)' },
+  { code: 'zh-tw', file: 'zh-tw', label: 'Chinese (Traditional)' },
+  { code: 'ja', file: 'ja', label: 'Japanese' },
+  { code: 'ko', file: 'ko', label: 'Korean' },
+  { code: 'fr', file: 'fr', label: 'French' },
+  { code: 'de', file: 'de', label: 'German' },
+  { code: 'es', file: 'es', label: 'Spanish' },
+  { code: 'pt', file: 'pt', label: 'Portuguese' },
+  { code: 'ru', file: 'ru', label: 'Russian' },
+  { code: 'it', file: 'it', label: 'Italian' },
+  { code: 'nl', file: 'nl', label: 'Dutch' },
+  { code: 'tr', file: 'tr', label: 'Turkish' },
+  { code: 'th', file: 'th', label: 'Thai' },
+  { code: 'vi', file: 'vi', label: 'Vietnamese' },
+  { code: 'id', file: 'id', label: 'Indonesian' },
+  { code: 'ms', file: 'ms', label: 'Malay' },
+  { code: 'bn', file: 'bn', label: 'Bengali' },
+  { code: 'pa', file: 'pa', label: 'Punjabi' },
+  { code: 'te', file: 'te', label: 'Telugu' },
+  { code: 'kn', file: 'kn', label: 'Kannada' },
+  { code: 'ml', file: 'ml', label: 'Malayalam' },
+  { code: 'mr', file: 'mr', label: 'Marathi' },
+  { code: 'gu', file: 'gu', label: 'Gujarati' },
+  { code: 'pl', file: 'pl', label: 'Polish' },
+  { code: 'uk', file: 'uk', label: 'Ukrainian' },
+  { code: 'cs', file: 'cs', label: 'Czech' },
+  { code: 'el', file: 'el', label: 'Greek' },
+  { code: 'he', file: 'he', label: 'Hebrew' },
+  { code: 'fa', file: 'fa', label: 'Persian' },
+  { code: 'ro', file: 'ro', label: 'Romanian' },
+  { code: 'sv', file: 'sv', label: 'Swedish' },
+  { code: 'no', file: 'no', label: 'Norwegian' },
+  { code: 'da', file: 'da', label: 'Danish' },
+  { code: 'fi', file: 'fi', label: 'Finnish' },
+  { code: 'hu', file: 'hu', label: 'Hungarian' },
+  { code: 'sk', file: 'sk', label: 'Slovak' },
+  { code: 'hr', file: 'hr', label: 'Croatian' },
+  { code: 'sr', file: 'sr', label: 'Serbian' },
+  { code: 'bg', file: 'bg', label: 'Bulgarian' },
+  { code: 'lt', file: 'lt', label: 'Lithuanian' },
+  { code: 'lv', file: 'lv', label: 'Latvian' },
+  { code: 'et', file: 'et', label: 'Estonian' }
+];
 
 function getFirebaseConfig() {
   if (window.FIREBASE_CONFIG && typeof window.FIREBASE_CONFIG === 'object') {
@@ -826,6 +883,146 @@ async function initFirebase() {
     firebaseAuth = window.firebase.auth();
 
     return firebaseAuth;
+}
+
+function getCurrentLanguageStorageKey() {
+  const userId = (user && user.id) || localStorage.getItem('mi_user_id') || '';
+  return userId ? `mi_language_${userId}` : null;
+}
+
+function getStoredLanguageCode() {
+  if (!isAuthenticated()) return 'en';
+  const storageKey = getCurrentLanguageStorageKey();
+  if (!storageKey) return 'en';
+  return localStorage.getItem(storageKey) || 'en';
+}
+
+function normalizeLanguageCode(code) {
+  const candidate = (code || 'en').toLowerCase();
+  const match = SUPPORTED_LANGUAGES.find((entry) => entry.code === candidate);
+  return match ? match.code : 'en';
+}
+
+async function loadLocale(langCode) {
+  const normalized = normalizeLanguageCode(langCode);
+  if (translationCache[normalized]) return translationCache[normalized];
+
+  const entry = SUPPORTED_LANGUAGES.find((item) => item.code === normalized) || SUPPORTED_LANGUAGES[0];
+  try {
+    const response = await fetch(`./locales/${entry.file}.json`);
+    if (!response.ok) throw new Error('missing locale');
+    const data = await response.json();
+    translationCache[normalized] = data;
+    return data;
+  } catch (error) {
+    translationCache[normalized] = {};
+    return {};
+  }
+}
+
+function t(key, fallback = '') {
+  return translations[key] || fallback || key;
+}
+
+function populateLanguageSelector() {
+  const select = document.getElementById('languageSelect');
+  if (!select) return;
+  select.innerHTML = '';
+  SUPPORTED_LANGUAGES.forEach((language) => {
+    const option = document.createElement('option');
+    option.value = language.code;
+    option.textContent = language.label;
+    select.appendChild(option);
+  });
+}
+
+function updateTranslatedUi() {
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) loginBtn.textContent = `📥 ${t('auth.login', 'Login')}`;
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.textContent = `📴 ${t('auth.logout', 'Logout')}`;
+
+  const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
+  if (newChatButton) newChatButton.innerHTML = `➕ ${t('sidebar.newChat', 'New Chat')}`;
+
+  const settingsButton = document.getElementById('settingsBtn');
+  if (settingsButton) settingsButton.innerHTML = `⚙ ${t('sidebar.settings', 'Settings')}`;
+
+  const supportButton = document.getElementById('supportBtn');
+  if (supportButton) supportButton.innerHTML = `🎧 ${t('sidebar.support', 'Customer Support')}`;
+
+  const mobileMenuClose = document.getElementById('mobileMenuClose');
+  if (mobileMenuClose) mobileMenuClose.setAttribute('aria-label', t('nav.closeMenu', 'Close menu'));
+
+  const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+  if (mobileMenuToggle) mobileMenuToggle.setAttribute('aria-label', t('nav.openMenu', 'Open menu'));
+
+  const settingsTitle = document.querySelector('#settingsPanel h3');
+  if (settingsTitle) settingsTitle.textContent = t('settings.title', 'Settings');
+
+  const languageLabel = document.querySelector('#settingsPanel label[data-i18n="settings.language"]');
+  if (languageLabel) languageLabel.textContent = t('settings.language', 'Language');
+
+  const themeLabel = document.querySelector('#settingsPanel label[data-i18n="settings.theme"]');
+  if (themeLabel) themeLabel.textContent = t('settings.theme', 'Theme');
+
+  const fontLabel = document.querySelector('#settingsPanel label[data-i18n="settings.fontSize"]');
+  if (fontLabel) fontLabel.textContent = t('settings.fontSize', 'Font Size');
+
+  const applyButton = document.querySelector('#settingsPanel button[onclick="applyTheme()"]');
+  if (applyButton) applyButton.textContent = t('settings.apply', 'Apply');
+
+  const chatInput = document.getElementById('msg');
+  if (chatInput) chatInput.placeholder = t('chat.placeholder', 'Ask from MI AI...');
+
+  const sendButton = document.getElementById('sendBtn');
+  if (sendButton) sendButton.title = t('chat.send', 'Send');
+
+  const signInTab = document.getElementById('signInTab');
+  if (signInTab) signInTab.textContent = t('auth.signIn', 'Sign In');
+
+  const registerTab = document.getElementById('registerTab');
+  if (registerTab) registerTab.textContent = t('auth.register', 'Register');
+
+  const resetButton = document.querySelector('#authForm button[onclick="handlePasswordReset()"]');
+  if (resetButton) resetButton.textContent = t('auth.resetPassword', 'Reset password');
+
+  const languageSelect = document.getElementById('languageSelect');
+  if (languageSelect) languageSelect.value = currentLanguage;
+
+  document.documentElement.setAttribute('lang', currentLanguage);
+  document.documentElement.setAttribute('dir', RTL_LANGUAGE_CODES.has(currentLanguage) ? 'rtl' : 'ltr');
+  document.body.setAttribute('dir', RTL_LANGUAGE_CODES.has(currentLanguage) ? 'rtl' : 'ltr');
+  document.body.classList.toggle('rtl', RTL_LANGUAGE_CODES.has(currentLanguage));
+  document.documentElement.classList.toggle('rtl', RTL_LANGUAGE_CODES.has(currentLanguage));
+  document.title = t('app.title', 'MI AI');
+}
+
+async function applyLanguage(langCode, persist = true) {
+  const normalized = normalizeLanguageCode(langCode);
+  const localeData = await loadLocale(normalized);
+  const fallback = translationCache.en || {};
+  translations = { ...fallback, ...(localeData || {}) };
+  currentLanguage = normalized;
+
+  updateTranslatedUi();
+
+  if (persist && isAuthenticated()) {
+    const storageKey = getCurrentLanguageStorageKey();
+    if (storageKey) {
+      localStorage.setItem(storageKey, normalized);
+    }
+  }
+
+  if (!isAuthenticated()) {
+    localStorage.removeItem('mi_current_language');
+  }
+}
+
+async function changeLanguage(langCode) {
+  const normalized = normalizeLanguageCode(langCode);
+  await applyLanguage(normalized, true);
 }
 
 function triggerFileUpload() {
@@ -1172,15 +1369,15 @@ function showLoginPrompt(chatId) {
 
     box.innerHTML = `
       <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-      <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">Login to unlock more</div>
-      <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">Enjoy these benefits when you sign in:</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">${t('auth.loginPrompt.title', 'Login to unlock more')}</div>
+      <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">${t('auth.loginPrompt.description', 'Enjoy these benefits when you sign in:')}</div>
       <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
-        <li>Save and restore your chats</li>
-        <li>Sync your history across devices</li>
-        <li>Get faster, more personal replies</li>
+        <li>${t('auth.loginPrompt.benefitSave', 'Save and restore your chats')}</li>
+        <li>${t('auth.loginPrompt.benefitSync', 'Sync your history across devices')}</li>
+        <li>${t('auth.loginPrompt.benefitPersonal', 'Get faster, more personal replies')}</li>
       </ul>
       <div style="display:flex;justify-content:center;">
-        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">Log in</button>
+        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">${t('auth.loginPrompt.button', 'Log in')}</button>
       </div>
     `;
 
@@ -1372,10 +1569,10 @@ function confirmLogout() {
     if (!box) return;
     box.innerHTML = `
       <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Are you sure you want to logout?</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
-        <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">Cancel</button>
-        <button type="button" onclick="logout()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Logout</button>
+        <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
+        <button type="button" onclick="logout()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.logout', 'Logout')}</button>
       </div>
     `;
 }
@@ -1403,6 +1600,7 @@ async function logout() {
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
 
+    await applyLanguage('en', false);
     resetChatStateForAuthChange();
     createSingleGuestChat();
     save();
@@ -1434,6 +1632,7 @@ function updateAuthControls(){
     }
 
     updateAuthReminder();
+    updateTranslatedUi();
 }
 
 function updateAuthReminder(){
@@ -3252,6 +3451,8 @@ function applyForcedLayout() {
 
 window.addEventListener("load", async () => {
     applyForcedLayout();
+    populateLanguageSelector();
+    await applyLanguage('en', false);
     await initChat();
 });
 
@@ -3275,12 +3476,26 @@ function setAuthMode(mode) {
   const registerTab = document.getElementById('registerTab');
   const form = document.getElementById('authForm');
   const message = document.getElementById('authMessage');
+  const signInText = t('auth.signIn', 'Sign In');
+  const registerText = t('auth.register', 'Register');
+  const fullNamePlaceholder = t('auth.fullName', 'Full Name');
+  const agePlaceholder = t('auth.age', 'Age');
+  const emailPlaceholder = t('auth.emailAddress', 'Email Address');
+  const newPasswordPlaceholder = t('auth.newPassword', 'New Password');
+  const confirmPasswordPlaceholder = t('auth.confirmPassword', 'Confirm Password');
+  const loginEmailPlaceholder = t('auth.email', 'Email');
+  const loginPasswordPlaceholder = t('auth.password', 'Password');
+  const resetPasswordText = t('auth.resetPassword', 'Reset password');
+  const registerButtonText = t('auth.register', 'Register');
+  const signInButtonText = t('auth.signIn', 'Sign In');
 
   if (signInTab && registerTab) {
     signInTab.style.background = mode === 'signin' ? '#38bdf8' : 'rgba(255,255,255,0.08)';
     signInTab.style.color = mode === 'signin' ? '#0f172a' : '#cbd5e1';
     registerTab.style.background = mode === 'register' ? '#38bdf8' : 'rgba(255,255,255,0.08)';
     registerTab.style.color = mode === 'register' ? '#0f172a' : '#cbd5e1';
+    signInTab.textContent = signInText;
+    registerTab.textContent = registerText;
   }
 
   if (!form) return;
@@ -3289,26 +3504,28 @@ function setAuthMode(mode) {
   if (mode === 'register') {
     form.innerHTML = `
       <div style="margin-bottom:12px;">
-        <input id="fullName" placeholder="Full Name" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="age" type="number" placeholder="Age" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="registerEmail" type="email" placeholder="Email Address" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="registerPassword" type="password" placeholder="New Password" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="confirmPassword" type="password" placeholder="Confirm Password" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
+        <input id="fullName" placeholder="${fullNamePlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
+        <input id="age" type="number" placeholder="${agePlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
+        <input id="registerEmail" type="email" placeholder="${emailPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
+        <input id="registerPassword" type="password" placeholder="${newPasswordPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
+        <input id="confirmPassword" type="password" placeholder="${confirmPasswordPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
       </div>
-      <button onclick="handleRegister()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">Register</button>
+      <button onclick="handleRegister()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">${registerButtonText}</button>
     `;
   } else {
     form.innerHTML = `
       <div style="margin-bottom:12px;">
-        <input id="loginEmail" type="email" placeholder="Email" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="loginPassword" type="password" placeholder="Password" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
+        <input id="loginEmail" type="email" placeholder="${loginEmailPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
+        <input id="loginPassword" type="password" placeholder="${loginPasswordPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
         <div style="text-align:right;margin-top:4px;">
-          <button type="button" onclick="handlePasswordReset()" style="background:none;border:none;color:#7dd3fc;padding:0;font-size:12px;cursor:pointer;">Reset password</button>
+          <button type="button" onclick="handlePasswordReset()" style="background:none;border:none;color:#7dd3fc;padding:0;font-size:12px;cursor:pointer;">${resetPasswordText}</button>
         </div>
       </div>
-      <button onclick="handleSignIn()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">Sign In</button>
+      <button onclick="handleSignIn()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">${signInButtonText}</button>
     `;
   }
+
+  updateTranslatedUi();
 }
 
 function handleSignIn() {
@@ -3322,7 +3539,7 @@ function handleRegister() {
 async function handlePasswordReset() {
   const email = document.getElementById('loginEmail')?.value.trim().toLowerCase();
   if (!email) {
-    setAuthMessage('Please enter your email address first.', true);
+    setAuthMessage(t('auth.reset.enterEmail', 'Please enter your email address first.'), true);
     return;
   }
 
@@ -3332,9 +3549,9 @@ async function handlePasswordReset() {
       url: window.location.origin || window.location.href,
     });
     document.getElementById('loginPassword').value = '';
-    setAuthMessage('A password reset email has been sent. Open it and choose a new password.', false);
+    setAuthMessage(t('auth.reset.sent', 'A password reset email has been sent. Open it and choose a new password.'), false);
   } catch (error) {
-    const message = error?.message || 'Unable to send the reset email.';
+    const message = error?.message || t('auth.reset.failed', 'Unable to send the reset email.');
     setAuthMessage(message, true);
   }
 }
@@ -3353,14 +3570,14 @@ function validateRegisterForm() {
   const password = document.getElementById('registerPassword')?.value || '';
   const confirmPassword = document.getElementById('confirmPassword')?.value || '';
 
-  if (!fullName) return 'Full Name cannot be empty.';
-  if (!ageValue) return 'Age is required.';
+  if (!fullName) return t('auth.validation.fullName', 'Full Name cannot be empty.');
+  if (!ageValue) return t('auth.validation.ageRequired', 'Age is required.');
   const age = Number(ageValue);
-  if (!Number.isInteger(age) ||100 > age > 1) return 'Age must be a valid number.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Please enter a valid email address.';
-  if (!password) return 'Password cannot be empty.';
-  if (!confirmPassword) return 'Confirm Password cannot be empty.';
-  if (password !== confirmPassword) return 'Passwords do not match.';
+  if (!Number.isInteger(age) || 100 < age || age < 1) return t('auth.validation.ageInvalid', 'Age must be a valid number.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return t('auth.validation.email', 'Please enter a valid email address.');
+  if (!password) return t('auth.validation.password', 'Password cannot be empty.');
+  if (!confirmPassword) return t('auth.validation.confirmPassword', 'Confirm Password cannot be empty.');
+  if (password !== confirmPassword) return t('auth.validation.passwordMismatch', 'Passwords do not match.');
   return '';
 }
 
@@ -3397,7 +3614,7 @@ async function registerEmail() {
     localStorage.removeItem('mi_user_email');
     
     // Show success message
-    setAuthMessage('Registration successful! A verification email has been sent. Please check your spam Folder or inbox and verify your email before signing in.', True);
+    setAuthMessage(t('auth.registerSuccess', 'Registration successful! A verification email has been sent. Please check your spam folder or inbox and verify your email before signing in.'), false);
     
     // Switch to sign in mode after a brief delay
     setTimeout(() => {
@@ -3410,9 +3627,9 @@ async function registerEmail() {
     const invalidCredentialMessage = 'INVALID EMAIL OR PASSWORD. TRY AGAIN.';
 
     if (normalized.includes('email-already-in-use') || normalized.includes('already in use')) {
-      setAuthMessage(duplicateMessage, true);
+      setAuthMessage(t('auth.errors.alreadyRegistered', duplicateMessage), true);
     } else if (normalized.includes('invalid-credential') || normalized.includes('invalid email') || normalized.includes('wrong-password')) {
-      setAuthMessage(invalidCredentialMessage, true);
+      setAuthMessage(t('auth.errors.invalidCredentials', invalidCredentialMessage), true);
     } else {
       setAuthMessage(message, true);
     }
@@ -3426,7 +3643,7 @@ async function loginEmail() {
   const password = document.getElementById('loginPassword').value;
 
   if (!email || !password) {
-    setAuthMessage('Please enter your email and password.');
+    setAuthMessage(t('auth.validation.signInRequired', 'Please enter your email and password.'));
     return;
   }
 
@@ -3449,7 +3666,7 @@ async function loginEmail() {
       localStorage.removeItem('mi_user_id');
       localStorage.removeItem('mi_user_email');
       
-      setAuthMessage('Your email is not verified. A new verification email has been sent. Please verify your email first.Please check your Spam Folder or inbox', true);
+      setAuthMessage(t('auth.unverifiedEmail', 'Your email is not verified. A new verification email has been sent. Please verify your email first. Please check your spam folder or inbox.'), true);
       return;
     }
     
@@ -3464,11 +3681,12 @@ async function loginEmail() {
     localStorage.setItem('mi_user_id', firebaseUser.uid);
     localStorage.setItem('mi_user_email', firebaseUser.email || '');
     window.dispatchEvent(new Event('mi-chat-user-changed'));
-    
+
+    await applyLanguage(getStoredLanguageCode(), false);
     updateAuthControls();
     const loginBox = document.getElementById('loginBox');
     if (loginBox) loginBox.style.display = 'none';
-    setAuthMessage('Signed in successfully.', false);
+    setAuthMessage(t('auth.signInSuccess', 'Signed in successfully.'), false);
     await loadUserChats();
   } catch (err) {
     const message = err?.message || 'Authentication failed.';
@@ -3476,7 +3694,7 @@ async function loginEmail() {
     const invalidCredentialMessage = 'INVALID EMAIL OR PASSWORD. TRY AGAIN.';
 
     if (normalized.includes('invalid-credential') || normalized.includes('invalid email') || normalized.includes('wrong-password')) {
-      setAuthMessage(invalidCredentialMessage, true);
+      setAuthMessage(t('auth.errors.invalidCredentials', invalidCredentialMessage), true);
     } else {
       setAuthMessage(message, true);
     }
