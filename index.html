@@ -248,6 +248,73 @@ bottom:auto;
 transform:scale(1.04);
 }
 
+.ai-link {
+  color: #0066cc;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.ai-link:hover {
+  color: #0052a3;
+  text-decoration-thickness: 2px;
+}
+
+.ai-link:active {
+  opacity: 0.8;
+}
+
+.ai-whatsapp {
+  color: #25D366 !important;
+}
+
+.ai-whatsapp:hover {
+  color: #1fa655 !important;
+}
+
+.ai-telegram {
+  color: #0088cc !important;
+}
+
+.ai-telegram:hover {
+  color: #006ba3 !important;
+}
+
+.ai-discord {
+  color: #5865F2 !important;
+}
+
+.ai-discord:hover {
+  color: #4752c4 !important;
+}
+
+.ai-github {
+  color: #333 !important;
+}
+
+.ai-github:hover {
+  color: #555 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-link {
+    color: #66b3ff;
+  }
+  
+  .ai-link:hover {
+    color: #99ccff;
+  }
+  
+  .ai-github {
+    color: #e0e0e0 !important;
+  }
+  
+  .ai-github:hover {
+    color: #fff !important;
+  }
+}
+
 /* ANIMATION */
 @keyframes pop{
 from{opacity:0;transform:scale(.8);}
@@ -2668,14 +2735,121 @@ function showShareFeedback(message) {
   setTimeout(() => box.remove(), 1800);
 }
 
+function linkifyText(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  // HTML escape helper
+  const escapeHtml = (str) => {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+  
+  // Track replacements to avoid double-linking
+  const replacements = [];
+  let processedText = text;
+  
+  // Pattern: URLs with protocols
+  processedText = processedText.replace(/\b(https?|ftp):\/\/[^\s<>]+/gi, (match) => {
+    let url = match.replace(/[.,;:!?\'")\]]*$/, '');
+    const link = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-link">${escapeHtml(url)}</a>`;
+    replacements.push({ original: match, replacement: link });
+    return `__LINK_${replacements.length - 1}__`;
+  });
+  
+  // Pattern: Email addresses
+  processedText = processedText.replace(/\b([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g, (match) => {
+    const link = `<a href="mailto:${match}" class="ai-link">${escapeHtml(match)}</a>`;
+    replacements.push({ replacement: link });
+    return `__LINK_${replacements.length - 1}__`;
+  });
+  
+  // Pattern: Phone numbers
+  processedText = processedText.replace(/\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b/g, (match) => {
+    const cleanPhone = match.replace(/[^\d+]/g, '');
+    const link = `<a href="tel:${cleanPhone}" class="ai-link">${escapeHtml(match)}</a>`;
+    replacements.push({ replacement: link });
+    return `__LINK_${replacements.length - 1}__`;
+  });
+  
+  // Pattern: WhatsApp
+  processedText = processedText.replace(/wa\.me\/[^\s<>]+|(?:https?:\/\/)?whatsapp\.com\/[^\s<>]+/gi, (match) => {
+    const url = match.match(/^https?:/) ? match : `https://${match}`;
+    const link = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-link ai-whatsapp">${escapeHtml(match)}</a>`;
+    replacements.push({ replacement: link });
+    return `__LINK_${replacements.length - 1}__`;
+  });
+  
+  // Pattern: Telegram
+  processedText = processedText.replace(/t\.me\/[^\s<>]+|@[a-zA-Z0-9_]{5,}/g, (match) => {
+    let url = match;
+    if (match.startsWith('@')) {
+      url = `https://t.me/${match.substring(1)}`;
+    } else if (!match.match(/^https?:/)) {
+      url = `https://${match}`;
+    }
+    const link = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-link ai-telegram">${escapeHtml(match)}</a>`;
+    replacements.push({ replacement: link });
+    return `__LINK_${replacements.length - 1}__`;
+  });
+  
+  // Pattern: Discord
+  processedText = processedText.replace(/discord\.gg\/[^\s<>]+/gi, (match) => {
+    const url = match.match(/^https?:/) ? match : `https://${match}`;
+    const link = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-link ai-discord">${escapeHtml(match)}</a>`;
+    replacements.push({ replacement: link });
+    return `__LINK_${replacements.length - 1}__`;
+  });
+  
+  // Pattern: GitHub
+  processedText = processedText.replace(/github\.com\/[a-zA-Z0-9_-]+\/[^\s<>]*/gi, (match) => {
+    const url = match.match(/^https?:/) ? match : `https://${match}`;
+    const link = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-link ai-github">${escapeHtml(match)}</a>`;
+    replacements.push({ replacement: link });
+    return `__LINK_${replacements.length - 1}__`;
+  });
+  
+  // Escape remaining HTML and preserve newlines
+  let result = escapeHtml(processedText);
+  
+  // Restore the links (they're already safe)
+  replacements.forEach((repl, idx) => {
+    result = result.replace(`__LINK_${idx}__`, repl.replacement);
+  });
+  
+  // Preserve line breaks
+  result = result.replace(/\n/g, '<br>');
+  
+  return result;
+}
+
 function isLongWritingResponse(text) {
   const value = String(text || '').trim();
   if (!value) return false;
-  if (value.length > 260) return true;
-  if (value.includes('\n\n')) return true;
-  if (value.includes('```')) return true;
-  if (/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s)/m.test(value)) return true;
-  return value.split(/\s+/).length > 80;
+  
+  // Code blocks and structured formats always get the writing card
+  if (value.includes('```')) return true; // Markdown code fences
+  if (/^(import|from|def|class|function|const|let|var|async|return|if|for|while)\s/m.test(value)) return true; // Common code keywords
+  if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP)\s/mi.test(value)) return true; // SQL
+  if (/^[\s]*[{[]|^[\s]*</m.test(value)) return true; // JSON, arrays, HTML, XML
+  if (/^---/m.test(value)) return true; // YAML/Markdown frontmatter
+  
+  // Markdown headers (any level)
+  if (/^#{1,6}\s/m.test(value)) return true;
+  
+  // Markdown lists with multiple items (4 or more)
+  const listItems = (value.match(/^[-*+]\s|^\d+\.\s/gm) || []).length;
+  if (listItems >= 4) return true;
+  
+  // Multiple paragraphs (3+) with substantial length
+  const paragraphs = value.split(/\n\n+/).length;
+  const wordCount = value.split(/\s+/).length;
+  if (paragraphs >= 3 && wordCount > 120) return true;
+  
+  // Very long responses (essay/article length)
+  if (wordCount > 180) return true;
+  
+  return false;
 }
 
 function createCopyButton(text) {
@@ -2697,12 +2871,13 @@ function appendAiMessage(container, text) {
   wrap.className = 'ai';
   const body = document.createElement('div');
   body.className = isLongWritingResponse(text) ? 'aiWritingCard' : 'aiMessageBody';
-  body.textContent = text || '';
+  body.innerHTML = linkifyText(text) || '';
   wrap.appendChild(body);
   wrap.appendChild(createCopyButton(text));
   container.appendChild(wrap);
   return wrap;
 }
+
 
 async function copyTextToClipboard(text) {
   try {
@@ -3147,6 +3322,10 @@ try{
             replyTypingTimer=null;
             replyInProgress=false;
             setReplyControlState(false);
+            
+            // Linkify the completed message
+            contentBox.innerHTML = linkifyText(aiText);
+            
             chats[conversationId].push({role:"ai",text:aiText});
             chats[conversationId].updatedAt = Date.now();
             chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
@@ -3251,6 +3430,10 @@ clearInterval(replyTypingTimer);
 replyTypingTimer=null;
 replyInProgress=false;
 setReplyControlState(false);
+
+// Linkify the completed message
+contentBox.innerHTML = linkifyText(text);
+
 chats[currentChat].push({role:"ai",text});
 save();
 maybeShowLoginPrompt(currentChat);
