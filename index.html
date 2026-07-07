@@ -2857,7 +2857,7 @@ function createCopyButton(text) {
   button.type = 'button';
   button.className = 'aiCopyButton';
   button.title = 'Copy';
-  button.innerHTML = '📋';
+  button.innerHTML = '⧉';
   button.onclick = async (event) => {
     event.stopPropagation();
     await copyTextToClipboard(text || '');
