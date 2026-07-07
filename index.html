@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 
 <style>
 
@@ -685,6 +686,160 @@ body.force-mobile-layout #settingsPanel {
   top:76px;
 }
 
+#appLockOverlay {
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,0.86);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+  padding:20px;
+}
+
+#appLockPanel {
+  width:min(92vw, 420px);
+  background:linear-gradient(135deg,#071426,#0f172a);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.36);
+  color:#f8fafc;
+}
+
+#appLockPanel .app-lock-header {
+  font-size:18px;
+  font-weight:700;
+  text-align:center;
+  margin-bottom:12px;
+}
+
+#appLockPanel .app-lock-subtext {
+  font-size:13px;
+  color:#cbd5e1;
+  text-align:center;
+  margin-bottom:14px;
+  line-height:1.5;
+}
+
+#appLockPanel .app-lock-boxes {
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin:14px 0;
+}
+
+#appLockPanel .app-lock-box {
+  width:42px;
+  height:48px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.16);
+  background:rgba(255,255,255,0.06);
+  color:#fff;
+  text-align:center;
+  font-size:20px;
+  font-weight:700;
+  outline:none;
+}
+
+#appLockPanel .app-lock-box:focus {
+  border-color:#38bdf8;
+  box-shadow:0 0 0 2px rgba(56,189,248,0.2);
+}
+
+#appLockPanel .app-lock-box.app-lock-success {
+  border-color:#22c55e;
+  background:rgba(34,197,94,0.18);
+  color:#bbf7d0;
+}
+
+#appLockPanel .app-lock-box.app-lock-error {
+  border-color:#ef4444;
+  background:rgba(239,68,68,0.16);
+  color:#fecaca;
+}
+
+#appLockPanel .app-lock-length-toggle {
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin-bottom:12px;
+}
+
+#appLockPanel .app-lock-length-toggle button,
+#appLockPanel .app-lock-button,
+#appLockPanel .app-lock-secondary-button {
+  border:none;
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+  cursor:pointer;
+  font-weight:700;
+}
+
+#appLockPanel .app-lock-length-toggle button.active,
+#appLockPanel .app-lock-button {
+  background:linear-gradient(135deg,#1e88e5,#38bdf8);
+  color:#fff;
+}
+
+#appLockPanel .app-lock-actions {
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  margin-top:12px;
+}
+
+#appLockPanel .app-lock-button:disabled {
+  opacity:0.5;
+  cursor:not-allowed;
+}
+
+#appLockPanel .app-lock-message {
+  min-height:18px;
+  font-size:13px;
+  text-align:center;
+  margin-top:10px;
+  color:#fda4af;
+}
+
+#appLockPanel .app-lock-message.success {
+  color:#86efac;
+}
+
+#appLockPanel .app-lock-forgot {
+  margin-top:12px;
+  text-align:center;
+  font-size:12px;
+  color:#7dd3fc;
+  cursor:pointer;
+}
+
+#appLockPanel .app-lock-inputs {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin:10px 0 12px;
+}
+
+#appLockPanel .app-lock-inputs input {
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.16);
+  background:#0f172a;
+  color:#fff;
+}
+
+#appLockPanel.app-lock-shake {
+  animation:appLockShake 0.28s ease;
+}
+
+@keyframes appLockShake {
+  0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 50%{transform:translateX(6px);} 75%{transform:translateX(-4px);} 
+}
+
 </style>
 </head>
 
@@ -749,6 +904,7 @@ ___________________________
 
 <label data-i18n="settings.fontSize">Font Size</label>
 <input type="range" min="12" max="25" value="15" oninput="setFont(this.value)">
+<button type="button" onclick="openAppLockSettings()" style="margin-top:10px;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">App Lock</button>
 </div>
 
 <!-- INPUT -->
@@ -1286,6 +1442,18 @@ let pendingAttachments = [];
 let attachmentUploadInProgress = false;
 let attachmentProgress = 0;
 let attachmentStatusText = '';
+let firebaseDb = null;
+let appLockOverlay = null;
+let appLockMode = 'hidden';
+let appLockSelectionLength = 4;
+let appLockPinDigits = [];
+let appLockConfirmDigits = [];
+let appLockSessionUnlocked = false;
+let appLockSettings = { enabled:false, length:4, hash:'', createdAt:null, updatedAt:null };
+let appLockMessage = '';
+let appLockPendingEmail = '';
+let appLockPendingPassword = '';
+let appLockFocusIndex = 0;
 
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
@@ -1598,6 +1766,7 @@ async function logout() {
     user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
+    appLockSessionUnlocked = false;
 
     await applyLanguage('en', false);
     resetChatStateForAuthChange();
@@ -2263,6 +2432,7 @@ try {
                 localStorage.removeItem('mi_user_email');
                 accountId = guestId;
                 localStorage.setItem('mi_account', accountId);
+                appLockSessionUnlocked = false;
                 resetChatStateForAuthChange();
                 loadGuestChats();
                 save();
@@ -2285,8 +2455,10 @@ try {
             localStorage.setItem('mi_user_email', firebaseUser.email || '');
             accountId = firebaseUser.uid;
             localStorage.setItem('mi_account', accountId);
+            appLockSessionUnlocked = false;
             await applyLanguage(getStoredLanguageCode(), false);
             await loadUserChats();
+            await maybeShowAppLockScreen();
             updateAuthControls();
             window.dispatchEvent(new Event('mi-chat-user-changed'));
         });
@@ -2297,8 +2469,10 @@ try {
 
 if (token && userId) {
     user = { id: userId, email: storedEmail || null };
+    appLockSessionUnlocked = false;
     await applyLanguage(getStoredLanguageCode(), false);
     await loadUserChats();
+    await maybeShowAppLockScreen();
 } else {
     loadGuestChats();
 }
@@ -3454,6 +3628,7 @@ window.addEventListener("load", async () => {
     applyForcedLayout();
     populateLanguageSelector();
     await applyLanguage('en', false);
+    await handleAppLockEmailLink();
     await initChat();
 });
 
@@ -3470,6 +3645,521 @@ document.addEventListener('keydown', (event) => {
     closeMobileMenu();
   }
 });
+
+async function initFirebaseDatabase() {
+  if (firebaseDb) return firebaseDb;
+  await initFirebase();
+  if (!window.firebase || !window.firebase.database) {
+    throw new Error('Firebase Realtime Database SDK failed to load.');
+  }
+  firebaseDb = window.firebase.database();
+  return firebaseDb;
+}
+
+function getCurrentUserUid() {
+  return ((user && user.id) || localStorage.getItem('mi_user_id') || '').toString().trim();
+}
+
+function getAppLockPath() {
+  const uid = getCurrentUserUid();
+  return uid ? `appLock/${uid}` : null;
+}
+
+async function loadAppLockSettings(uid = null) {
+  const targetUid = (uid || getCurrentUserUid()).toString().trim();
+  if (!targetUid) {
+    return { enabled:false, length:4, hash:'', createdAt:null, updatedAt:null };
+  }
+  try {
+    const db = await initFirebaseDatabase();
+    const snapshot = await db.ref(`appLock/${targetUid}`).once('value');
+    const data = snapshot.val() || {};
+    const nextSettings = {
+      enabled: Boolean(data.enabled),
+      length: Number(data.length) === 6 ? 6 : 4,
+      hash: data.hash || '',
+      createdAt: data.createdAt || null,
+      updatedAt: data.updatedAt || null,
+    };
+    appLockSettings = nextSettings;
+    return nextSettings;
+  } catch (e) {
+    console.error('App lock load failed', e);
+    return { enabled:false, length:4, hash:'', createdAt:null, updatedAt:null };
+  }
+}
+
+async function saveAppLockSettings(settings) {
+  const uid = getCurrentUserUid();
+  if (!uid) return false;
+  try {
+    const db = await initFirebaseDatabase();
+    const ref = db.ref(`appLock/${uid}`);
+    const existingSnap = await ref.once('value');
+    const existingData = existingSnap.val() || {};
+    const payload = {
+      enabled: Boolean(settings.enabled),
+      length: Number(settings.length) === 6 ? 6 : 4,
+      hash: String(settings.hash || ''),
+      uid,
+      createdAt: existingData.createdAt || settings.createdAt || Date.now(),
+      updatedAt: settings.updatedAt || Date.now(),
+    };
+    await ref.set(payload);
+    appLockSettings = payload;
+    return true;
+  } catch (e) {
+    console.error('App lock save failed', e);
+    return false;
+  }
+}
+
+async function hashAppLockPin(pin, uid) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${uid}:${pin}`);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyAppLockPin(pin) {
+  if (!appLockSettings.hash) return false;
+  const uid = getCurrentUserUid();
+  if (!uid) return false;
+  const expected = await hashAppLockPin(pin, uid);
+  return expected === appLockSettings.hash;
+}
+
+function createAppLockOverlay() {
+  if (appLockOverlay) return appLockOverlay;
+  appLockOverlay = document.createElement('div');
+  appLockOverlay.id = 'appLockOverlay';
+  appLockOverlay.innerHTML = `
+    <div id="appLockPanel">
+      <div id="appLockContent"></div>
+    </div>
+  `;
+  document.body.appendChild(appLockOverlay);
+  return appLockOverlay;
+}
+
+function resetAppLockEntryState() {
+  appLockPinDigits = [];
+  appLockConfirmDigits = [];
+  appLockPendingEmail = '';
+  appLockPendingPassword = '';
+  appLockMessage = '';
+  appLockFocusIndex = 0;
+}
+
+function setAppLockMessage(text, isSuccess = false) {
+  appLockMessage = text || '';
+  if (appLockOverlay) {
+    const messageNode = document.getElementById('appLockMessage');
+    if (messageNode) {
+      messageNode.textContent = appLockMessage;
+      messageNode.classList.toggle('success', isSuccess);
+    }
+  }
+}
+
+function showAppLockOverlay(mode, options = {}) {
+  createAppLockOverlay();
+  appLockMode = mode;
+  if (options.length) appLockSelectionLength = Number(options.length) === 6 ? 6 : 4;
+  resetAppLockEntryState();
+  if (options.message) {
+    setAppLockMessage(options.message, Boolean(options.success));
+  }
+  appLockOverlay.style.display = 'flex';
+  renderAppLockOverlay();
+}
+
+function hideAppLockOverlay() {
+  if (appLockOverlay) {
+    appLockOverlay.style.display = 'none';
+  }
+  appLockMode = 'hidden';
+  appLockPinDigits = [];
+  appLockConfirmDigits = [];
+  appLockMessage = '';
+}
+
+function playAppLockSuccess(panel) {
+  if (!panel) return;
+  const boxes = panel.querySelectorAll('.app-lock-box');
+  boxes.forEach((box) => box.classList.add('app-lock-success'));
+  panel.classList.remove('app-lock-shake');
+  setTimeout(() => {
+    boxes.forEach((box) => box.classList.remove('app-lock-success'));
+  }, 500);
+}
+
+function playAppLockFailure(panel) {
+  if (!panel) return;
+  const boxes = panel.querySelectorAll('.app-lock-box');
+  boxes.forEach((box) => box.classList.add('app-lock-error'));
+  panel.classList.remove('app-lock-shake');
+  void panel.offsetWidth;
+  panel.classList.add('app-lock-shake');
+  setTimeout(() => {
+    boxes.forEach((box) => box.classList.remove('app-lock-error'));
+  }, 450);
+}
+
+function getActiveAppLockDigits() {
+  return appLockMode === 'confirm' || appLockMode === 'reset-confirm' ? appLockConfirmDigits : appLockPinDigits;
+}
+
+function getAppLockLengthForMode() {
+  if (appLockMode === 'setup' || appLockMode === 'confirm' || appLockMode === 'reset' || appLockMode === 'reset-confirm') {
+    return appLockSelectionLength;
+  }
+  return appLockSettings.length || 4;
+}
+
+function renderAppLockOverlay() {
+  const content = document.getElementById('appLockContent');
+  if (!content) return;
+  const length = getAppLockLengthForMode();
+  const currentDigits = getActiveAppLockDigits();
+  let html = '';
+
+  if (appLockMode === 'setup' || appLockMode === 'reset') {
+    html += `<div class="app-lock-header">${appLockMode === 'reset' ? 'Create New Passcode' : 'New Passcode'}</div>`;
+    html += `<div class="app-lock-subtext">Choose a passcode length</div>`;
+    html += `<div class="app-lock-length-toggle">`;
+    html += `<button type="button" class="${appLockSelectionLength === 4 ? 'active' : ''}" onclick="setAppLockSelectionLength(4)">4 Digit</button>`;
+    html += `<button type="button" class="${appLockSelectionLength === 6 ? 'active' : ''}" onclick="setAppLockSelectionLength(6)">6 Digit</button>`;
+    html += `</div>`;
+    html += `<div class="app-lock-boxes">`;
+    for (let i = 0; i < length; i += 1) {
+      html += `<input class="app-lock-box" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" autocapitalize="off" autocorrect="off" spellcheck="false" value="${currentDigits[i] || ''}" />`;
+    }
+    html += `</div>`;
+    html += `<div class="app-lock-actions"><button class="app-lock-button" type="button" onclick="startAppLockSetup()" ${currentDigits.filter(Boolean).length === length ? '' : 'disabled'}>Next</button></div>`;
+    html += `<div class="app-lock-forgot" onclick="showAppLockForgotScreen()">Forgot Passcode?</div>`;
+  } else if (appLockMode === 'confirm' || appLockMode === 'reset-confirm') {
+    html += `<div class="app-lock-header">Confirm Passcode</div>`;
+    html += `<div class="app-lock-subtext">Re-enter your passcode to continue</div>`;
+    html += `<div class="app-lock-boxes">`;
+    for (let i = 0; i < length; i += 1) {
+      html += `<input class="app-lock-box" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" autocapitalize="off" autocorrect="off" spellcheck="false" value="${appLockConfirmDigits[i] || ''}" />`;
+    }
+    html += `</div>`;
+    html += `<div class="app-lock-actions"><button class="app-lock-button" type="button" onclick="saveAppLockPasscode()" ${appLockConfirmDigits.filter(Boolean).length === length ? '' : 'disabled'}>Save</button></div>`;
+    html += `<div class="app-lock-forgot" onclick="showAppLockForgotScreen()">Forgot Passcode?</div>`;
+  } else if (appLockMode === 'verify-current') {
+    html += `<div class="app-lock-header">Confirm Current Passcode</div>`;
+    html += `<div class="app-lock-subtext">Enter your existing passcode to change it</div>`;
+    html += `<div class="app-lock-boxes">`;
+    for (let i = 0; i < length; i += 1) {
+      html += `<input class="app-lock-box" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" autocapitalize="off" autocorrect="off" spellcheck="false" value="${currentDigits[i] || ''}" />`;
+    }
+    html += `</div>`;
+    html += `<div id="appLockMessage" class="app-lock-message">${appLockMessage || ''}</div>`;
+    html += `<div class="app-lock-forgot" onclick="showAppLockForgotScreen()">Forgot Passcode?</div>`;
+  } else if (appLockMode === 'lock') {
+    html += `<div class="app-lock-header">Enter your App Lock Passcode</div>`;
+    html += `<div class="app-lock-subtext">Use your saved passcode to continue</div>`;
+    html += `<div class="app-lock-boxes">`;
+    for (let i = 0; i < length; i += 1) {
+      html += `<input class="app-lock-box" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" autocapitalize="off" autocorrect="off" spellcheck="false" value="${currentDigits[i] || ''}" />`;
+    }
+    html += `</div>`;
+    html += `<div id="appLockMessage" class="app-lock-message">${appLockMessage || ''}</div>`;
+    html += `<div class="app-lock-forgot" onclick="showAppLockForgotScreen()">Forgot Passcode?</div>`;
+  } else if (appLockMode === 'forgot') {
+    html += `<div class="app-lock-header">Verify your account to reset your App Lock passcode</div>`;
+    html += `<div class="app-lock-subtext">Enter your email and password to continue</div>`;
+    html += `<div class="app-lock-inputs">`;
+    html += `<input id="appLockResetEmail" type="email" placeholder="Email Address" value="${appLockPendingEmail || ''}" />`;
+    html += `<input id="appLockResetPassword" type="password" placeholder="Account Password" value="${appLockPendingPassword || ''}" />`;
+    html += `</div>`;
+    html += `<div class="app-lock-actions"><button class="app-lock-button" type="button" onclick="verifyAppLockResetIdentity()">Verify</button><button class="app-lock-secondary-button" type="button" onclick="closeAppLockForgotScreen()">Cancel</button></div>`;
+    html += `<div id="appLockMessage" class="app-lock-message">${appLockMessage || ''}</div>`;
+  }
+
+  content.innerHTML = html;
+  const panel = document.getElementById('appLockPanel');
+  if (panel) {
+    panel.classList.remove('app-lock-shake');
+  }
+  const inputs = content.querySelectorAll('.app-lock-box');
+  inputs.forEach((input, index) => {
+    input.addEventListener('focus', () => input.select());
+    input.addEventListener('input', (event) => handleAppLockInput(index, event));
+    input.addEventListener('keydown', (event) => handleAppLockBackspace(index, event));
+    input.addEventListener('paste', (event) => event.preventDefault());
+    input.addEventListener('copy', (event) => event.preventDefault());
+    input.addEventListener('cut', (event) => event.preventDefault());
+  });
+  if (inputs.length) {
+    const targetIndex = Math.max(0, Math.min(appLockFocusIndex, inputs.length - 1));
+    setTimeout(() => {
+      const nextInput = inputs[targetIndex];
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    }, 0);
+  }
+}
+
+function setAppLockSelectionLength(length) {
+  appLockSelectionLength = Number(length) === 6 ? 6 : 4;
+  appLockPinDigits = [];
+  renderAppLockOverlay();
+}
+
+function getActiveAppLockInputValue() {
+  return (getActiveAppLockDigits().join('') || '').trim();
+}
+
+function focusAppLockInput(index) {
+  appLockFocusIndex = index;
+  const content = document.getElementById('appLockContent');
+  if (!content) return;
+  const nextInput = content.querySelectorAll('.app-lock-box')[index];
+  if (nextInput) {
+    nextInput.focus();
+    nextInput.select();
+  }
+}
+
+function updateAppLockEntry(index, value) {
+  const digits = getActiveAppLockDigits();
+  digits[index] = value;
+  if (appLockMode === 'confirm' || appLockMode === 'reset-confirm') {
+    appLockConfirmDigits = digits;
+  } else {
+    appLockPinDigits = digits;
+  }
+}
+
+function appendAppLockDigit(value, index) {
+  if (!/^[0-9]$/.test(value)) return;
+  const digits = getActiveAppLockDigits();
+  digits[index] = value;
+  if (appLockMode === 'confirm' || appLockMode === 'reset-confirm') {
+    appLockConfirmDigits = digits;
+  } else {
+    appLockPinDigits = digits;
+  }
+  if (index < getAppLockLengthForMode() - 1) {
+    focusAppLockInput(index + 1);
+  }
+  renderAppLockOverlay();
+}
+
+function handleAppLockInput(index, event) {
+  const rawValue = (event.target.value || '').replace(/\D/g, '').slice(-1);
+  event.target.value = rawValue;
+  if (rawValue) {
+    updateAppLockEntry(index, rawValue);
+    const nextIndex = index < getAppLockLengthForMode() - 1 ? index + 1 : index;
+    appLockFocusIndex = nextIndex;
+    renderAppLockOverlay();
+    if (getActiveAppLockDigits().filter(Boolean).length === getAppLockLengthForMode()) {
+      if (appLockMode === 'lock' || appLockMode === 'verify-current') {
+        verifyEnteredAppLockPin();
+      }
+    }
+  }
+}
+
+function handleAppLockBackspace(index, event) {
+  if (event.key !== 'Backspace') return;
+  event.preventDefault();
+  const digits = getActiveAppLockDigits();
+  if (digits[index]) {
+    digits[index] = '';
+    if (appLockMode === 'confirm' || appLockMode === 'reset-confirm') {
+      appLockConfirmDigits = digits;
+    } else {
+      appLockPinDigits = digits;
+    }
+    appLockFocusIndex = index;
+    renderAppLockOverlay();
+  } else if (index > 0) {
+    digits[index - 1] = '';
+    if (appLockMode === 'confirm' || appLockMode === 'reset-confirm') {
+      appLockConfirmDigits = digits;
+    } else {
+      appLockPinDigits = digits;
+    }
+    appLockFocusIndex = index - 1;
+    renderAppLockOverlay();
+  }
+}
+
+async function startAppLockSetup() {
+  const digits = appLockPinDigits.filter(Boolean);
+  if (digits.length !== getAppLockLengthForMode()) return;
+  const entered = digits.join('');
+  appLockPinDigits = entered.split('');
+  appLockConfirmDigits = [];
+  appLockMessage = '';
+  showAppLockOverlay('confirm');
+}
+
+async function saveAppLockPasscode() {
+  const pin = appLockConfirmDigits.join('');
+  const expectedPin = appLockPinDigits.join('');
+  const panel = document.getElementById('appLockPanel');
+  if (!pin || pin.length !== getAppLockLengthForMode() || pin !== expectedPin) {
+    playAppLockFailure(panel);
+    appLockConfirmDigits = [];
+    appLockMessage = 'Passcodes do not match.';
+    renderAppLockOverlay();
+    return;
+  }
+  const uid = getCurrentUserUid();
+  if (!uid) return;
+  const hash = await hashAppLockPin(pin, uid);
+  const saved = await saveAppLockSettings({ enabled:true, length:getAppLockLengthForMode(), hash });
+  if (saved) {
+    playAppLockSuccess(panel);
+    appLockSettings = { ...appLockSettings, enabled:true, length:getAppLockLengthForMode(), hash };
+    appLockSessionUnlocked = true;
+    setTimeout(() => {
+      hideAppLockOverlay();
+      appLockPinDigits = [];
+      appLockConfirmDigits = [];
+    }, 400);
+  }
+}
+
+async function verifyEnteredAppLockPin() {
+  const pin = getActiveAppLockDigits().join('');
+  if (pin.length !== getAppLockLengthForMode()) return;
+  const panel = document.getElementById('appLockPanel');
+  if (await verifyAppLockPin(pin)) {
+    playAppLockSuccess(panel);
+    appLockSessionUnlocked = true;
+    if (appLockMode === 'verify-current') {
+      appLockPinDigits = [];
+      appLockConfirmDigits = [];
+      appLockSelectionLength = appLockSettings.length || 4;
+      setTimeout(() => {
+        showAppLockOverlay('setup', { length: appLockSettings.length || 4 });
+      }, 400);
+    } else {
+      setTimeout(() => {
+        hideAppLockOverlay();
+      }, 400);
+    }
+  } else {
+    playAppLockFailure(panel);
+    appLockPinDigits = [];
+    appLockConfirmDigits = [];
+    appLockMessage = 'Incorrect passcode.';
+    renderAppLockOverlay();
+  }
+}
+
+async function openAppLockSettings() {
+  if (!isAuthenticated()) return;
+  const settings = await loadAppLockSettings();
+  appLockSettings = settings;
+  if (settings.enabled) {
+    appLockSelectionLength = settings.length || 4;
+    appLockPinDigits = [];
+    appLockConfirmDigits = [];
+    showAppLockOverlay('verify-current', { length: settings.length || 4 });
+  } else {
+    appLockSelectionLength = 4;
+    appLockPinDigits = [];
+    appLockConfirmDigits = [];
+    showAppLockOverlay('setup');
+  }
+}
+
+async function maybeShowAppLockScreen() {
+  if (!isAuthenticated()) {
+    appLockSessionUnlocked = false;
+    hideAppLockOverlay();
+    return;
+  }
+  const settings = await loadAppLockSettings();
+  if (settings.enabled && !appLockSessionUnlocked) {
+    appLockSettings = settings;
+    appLockSelectionLength = settings.length || 4;
+    appLockPinDigits = [];
+    appLockConfirmDigits = [];
+    showAppLockOverlay('lock', { length: settings.length || 4 });
+  } else {
+    hideAppLockOverlay();
+  }
+}
+
+async function verifyAppLockResetIdentity() {
+  const emailInput = document.getElementById('appLockResetEmail');
+  const passwordInput = document.getElementById('appLockResetPassword');
+  const email = (emailInput?.value || '').trim().toLowerCase();
+  const password = passwordInput?.value || '';
+  if (!email || !password) {
+    setAppLockMessage('Please enter your email and password.');
+    return;
+  }
+  try {
+    const auth = await initFirebase();
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setAppLockMessage('You must be signed in to continue.');
+      return;
+    }
+    if (currentUser.email && currentUser.email.toLowerCase() !== email) {
+      setAppLockMessage('The email must match your current account.');
+      return;
+    }
+    const credential = window.firebase.auth.EmailAuthProvider.credential(email, password);
+    await currentUser.reauthenticateWithCredential(credential);
+    const actionCodeSettings = {
+      url: `${window.location.origin}${window.location.pathname}?appLockReset=1`,
+      handleCodeInApp: true,
+    };
+    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    localStorage.setItem('appLockResetEmail', email);
+    setAppLockMessage('A verification email has been sent. Open it to continue.', true);
+    appLockPendingEmail = email;
+    appLockPendingPassword = '';
+    renderAppLockOverlay();
+  } catch (error) {
+    const message = error?.message || 'Unable to verify your account.';
+    setAppLockMessage(message);
+  }
+}
+
+async function handleAppLockEmailLink() {
+  try {
+    const auth = await initFirebase();
+    const currentUrl = window.location.href;
+    if (!auth.isSignInWithEmailLink(currentUrl)) return;
+    const storedEmail = localStorage.getItem('appLockResetEmail');
+    if (!storedEmail) return;
+    await auth.signInWithEmailLink(storedEmail, currentUrl);
+    appLockSessionUnlocked = false;
+    showAppLockOverlay('reset');
+  } catch (error) {
+    console.error('App lock reset link failed', error);
+  }
+}
+
+function showAppLockForgotScreen() {
+  appLockPendingEmail = (user && user.email) ? user.email : (localStorage.getItem('mi_user_email') || '');
+  appLockPendingPassword = '';
+  appLockMessage = '';
+  showAppLockOverlay('forgot');
+}
+
+function closeAppLockForgotScreen() {
+  if (appLockSettings.enabled) {
+    showAppLockOverlay('lock', { length: appLockSettings.length || 4 });
+  } else {
+    hideAppLockOverlay();
+  }
+}
+
 
 function setAuthMode(mode) {
   authMode = mode;
