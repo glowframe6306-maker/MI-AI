@@ -3120,52 +3120,6 @@ function shareChat(){
   menu.style.display = 'none';
 }
 
-function getChatApiCandidates() {
-  const candidates = [];
-  const origin = window.location && window.location.origin ? window.location.origin : '';
-  if (origin) {
-    candidates.push(`${origin}/chat`);
-  }
-  const hostname = window.location && window.location.hostname ? window.location.hostname : '';
-  if (hostname) {
-    candidates.push(`${window.location.protocol}//${hostname}/chat`);
-    candidates.push(`http://${hostname}:5000/chat`);
-    candidates.push(`http://${hostname}:5001/chat`);
-  }
-  candidates.push('http://127.0.0.1:5000/chat');
-  candidates.push('http://localhost:5000/chat');
-
-  return candidates.filter((value, index, arr) => arr.indexOf(value) === index);
-}
-
-async function fetchChatReply(payload, signal) {
-  const endpoints = getChatApiCandidates();
-  let lastError = null;
-
-  for (let attempt = 0; attempt < endpoints.length; attempt += 1) {
-    const endpoint = endpoints[attempt];
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal
-      });
-
-      if (response.ok) {
-        return response;
-      }
-
-      const text = await response.text().catch(() => '');
-      lastError = new Error(text || `Server returned ${response.status}`);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError || new Error('Unable to contact the AI server.');
-}
-
 /* SEND */
 function sendOrStop() {
   if (replyInProgress) {
@@ -3320,28 +3274,25 @@ chatBox.appendChild(t);
 scroll();
 
 try{
+    const API_URL = "http://127.0.0.1:5000/chat";
     replyAbortController = new AbortController();
-    const timeoutId = setTimeout(() => {
-        if (replyAbortController) {
-            replyAbortController.abort();
-        }
-    }, 30000);
-
-    try {
-        let res = await fetchChatReply({
+    let res = await fetch(API_URL, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        signal: replyAbortController.signal,
+        body: JSON.stringify({
             message: msg,
             history: history,
             conversation_id: conversationId,
             attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((attachment) => attachment.id) : []
-        }, replyAbortController.signal);
+        })
+    });
 
-        clearTimeout(timeoutId);
+    if (!res.ok) {
+        throw new Error("Server returned " + res.status);
+    }
 
-        if (!res.ok) {
-            throw new Error("Server returned " + res.status);
-        }
-
-        const data = await res.json();
+    const data = await res.json();
     const aiText = data.reply || "";
 
     t.remove();
@@ -3439,13 +3390,13 @@ try{
 
     let errorBubble=document.createElement("div");
     errorBubble.className="ai";
-    errorBubble.innerText="The AI is unavailable right now. Please try again."
+    errorBubble.innerText="Server Error ❌";
     chatBox.appendChild(errorBubble);
 
-    chats[conversationId].push({role:"ai",text:"The AI is unavailable right now. Please try again."});
+    chats[conversationId].push({role:"ai",text:"Server Error ❌"});
     chats[conversationId].updatedAt = Date.now();
     chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
-    chats[conversationId].lastPreview = "The AI is unavailable right now. Please try again.";
+    chats[conversationId].lastPreview = "Server Error ❌";
     save();
     scroll();
 
