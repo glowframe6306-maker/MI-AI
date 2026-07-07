@@ -11,7 +11,11 @@ from pathlib import Path
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from groq import Groq
+
+try:
+    from openai import OpenAI
+except Exception:
+    OpenAI = None
 
 try:
     import PyPDF2
@@ -49,48 +53,45 @@ CORS(app)
 client = None
 
 
-def _get_groq_api_key():
-    """Read the Groq API key from server-side environment variables with Vercel-safe fallbacks."""
-    candidate_names = [
-        "GROQ_API_KEY",
-        "GROQ_KEY",
-        "GROQ_APIKEY",
-        "GROQ_API_TOKEN",
-    ]
-
-    for name in candidate_names:
-        value = os.getenv(name, "")
-        if isinstance(value, str):
-            value = value.strip()
-            if value:
-                return value
+def _get_openai_api_key():
+    """Read the OpenAI API key from server-side environment variables with Vercel-safe handling."""
+    name = "OPENAI_API_KEY"
+    value = os.getenv(name, "")
+    if isinstance(value, str):
+        value = value.strip()
+        if value:
+            return value
 
     try:
         from dotenv import load_dotenv
         if load_dotenv():
-            for name in candidate_names:
-                value = os.getenv(name, "")
-                if isinstance(value, str):
-                    value = value.strip()
-                    if value:
-                        return value
+            value = os.getenv(name, "")
+            if isinstance(value, str):
+                value = value.strip()
+                if value:
+                    return value
     except Exception:
         pass
 
     return ""
 
 
-def _get_groq_client():
+def _get_openai_model():
+    model = os.getenv("OPENAI_MODEL", "").strip()
+    return model or "gpt-4o-mini"
+
+
+def _get_openai_client():
     global client
     if client is not None:
         return client
 
-    api_key = _get_groq_api_key()
-    if not api_key:
+    api_key = _get_openai_api_key()
+    if not api_key or OpenAI is None:
         return None
 
     try:
-        client = Groq(api_key=api_key)
+        client = OpenAI(api_key=api_key)
     except Exception:
         client = None
 
@@ -1331,19 +1332,18 @@ You can help with:
 
         messages_payload.append({"role": "user", "content": user_prompt})
 
-        groq_client = _get_groq_client()
-        if groq_client is None:
+        openai_client = _get_openai_client()
+        if openai_client is None:
             return jsonify({
-                "reply": "The AI service is currently unavailable because the Groq API key is not configured on the server. Please contact the administrator to set GROQ_API_KEY in the deployment environment."
+                "reply": "The AI service is currently unavailable because the OpenAI API key is not configured on the server. Please contact the administrator to set OPENAI_API_KEY in the deployment environment."
             })
 
-        response = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        response = openai_client.chat.completions.create(
+            model=_get_openai_model(),
             messages=messages_payload,
         )
 
-
-        answer=response.choices[0].message.content
+        answer = response.choices[0].message.content
 
 
         return jsonify({
