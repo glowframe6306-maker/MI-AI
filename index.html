@@ -1223,6 +1223,29 @@ function updateAuthReminder(){
     }
 }
 
+function getSharedLinkStore() {
+  try {
+    const raw = localStorage.getItem('mi_shared_chat_links');
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    console.error('Unable to read shared link store', error);
+    return {};
+  }
+}
+
+function saveSharedLinkStore(store) {
+  localStorage.setItem('mi_shared_chat_links', JSON.stringify(store));
+}
+
+function generateShortShareId() {
+  const existing = getSharedLinkStore();
+  let id = '';
+  do {
+    id = Math.random().toString(36).slice(2, 8);
+  } while (existing[id]);
+  return id;
+}
+
 function encodeSharedChatPayload(payload) {
   try {
     const json = JSON.stringify(payload);
@@ -1260,9 +1283,18 @@ function decodeSharedChatPayload(value) {
 
 function getSharedChatPayloadFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const sharedValue = params.get('share');
-  if (!sharedValue) return null;
-  return decodeSharedChatPayload(sharedValue);
+  const shortId = params.get('s') || params.get('share');
+  if (!shortId) return null;
+
+  if (shortId.length <= 8 && /^[a-z0-9]+$/i.test(shortId)) {
+    const store = getSharedLinkStore();
+    const stored = store[shortId];
+    if (stored) {
+      return stored;
+    }
+  }
+
+  return decodeSharedChatPayload(shortId);
 }
 
 function applySharedChatUi(permission) {
@@ -1705,10 +1737,12 @@ async function generateSharedChatLink(chatId) {
     createdAt: Date.now()
   };
 
-  const encodedPayload = encodeSharedChatPayload(payload);
-  const shareLink = encodedPayload
-    ? `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(encodedPayload)}`
-    : `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(JSON.stringify(payload))}`;
+  const shortId = generateShortShareId();
+  const store = getSharedLinkStore();
+  store[shortId] = payload;
+  saveSharedLinkStore(store);
+
+  const shareLink = `?s=${shortId}`;
 
   await copyTextToClipboard(shareLink);
   showShareFeedback('Copied to the clipboard.');
