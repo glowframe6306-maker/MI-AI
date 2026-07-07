@@ -1,0 +1,1160 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>MI AI ChatBOT Pro</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<style>
+
+:root{
+--main:#1e88e5;
+--bg:#0b1220;
+--panel:#111a2b;
+--ai:#263238;
+--text:#fff;
+--input:#1c2b3a;
+}
+
+*{box-sizing:border-box;}
+
+html,body{
+margin:0;
+height:100%;
+overflow:hidden;
+font-family:Arial;
+background:var(--bg);
+color:var(--text);
+transition:.3s;
+}
+
+body{display:flex;}
+
+/* SIDEBAR */
+#sidebar{
+width:260px;
+background:var(--panel);
+padding:10px;
+display:flex;
+flex-direction:column;
+}
+
+h3{text-align:center;}
+
+button{
+border:none;
+padding:10px;
+margin:5px 0;
+border-radius:10px;
+background:var(--main);
+color:white;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+/* CHAT LIST */
+.chatItem{
+padding:10px;
+margin:5px 0;
+background:#ffffff10;
+border-radius:10px;
+cursor:pointer;
+transition:.2s;
+}
+
+.chatItem:hover{
+background:var(--main);
+}
+
+/* MAIN */
+#main{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+/* HEADER */
+#header{
+height:60px;
+background:var(--panel);
+display:flex;
+align-items:center;
+gap:10px;
+padding:10px;
+font-weight:bold;
+}
+
+#header img{
+width:40px;
+height:40px;
+border-radius:50%;
+border:2px solid var(--main);
+}
+
+/* CHAT */
+#chat{
+flex:1;
+overflow-y:auto;
+padding:15px;
+scroll-behavior:smooth;
+}
+
+/* MESSAGES */
+.me,.ai{
+max-width:70%;
+padding:12px;
+margin:8px;
+border-radius:15px;
+white-space:pre-wrap;
+line-height:1.5;
+animation:pop .2s ease;
+}
+
+.me{
+background:var(--main);
+margin-left:auto;
+}
+
+.ai{
+background:var(--ai);
+}
+
+/* ANIMATION */
+@keyframes pop{
+from{opacity:0;transform:scale(.8);}
+to{opacity:1;transform:scale(1);}
+}
+
+/* THINKING */
+.thinking{
+background:var(--ai);
+padding:10px;
+border-radius:12px;
+display:flex;
+gap:6px;
+align-items:center;
+width:max-content;
+animation:blink 1.2s infinite;
+}
+
+/* MI AI pulsing effect */
+.thinking .label{
+animation:pulseText 1.2s infinite;
+font-weight:bold;
+}
+
+@keyframes pulseText{
+0%{opacity:0.2;}
+50%{opacity:1;}
+100%{opacity:0.2;}
+}
+
+.dot{
+width:6px;
+height:6px;
+background:white;
+border-radius:50%;
+animation:bounce 1s infinite;
+}
+
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
+
+@keyframes bounce{
+50%{transform:translateY(-6px);}
+}
+
+/* INPUT */
+#inputBox{
+display:flex;
+padding:10px;
+background:var(--panel);
+}
+
+textarea{
+flex:1;
+resize:none;
+border:none;
+outline:none;
+padding:10px;
+border-radius:15px;
+background:var(--input);
+color:white;
+min-height:45px;
+max-height:120px;
+}
+
+/* SETTINGS */
+#settingsPanel{
+display:none;
+position:absolute;
+right:20px;
+top:70px;
+width:250px;
+background:var(--panel);
+padding:15px;
+border-radius:12px;
+}
+
+input[type="color"],input[type="range"]{
+width:100%;
+}
+
+/* CONTEXT MENU */
+#menu{
+position:absolute;
+display:none;
+background:#111a2b;
+border:1px solid #333;
+border-radius:10px;
+overflow:hidden;
+z-index:999;
+min-width:120px;
+}
+
+#menu div{
+padding:10px;
+cursor:pointer;
+}
+
+#menu div:hover{
+background:var(--main);
+}
+
+#shareMenu{
+position:absolute;
+display:none;
+background:#111a2b;
+border:1px solid #333;
+border-radius:10px;
+overflow:hidden;
+z-index:999;
+min-width:160px;
+}
+
+#shareMenu div{
+padding:10px;
+cursor:pointer;
+}
+
+#shareMenu div:hover{
+background:var(--main);
+}
+
+#sharePanel{
+position:fixed;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%);
+background:#111a2b;
+padding:18px;
+border-radius:15px;
+z-index:10000;
+width:280px;
+display:none;
+box-shadow:0 10px 30px rgba(0,0,0,0.35);
+}
+
+#sharePanel h4{margin-top:0;}
+
+#sharePanel select,
+#sharePanel button{
+width:100%;
+padding:10px;
+margin:6px 0;
+border-radius:10px;
+border:none;
+}
+
+#shareToast{
+position:fixed;
+right:20px;
+bottom:20px;
+background:#1f8f53;
+color:white;
+padding:10px 14px;
+border-radius:999px;
+display:none;
+z-index:10001;
+box-shadow:0 8px 24px rgba(0,0,0,0.25);
+}
+
+.shareBanner{
+background:#ff7a18;
+color:white;
+padding:10px 14px;
+margin:8px 0 12px;
+border-radius:12px;
+text-align:center;
+font-weight:bold;
+}
+
+#introOverlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  color: #d4af37;
+  overflow: hidden;
+}
+
+#introTitle,
+#introSubtitle,
+#introLogo {
+  opacity: 0;
+}
+
+.introZoomIn {
+  animation: introZoomIn 1s ease forwards;
+}
+
+.introFadeIn {
+  animation: introFadeIn 1s ease forwards;
+}
+
+.introFadeOut {
+  animation: introFadeOut 0.6s ease forwards;
+}
+
+.logoZoomIn {
+  animation: logoZoomIn 0.9s ease forwards;
+}
+
+.slideLeft {
+  animation: slideLeft 0.8s ease forwards;
+}
+
+@keyframes introZoomIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes introFadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes introFadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes logoZoomIn {
+  0% { transform: scale(0.2); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideLeft {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-110%); opacity: 0; }
+}
+
+</style>
+</head>
+
+<body>
+<div id="introOverlay">
+  <div id="introTitle" style="font-size:5rem;font-weight:900;letter-spacing:0.3em;">MI AI</div>
+  <div id="introSubtitle" style="font-size:1.2rem;font-weight:700;letter-spacing:0.18em;">ASSISTANT OF M.I.MUHAMMADH</div>
+  <img id="introLogo" src="logo.png" alt="MI AI Logo" style="width:180px;height:180px;object-fit:contain;display:block;" />
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+<h3>MI AI ChatBOT</h3>
+
+<button id="loginBtn" onclick="openLogin()">📧 Email Login</button>
+
+<button id="logoutBtn" onclick="logout()" style="display:none;">
+🚪 Logout
+</button>
+
+<button onclick="newChat()">➕ New Chat</button>
+
+<button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
+
+<button id="supportBtn" onclick="customerSupport()">🎧 Customer Support</button>
+
+<div id="chatList"></div>
+
+</div>   <!-- CLOSE SIDEBAR -->
+
+<!-- MAIN -->
+<div id="main">
+<div id="header">
+<img src="logo.png">
+MI AI ChatBOT
+</div>
+
+<div id="loginBox" style="
+display:none;
+position:absolute;
+top:70px;
+left:50%;
+transform:translateX(-50%);
+background:#111a2b;
+padding:20px;
+border-radius:15px;
+z-index:999;
+width:280px;
+">
+
+<h3>Email Login</h3>
+
+<input id="email" 
+placeholder="Email"
+style="width:100%;padding:10px;margin:5px">
+
+
+<input id="password"
+type="password"
+placeholder="Password"
+style="width:100%;padding:10px;margin:5px">
+
+
+<button onclick="loginEmail()">
+Login / Create
+</button>
+
+</div>
+
+<div id="chat"></div>
+
+<!-- SETTINGS -->
+<div id="settingsPanel">
+<h3>Settings</h3>
+
+<label>Theme</label>
+<input type="color" id="themeColor">
+<button onclick="applyTheme()">Apply</button>
+
+<label>Font Size</label>
+<input type="range" min="12" max="25" value="15" oninput="setFont(this.value)">
+</div>
+
+<!-- INPUT -->
+<div id="inputBox">
+<textarea id="msg" placeholder="Ask from MI AI..."></textarea>
+<button onclick="send()">Send</button>
+</div>
+
+</div>
+
+<!-- RIGHT CLICK MENU -->
+<div id="menu">
+
+<div onclick="renameChat()">
+✏️ Rename
+</div>
+
+<div onclick="pinChat()" id="pinOption">
+📌 Pin
+</div>
+
+<div onclick="shareChat()">
+📤 Share
+</div>
+
+<div onclick="deleteChat()" style="color:red">
+🗑 Delete
+</div>
+
+<div id="shareMenu">
+<div onclick="copyAsText()">📋 Copy as a text</div>
+<div onclick="showCreateLinkPanel()">🔗 Create a link</div>
+</div>
+
+<div id="sharePanel">
+<h4>Share chat</h4>
+<label for="sharePermissionSelect">Permission</label>
+<select id="sharePermissionSelect">
+<option value="edit">Can edit</option>
+<option value="view">View only</option>
+</select>
+<button onclick="generateShareLink()">Generate link</button>
+<button onclick="hideSharePanel()">Cancel</button>
+</div>
+
+<div id="shareToast"></div>
+
+<script>
+
+const firebaseConfig = {
+
+apiKey:"AIzaSyDDsWFgmELXQBeupafAU6bGeQjvMmnSzGI",
+
+authDomain:"mi-ai-b3a57.firebaseapp.com",
+
+projectId:"mi-ai-b3a57"
+
+};
+
+
+firebase.initializeApp(firebaseConfig);
+
+
+const auth = firebase.auth();
+
+
+let user=null;
+
+let chatBox=document.getElementById("chat");
+let chatList=document.getElementById("chatList");
+let input=document.getElementById("msg");
+let menu=document.getElementById("menu");
+let shareMenu=document.getElementById("shareMenu");
+let sharePanel=document.getElementById("sharePanel");
+let shareToast=document.getElementById("shareToast");
+
+let accountId = localStorage.getItem("mi_account");
+
+// if no account exists → create automatically
+if(!accountId){
+    accountId = "acc_" + crypto.randomUUID();
+    localStorage.setItem("mi_account", accountId);
+}
+
+let chats={};
+let currentChat=null;
+let selectedChat=null;
+let isSharedView=false;
+let sharedPermission="edit";
+let sharedMessages=[];
+
+function getSharePayloadFromUrl(){
+  const params=new URLSearchParams(window.location.search);
+  const shareParam=params.get("share");
+
+  if(!shareParam) return null;
+
+  try{
+    const decoded=decodeURIComponent(atob(shareParam));
+    return JSON.parse(decoded);
+  }catch(e){
+    return null;
+  }
+}
+
+function showToast(message){
+  shareToast.innerText=message;
+  shareToast.style.display="block";
+  clearTimeout(showToast.timeout);
+  showToast.timeout=setTimeout(()=>shareToast.style.display="none",2200);
+}
+
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text);
+  }
+
+  const textarea=document.createElement("textarea");
+  textarea.value=text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+  return Promise.resolve();
+}
+
+function loadSharedChat(payload){
+  if(!payload || !Array.isArray(payload.messages)) return;
+
+  isSharedView=true;
+  sharedPermission=payload.permission === "view" ? "view" : "edit";
+  sharedMessages=payload.messages;
+  currentChat=null;
+  input.disabled=sharedPermission === "view";
+  input.placeholder=sharedPermission === "view" ? "RESTRICTED BY CHAT OWNER" : "Ask from MI AI...";
+
+  const sendBtn=document.querySelector("#inputBox button");
+  if(sendBtn){ sendBtn.disabled=sharedPermission === "view"; }
+
+  chatBox.innerHTML="";
+
+  if(sharedPermission === "view"){
+    const banner=document.createElement("div");
+    banner.className="shareBanner";
+    banner.innerText="RESTRICTED BY CHAT OWNER";
+    chatBox.appendChild(banner);
+  }
+
+  sharedMessages.forEach(m=>add(m.role,m.text,false));
+  scroll();
+}
+
+window.addEventListener("load", () => {
+  const introOverlay = document.getElementById("introOverlay");
+  const introTitle = document.getElementById("introTitle");
+  const introSubtitle = document.getElementById("introSubtitle");
+  const introLogo = document.getElementById("introLogo");
+
+  introTitle.classList.add("introZoomIn");
+  setTimeout(() => introSubtitle.classList.add("introFadeIn"), 1000);
+  setTimeout(() => {
+    introTitle.classList.add("introFadeOut");
+    introSubtitle.classList.add("introFadeOut");
+  }, 3000);
+  setTimeout(() => introLogo.classList.add("logoZoomIn"), 3300);
+  setTimeout(() => introOverlay.classList.add("slideLeft"), 4300);
+  setTimeout(() => introOverlay.style.display = "none", 5100);
+});
+
+/* LOAD */
+window.onload=function(){
+
+let saved=localStorage.getItem("mi_chats_" + accountId);
+
+if(saved){
+    chats=JSON.parse(saved);
+
+    localStorage.setItem("mi_last_account", accountId);
+}else{
+    chats={};
+}
+
+
+let theme=localStorage.getItem("theme");
+
+if(theme){
+document.documentElement.style.setProperty("--main",theme);
+}
+
+const sharedPayload=getSharePayloadFromUrl();
+
+if(sharedPayload){
+    loadSharedChat(sharedPayload);
+}else{
+    let id="chat_"+Date.now();
+
+    chats[id]=[];
+
+    currentChat=id;
+
+    save();
+
+    renderList();
+
+    openChat(id);
+}
+
+input.focus();
+
+};
+
+/* ENTER */
+input.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+if(e.shiftKey) return;
+e.preventDefault();
+send();
+}
+});
+
+/* NEW CHAT */
+function newChat(){
+isSharedView=false;
+sharedMessages=[];
+sharedPermission="edit";
+let id="chat_"+Date.now();
+chats[id]=[];
+currentChat=id;
+save();
+renderList();
+openChat(id);
+}
+
+/* OPEN */
+function openChat(id){
+isSharedView=false;
+sharedMessages=[];
+sharedPermission="edit";
+currentChat=id;
+input.disabled=false;
+input.placeholder="Ask from MI AI...";
+const sendBtn=document.querySelector("#inputBox button");
+if(sendBtn){ sendBtn.disabled=false; }
+chatBox.innerHTML="";
+chats[id].forEach(m=>add(m.role,m.text,false));
+localStorage.setItem("last_chat",id);
+}
+
+/* RENDER LIST */
+function renderList(){
+chatList.innerHTML="";
+
+let ids = Object.keys(chats);
+
+
+ids.sort((a,b)=>{
+
+if(chats[a].pin && !chats[b].pin) return -1;
+
+if(!chats[a].pin && chats[b].pin) return 1;
+
+return 0;
+
+});
+
+ids.forEach(id=>{
+let div=document.createElement("div");
+div.className="chatItem";
+div.dataset.id=id;
+div.innerText=(chats[id].pin ? "📌 " : "")+"💬 "+id;
+
+div.onclick=()=>openChat(id);
+
+/* RIGHT CLICK */
+div.oncontextmenu=(e)=>{
+
+e.preventDefault();
+
+selectedChat=id;
+
+
+document.getElementById("pinOption").innerHTML =
+chats[id].pin ? "📍 Unpin" : "📌 Pin";
+
+
+menu.style.display="block";
+menu.style.left=e.pageX+"px";
+menu.style.top=e.pageY+"px";
+
+};
+
+chatList.appendChild(div);
+});
+}
+
+/* CLOSE MENU */
+document.addEventListener("click", e => {
+  const settingsPanel = document.getElementById("settingsPanel");
+  const loginBox = document.getElementById("loginBox");
+  const supportOverlay = document.getElementById("supportOverlay");
+  const target = e.target;
+
+  if (menu.style.display === "block" && !menu.contains(target)) {
+    menu.style.display = "none";
+  }
+
+  if (shareMenu.style.display === "block" && !shareMenu.contains(target)) {
+    shareMenu.style.display = "none";
+  }
+
+  if (sharePanel.style.display === "block" && !sharePanel.contains(target)) {
+    sharePanel.style.display = "none";
+  }
+
+  if (settingsPanel && settingsPanel.style.display === "block" &&
+      !settingsPanel.contains(target) && target.id !== "settingsBtn") {
+    settingsPanel.style.display = "none";
+  }
+
+  if (loginBox && loginBox.style.display === "block" &&
+      !loginBox.contains(target) && target.id !== "loginBtn") {
+    loginBox.style.display = "none";
+  }
+
+  if (supportOverlay && !supportOverlay.contains(target) && target.id !== "supportBtn") {
+    supportOverlay.remove();
+  }
+});
+
+/* RENAME */
+function renameChat(){
+if(!selectedChat) return;
+let name=prompt("Rename chat:",selectedChat);
+if(!name) return;
+
+chats[name]=chats[selectedChat];
+delete chats[selectedChat];
+
+if(currentChat===selectedChat) currentChat=name;
+
+save();
+renderList();
+menu.style.display="none";
+}
+
+/* DELETE */
+function deleteChat(){
+if(!selectedChat) return;
+if(!confirm("Delete this chat?")) return;
+
+delete chats[selectedChat];
+
+if(currentChat===selectedChat){
+currentChat=null;
+chatBox.innerHTML="";
+}
+
+save();
+renderList();
+menu.style.display="none";
+}
+
+function pinChat(){
+
+if(!selectedChat)return;
+
+chats[selectedChat].pin =
+!chats[selectedChat].pin;
+
+
+save();
+renderList();
+
+menu.style.display="none";
+
+}
+
+
+
+
+function shareChat(){
+if(!selectedChat)return;
+menu.style.display="none";
+shareMenu.style.display="block";
+shareMenu.style.left=menu.style.left;
+shareMenu.style.top=(parseInt(menu.style.top||"0",10)+40)+"px";
+}
+
+function copyAsText(){
+if(!selectedChat)return;
+
+let copyText="";
+chats[selectedChat].forEach(m=>{
+if(m.role==="me"){
+copyText += "user -: "+m.text+"\n\n";
+}else{
+copyText += "MI AI-: "+m.text+"\n\n";
+}
+});
+
+copyToClipboard(copyText).then(()=>showToast("Copied to the clipboard."));
+shareMenu.style.display="none";
+}
+
+function showCreateLinkPanel(){
+shareMenu.style.display="none";
+sharePanel.style.display="block";
+}
+
+function hideSharePanel(){
+sharePanel.style.display="none";
+}
+
+function generateShareLink(){
+if(!selectedChat)return;
+
+const permission=document.getElementById("sharePermissionSelect").value;
+const payload={
+messages: chats[selectedChat],
+permission,
+createdAt:new Date().toISOString()
+};
+
+const encoded=btoa(encodeURIComponent(JSON.stringify(payload)));
+const shareUrl=`${window.location.href.split("?")[0]}?share=${encoded}`;
+
+copyToClipboard(shareUrl).then(()=>showToast("Copied to the clipboard."));
+sharePanel.style.display="none";
+}
+
+/* SEND */
+async function send(){
+
+let msg=input.value.trim();
+if(!msg || (!currentChat && !isSharedView)) return;
+if(isSharedView && sharedPermission === "view") return;
+
+input.value="";
+
+add("me",msg,!isSharedView);
+
+/* THINKING */
+let t=document.createElement("div");
+t.className="thinking";
+t.innerHTML=`
+<span class="label">MI AI</span>
+<span class="dot"></span>
+<span class="dot"></span>
+<span class="dot"></span>
+`;
+
+chatBox.appendChild(t);
+scroll();
+
+try{
+let res=await fetch("http://127.0.0.1:5000/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({message:msg})
+});
+
+let data=await res.json();
+
+t.remove();
+type(data.reply,!isSharedView);
+
+}catch(e){
+t.remove();
+add("ai","Server Error ❌",false);
+}
+}
+
+/* TYPE */
+function type(text,persist=true){
+let d=document.createElement("div");
+d.className="ai";
+chatBox.appendChild(d);
+
+let i=0;
+let timer=setInterval(()=>{
+d.innerText+=text[i];
+i++;
+scroll();
+
+if(i>=text.length){
+clearInterval(timer);
+if(persist){
+chats[currentChat].push({role:"ai",text});
+save();
+}else if(isSharedView){
+sharedMessages.push({role:"ai",text});
+}
+}
+},20);
+}
+
+/* ADD */
+function add(role,text,persist=true){
+let d=document.createElement("div");
+d.className=role;
+d.innerText=text;
+chatBox.appendChild(d);
+
+if(role==="me"){
+if(persist){
+chats[currentChat].push({role,text});
+save();
+}else if(isSharedView){
+sharedMessages.push({role,text});
+}
+}
+
+scroll();
+}
+
+/* SCROLL */
+function scroll(){
+chatBox.scrollTop=chatBox.scrollHeight;
+}
+
+/* SAVE */
+function save(){
+localStorage.setItem("mi_chats_" + accountId, JSON.stringify(chats));
+localStorage.setItem("mi_last_account", accountId);
+}
+
+/* SETTINGS */
+function toggleSettings(){
+let s=document.getElementById("settingsPanel");
+s.style.display=s.style.display==="block"?"none":"block";
+}
+
+/* THEME */
+function applyTheme(){
+let c=document.getElementById("themeColor").value;
+document.documentElement.style.setProperty("--main",c);
+localStorage.setItem("theme",c);
+}
+
+/* FONT */
+function setFont(v){
+chatBox.style.fontSize=v+"px";
+}
+
+/* CUSTOMER SUPPORT */
+
+function customerSupport(){
+
+let box=document.createElement("div");
+box.id = "supportOverlay";
+
+box.style.position="fixed";
+box.style.left="50%";
+box.style.top="50%";
+box.style.transform="translate(-50%,-50%)";
+box.style.background="rgba(17,26,43,0.95)";
+box.style.backdropFilter="blur(15px)";
+box.style.padding="25px";
+box.style.borderRadius="20px";
+box.style.zIndex="9999";
+box.style.width="280px";
+box.style.textAlign="center";
+box.style.boxShadow="0 0 25px #ff7a18";
+
+
+box.innerHTML=`
+
+<h3>🎧 Customer Support</h3>
+
+<p>📧 Email</p>
+
+<button onclick="openEmail()">
+miai.customerservice@gmail.com
+</button>
+
+
+<p>📱 WhatsApp</p>
+
+<button onclick="openWhatsApp()">
+0756390621
+</button>
+
+
+<button onclick="this.parentElement.remove()">
+❌ Close
+</button>
+
+`;
+
+document.body.appendChild(box);
+
+}
+
+
+
+/* EMAIL */
+
+function openEmail(){
+
+window.open(
+"https://mail.google.com/mail/?view=cm&fs=1&to=miai.customerservice@gmail.com&su=MI%20AI%20Customer%20Support",
+"_blank"
+);
+
+}
+
+
+
+/* WHATSAPP */
+
+function openWhatsApp(){
+
+window.open(
+"https://wa.me/94756390621",
+"_blank"
+);
+
+}
+
+function openLogin(){
+
+let box=document.getElementById("loginBox");
+
+box.style.display =
+box.style.display=="block"
+?"none"
+:"block";
+
+}
+
+
+function loginEmail(){
+
+let email=document.getElementById("email").value;
+
+let password=document.getElementById("password").value;
+
+
+auth.signInWithEmailAndPassword(email,password)
+
+.then(()=>{
+
+alert("Login Success ✅");
+
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
+
+})
+
+
+.catch(()=>{
+
+auth.createUserWithEmailAndPassword(email,password)
+
+.then(()=>{
+
+alert("New Account Created ✅");
+
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
+
+})
+.catch(e=>alert(e.message));
+
+});
+
+
+}
+
+
+
+function logout(){
+
+auth.signOut();
+
+alert("Logout");
+
+location.reload();
+
+}
+
+auth.onAuthStateChanged(function(currentUser){
+
+let loginBtn = document.getElementById("loginBtn");
+let logoutBtn = document.getElementById("logoutBtn");
+
+
+if(currentUser){
+
+    user = currentUser;
+
+    loginBtn.style.display="none";
+
+    logoutBtn.style.display="block";
+
+    console.log(
+    "Logged Account : " + user.email
+    );
+
+
+}else{
+
+    user=null;
+
+    loginBtn.style.display="block";
+
+    logoutBtn.style.display="none";
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
