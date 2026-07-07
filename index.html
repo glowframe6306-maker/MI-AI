@@ -889,7 +889,7 @@ async function loadUserChats() {
     localStorage.setItem('mi_account', accountId);
     const lastChatId = localStorage.getItem('last_chat');
     currentChat = lastChatId && chats[lastChatId] ? lastChatId : Object.keys(chats)[0] ?? null;
-    await save();
+    save();
     renderList();
     if (currentChat) {
       openChat(currentChat);
@@ -1787,7 +1787,7 @@ if(Object.keys(chats).length===0){
     currentChat = currentChat || Object.keys(chats)[0];
 }
 
-await save();
+save();
 renderList();
 openChat(currentChat);
 updateAuthControls();
@@ -1820,7 +1820,7 @@ async function newChat(){
                 const id = json.conversation.id;
                 chats[id] = [];
                 currentChat = id;
-                await save();
+                save();
                 renderList();
                 openChat(id);
                 return;
@@ -1843,7 +1843,7 @@ async function newChat(){
     let id="chat_"+Date.now();
     chats[id]=[];
     currentChat=id;
-    await save();
+    save();
     renderList();
     openChat(id);
 }
@@ -1982,7 +1982,7 @@ if (token && isAuthenticated()) {
   }).catch(() => {});
 }
 
-await save();
+save();
 renderList();
 menu.style.display="none";
 }
@@ -2012,7 +2012,7 @@ currentChat=null;
 chatBox.innerHTML="";
 }
 
-await save();
+save();
 renderList();
 menu.style.display="none";
 }
@@ -2025,7 +2025,7 @@ chats[selectedChat].pin =
 !chats[selectedChat].pin;
 
 
-await save();
+save();
 renderList();
 
 menu.style.display="none";
@@ -2332,7 +2332,7 @@ if(!currentChat){
     const fallbackId="chat_"+Date.now();
     chats[fallbackId]=[];
     currentChat=fallbackId;
-    await save();
+    save();
     renderList();
 }
 
@@ -2425,7 +2425,7 @@ replyTypingTimer=null;
 replyInProgress=false;
 setReplyControlState(false);
 chats[currentChat].push({role:"ai",text});
-await save();
+save();
 maybeShowLoginPrompt(currentChat);
 }
 },20);
@@ -2442,7 +2442,7 @@ chats[currentChat].push({role,text});
 chats[currentChat].updatedAt = Date.now();
 chats[currentChat].messageCount = (chats[currentChat].messageCount || 0) + 1;
 chats[currentChat].lastPreview = text;
-await save();
+save();
 
 // If the user is authenticated, persist the message to the server as well
 try {
@@ -2529,7 +2529,7 @@ async function save() {
 }
 
 function persistChats() {
-    await save();
+    save();
 }
 
 function setReplyControlState(isActive) {
