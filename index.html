@@ -886,12 +886,11 @@ async function initFirebase() {
 }
 
 function getCurrentLanguageStorageKey() {
-  const userId = (user && user.id) || localStorage.getItem('mi_user_id') || '';
+  const userId = ((user && user.id) || localStorage.getItem('mi_user_id') || '').toString().trim();
   return userId ? `mi_language_${userId}` : null;
 }
 
 function getStoredLanguageCode() {
-  if (!isAuthenticated()) return 'en';
   const storageKey = getCurrentLanguageStorageKey();
   if (!storageKey) return 'en';
   return localStorage.getItem(storageKey) || 'en';
@@ -2286,6 +2285,7 @@ try {
             localStorage.setItem('mi_user_email', firebaseUser.email || '');
             accountId = firebaseUser.uid;
             localStorage.setItem('mi_account', accountId);
+            await applyLanguage(getStoredLanguageCode(), false);
             await loadUserChats();
             updateAuthControls();
             window.dispatchEvent(new Event('mi-chat-user-changed'));
@@ -2297,6 +2297,7 @@ try {
 
 if (token && userId) {
     user = { id: userId, email: storedEmail || null };
+    await applyLanguage(getStoredLanguageCode(), false);
     await loadUserChats();
 } else {
     loadGuestChats();
