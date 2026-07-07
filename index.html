@@ -2336,11 +2336,64 @@ if(!currentChat){
     renderList();
 }
 
+const conversationId=currentChat;
+const token = localStorage.getItem('mi_supabase_token');
+const userId = localStorage.getItem('mi_user_id') || '';
+const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+
 input.value="";
 replyInProgress = true;
 setReplyControlState(true);
 
-add("me",msg);
+let userBubble=document.createElement("div");
+userBubble.className="me";
+userBubble.innerText=msg;
+chatBox.appendChild(userBubble);
+
+chats[conversationId].push({role:"me",text:msg});
+chats[conversationId].updatedAt = Date.now();
+chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+chats[conversationId].lastPreview = msg;
+save();
+scroll();
+
+try{
+    if (token && conversationId) {
+        const headers = {
+            "Content-Type":"application/json",
+            "Authorization":"Bearer " + token,
+            "X-Session-Id": accountId || userId || "",
+            "X-User-Id": userId || "",
+            "X-User-Email": storedEmail || ""
+        };
+
+        const messageRes = await fetch("/api/messages", {
+            method:"POST",
+            headers: headers,
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                session_id: accountId || userId || "",
+                role: "me",
+                content: msg
+            })
+        });
+
+        if (messageRes.ok) {
+            await fetch("/api/conversations/" + encodeURIComponent(conversationId), {
+                method:"PATCH",
+                headers: headers,
+                body: JSON.stringify({
+                    title: chats[conversationId].title || "New chat",
+                    updated_at: new Date().toISOString(),
+                    last_preview: msg,
+                    message_count: chats[conversationId].messageCount || 0
+                })
+            }).catch(() => {});
+        }
+    }
+} catch (e) {
+    console.error("Failed to save user message", e);
+}
 
 /* THINKING */
 let t=document.createElement("div");
@@ -2357,7 +2410,7 @@ scroll();
 
 try{
     const API_URL = "http://127.0.0.1:5000/chat";
-    const history = (chats[currentChat] || []).map((message) => ({
+    const history = (chats[conversationId] || []).map((message) => ({
         role: message.role === 'me' ? 'user' : 'assistant',
         content: message.text || ''
     }));
@@ -2367,9 +2420,9 @@ try{
         headers:{"Content-Type":"application/json"},
         signal: replyAbortController.signal,
         body: JSON.stringify({
-    message: msg,
-    history: history
-}),
+            message: msg,
+            history: history
+        })
     });
 
     if (!res.ok) {
@@ -2377,9 +2430,80 @@ try{
     }
 
     const data = await res.json();
+    const aiText = data.reply || "";
 
     t.remove();
-    type(data.reply);
+
+    let d=document.createElement("div");
+    d.className="ai";
+    chatBox.appendChild(d);
+
+    let i=0;
+    replyTypingTimer=setInterval(()=>{
+        if(!replyInProgress){
+            clearInterval(replyTypingTimer);
+            replyTypingTimer=null;
+            return;
+        }
+
+        d.innerText+=aiText[i];
+        i++;
+        scroll();
+
+        if(i>=aiText.length){
+            clearInterval(replyTypingTimer);
+            replyTypingTimer=null;
+            replyInProgress=false;
+            setReplyControlState(false);
+            chats[conversationId].push({role:"ai",text:aiText});
+            chats[conversationId].updatedAt = Date.now();
+            chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+            chats[conversationId].lastPreview = aiText;
+            save();
+            scroll();
+            maybeShowLoginPrompt(conversationId);
+
+            (async () => {
+                try {
+                    if (token && conversationId) {
+                        const headers = {
+                            "Content-Type":"application/json",
+                            "Authorization":"Bearer " + token,
+                            "X-Session-Id": accountId || userId || "",
+                            "X-User-Id": userId || "",
+                            "X-User-Email": storedEmail || ""
+                        };
+
+                        const aiMessageRes = await fetch("/api/messages", {
+                            method:"POST",
+                            headers: headers,
+                            body: JSON.stringify({
+                                conversation_id: conversationId,
+                                session_id: accountId || userId || "",
+                                role: "ai",
+                                content: aiText
+                            })
+                        });
+
+                        if (aiMessageRes.ok) {
+                            await fetch("/api/conversations/" + encodeURIComponent(conversationId), {
+                                method:"PATCH",
+                                headers: headers,
+                                body: JSON.stringify({
+                                    title: chats[conversationId].title || "New chat",
+                                    updated_at: new Date().toISOString(),
+                                    last_preview: aiText,
+                                    message_count: chats[conversationId].messageCount || 0
+                                })
+                            }).catch(() => {});
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to save AI reply", e);
+                }
+            })();
+        }
+    },20);
 } catch (e) {
     if (e && e.name === 'AbortError') {
         replyInProgress = false;
@@ -2393,10 +2517,17 @@ try{
     replyInProgress = false;
     setReplyControlState(false);
 
-    add(
-        "ai",
-        "Server Error ❌"
-    );
+    let errorBubble=document.createElement("div");
+    errorBubble.className="ai";
+    errorBubble.innerText="Server Error ❌";
+    chatBox.appendChild(errorBubble);
+
+    chats[conversationId].push({role:"ai",text:"Server Error ❌"});
+    chats[conversationId].updatedAt = Date.now();
+    chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+    chats[conversationId].lastPreview = "Server Error ❌";
+    save();
+    scroll();
 
 }
 }
