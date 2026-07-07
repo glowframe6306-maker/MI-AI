@@ -3138,50 +3138,6 @@ function getChatApiCandidates() {
   return candidates.filter((value, index, arr) => arr.indexOf(value) === index);
 }
 
-function getApiBaseCandidates() {
-  const candidates = [];
-  const origin = window.location && window.location.origin ? window.location.origin : '';
-  if (origin) {
-    candidates.push(origin);
-  }
-  const hostname = window.location && window.location.hostname ? window.location.hostname : '';
-  if (hostname) {
-    candidates.push(`${window.location.protocol}//${hostname}`);
-    candidates.push(`http://${hostname}:5000`);
-    candidates.push(`http://${hostname}:5001`);
-  }
-  candidates.push('http://127.0.0.1:5000');
-  candidates.push('http://localhost:5000');
-
-  return candidates.filter((value, index, arr) => arr.indexOf(value) === index);
-}
-
-async function fetchJsonWithFallback(path, options = {}, signal) {
-  const endpoints = getApiBaseCandidates().map((base) => `${base}${path}`);
-  let lastError = null;
-
-  for (let attempt = 0; attempt < endpoints.length; attempt += 1) {
-    const endpoint = endpoints[attempt];
-    try {
-      const response = await fetch(endpoint, {
-        ...options,
-        signal
-      });
-
-      if (response.ok) {
-        return response;
-      }
-
-      const text = await response.text().catch(() => '');
-      lastError = new Error(text || `Server returned ${response.status}`);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError || new Error('Unable to contact the AI server.');
-}
-
 async function fetchChatReply(payload, signal) {
   const endpoints = getChatApiCandidates();
   let lastError = null;
@@ -3314,7 +3270,7 @@ try{
             "X-User-Email": storedEmail || ""
         };
 
-        const messageRes = await fetchJsonWithFallback("/api/messages", {
+        const messageRes = await fetch("/api/messages", {
             method:"POST",
             headers: headers,
             body: JSON.stringify({
@@ -3334,7 +3290,7 @@ try{
         });
 
         if (messageRes.ok) {
-            await fetchJsonWithFallback("/api/conversations/" + encodeURIComponent(conversationId), {
+            await fetch("/api/conversations/" + encodeURIComponent(conversationId), {
                 method:"PATCH",
                 headers: headers,
                 body: JSON.stringify({
@@ -3438,7 +3394,7 @@ try{
                             "X-User-Email": storedEmail || ""
                         };
 
-                        const aiMessageRes = await fetchJsonWithFallback("/api/messages", {
+                        const aiMessageRes = await fetch("/api/messages", {
                             method:"POST",
                             headers: headers,
                             body: JSON.stringify({
@@ -3450,7 +3406,7 @@ try{
                         });
 
                         if (aiMessageRes.ok) {
-                            await fetchJsonWithFallback("/api/conversations/" + encodeURIComponent(conversationId), {
+                            await fetch("/api/conversations/" + encodeURIComponent(conversationId), {
                                 method:"PATCH",
                                 headers: headers,
                                 body: JSON.stringify({
