@@ -753,8 +753,8 @@ ___________________________
   <div style="display:flex;flex:1;flex-direction:column;gap:8px;">
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
-      <button id="sendBtn" type="button" onclick="send()">↑</button>
-      <button id="replyControlBtn" type="button" onclick="stopReply()" style="min-width:90px;">Auto Stop</button>
+      <button id="sendBtn" type="button" onclick="sendOrStop()">↑</button>
+      <button id="replyControlBtn" type="button" onclick="stopReply()" style="display:none;min-width:90px;">Stop</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -2179,7 +2179,8 @@ function shareChat(){
   if (!chatId || !chats[chatId]) return;
 
   if (!isAuthenticated()) {
-    showLoginPrompt(chatId);
+    showShareFeedback('Please log in to share chats.');
+    openLogin();
     return;
   }
 
@@ -2217,6 +2218,14 @@ function shareChat(){
 }
 
 /* SEND */
+function sendOrStop() {
+  if (replyInProgress) {
+    stopReply();
+    return;
+  }
+  send();
+}
+
 async function send(){
 
 if (replyInProgress) return;
@@ -2392,10 +2401,15 @@ function persistChats() {
 }
 
 function setReplyControlState(isActive) {
-    const button = document.getElementById('replyControlBtn');
-    if (!button) return;
-    button.textContent = isActive ? 'Stop' : 'Auto Stop';
-    button.disabled = false;
+    const sendButton = document.getElementById('sendBtn');
+    const stopButton = document.getElementById('replyControlBtn');
+    if (sendButton) {
+        sendButton.innerHTML = isActive ? '⏹' : '↑';
+        sendButton.title = isActive ? 'Stop reply' : 'Send message';
+    }
+    if (stopButton) {
+        stopButton.style.display = isActive ? 'inline-flex' : 'none';
+    }
 }
 
 function stopReply() {
