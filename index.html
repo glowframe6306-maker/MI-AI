@@ -751,10 +751,14 @@ ___________________________
 <!-- INPUT -->
 <div id="inputBox">
   <div style="display:flex;flex:1;flex-direction:column;gap:8px;">
+    <div id="attachmentPreview" style="display:none;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#e2e8f0;font-size:13px;"></div>
+    <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
+      <button id="attachBtn" type="button" onclick="triggerFileUpload()" style="padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.12);color:#fff;cursor:pointer;">📎</button>
       <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
       <button id="sendBtn" type="button" onclick="sendOrStop()">↑</button>
     </div>
+    <input id="fileInput" type="file" accept=".pdf,.docx,.txt,.xlsx,.csv,.pptx,.png,.jpg,.jpeg,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/png,image/jpeg,image/webp" style="display:none" onchange="handleFileSelection(event)">
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
 </div>
@@ -826,6 +830,150 @@ async function initFirebase() {
     return firebaseAuth;
 }
 
+function triggerFileUpload() {
+  const input = document.getElementById('fileInput');
+  if (input) input.click();
+}
+
+function setAttachmentUiState(isVisible, message, progressValue) {
+  const preview = document.getElementById('attachmentPreview');
+  const progress = document.getElementById('attachmentProgress');
+  if (!preview || !progress) return;
+  if (isVisible) {
+    preview.style.display = 'block';
+    preview.innerHTML = message;
+  } else {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+  }
+  if (progressValue !== undefined && progressValue !== null) {
+    progress.style.display = 'block';
+    progress.textContent = progressValue;
+  } else {
+    progress.style.display = 'none';
+    progress.textContent = '';
+  }
+}
+
+function renderPendingAttachmentPreview() {
+  if (!pendingAttachment) {
+    setAttachmentUiState(false, '', '');
+    return;
+  }
+
+  const sizeInMb = (pendingAttachment.size / (1024 * 1024)).toFixed(2);
+  const label = pendingAttachment.type || 'File';
+  const icon = pendingAttachment.type && pendingAttachment.type.startsWith('image/') ? '🖼️' : '📄';
+  const html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">${icon}</span>
+        <div>
+          <div style="font-weight:700;">${pendingAttachment.name}</div>
+          <div style="font-size:12px;color:#94a3b8;">${label} • ${sizeInMb} MB</div>
+        </div>
+      </div>
+      <button type="button" onclick="removePendingAttachment()" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
+    </div>
+  `;
+  setAttachmentUiState(true, html, '');
+}
+
+function handleFileSelection(event) {
+  const input = event.target;
+  const file = input && input.files ? input.files[0] : null;
+  if (!file) return;
+
+  const allowedExtensions = ['.pdf', '.docx', '.txt', '.xlsx', '.csv', '.pptx', '.png', '.jpg', '.jpeg', '.webp'];
+  const allowedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'image/png', 'image/jpeg', 'image/webp'];
+  const ext = (file.name || '').substring((file.name || '').lastIndexOf('.')).toLowerCase();
+  const mimeOk = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(ext);
+  if (!mimeOk) {
+    alert('Unsupported file type. Please upload a supported document or image.');
+    input.value = '';
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    alert('File is too large. Maximum upload size is 20 MB.');
+    input.value = '';
+    return;
+  }
+
+  pendingAttachment = file;
+  attachmentUploadInProgress = false;
+  attachmentProgress = 0;
+  attachmentStatusText = '';
+  renderPendingAttachmentPreview();
+  input.value = '';
+}
+
+function removePendingAttachment() {
+  pendingAttachment = null;
+  attachmentUploadInProgress = false;
+  attachmentProgress = 0;
+  attachmentStatusText = '';
+  renderPendingAttachmentPreview();
+}
+
+async function uploadPendingAttachment() {
+  if (!pendingAttachment) return null;
+  if (!currentChat) return null;
+  if (attachmentUploadInProgress) return null;
+
+  const token = localStorage.getItem('mi_supabase_token');
+  if (!token) {
+    alert('Please sign in before uploading files.');
+    return null;
+  }
+
+  attachmentUploadInProgress = true;
+  attachmentProgress = 0;
+  attachmentStatusText = 'Uploading file...';
+  setAttachmentUiState(true, pendingAttachment.name, 'Uploading file...');
+
+  const formData = new FormData();
+  formData.append('file', pendingAttachment);
+  formData.append('conversation_id', currentChat);
+
+  return await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload', true);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        attachmentProgress = Math.round((event.loaded / event.total) * 100);
+        attachmentStatusText = 'Uploading file... ' + attachmentProgress + '%';
+        setAttachmentUiState(true, pendingAttachment.name, attachmentStatusText);
+      }
+    };
+    xhr.onload = () => {
+      attachmentUploadInProgress = false;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText || '{}');
+          if (data && data.attachment) {
+            attachmentStatusText = 'File uploaded';
+            setAttachmentUiState(true, pendingAttachment.name, attachmentStatusText);
+            resolve(data.attachment);
+          } else {
+            reject(new Error('Upload failed'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      } else {
+        reject(new Error('Upload failed'));
+      }
+    };
+    xhr.onerror = () => {
+      attachmentUploadInProgress = false;
+      reject(new Error('Upload failed'));
+    };
+    xhr.send(formData);
+  });
+}
+
 async function loadUserChats() {
   const token = localStorage.getItem('mi_supabase_token');
   const userId = localStorage.getItem('mi_user_id');
@@ -854,6 +1002,7 @@ async function loadUserChats() {
         chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
         chatMessages.lastPreview = conversation.last_preview || '';
         chatMessages.messageCount = conversation.message_count || 0;
+        chatMessages.attachments = [];
 
         try {
           const messagesRes = await fetch('/api/messages?conversation_id=' + encodeURIComponent(conversationId), {
@@ -878,6 +1027,22 @@ async function loadUserChats() {
           }
         } catch (e) {
           // keep the conversation with whatever metadata we already have
+        }
+
+        try {
+          const attachmentsRes = await fetch('/api/conversations/' + encodeURIComponent(conversationId) + '/attachments', {
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'X-User-Id': userId,
+              'X-User-Email': email,
+            },
+          });
+          const attachmentsJson = await attachmentsRes.json();
+          if (attachmentsRes.ok && Array.isArray(attachmentsJson.attachments)) {
+            chatMessages.attachments = attachmentsJson.attachments;
+          }
+        } catch (e) {
+          // ignore attachment fetch failures
         }
 
         loadedChats[conversationId] = chatMessages;
@@ -987,6 +1152,10 @@ let sharedChatData = null;
 let replyAbortController = null;
 let replyTypingTimer = null;
 let replyInProgress = false;
+let pendingAttachment = null;
+let attachmentUploadInProgress = false;
+let attachmentProgress = 0;
+let attachmentStatusText = '';
 
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
@@ -1871,7 +2040,20 @@ if (!chatBox) {
     return;
 }
 chatBox.innerHTML="";
-(chats[id] || []).forEach(m => {
+const chatData = chats[id] || [];
+const attachments = Array.isArray(chatData.attachments) ? chatData.attachments : [];
+if (attachments.length > 0) {
+    const attachmentBox = document.createElement('div');
+    attachmentBox.style.marginBottom = '12px';
+    attachmentBox.innerHTML = attachments.map((attachment) => `
+      <div style="margin-bottom:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#f8fafc;">
+        <div style="font-size:13px;font-weight:700;">📎 ${attachment.file_name || 'Uploaded file'}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} • ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
+      </div>
+    `).join('');
+    chatBox.appendChild(attachmentBox);
+}
+(Array.isArray(chatData) ? chatData : []).forEach(m => {
     let d = document.createElement("div");
     d.className = m.role;
     d.innerText = m.text;
@@ -2359,6 +2541,40 @@ input.value="";
 replyInProgress = true;
 setReplyControlState(true);
 
+let uploadedAttachment = null;
+try {
+    uploadedAttachment = pendingAttachment ? await uploadPendingAttachment() : null;
+    if (pendingAttachment && !uploadedAttachment) {
+        replyInProgress = false;
+        setReplyControlState(false);
+        setAttachmentUiState(true, pendingAttachment.name, 'Upload failed');
+        return;
+    }
+} catch (e) {
+    replyInProgress = false;
+    setReplyControlState(false);
+    setAttachmentUiState(true, pendingAttachment ? pendingAttachment.name : '', 'Upload failed');
+    console.error(e);
+    return;
+}
+
+if (uploadedAttachment) {
+    if (!Array.isArray(chats[conversationId].attachments)) {
+        chats[conversationId].attachments = [];
+    }
+    chats[conversationId].attachments = chats[conversationId].attachments.filter((attachment) => attachment.id !== uploadedAttachment.id);
+    chats[conversationId].attachments.push(uploadedAttachment);
+    chats[conversationId].updatedAt = Date.now();
+    save();
+    pendingAttachment = null;
+    renderPendingAttachmentPreview();
+}
+
+const history = (chats[conversationId] || []).map((message) => ({
+    role: message.role === 'me' ? 'user' : 'assistant',
+    content: message.text || ''
+}));
+
 let userBubble=document.createElement("div");
 userBubble.className="me";
 userBubble.innerText=msg;
@@ -2424,10 +2640,6 @@ scroll();
 
 try{
     const API_URL = "http://127.0.0.1:5000/chat";
-    const history = (chats[conversationId] || []).map((message) => ({
-        role: message.role === 'me' ? 'user' : 'assistant',
-        content: message.text || ''
-    }));
     replyAbortController = new AbortController();
     let res = await fetch(API_URL, {
         method:"POST",
@@ -2435,7 +2647,8 @@ try{
         signal: replyAbortController.signal,
         body: JSON.stringify({
             message: msg,
-            history: history
+            history: history,
+            attachment_id: uploadedAttachment ? uploadedAttachment.id : null
         })
     });
 
