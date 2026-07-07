@@ -1604,44 +1604,35 @@ chatBox.appendChild(t);
 scroll();
 
 try{
-    const API_URL = "/api/chat";
+    const API_URL = "http://127.0.0.1:5000/chat";
     let res = await fetch(API_URL, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            message: msg,
-            conversation_id: currentChat,
-            session_id: accountId,
-            user_id: accountId,
-            user_email: user ? user.email : null,
-        }),
+        body: JSON.stringify({
+    message: msg
+}),
     });
 
     if (!res.ok) {
         throw new Error("Server returned " + res.status);
     }
 
-    const text = await res.text();
-
-    let data;
-
-    try {
-        data = JSON.parse(text);
-    } catch {
-        data = { reply: text || "No response received." };
-    }
+    const data = await res.json();
 
     t.remove();
-    type(data.reply || "No response received.");
+    type(data.reply);
 } catch (e) {
 
     console.error(e);
 
     t.remove();
 
-    add("ai",
-        "❌ Error : " + (e.message || "Unable to reach the assistant")
-    );
+   console.error(e);
+
+add(
+    "ai",
+    "Server Error ❌"
+);0
 
 }
 }
