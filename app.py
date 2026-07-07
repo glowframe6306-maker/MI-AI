@@ -49,14 +49,51 @@ CORS(app)
 client = None
 
 
+def _get_groq_api_key():
+    """Read the Groq API key from server-side environment variables with Vercel-safe fallbacks."""
+    candidate_names = [
+        "GROQ_API_KEY",
+        "GROQ_KEY",
+        "GROQ_APIKEY",
+        "GROQ_API_TOKEN",
+    ]
+
+    for name in candidate_names:
+        value = os.getenv(name, "")
+        if isinstance(value, str):
+            value = value.strip()
+            if value:
+                return value
+
+    try:
+        from dotenv import load_dotenv
+        if load_dotenv():
+            for name in candidate_names:
+                value = os.getenv(name, "")
+                if isinstance(value, str):
+                    value = value.strip()
+                    if value:
+                        return value
+    except Exception:
+        pass
+
+    return ""
+
+
 def _get_groq_client():
     global client
     if client is not None:
         return client
-    api_key = os.getenv("GROQ_API_KEY", "").strip()
+
+    api_key = _get_groq_api_key()
     if not api_key:
         return None
-    client = Groq(api_key=api_key)
+
+    try:
+        client = Groq(api_key=api_key)
+    except Exception:
+        client = None
+
     return client
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
@@ -1297,7 +1334,7 @@ You can help with:
         groq_client = _get_groq_client()
         if groq_client is None:
             return jsonify({
-                "reply": "The Groq API key is not configured. Please set GROQ_API_KEY to enable chat replies."
+                "reply": "The AI service is currently unavailable because the Groq API key is not configured on the server. Please contact the administrator to set GROQ_API_KEY in the deployment environment."
             })
 
         response = groq_client.chat.completions.create(
