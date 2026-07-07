@@ -110,9 +110,29 @@ def _needs_live_web_search(text):
     lowered = text.lower()
     patterns = [
         r"\b(latest|current|today|now|live|breaking|recent|this week|this month|upcoming|tonight|weather|news|stock|price|forecast|schedule|result|score|release|latest news|what['’]?s happening|who won|what time|what day|when does|where is|how much is)\b",
-        r"\b(what['’]?s the latest|what['’]?s happening|recent updates|up to date|today['’]?s|current status)\b"
+        r"\b(what['’]?s the latest|what['’]?s happening|recent updates|up to date|today['’]?s|current status)\b",
+        r"\b(search|find|look up|google|online|internet|official website|official docs|documentation|github|youtube|image|video|pdf|research|map|maps|restaurant|hotel|hospital|bank|mosque|temple|school|product|price|cheapest|compare|best product|buy|flight|hotel|shop|shopping|location|address)\b"
     ]
     return any(re.search(pattern, lowered) for pattern in patterns)
+
+
+def _classify_search_intent(text):
+    lowered = (text or "").lower()
+    if any(keyword in lowered for keyword in ["image", "picture", "photo", "images", "show me a picture", "show me", "kaputa"]):
+        return "images"
+    if any(keyword in lowered for keyword in ["video", "tutorial", "interview", "documentary", "song", "gameplay", "movie trailer", "youtube"]):
+        return "videos"
+    if any(keyword in lowered for keyword in ["pdf", "research paper", "manual", "documentation", "user guide", "guide", "doc"]):
+        return "documents"
+    if any(keyword in lowered for keyword in ["price", "buy", "cheapest", "compare", "best product", "product", "shopping", "shop"]):
+        return "shopping"
+    if any(keyword in lowered for keyword in ["restaurant", "hotel", "hospital", "bank", "police", "mosque", "temple", "school", "nearest", "map", "maps", "location", "address"]):
+        return "maps"
+    if any(keyword in lowered for keyword in ["news", "latest", "breaking", "current events", "today", "tonight", "recent"]):
+        return "news"
+    if any(keyword in lowered for keyword in ["github", "npm", "pypi", "firebase", "supabase", "openai", "groq", "cloudflare", "vercel", "mdn", "stackoverflow", "official docs", "official website"]):
+        return "developer"
+    return "web"
 
 
 def _fetch_web_search_results(query, limit=4):
@@ -142,17 +162,345 @@ def _fetch_web_search_results(query, limit=4):
     return results
 
 
+def _build_search_links(query, intent):
+    encoded_query = urllib.parse.quote(query)
+    if intent == "images":
+        return [
+            f"https://www.google.com/search?tbm=isch&q={encoded_query}",
+            f"https://duckduckgo.com/?q={encoded_query}&iax=images&ia=images",
+        ]
+    if intent == "videos":
+        return [
+            f"https://www.youtube.com/results?search_query={encoded_query}",
+            f"https://www.google.com/search?tbm=vid&q={encoded_query}",
+        ]
+    if intent == "maps":
+        return [
+            f"https://www.google.com/maps/search/{encoded_query}",
+            f"https://www.google.com/search?q={encoded_query}+map",
+        ]
+    if intent == "news":
+        return [
+            f"https://news.google.com/search?q={encoded_query}",
+            f"https://www.google.com/search?q={encoded_query}+news",
+        ]
+    if intent == "documents":
+        return [
+            f"https://www.google.com/search?q={encoded_query}+pdf",
+            f"https://www.google.com/search?q={encoded_query}+documentation",
+        ]
+    if intent == "shopping":
+        return [
+            f"https://www.google.com/search?q={encoded_query}+price+official+store",
+            f"https://www.google.com/search?q={encoded_query}+buy",
+        ]
+    if intent == "developer":
+        return [
+            f"https://www.google.com/search?q={encoded_query}+official+documentation",
+            f"https://www.google.com/search?q={encoded_query}+github",
+        ]
+    return [
+        f"https://www.google.com/search?q={encoded_query}",
+        f"https://duckduckgo.com/?q={encoded_query}",
+        f"https://en.wikipedia.org/wiki/Special:Search?search={encoded_query}",
+    ]
+
+
 def _build_live_search_context(user_message):
     if not _needs_live_web_search(user_message):
         return ""
+
     query = user_message.strip()
+    intent = _classify_search_intent(query)
     results = _fetch_web_search_results(query, limit=4)
-    if not results:
-        return ""
+    search_links = _build_search_links(query, intent)
+
     context_lines = ["Live web context:"]
-    for index, item in enumerate(results, 1):
-        context_lines.append(f"{index}. {item['title']} - {item['url']}")
+    if results:
+        context_lines.append("Web results:")
+        for index, item in enumerate(results, 1):
+            context_lines.append(f"{index}. {item['title']} - {item['url']}")
+
+    if search_links:
+        context_lines.append("Suggested sources:")
+        for index, link in enumerate(search_links, 1):
+            context_lines.append(f"{index}. {link}")
+
     return "\n".join(context_lines)
+
+
+# ==================== REAL-TIME ACCESS SYSTEM ====================
+
+def _needs_real_time_data(text):
+    """Detect if user query requires real-time data"""
+    if not text:
+        return False
+    lowered = text.lower()
+    
+    real_time_patterns = [
+        # Time and date
+        r"\b(what time|what['']?s the time|current time|what is|what['']?s today|today['']?s date|current date|what day)\b",
+        # Weather
+        r"\b(weather|temperature|rain|raining|forecast|humidity|wind speed|sunrise|sunset|air quality|uv index|storm|cold|hot|snow|cloudy|sunny)\b",
+        # Sports
+        r"\b(score|match|game|cricket|football|basketball|tennis|volleyball|formula 1|f1|live|sports|league|table|standings|fixtures|results|player stats|tournament)\b",
+        # News and current events
+        r"\b(news|breaking|latest|current events|elections|announcements|trending)\b",
+        # Crypto and market
+        r"\b(bitcoin|ethereum|crypto|price|stock|market|gold|silver|dollar|exchange rate|usd|gbp|eur|inr|lkr)\b",
+        # Traffic and transport
+        r"\b(traffic|flight status|train|bus|public transport|fuel price|petrol|diesel|current)\b",
+        # Disasters and alerts
+        r"\b(earthquake|weather warning|alert|emergency|disaster)\b",
+        # Time zones and world clock
+        r"\b(time zone|world clock|time in|country time|city time)\b",
+    ]
+    return any(re.search(pattern, lowered) for pattern in real_time_patterns)
+
+
+def _detect_real_time_type(text):
+    """Identify what type of real-time data is needed"""
+    lowered = text.lower()
+
+    if any(kw in lowered for kw in ["what time", "current time", "what['']?s the time", "time now", "what time is it"]):
+        return "time"
+    if any(kw in lowered for kw in ["weather", "temperature", "rain", "raining", "forecast", "humidity", "wind", "sunrise", "sunset", "air quality", "uv", "sunny", "cloudy"]):
+        return "weather"
+    if any(kw in lowered for kw in ["bitcoin", "ethereum", "crypto", "btc", "eth"]):
+        return "crypto"
+    if any(kw in lowered for kw in ["stock", "market", "nasdaq", "s&p", "dow"]):
+        return "stocks"
+    if any(kw in lowered for kw in ["cricket", "football", "soccer", "basketball", "tennis", "volleyball", "f1", "formula 1", "live score", "match score"]):
+        return "sports"
+    if any(kw in lowered for kw in ["exchange rate", "currency", "usd", "eur", "gbp", "inr", "lkr"]):
+        return "currency"
+    if any(kw in lowered for kw in ["gold", "silver", "precious", "commodity", "gold price", "silver price"]):
+        return "commodities"
+    if any(kw in lowered for kw in ["news", "breaking", "latest", "current events", "elections", "announcements", "trending"]):
+        return "news"
+    if any(kw in lowered for kw in ["flight", "train", "bus", "transport", "fuel price", "petrol", "diesel"]):
+        return "transport"
+    if any(kw in lowered for kw in ["traffic", "road", "congestion"]):
+        return "traffic"
+    if any(kw in lowered for kw in ["earthquake", "weather warning", "alert", "emergency", "disaster"]):
+        return "alerts"
+
+    return "general"
+
+
+def _extract_location(text):
+    """Extract a likely location from a user query for weather or local queries."""
+    if not text:
+        return ""
+    lowered = text.lower().strip()
+    if not lowered:
+        return ""
+
+    prefixes = ["in ", "at ", "for ", "near ", "around "]
+    for prefix in prefixes:
+        pos = lowered.find(prefix)
+        if pos != -1:
+            candidate = lowered[pos + len(prefix):].strip()
+            candidate = re.split(r"\b(today|now|tomorrow|this week|this month|weather|temperature|rain|forecast|time|date)\b", candidate)[0].strip()
+            candidate = re.sub(r"[^a-zA-Z0-9\s,.-]", "", candidate).strip()
+            if candidate:
+                return candidate.title()
+
+    if " in " in lowered:
+        parts = lowered.split(" in ", 1)[1]
+        parts = re.split(r"\b(today|now|tomorrow|this week|this month|weather|temperature|rain|forecast|time|date)\b", parts)[0].strip()
+        parts = re.sub(r"[^a-zA-Z0-9\s,.-]", "", parts).strip()
+        if parts:
+            return parts.title()
+
+    return ""
+
+
+def _fetch_current_time():
+    """Fetch current time and date"""
+    try:
+        import datetime
+        now = datetime.datetime.now()
+        return {
+            "time": now.strftime("%H:%M:%S"),
+            "date": now.strftime("%A, %B %d, %Y"),
+            "timestamp": now.isoformat(),
+            "timezone": "Local"
+        }
+    except Exception as e:
+        return {"error": f"Could not fetch time: {str(e)}"}
+
+
+def _fetch_weather_data(location="auto"):
+    """Fetch weather data using Open-Meteo (free, no API key required)."""
+    try:
+        if location and location != "auto":
+            loc_query = urllib.parse.quote(location)
+            geocode_url = f"https://geocoding-api.open-meteo.com/v1/search?name={loc_query}&count=1&language=en&format=json"
+            request = urllib.request.Request(
+                geocode_url,
+                headers={"User-Agent": "Mozilla/5.0"}
+            )
+            with urllib.request.urlopen(request, timeout=5) as response:
+                geo_data = json.loads(response.read().decode("utf-8"))
+                results = geo_data.get("results") or []
+                if results:
+                    result = results[0]
+                    latitude = result.get("latitude")
+                    longitude = result.get("longitude")
+                    location_name = result.get("name") or location
+                else:
+                    raise ValueError("Location not found")
+        else:
+            latitude = 40.7128
+            longitude = -74.0060
+            location_name = "New York"
+
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto"
+
+        request = urllib.request.Request(
+            weather_url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+
+        with urllib.request.urlopen(request, timeout=5) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            current = data.get("current", {})
+            daily = (data.get("daily") or {})
+            return {
+                "location": location_name,
+                "temperature": f"{current.get('temperature_2m')}°F",
+                "humidity": f"{current.get('relative_humidity_2m')}%",
+                "wind_speed": f"{current.get('wind_speed_10m')} mph",
+                "weather_code": current.get("weather_code"),
+                "sunrise": daily.get("sunrise", [None])[0],
+                "sunset": daily.get("sunset", [None])[0],
+                "source": "Open-Meteo"
+            }
+    except Exception as e:
+        return {"error": f"Could not fetch weather: {str(e)}"}
+
+
+def _fetch_crypto_prices():
+    """Fetch cryptocurrency prices from CoinGecko (free API)"""
+    try:
+        crypto_url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,cardano&vs_currencies=usd&include_market_cap=true&include_24hr_change=true"
+        
+        request = urllib.request.Request(
+            crypto_url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        
+        with urllib.request.urlopen(request, timeout=5) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            return {
+                "bitcoin": data.get("bitcoin", {}).get("usd"),
+                "bitcoin_change": data.get("bitcoin", {}).get("usd_24h_change"),
+                "ethereum": data.get("ethereum", {}).get("usd"),
+                "ethereum_change": data.get("ethereum", {}).get("usd_24h_change"),
+                "cardano": data.get("cardano", {}).get("usd"),
+                "cardano_change": data.get("cardano", {}).get("usd_24h_change"),
+                "source": "CoinGecko"
+            }
+    except Exception as e:
+        return {"error": f"Could not fetch crypto prices: {str(e)}"}
+
+
+def _fetch_exchange_rates():
+    """Fetch currency exchange rates from exchangerate-api (limited free tier)"""
+    try:
+        # Using a free endpoint that doesn't require auth
+        rates_url = "https://api.exchangerate-api.com/v4/latest/USD"
+        
+        request = urllib.request.Request(
+            rates_url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        
+        with urllib.request.urlopen(request, timeout=5) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            rates = data.get("rates", {})
+            
+            return {
+                "base": "USD",
+                "eur": rates.get("EUR"),
+                "gbp": rates.get("GBP"),
+                "inr": rates.get("INR"),
+                "lkr": rates.get("LKR"),
+                "jpy": rates.get("JPY"),
+                "aud": rates.get("AUD"),
+                "timestamp": data.get("time_last_updated"),
+                "source": "ExchangeRate-API"
+            }
+    except Exception as e:
+        return {"error": f"Could not fetch exchange rates: {str(e)}"}
+
+
+def _build_real_time_context(user_message):
+    """Build real-time data context based on user query."""
+    if not _needs_real_time_data(user_message):
+        return ""
+
+    data_type = _detect_real_time_type(user_message)
+    location = _extract_location(user_message)
+    context_lines = ["Real-Time Data Context:"]
+
+    try:
+        if data_type == "time":
+            time_data = _fetch_current_time()
+            if "error" not in time_data:
+                context_lines.append(f"Current time: {time_data['time']}")
+                context_lines.append(f"Current date: {time_data['date']}")
+                context_lines.append(f"Timezone: {time_data['timezone']}")
+
+        elif data_type == "weather":
+            weather_data = _fetch_weather_data(location or None)
+            if "error" not in weather_data:
+                context_lines.append(f"Location: {weather_data['location']}")
+                context_lines.append(f"Temperature: {weather_data['temperature']}")
+                context_lines.append(f"Humidity: {weather_data['humidity']}")
+                context_lines.append(f"Wind Speed: {weather_data['wind_speed']}")
+                if weather_data.get("sunrise"):
+                    context_lines.append(f"Sunrise: {weather_data['sunrise']}")
+                if weather_data.get("sunset"):
+                    context_lines.append(f"Sunset: {weather_data['sunset']}")
+                context_lines.append(f"Source: {weather_data['source']}")
+
+        elif data_type == "crypto":
+            crypto_data = _fetch_crypto_prices()
+            if "error" not in crypto_data:
+                context_lines.append(f"Bitcoin: ${crypto_data['bitcoin']} ({crypto_data['bitcoin_change']:+.2f}%)")
+                context_lines.append(f"Ethereum: ${crypto_data['ethereum']} ({crypto_data['ethereum_change']:+.2f}%)")
+                context_lines.append(f"Cardano: ${crypto_data['cardano']} ({crypto_data['cardano_change']:+.2f}%)")
+                context_lines.append(f"Source: {crypto_data['source']}")
+
+        elif data_type == "currency":
+            rates_data = _fetch_exchange_rates()
+            if "error" not in rates_data:
+                context_lines.append(f"Base Currency: {rates_data['base']}")
+                context_lines.append(f"EUR: {rates_data['eur']}")
+                context_lines.append(f"GBP: {rates_data['gbp']}")
+                context_lines.append(f"INR: {rates_data['inr']}")
+                context_lines.append(f"LKR: {rates_data['lkr']}")
+                context_lines.append(f"Source: {rates_data['source']}")
+
+        elif data_type == "commodities":
+            context_lines.append("Commodity price lookup requested.")
+            context_lines.append("Use official market or commodity sources where available.")
+
+        else:
+            search_results = _fetch_web_search_results(user_message, limit=3)
+            if search_results:
+                context_lines.append("Latest Results:")
+                for idx, result in enumerate(search_results, 1):
+                    context_lines.append(f"{idx}. {result['title']} - {result['url']}")
+
+    except Exception:
+        context_lines.append("Live data is temporarily unavailable. Please try again shortly.")
+
+    if len(context_lines) > 1:
+        return "\n".join(context_lines)
+    return ""
 
 
 def _extract_text_from_file(file_path, filename):
@@ -675,6 +1023,29 @@ IMPORTANT:
 10. If the user asks about an uploaded file, answer using the attached file content as the primary source of truth.
 11. For images, documents, spreadsheets, slides, and PDFs, analyze the complete content and answer any question from it.
 12. For multiple files, use the relevant one(s) that match the user's question.
+13. If the user asks for current or online information, treat the live web context as a primary source and prefer official or reputable sources when available.
+14. When live web context is provided, answer using it to support the response, but clearly say if something could not be verified.
+15. If the user asks for images, videos, official websites, documentation, software downloads, GitHub repositories, maps, PDFs, manuals, or guides, include relevant clickable links whenever possible and prefer official sources over third-party websites.
+16. For image requests, provide a Google Images or trusted image-search link when appropriate.
+17. For video requests, provide a YouTube or trusted video-search link when appropriate.
+18. For documentation or software requests, provide the official documentation or download page when possible.
+19. For location or map requests, provide a Google Maps link when appropriate.
+20. For GitHub or developer-resource requests, provide the official repository or documentation link when possible.
+21. Never invent or guess a link; if no reliable source is known, say so clearly.
+22. When real-time data is provided (time, weather, sports scores, cryptocurrency prices, exchange rates, etc.), ALWAYS use this data as the source of truth for current information.
+23. If the user asks for current time, weather, live sports scores, cryptocurrency prices, currency exchange rates, flight status, news, or any time-sensitive information, prioritize the real-time data provided.
+24. Never provide outdated or cached information when real-time data is available.
+25. If real-time data is temporarily unavailable, clearly inform the user instead of providing potentially false information.
+26. For weather queries, provide temperature, humidity, wind speed, and any relevant forecasts when available.
+27. For sports queries, provide live scores, match statistics, and league standings when available.
+28. For cryptocurrency queries, provide current prices and 24-hour change percentages.
+29. For currency exchange queries, provide current conversion rates between major currencies.
+30. Always mention the source and timestamp of real-time data when appropriate.
+31. By default, always provide a complete, detailed, and helpful answer. Do not intentionally be brief unless the user explicitly asks for a short response.
+32. If the user does not ask for a short answer, explain the topic clearly, include important details, examples when helpful, steps when explaining a process, and warnings or notes when relevant.
+33. For explanations, tutorials, coding questions, programming, comparisons, troubleshooting, research, science, mathematics, history, travel, and product recommendations, give a fuller and more comprehensive answer.
+34. Only use a short answer if the user explicitly requests one, for example with words like: short answer, briefly, one sentence, summarize, TL;DR, or concise.
+35. Do not stop after only one or two sentences when more useful information can be provided.
 LANGUAGE RULE:
 - Detect the language of the user's latest message.
 - Reply ONLY in that language.
@@ -900,14 +1271,26 @@ You can help with:
             if role in {"user", "assistant", "system"} and content:
                 messages_payload.append({"role": role, "content": content})
 
+        # Fetch both live web search and real-time data
         search_context = _build_live_search_context(user_message)
+        real_time_context = _build_real_time_context(user_message)
+        
         if attachment_context:
             user_prompt = f"{user_message}\n\n[Uploaded file context]\n{attachment_context}"
         else:
             user_prompt = user_message
 
+        # Combine contexts with appropriate instructions
+        context_parts = []
+        if real_time_context:
+            context_parts.append(real_time_context)
+            context_parts.append("Use this real-time data to provide the most current and accurate information.")
         if search_context:
-            user_prompt = f"{user_prompt}\n\n{search_context}\n\nIf the search results do not clearly answer the question, state that you could not verify the latest information."
+            context_parts.append(search_context)
+            context_parts.append("If the search results do not clearly answer the question, state that you could not verify the latest information.")
+        
+        if context_parts:
+            user_prompt = f"{user_prompt}\n\n" + "\n\n".join(context_parts)
 
         messages_payload.append({"role": "user", "content": user_prompt})
 
