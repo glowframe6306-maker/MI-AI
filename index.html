@@ -1223,10 +1223,38 @@ function updateAuthReminder(){
     }
 }
 
+function getSharedLinkStore() {
+  try {
+    const raw = localStorage.getItem('mi_shared_chat_links');
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    console.error('Unable to read shared link store', error);
+    return {};
+  }
+}
+
+function saveSharedLinkStore(store) {
+  localStorage.setItem('mi_shared_chat_links', JSON.stringify(store));
+}
+
+function generateShortShareId() {
+  const existing = getSharedLinkStore();
+  let id = '';
+  do {
+    id = Math.random().toString(36).slice(2, 8);
+  } while (existing[id]);
+  return id;
+}
+
 function getSharedChatPayloadFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const sharedValue = params.get('share');
+  const sharedValue = params.get('s') || params.get('share');
   if (!sharedValue) return null;
+
+  if (sharedValue.length <= 8 && /^[a-z0-9]+$/i.test(sharedValue)) {
+    const store = getSharedLinkStore();
+    return store[sharedValue] || null;
+  }
 
   try {
     const parsed = JSON.parse(sharedValue);
@@ -1678,9 +1706,12 @@ async function generateSharedChatLink(chatId) {
     createdAt: Date.now()
   };
 
-  const url = new URL(window.location.href);
-  url.searchParams.set('share', JSON.stringify(payload));
-  const shareLink = url.toString();
+  const shortId = generateShortShareId();
+  const store = getSharedLinkStore();
+  store[shortId] = payload;
+  saveSharedLinkStore(store);
+
+  const shareLink = `?s=${shortId}`;
 
   await copyTextToClipboard(shareLink);
   showShareFeedback('Copied to the clipboard.');
