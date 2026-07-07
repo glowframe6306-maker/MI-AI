@@ -1742,7 +1742,7 @@ if (token && userId) {
                 chats[c.id] = [];
                 // fetch messages for each conversation (lightweight)
                 try {
-                    const mres = await fetch('/api/messages?conversation_id=' + encodeURIComponent(c.id), { headers: { 'Authorization': 'Bearer ' + token } });
+                    const mres = await fetch('/api/messages?conversation_id=' + encodeURIComponent(c.id), { headers: { 'Authorization': 'Bearer ' + token, 'X-Session-Id': accountId || userId || '' } });
                     const mjson = await mres.json();
                     if (mres.ok && Array.isArray(mjson.messages)) {
                         chats[c.id] = mjson.messages.map(m => ({ role: m.role === 'me' ? 'me' : 'ai', text: m.content }));
@@ -1822,7 +1822,7 @@ async function newChat(){
     if (token) {
         // create conversation on server
         try {
-            const res = await fetch('/api/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ title: 'New chat', session_id: accountId }) });
+            const res = await fetch('/api/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Session-Id': accountId || userId || '' }, body: JSON.stringify({ title: 'New chat', session_id: accountId }) });
             const json = await res.json();
             if (res.ok && json.conversation && json.conversation.id) {
                 const id = json.conversation.id;
@@ -2442,7 +2442,7 @@ try {
     if (token) {
         fetch('/api/messages', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Session-Id': accountId || userId || '' },
             body: JSON.stringify({ conversation_id: currentChat, session_id: accountId, role: role === 'me' ? 'me' : 'ai', content: text })
         }).catch(() => {});
     }
