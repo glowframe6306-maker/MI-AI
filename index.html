@@ -194,6 +194,7 @@ border-radius:15px;
 white-space:pre-wrap;
 line-height:1.5;
 animation:pop .2s ease;
+position:relative;
 }
 
 .me{
@@ -203,6 +204,48 @@ margin-left:auto;
 
 .ai{
 background:var(--ai);
+}
+
+.aiMessageBody,
+.aiWritingCard{
+white-space:pre-wrap;
+word-break:break-word;
+line-height:1.5;
+}
+
+.aiWritingCard{
+background:rgba(255,255,255,0.06);
+border:1px solid rgba(255,255,255,0.1);
+border-radius:12px;
+padding:12px 42px 12px 12px;
+}
+
+.aiCopyButton{
+position:absolute;
+right:8px;
+bottom:8px;
+width:26px;
+height:26px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:999px;
+background:rgba(255,255,255,0.12);
+color:#fff;
+font-size:12px;
+padding:0;
+margin:0;
+box-shadow:0 6px 14px rgba(0,0,0,0.16);
+}
+
+.aiWritingCard .aiCopyButton{
+right:8px;
+top:8px;
+bottom:auto;
+}
+
+.aiCopyButton:hover{
+transform:scale(1.04);
 }
 
 /* ANIMATION */
@@ -698,10 +741,8 @@ body.force-mobile-layout #settingsPanel {
 </div>
 
 <button onclick="newChat()">➕ New Chat</button>
-
-<button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
-___________________________
 <button id="supportBtn" onclick="customerSupport()">🎧 Customer Support</button>
+<button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
 
 <div id="chatList"></div>
 
@@ -2415,10 +2456,14 @@ if (attachments.length > 0) {
     chatBox.appendChild(attachmentBox);
 }
 (Array.isArray(chatData) ? chatData : []).forEach(m => {
-    let d = document.createElement("div");
-    d.className = m.role;
-    d.innerText = m.text;
-    chatBox.appendChild(d);
+    if (m.role === 'ai') {
+        appendAiMessage(chatBox, m.text);
+    } else {
+        let d = document.createElement("div");
+        d.className = m.role;
+        d.textContent = m.text;
+        chatBox.appendChild(d);
+    }
 });
 localStorage.setItem("last_chat",id);
 }
@@ -2623,13 +2668,49 @@ function showShareFeedback(message) {
   setTimeout(() => box.remove(), 1800);
 }
 
+function isLongWritingResponse(text) {
+  const value = String(text || '').trim();
+  if (!value) return false;
+  if (value.length > 260) return true;
+  if (value.includes('\n\n')) return true;
+  if (value.includes('```')) return true;
+  if (/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s)/m.test(value)) return true;
+  return value.split(/\s+/).length > 80;
+}
+
+function createCopyButton(text) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'aiCopyButton';
+  button.title = 'Copy';
+  button.innerHTML = '📋';
+  button.onclick = async (event) => {
+    event.stopPropagation();
+    await copyTextToClipboard(text || '');
+    showShareFeedback('Copied!');
+  };
+  return button;
+}
+
+function appendAiMessage(container, text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ai';
+  const body = document.createElement('div');
+  body.className = isLongWritingResponse(text) ? 'aiWritingCard' : 'aiMessageBody';
+  body.textContent = text || '';
+  wrap.appendChild(body);
+  wrap.appendChild(createCopyButton(text));
+  container.appendChild(wrap);
+  return wrap;
+}
+
 async function copyTextToClipboard(text) {
   try {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(text || '');
     return true;
   } catch (error) {
     const temp = document.createElement('textarea');
-    temp.value = text;
+    temp.value = text || '';
     temp.setAttribute('readonly', '');
     temp.style.position = 'fixed';
     temp.style.left = '-9999px';
@@ -3041,8 +3122,12 @@ try{
 
     t.remove();
 
-    let d=document.createElement("div");
+    const d = document.createElement("div");
     d.className="ai";
+    const contentBox = document.createElement('div');
+    contentBox.className = isLongWritingResponse(aiText) ? 'aiWritingCard' : 'aiMessageBody';
+    d.appendChild(contentBox);
+    d.appendChild(createCopyButton(aiText));
     chatBox.appendChild(d);
 
     let i=0;
@@ -3053,7 +3138,7 @@ try{
             return;
         }
 
-        d.innerText+=aiText[i];
+        contentBox.textContent += aiText[i];
         i++;
         scroll();
 
@@ -3143,6 +3228,10 @@ try{
 function type(text){
 let d=document.createElement("div");
 d.className="ai";
+const contentBox=document.createElement('div');
+contentBox.className=isLongWritingResponse(text) ? 'aiWritingCard' : 'aiMessageBody';
+d.appendChild(contentBox);
+d.appendChild(createCopyButton(text));
 chatBox.appendChild(d);
 
 let i=0;
@@ -3153,7 +3242,7 @@ replyTypingTimer=null;
 return;
 }
 
-d.innerText+=text[i];
+contentBox.textContent+=text[i];
 i++;
 scroll();
 
@@ -3173,7 +3262,11 @@ maybeShowLoginPrompt(currentChat);
 function add(role,text){
 let d=document.createElement("div");
 d.className=role;
-d.innerText=text;
+if (role === 'ai') {
+    appendAiMessage(chatBox, text);
+    return;
+}
+d.textContent=text;
 chatBox.appendChild(d);
 
 chats[currentChat].push({role,text});
