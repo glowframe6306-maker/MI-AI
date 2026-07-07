@@ -749,8 +749,11 @@ ___________________________
 
 <!-- INPUT -->
 <div id="inputBox">
-<textarea id="msg" placeholder="Ask from MI AI..."></textarea>
-<button onclick="send()">↑</button>
+  <div style="display:flex;flex:1;flex-direction:column;gap:8px;">
+    <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
+    <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
+  </div>
+  <button onclick="send()">↑</button>
 </div>
 <div id="watermark">MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION. </div>
 <div id="watermark">CREATED AND POWERED BY M.I.MUHAMMADH</div>
@@ -905,6 +908,8 @@ if (!accountId) {
 let chats = {};
 let currentChat = null;
 let selectedChat = null;
+let shareOverlay = null;
+let sharedChatData = null;
 
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
@@ -1218,6 +1223,35 @@ function updateAuthReminder(){
     }
 }
 
+function getSharedChatPayloadFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const sharedValue = params.get('share');
+  if (!sharedValue) return null;
+
+  try {
+    const parsed = JSON.parse(sharedValue);
+    if (!parsed || !Array.isArray(parsed.messages)) return null;
+    return parsed;
+  } catch (error) {
+    console.error('Unable to parse shared chat payload', error);
+    return null;
+  }
+}
+
+function applySharedChatUi(permission) {
+  const inputField = document.getElementById('msg');
+  const sendButton = document.querySelector('#inputBox button');
+  const notice = document.getElementById('sharedRestrictionMessage');
+  const isViewOnly = permission === 'view';
+
+  if (inputField) inputField.disabled = isViewOnly;
+  if (sendButton) sendButton.disabled = isViewOnly;
+  if (notice) {
+    notice.style.display = isViewOnly ? 'block' : 'none';
+    notice.textContent = isViewOnly ? 'RESTRICTED BY CHAT OWNER' : '';
+  }
+}
+
 async function initChat(){
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -1241,6 +1275,31 @@ chatList = document.getElementById("chatList");
 input = document.getElementById("msg");
 menu = document.getElementById("menu");
 authReminder = document.getElementById("authReminder");
+
+const sharedPayload = getSharedChatPayloadFromUrl();
+if (sharedPayload) {
+    sharedChatData = sharedPayload;
+    const sharedId = sharedPayload.chatId || 'shared_' + Date.now();
+    chats = { [sharedId]: Array.isArray(sharedPayload.messages) ? sharedPayload.messages : [] };
+    currentChat = sharedId;
+    applySharedChatUi(sharedPayload.permission === 'view' ? 'view' : 'edit');
+    renderList();
+    openChat(currentChat);
+    updateAuthControls();
+
+    if (input) {
+        input.focus();
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                if (e.shiftKey) return;
+                e.preventDefault();
+                send();
+            }
+        });
+    }
+
+    return;
+}
 
 let token = localStorage.getItem('mi_supabase_token');
 let userId = localStorage.getItem('mi_user_id');
@@ -1468,6 +1527,11 @@ function closeAllOverlays(target) {
   if (supportOverlay && !supportOverlay.contains(target) && target.id !== "supportBtn") {
     supportOverlay.remove();
   }
+
+  if (shareOverlay && !shareOverlay.contains(target)) {
+    shareOverlay.remove();
+    shareOverlay = null;
+  }
 }
 
 document.addEventListener("pointerdown", e => {
@@ -1526,54 +1590,147 @@ menu.style.display="none";
 
 
 
+function removeShareOverlay() {
+  if (shareOverlay && shareOverlay.parentNode) {
+    shareOverlay.parentNode.removeChild(shareOverlay);
+  }
+  shareOverlay = null;
+}
+
+function showShareFeedback(message) {
+  const existing = document.getElementById('shareFeedback');
+  if (existing) existing.remove();
+
+  const box = document.createElement('div');
+  box.id = 'shareFeedback';
+  box.style.position = 'fixed';
+  box.style.left = '50%';
+  box.style.bottom = '24px';
+  box.style.transform = 'translateX(-50%)';
+  box.style.background = 'rgba(15, 23, 42, 0.96)';
+  box.style.color = '#f8fafc';
+  box.style.padding = '10px 14px';
+  box.style.borderRadius = '999px';
+  box.style.zIndex = '10001';
+  box.style.boxShadow = '0 12px 28px rgba(0,0,0,0.28)';
+  box.style.fontSize = '13px';
+  box.style.fontWeight = '700';
+  box.textContent = message;
+
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 1800);
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    const temp = document.createElement('textarea');
+    temp.value = text;
+    temp.setAttribute('readonly', '');
+    temp.style.position = 'fixed';
+    temp.style.left = '-9999px';
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand('copy');
+    document.body.removeChild(temp);
+    return true;
+  }
+}
+
+async function copySharedChatAsText(chatId) {
+  const chatMessages = chats[chatId] || [];
+  const text = chatMessages.map((message) => {
+    if (message.role === 'me') {
+      return 'user -: ' + (message.text || '');
+    }
+    return 'MI AI-: ' + (message.text || '');
+  }).join('\n\n');
+
+  await copyTextToClipboard(text);
+  showShareFeedback('Copied as text.');
+  removeShareOverlay();
+}
+
+function showLinkShareOptions(chatId) {
+  const body = document.getElementById('shareOptionsBody');
+  if (!body) return;
+
+  body.innerHTML = `
+    <label style="display:block;font-size:12px;margin-bottom:6px;color:#cbd5e1;">Permission</label>
+    <select id="sharePermissionSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+      <option value="edit">Can edit</option>
+      <option value="view">View only</option>
+    </select>
+    <button type="button" onclick="generateSharedChatLink('${chatId}')" style="width:100%;margin-top:12px;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">Generate a link</button>
+  `;
+}
+
+async function generateSharedChatLink(chatId) {
+  const permissionSelect = document.getElementById('sharePermissionSelect');
+  const permission = permissionSelect && permissionSelect.value === 'view' ? 'view' : 'edit';
+  const messages = (chats[chatId] || []).map((message) => ({ role: message.role, text: message.text }));
+  const payload = {
+    chatId,
+    messages,
+    permission,
+    createdAt: Date.now()
+  };
+
+  const url = new URL(window.location.href);
+  url.searchParams.set('share', JSON.stringify(payload));
+  const shareLink = url.toString();
+
+  await copyTextToClipboard(shareLink);
+  showShareFeedback('Copied to the clipboard.');
+  removeShareOverlay();
+}
+
 function shareChat(){
+  const chatId = selectedChat || currentChat;
+  if (!chatId || !chats[chatId]) return;
 
-if(!selectedChat)return;
+  removeShareOverlay();
+  closeMobileMenu();
 
+  shareOverlay = document.createElement('div');
+  shareOverlay.id = 'shareOverlay';
+  shareOverlay.style.position = 'fixed';
+  shareOverlay.style.left = '50%';
+  shareOverlay.style.top = '50%';
+  shareOverlay.style.transform = 'translate(-50%, -50%)';
+  shareOverlay.style.width = 'min(92vw, 320px)';
+  shareOverlay.style.background = 'rgba(15,23,42,0.98)';
+  shareOverlay.style.border = '1px solid rgba(255,255,255,0.14)';
+  shareOverlay.style.borderRadius = '18px';
+  shareOverlay.style.padding = '18px';
+  shareOverlay.style.zIndex = '10000';
+  shareOverlay.style.boxShadow = '0 24px 60px rgba(0,0,0,0.36)';
+  shareOverlay.style.color = '#f8fafc';
 
-let copyText="";
+  shareOverlay.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:16px;font-weight:700;">Share chat</div>
+      <button type="button" onclick="removeShareOverlay()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <div id="shareOptionsBody">
+      <button type="button" onclick="copySharedChatAsText('${chatId}')" style="width:100%;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;margin-bottom:10px;">Copy as a text</button>
+      <button type="button" onclick="showLinkShareOptions('${chatId}')" style="width:100%;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.1);color:#fff;font-weight:700;cursor:pointer;">Create a link</button>
+    </div>
+  `;
 
-
-chats[selectedChat].forEach(m=>{
-
-
-if(m.role==="me"){
-
-copyText += "USER: "+m.text+"\n\n";
-
-}
-else{
-
-copyText += "MI AI ChatBOT -: "+m.text+"\n\n";
-
-}
-
-});
-
-
-navigator.clipboard.writeText(copyText)
-.then(()=>{
-
-    if(user){
-        alert("Your Chat copied successfully ✅. So you can paste  it anywhere");
-    } else {
-        alert("Please sign in to copy your chat history safely. 📧");
-    }
-
-    const loginBox = document.getElementById("loginBox");
-    if (loginBox) {
-        loginBox.style.display = "none";
-    }
-
-})
-
-
-menu.style.display="none";
-
+  document.body.appendChild(shareOverlay);
+  menu.style.display = 'none';
 }
 
 /* SEND */
 async function send(){
+
+if (sharedChatData && sharedChatData.permission === 'view') {
+    applySharedChatUi('view');
+    return;
+}
 
 let msg=input.value.trim();
 if(!msg) return;
