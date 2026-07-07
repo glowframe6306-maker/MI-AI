@@ -3363,7 +3363,7 @@ t.innerHTML=`
 chatBox.appendChild(t);
 scroll();
 
-try {
+try{
     replyAbortController = new AbortController();
     const timeoutId = setTimeout(() => {
         if (replyAbortController) {
@@ -3371,37 +3371,38 @@ try {
         }
     }, 30000);
 
-    let res = await fetchChatReply({
-        message: msg,
-        history: history,
-        conversation_id: conversationId,
-        attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((attachment) => attachment.id) : []
-    }, replyAbortController.signal);
+    try {
+        let res = await fetchChatReply({
+            message: msg,
+            history: history,
+            conversation_id: conversationId,
+            attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((attachment) => attachment.id) : []
+        }, replyAbortController.signal);
 
-    clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-    if (!res.ok) {
-        throw new Error("Server returned " + res.status);
-    }
+        if (!res.ok) {
+            throw new Error("Server returned " + res.status);
+        }
 
-    const data = await res.json();
+        const data = await res.json();
     const aiText = data.reply || "";
 
     t.remove();
 
     const d = document.createElement("div");
-    d.className = "ai";
+    d.className="ai";
     const contentBox = document.createElement('div');
     contentBox.className = isLongWritingResponse(aiText) ? 'aiWritingCard' : 'aiMessageBody';
     d.appendChild(contentBox);
     d.appendChild(createCopyButton(aiText));
     chatBox.appendChild(d);
 
-    let i = 0;
-    replyTypingTimer = setInterval(() => {
-        if (!replyInProgress) {
+    let i=0;
+    replyTypingTimer=setInterval(()=>{
+        if(!replyInProgress){
             clearInterval(replyTypingTimer);
-            replyTypingTimer = null;
+            replyTypingTimer=null;
             return;
         }
 
@@ -3409,15 +3410,16 @@ try {
         i++;
         scroll();
 
-        if (i >= aiText.length) {
+        if(i>=aiText.length){
             clearInterval(replyTypingTimer);
-            replyTypingTimer = null;
-            replyInProgress = false;
+            replyTypingTimer=null;
+            replyInProgress=false;
             setReplyControlState(false);
-
+            
+            // Linkify the completed message
             contentBox.innerHTML = linkifyText(aiText);
-
-            chats[conversationId].push({ role: "ai", text: aiText });
+            
+            chats[conversationId].push({role:"ai",text:aiText});
             chats[conversationId].updatedAt = Date.now();
             chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
             chats[conversationId].lastPreview = aiText;
@@ -3429,15 +3431,15 @@ try {
                 try {
                     if (token && conversationId) {
                         const headers = {
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer " + token,
+                            "Content-Type":"application/json",
+                            "Authorization":"Bearer " + token,
                             "X-Session-Id": accountId || userId || "",
                             "X-User-Id": userId || "",
                             "X-User-Email": storedEmail || ""
                         };
 
                         const aiMessageRes = await fetchJsonWithFallback("/api/messages", {
-                            method: "POST",
+                            method:"POST",
                             headers: headers,
                             body: JSON.stringify({
                                 conversation_id: conversationId,
@@ -3449,7 +3451,7 @@ try {
 
                         if (aiMessageRes.ok) {
                             await fetchJsonWithFallback("/api/conversations/" + encodeURIComponent(conversationId), {
-                                method: "PATCH",
+                                method:"PATCH",
                                 headers: headers,
                                 body: JSON.stringify({
                                     title: chats[conversationId].title || "New chat",
@@ -3465,7 +3467,7 @@ try {
                 }
             })();
         }
-    }, 20);
+    },20);
 } catch (e) {
     if (e && e.name === 'AbortError') {
         replyInProgress = false;
@@ -3479,17 +3481,19 @@ try {
     replyInProgress = false;
     setReplyControlState(false);
 
-    let errorBubble = document.createElement("div");
-    errorBubble.className = "ai";
-    errorBubble.innerText = "The AI is unavailable right now. Please try again.";
+    let errorBubble=document.createElement("div");
+    errorBubble.className="ai";
+    errorBubble.innerText="The AI is unavailable right now. Please try again."
     chatBox.appendChild(errorBubble);
 
-    chats[conversationId].push({ role: "ai", text: "The AI is unavailable right now. Please try again." });
+    chats[conversationId].push({role:"ai",text:"The AI is unavailable right now. Please try again."});
     chats[conversationId].updatedAt = Date.now();
     chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
     chats[conversationId].lastPreview = "The AI is unavailable right now. Please try again.";
     save();
     scroll();
+
+}
 }
 
 /* TYPE */
