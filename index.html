@@ -884,28 +884,40 @@ function handleFileSelection(event) {
   const file = input && input.files ? input.files[0] : null;
   if (!file) return;
 
-  const allowedExtensions = ['.pdf', '.docx', '.txt', '.xlsx', '.csv', '.pptx', '.png', '.jpg', '.jpeg', '.webp'];
-  const allowedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'image/png', 'image/jpeg', 'image/webp'];
-  const ext = (file.name || '').substring((file.name || '').lastIndexOf('.')).toLowerCase();
-  const mimeOk = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(ext);
-  if (!mimeOk) {
-    alert('Unsupported file type. Please upload a supported document or image.');
-    input.value = '';
-    return;
-  }
+  try {
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt', '.xlsx', '.xls', '.csv', '.pptx', '.ppt', '.png', '.jpg', '.jpeg', '.webp'];
+    const allowedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.ms-powerpoint', 'image/png', 'image/jpeg', 'image/webp'];
+    const ext = (file.name || '').substring((file.name || '').lastIndexOf('.')).toLowerCase();
+    const mimeOk = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(ext);
+    if (!mimeOk) {
+      setAttachmentUiState(true, '<div style="color:#fda4af;">Unsupported file type. Please upload a supported document or image.</div>', '');
+      input.value = '';
+      return;
+    }
 
-  if (file.size > 20 * 1024 * 1024) {
-    alert('File is too large. Maximum upload size is 20 MB.');
-    input.value = '';
-    return;
-  }
+    if (!file.size || file.size <= 0) {
+      setAttachmentUiState(true, '<div style="color:#fda4af;">The selected file is empty.</div>', '');
+      input.value = '';
+      return;
+    }
 
-  pendingAttachment = file;
-  attachmentUploadInProgress = false;
-  attachmentProgress = 0;
-  attachmentStatusText = '';
-  renderPendingAttachmentPreview();
-  input.value = '';
+    if (file.size > 20 * 1024 * 1024) {
+      setAttachmentUiState(true, '<div style="color:#fda4af;">File is too large. Maximum upload size is 20 MB.</div>', '');
+      input.value = '';
+      return;
+    }
+
+    pendingAttachment = file;
+    attachmentUploadInProgress = false;
+    attachmentProgress = 0;
+    attachmentStatusText = '';
+    renderPendingAttachmentPreview();
+    input.value = '';
+  } catch (error) {
+    console.error('File selection failed', error);
+    setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to process the selected file.</div>', '');
+    input.value = '';
+  }
 }
 
 function removePendingAttachment() {
@@ -923,7 +935,7 @@ async function uploadPendingAttachment() {
 
   const token = localStorage.getItem('mi_supabase_token');
   if (!token) {
-    alert('Please sign in before uploading files.');
+    setAttachmentUiState(true, '<div style="color:#fda4af;">Please sign in before uploading files.</div>', '');
     return null;
   }
 
@@ -936,7 +948,7 @@ async function uploadPendingAttachment() {
   formData.append('file', pendingAttachment);
   formData.append('conversation_id', currentChat);
 
-  return await new Promise((resolve, reject) => {
+  return await new Promise((resolve) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/upload', true);
     xhr.setRequestHeader('Authorization', 'Bearer ' + token);
@@ -957,18 +969,27 @@ async function uploadPendingAttachment() {
             setAttachmentUiState(true, pendingAttachment.name, attachmentStatusText);
             resolve(data.attachment);
           } else {
-            reject(new Error('Upload failed'));
+            attachmentStatusText = 'Upload failed';
+            setAttachmentUiState(true, pendingAttachment.name, attachmentStatusText);
+            resolve(null);
           }
-        } catch (e) {
-          reject(e);
+        } catch (error) {
+          console.error('Upload response parsing failed', error);
+          attachmentStatusText = 'Upload failed';
+          setAttachmentUiState(true, pendingAttachment.name, attachmentStatusText);
+          resolve(null);
         }
       } else {
-        reject(new Error('Upload failed'));
+        attachmentStatusText = 'Upload failed';
+        setAttachmentUiState(true, pendingAttachment.name, attachmentStatusText);
+        resolve(null);
       }
     };
     xhr.onerror = () => {
       attachmentUploadInProgress = false;
-      reject(new Error('Upload failed'));
+      attachmentStatusText = 'Upload failed';
+      setAttachmentUiState(true, pendingAttachment.name, attachmentStatusText);
+      resolve(null);
     };
     xhr.send(formData);
   });
@@ -1605,9 +1626,14 @@ function getSharedPrivacySummaryItems(payload) {
 function showSharedPrivacyGate(payload) {
   const security = payload.security || {};
   const items = getSharedPrivacySummaryItems(payload);
-  const hasRestrictions = payload.permission === 'view' || items.some((item) => item !== 'Access: Can edit' && item !== 'Access: View only');
+  const hasSecurityControls = Boolean(
+    security.password ||
+    (security.openLimitMode && security.openLimitMode !== 'no-expiry') ||
+    (security.timeLimitUnit && security.timeLimitUnit !== 'no-expiry') ||
+    security.notification === 'on'
+  );
 
-  if (!hasRestrictions && !security.password) {
+  if (!hasSecurityControls) {
     return Promise.resolve(true);
   }
 
@@ -1907,6 +1933,8 @@ authReminder = document.getElementById("authReminder");
 
 const sharedPayload = getSharedChatPayloadFromUrl();
 if (sharedPayload) {
+    const previousChats = chats && typeof chats === 'object' && !Array.isArray(chats) ? chats : {};
+    const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
     sharedChatData = sharedPayload;
     const sharedId = sharedPayload.id || sharedPayload.chatId || 'shared_' + Date.now();
     chats = { [sharedId]: Array.isArray(sharedPayload.messages) ? sharedPayload.messages : [] };
@@ -1914,9 +1942,16 @@ if (sharedPayload) {
 
     const allowed = await initSharedAccess(sharedPayload);
     if (!allowed) {
-        applySharedChatUi(sharedPayload.permission === 'view' ? 'view' : 'edit', sharedPayload.permission === 'view' ? 'RESTRICTED BY CHAT OWNER' : 'Access restricted');
+        sharedChatData = null;
+        chats = previousChats && typeof previousChats === 'object' && !Array.isArray(previousChats) ? previousChats : {};
+        currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : Object.keys(chats || {})[0] || null;
+        applySharedChatUi('edit');
         renderList();
-        openChat(currentChat);
+        if (currentChat) {
+            openChat(currentChat);
+        } else if (chatBox) {
+            chatBox.innerHTML = '';
+        }
         updateAuthControls();
         return;
     }
@@ -2604,7 +2639,15 @@ try{
                 conversation_id: conversationId,
                 session_id: accountId || userId || "",
                 role: "me",
-                content: msg
+                content: msg,
+                attachment_id: uploadedAttachment ? uploadedAttachment.id : null,
+                attachment_meta: uploadedAttachment ? {
+                    file_name: uploadedAttachment.file_name,
+                    file_type: uploadedAttachment.file_type,
+                    file_size: uploadedAttachment.file_size,
+                    upload_time: uploadedAttachment.upload_time,
+                    uploaded_file_url: uploadedAttachment.uploaded_file_url || null
+                } : null
             })
         });
 
