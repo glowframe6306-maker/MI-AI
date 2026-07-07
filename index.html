@@ -1,335 +1,973 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>MI AI ChatBOT Pro</title>
+<title>MI AI ChatBOT Pro</title>
 
-  <!-- External libs: Supabase + Firebase kept (existing systems) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-  <!-- Markdown + Highlighting -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<style>
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+:root{
+--main:#1e88e5;
+--bg:#0b1220;
+--panel:#111a2b;
+--ai:#263238;
+--text:#fff;
+--input:#1c2b3a;
+}
 
-  <style>
-    :root{
-      --bg:#071027;
-      --panel:rgba(12,18,32,0.72);
-      --glass: rgba(255,255,255,0.03);
-      --accent:#38bdf8;
-      --accent-2:#7c3aed;
-      --muted:#9aa6bf;
-      --ai:#0f1724;
-      --text:#e6eef8;
-      --success:#86efac;
-      --danger:#fb7185;
-      --input:#0b1724;
-    }
+*{box-sizing:border-box;}
 
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;color:var(--text);background:linear-gradient(180deg,#031027 0%, #071428 100%);}
-    :focus{outline:none}
+html,body{
+margin:0;
+height:100%;
+overflow:hidden;
+font-family:Arial;
+background:var(--bg);
+color:var(--text);
+transition:.3s;
+}
 
-    /* App layout */
-    .app{display:flex;height:100vh;gap:18px;padding:18px}
-    .sidebar{width:300px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));backdrop-filter:blur(8px);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#042;box-shadow:0 8px 30px rgba(56,189,248,0.12)}
-    h1{font-size:18px;margin:0}
+body{display:flex;}
 
-    .actions{display:flex;flex-direction:column;margin-top:6px;gap:8px}
-    .btn{border:none;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#1e88e5);color:#042;font-weight:700;cursor:pointer;box-shadow:0 8px 22px rgba(30,136,229,0.12);transition:transform .18s,box-shadow .18s}
-    .btn.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.06);box-shadow:none}
-    .btn:hover{transform:translateY(-3px)}
+/* SIDEBAR */
+#sidebar{
+width:260px;
+background:var(--panel);
+padding:10px;
+display:flex;
+flex-direction:column;
+}
 
-    .chat-list{flex:1;overflow:auto;padding-top:6px;display:flex;flex-direction:column;gap:8px}
-    .chat-item{padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-    .chat-item:hover{background:linear-gradient(90deg, rgba(56,189,248,0.08), rgba(124,58,237,0.04))}
+h3{text-align:center;}
 
-    .main{flex:1;display:flex;flex-direction:column;gap:12px}
-    .header{height:72px;background:var(--panel);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px}
-    .header .title{font-weight:700;font-size:18px}
-    .header .header-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+button{
+border:none;
+padding:10px;
+margin:5px 0;
+border-radius:10px;
+background:var(--main);
+color:white;
+cursor:pointer;
+transition:.2s;
+}
 
-    .chat{flex:1;overflow:auto;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));border-radius:12px}
+button:hover{
+transform:scale(1.05);
+}
 
-    .msg{max-width:78%;padding:12px;border-radius:12px;margin:8px 0;white-space:pre-wrap;line-height:1.5}
-    .msg.me{margin-left:auto;background:linear-gradient(180deg,var(--accent-2),var(--accent));color:#021}
-    .msg.ai{background:linear-gradient(180deg,#0c2130,#071526);border:1px solid rgba(255,255,255,0.02)}
-    .meta{font-size:12px;color:var(--muted);margin-bottom:6px}
+/* CHAT LIST */
+.chatItem{
+padding:10px;
+margin:5px 0;
+background:#ffffff10;
+border-radius:10px;
+cursor:pointer;
+transition:.2s;
+}
 
-    .thinking{display:inline-flex;align-items:center;gap:8px;padding:10px;border-radius:999px;background:linear-gradient(90deg,#071426,#0f2132);box-shadow:0 6px 20px rgba(2,6,23,0.6)}
-    .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:bounce 1s infinite}
-    .dot:nth-child(2){animation-delay:.15s}
-    .dot:nth-child(3){animation-delay:.3s}
-    @keyframes bounce{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+.chatItem:hover{
+background:var(--main);
+}
 
-    .compose{display:flex;gap:12px;align-items:flex-end;padding:12px;background:var(--panel);border-radius:12px}
-    textarea{flex:1;min-height:48px;max-height:160px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:var(--input);color:var(--text);resize:none}
-    .send{width:56px;height:48px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#042;font-weight:800;cursor:pointer}
+/* MAIN */
+#main{
+flex:1;
+display:flex;
+flex-direction:column;
+}
 
-    .popover{position:fixed;display:none;background:var(--panel);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:8px;z-index:9999}
+/* HEADER */
+#header{
+height:60px;
+background:var(--panel);
+display:flex;
+align-items:center;
+gap:10px;
+padding:10px;
+font-weight:bold;
+}
 
-    .watermark{font-size:12px;color:var(--muted);text-align:center;padding:6px}
+#header img{
+width:40px;
+height:40px;
+border-radius:50%;
+border:2px solid var(--main);
+}
 
-    /* code blocks */
-    pre.hljs{border-radius:10px;padding:12px;overflow:auto}
+/* CHAT */
+#chat{
+flex:1;
+overflow-y:auto;
+padding:15px;
+scroll-behavior:smooth;
+}
 
-    /* responsive */
-    @media (max-width:900px){
-      .app{flex-direction:column;padding:12px}
-      .sidebar{width:100%;height:calc(40vh);order:2}
-      .main{order:1}
-    }
-  </style>
+/* MESSAGES */
+.me,.ai{
+max-width:70%;
+padding:12px;
+margin:8px;
+border-radius:15px;
+white-space:pre-wrap;
+line-height:1.5;
+animation:pop .2s ease;
+}
+
+.me{
+background:var(--main);
+margin-left:auto;
+}
+
+.ai{
+background:var(--ai);
+}
+
+/* ANIMATION */
+@keyframes pop{
+from{opacity:0;transform:scale(.8);}
+to{opacity:1;transform:scale(1);}
+}
+
+/* THINKING */
+.thinking{
+background:var(--ai);
+padding:10px;
+border-radius:12px;
+display:flex;
+gap:6px;
+align-items:center;
+width:max-content;
+animation:blink 1.2s infinite;
+}
+
+/* MI AI pulsing effect */
+.thinking .label{
+animation:pulseText 1.2s infinite;
+font-weight:bold;
+}
+
+@keyframes pulseText{
+0%{opacity:0.2;}
+50%{opacity:1;}
+100%{opacity:0.2;}
+}
+
+.dot{
+width:6px;
+height:6px;
+background:white;
+border-radius:50%;
+animation:bounce 1s infinite;
+}
+
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
+
+@keyframes bounce{
+50%{transform:translateY(-6px);}
+}
+
+/* INPUT */
+#inputBox{
+display:flex;
+padding:10px;
+background:var(--panel);
+}
+
+textarea{
+flex:1;
+resize:none;
+border:none;
+outline:none;
+padding:10px;
+border-radius:15px;
+background:var(--input);
+color:white;
+min-height:45px;
+max-height:120px;
+}
+
+/* SETTINGS */
+#settingsPanel{
+display:none;
+position:absolute;
+right:20px;
+top:70px;
+width:250px;
+background:var(--panel);
+padding:15px;
+border-radius:12px;
+}
+
+input[type="color"],input[type="range"]{
+width:100%;
+}
+
+/* CONTEXT MENU */
+#menu{
+position:absolute;
+display:none;
+background:#111a2b;
+border:1px solid #333;
+border-radius:10px;
+overflow:hidden;
+z-index:999;
+min-width:120px;
+}
+
+#menu div{
+padding:10px;
+cursor:pointer;
+}
+
+#menu div:hover{
+background:var(--main);
+}
+
+#introOverlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  color: #d4af37;
+  overflow: hidden;
+}
+
+#introTitle,
+#introSubtitle,
+#introLogo {
+  opacity: 0;
+}
+
+.introZoomIn {
+  animation: introZoomIn 1s ease forwards;
+}
+
+.introFadeIn {
+  animation: introFadeIn 1s ease forwards;
+}
+
+.introFadeOut {
+  animation: introFadeOut 0.6s ease forwards;
+}
+
+.logoZoomIn {
+  animation: logoZoomIn 0.9s ease forwards;
+}
+
+.slideLeft {
+  animation: slideLeft 0.8s ease forwards;
+}
+
+@keyframes introZoomIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes introFadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes introFadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes logoZoomIn {
+  0% { transform: scale(0.2); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideLeft {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-110%); opacity: 0; }
+}
+
+</style>
 </head>
+
 <body>
+<div id="introOverlay">
+  <div id="introTitle" style="font-size:5rem;font-weight:900;letter-spacing:0.3em;">MI AI</div>
+  <div id="introSubtitle" style="font-size:1.2rem;font-weight:700;letter-spacing:0.18em;">ASSISTANT OF M.I.MUHAMMADH</div>
+  <img id="introLogo" src="logo.png" alt="MI AI Logo" style="width:180px;height:180px;object-fit:contain;display:block;" />
+</div>
 
-  <div class="app">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="logo">MI</div>
-        <div>
-          <h1>MI AI ChatBOT</h1>
-          <div style="font-size:12px;color:var(--muted)">Private • Fast • Secure</div>
-        </div>
-      </div>
+<!-- SIDEBAR -->
+<div id="sidebar">
+<h3>MI AI ChatBOT</h3>
 
-      <div class="actions">
-        <button class="btn" id="newChatBtn" onclick="newChat()">➕ New Chat</button>
-        <button class="btn secondary" id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
-        <button class="btn secondary" id="supportBtn" onclick="customerSupport()">🎧 Support</button>
-      </div>
+<button id="loginBtn" onclick="openLogin()">📧 Email Login</button>
 
-      <div class="chat-list" id="chatList" aria-live="polite"></div>
+<button id="logoutBtn" onclick="logout()" style="display:none;">
+🚪 Logout
+</button>
 
-      <div style="margin-top:8px" class="watermark">MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.</div>
-      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">CREATED AND POWERED BY M.I.MUHAMMADH</div>
-    </aside>
+<button onclick="newChat()">➕ New Chat</button>
 
-    <main class="main">
-      <header class="header">
-        <img id="headerLogo" src="/MIAI.svg" alt="logo" style="width:56px;height:56px;border-radius:12px;object-fit:contain;border:1px solid rgba(255,255,255,0.04)"/>
-        <div class="title">MI AI ChatBOT</div>
-        <div class="header-actions">
-          <button id="loginBtn" class="btn" onclick="openLogin()">📥 Login</button>
-          <button id="logoutBtn" class="btn" style="display:none" onclick="openProfilePanel()">📴 Profile</button>
-        </div>
-      </header>
+<button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
 
-      <section class="chat" id="chat" aria-live="polite" aria-atomic="false"></section>
+<button id="supportBtn" onclick="customerSupport()">🎧 Customer Support</button>
 
-      <div style="display:flex;gap:12px;align-items:center;justify-content:center;">
-        <div style="flex:1;max-width:1100px;width:100%">
-          <div class="compose" id="inputBox">
-            <textarea id="msg" placeholder="Ask MI AI..." aria-label="Message input"></textarea>
-            <button class="send" id="sendBtn" onclick="send()" aria-label="Send message">↑</button>
-          </div>
-        </div>
-      </div>
+<div id="chatList"></div>
 
-      <div style="height:8px"></div>
-    </main>
-  </div>
+</div>   <!-- CLOSE SIDEBAR -->
 
-  <!-- Popovers / panels -->
-  <div id="menu" class="popover" role="menu" aria-hidden="true">
-    <div onclick="renameChat()">✏️ Rename</div>
-    <div id="pinOption" onclick="pinChat()">📌 Pin</div>
-    <div onclick="shareChat()">📤 Share</div>
-    <div onclick="deleteChat()" style="color:var(--danger)">🗑 Delete</div>
-  </div>
+<!-- MAIN -->
+<div id="main">
+<div id="header">
+<img src="logo.png">
+MI AI ChatBOT
+</div>
 
-  <div id="settingsPanel" class="popover" style="right:22px;top:86px;width:260px">
-    <h3 style="margin:0 0 8px 0">Settings</h3>
-    <label style="font-size:13px;color:var(--muted)">Theme color</label>
-    <input id="themeColor" type="color" style="width:100%;height:38px;border-radius:8px;border:none;margin:6px 0" />
-    <label style="font-size:13px;color:var(--muted)">Font size</label>
-    <input id="fontSize" type="range" min="12" max="20" value="15" style="width:100%" />
-  </div>
+<div id="loginBox" style="
+display:none;
+position:absolute;
+top:70px;
+left:50%;
+transform:translateX(-50%);
+background:#111a2b;
+padding:20px;
+border-radius:15px;
+z-index:999;
+width:280px;
+">
 
-  <!-- Login modal -->
-  <div id="loginBox" class="popover" style="left:50%;top:50%;transform:translate(-50%,-50%);min-width:320px;padding:18px;display:none">
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button id="signInTab" class="btn" onclick="setAuthMode('signin')">Sign In</button>
-      <button id="registerTab" class="btn secondary" onclick="setAuthMode('register')">Register</button>
-    </div>
-    <div id="authMessage" style="min-height:28px;color:var(--danger);margin-bottom:8px"></div>
-    <div id="authForm"></div>
-  </div>
+<h3>Email Login</h3>
 
-  <!-- Profile panel inserted dynamically -->
+<input id="email" 
+placeholder="Email"
+style="width:100%;padding:10px;margin:5px">
 
-  <script>
-    // Keep existing Firebase config variable if present
-    window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
-      apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
-      authDomain: "mi-ai-99e6a.firebaseapp.com",
-      projectId: "mi-ai-99e6a",
-      appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
-    };
 
-    // Lightweight helpers
-    const $ = id => document.getElementById(id);
-    const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+<input id="password"
+type="password"
+placeholder="Password"
+style="width:100%;padding:10px;margin:5px">
 
-    // State
-    let firebaseAuth = null;
-    let authMode = 'signin';
-    let user = null;
 
-    let guestId = localStorage.getItem('mi_guest_id') || (function(){ const g='guest_'+crypto.randomUUID(); localStorage.setItem('mi_guest_id',g); return g; })();
-    let accountId = localStorage.getItem('mi_account') || (function(){ localStorage.setItem('mi_account',guestId); return guestId; })();
+<button onclick="loginEmail()">
+Login / Create
+</button>
 
-    let chats = {};
-    let currentChat = null;
-    let selectedChat = null;
+</div>
 
-    // Elements
-    let chatBox = $('chat');
-    let chatList = $('chatList');
-    let input = $('msg');
-    let menu = $('menu');
+<div id="chat"></div>
 
-    // Markdown renderer setup
-    marked.setOptions({gfm:true,breaks:true});
+<!-- SETTINGS -->
+<div id="settingsPanel">
+<h3>Settings</h3>
 
-    function initHighlight(){ if(window.hljs) window.hljs.highlightAll(); }
+<label>Theme</label>
+<input type="color" id="themeColor">
+<button onclick="applyTheme()">Apply</button>
 
-    // Firebase init
-    async function initFirebase(){
-      if (firebaseAuth) return firebaseAuth;
-      const cfg = window.FIREBASE_CONFIG;
-      if (!cfg || !cfg.apiKey) throw new Error('Missing Firebase config');
-      if (!window.firebase) throw new Error('Firebase SDK not loaded');
-      if (!window.firebase.apps.length) window.firebase.initializeApp(cfg);
-      firebaseAuth = window.firebase.auth();
-      firebaseAuth.onAuthStateChanged(handleAuthChange);
-      return firebaseAuth;
-    }
+<label>Font Size</label>
+<input type="range" min="12" max="25" value="15" oninput="setFont(this.value)">
+</div>
 
-    function handleAuthChange(u){
-      if (u){
-        user = { id:u.uid, email:u.email };
-        updateAuthControls();
-      } else {
-        user = null; updateAuthControls();
-      }
-    }
+<!-- INPUT -->
+<div id="inputBox">
+<textarea id="msg" placeholder="Ask from MI AI..."></textarea>
+<button onclick="send()">Send</button>
+</div>
 
-    // Storage keys
-    function getGuestStorageKey(){ return `mi_chats_${guestId}`; }
-    function getUserStorageKey(){ const e=localStorage.getItem('mi_user_email')||''; const id=localStorage.getItem('mi_user_id')||''; return `mi_chats_${(e||id||guestId)}`; }
-    function getActiveStorageKey(){ return user ? getUserStorageKey() : getGuestStorageKey(); }
+</div>
 
-    // Persist/load
-    function save(){ try{ localStorage.setItem(getActiveStorageKey(), JSON.stringify(chats)); }catch(e){} }
+<!-- RIGHT CLICK MENU -->
+<div id="menu">
 
-    function loadGuestChats(){ try{ const s = localStorage.getItem(getGuestStorageKey()); chats = s ? JSON.parse(s) : {}; }catch(e){ chats={}; } }
+<div onclick="renameChat()">
+✏️ Rename
+</div>
 
-    // UI: render list
-    function renderList(){ chatList.innerHTML=''; const ids=Object.keys(chats||{}); if(ids.length===0) return; ids.sort((a,b)=> (chats[a].pin? -1:0)-(chats[b].pin? -1:0)); ids.forEach(id=>{ const div=document.createElement('div'); div.className='chat-item'; div.dataset.id=id; div.innerHTML=`<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${chats[id].title||id}</div><div style="font-size:12px;color:var(--muted)">${(chats[id].pin? '📌 ':'')}</div>`; div.onclick=()=>openChat(id); div.oncontextmenu=(e)=>{ e.preventDefault(); selectedChat=id; $('pinOption').innerText = chats[id].pin? '❌ Unpin':'📌 Pin'; showMenuAt(e.pageX,e.pageY); }; chatList.appendChild(div); }); }
+<div onclick="pinChat()" id="pinOption">
+📌 Pin
+</div>
 
-    function showMenuAt(x,y){ menu.style.display='block'; menu.style.left=x+'px'; menu.style.top=y+'px'; menu.setAttribute('aria-hidden','false'); }
-    document.addEventListener('click', e=>{ if(menu.style.display==='block' && !menu.contains(e.target)) { menu.style.display='none'; menu.setAttribute('aria-hidden','true'); } });
+<div onclick="shareChat()">
+📤 Share
+</div>
 
-    // Open chat
-    function openChat(id){ currentChat=id; chatBox.innerHTML=''; (chats[id].messages||[]).forEach(m=>renderMessage(m)); localStorage.setItem('last_chat',id); input.focus(); maybeShowLoginPrompt(id); }
+<div onclick="deleteChat()" style="color:red">
+🗑 Delete
+</div>
 
-    function renderMessage(m){ const el=document.createElement('div'); el.className='msg '+(m.role==='me'?'me':'ai'); const meta=document.createElement('div'); meta.className='meta'; meta.textContent = m.role==='me' ? 'You' : 'MI AI'; el.appendChild(meta); const content=document.createElement('div'); content.className='content'; if(typeof m.text==='string'){ const html = marked.parse(m.text); content.innerHTML=html; } else content.textContent=JSON.stringify(m.text); el.appendChild(content); chatBox.appendChild(el); initHighlight(); chatBox.scrollTop = chatBox.scrollHeight; }
+</div>
 
-    // Add message
-    function add(role,text,persist=true){ if(!currentChat){ const id = 'chat_'+Date.now(); chats[id]={title:id,messages:[]}; currentChat=id; } const m = { role, text, ts:Date.now() }; chats[currentChat].messages = chats[currentChat].messages||[]; chats[currentChat].messages.push(m); if(persist) save(); renderMessage(m); // persist server side if logged in
-      const token = localStorage.getItem('mi_supabase_token'); if(token){ fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({ conversation_id: currentChat, session_id: accountId, role: role==='me'?'me':'ai', content: text })}).catch(()=>{}); } }
+<script>
 
-    // Typing effect
-    function typeText(text){ const d=document.createElement('div'); d.className='msg ai'; const meta=document.createElement('div'); meta.className='meta'; meta.textContent='MI AI'; d.appendChild(meta); const content=document.createElement('div'); content.className='content'; d.appendChild(content); chatBox.appendChild(d); let i=0; const speed=12; const iv=setInterval(()=>{ if(i<text.length){ content.innerText += text[i++]; chatBox.scrollTop=chatBox.scrollHeight; } else { clearInterval(iv); chats[currentChat].messages.push({role:'ai',text}); save(); maybeShowLoginPrompt(currentChat); } }, speed); }
+const firebaseConfig = {
 
-    // API call with retry
-    async function callApiMessage(payload, retries=2){ const url='/api/chat'; try{ const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!res.ok) throw new Error('Server '+res.status); const text = await res.text(); try{ return JSON.parse(text); }catch{ return { reply: text }; } }catch(err){ if(retries>0){ await new Promise(r=>setTimeout(r,600)); return callApiMessage(payload,retries-1); } throw err; } }
+apiKey:"AIzaSyDDsWFgmELXQBeupafAU6bGeQjvMmnSzGI",
 
-    // Send
-    async function send(){ const msg=input.value.trim(); if(!msg) return; input.value=''; add('me',msg); const thinking = document.createElement('div'); thinking.className='thinking'; thinking.innerHTML='<div style="font-weight:700;color:var(--muted)">MI AI</div><div class="dot"></div><div class="dot"></div><div class="dot"></div>'; chatBox.appendChild(thinking); chatBox.scrollTop=chatBox.scrollHeight; try{ const data = await callApiMessage({ message: msg, conversation_id: currentChat, session_id: accountId, user_id: accountId, user_email: user? user.email:null }); thinking.remove(); const reply = data.reply || 'No response received.'; typeText(reply); }catch(e){ thinking.remove(); add('ai','❌ Error: '+(e.message||'Network error')); } }
+authDomain:"mi-ai-b3a57.firebaseapp.com",
 
-    // Share / copy
-    function shareChat(){ if(!selectedChat) return; let text=''; (chats[selectedChat].messages||[]).forEach(m=>{ if(m.role==='me') text += 'USER: '+m.text+'\n\n'; else text += 'MI AI: '+m.text+'\n\n'; }); navigator.clipboard.writeText(text).then(()=>{ alert(user? 'Your chat copied to clipboard':'Please sign in to copy chat safely.'); }); }
+projectId:"mi-ai-b3a57"
 
-    // Other actions
-    function renameChat(){ if(!selectedChat) return; const name = prompt('Rename chat',selectedChat); if(!name) return; chats[name]=chats[selectedChat]; delete chats[selectedChat]; if(currentChat===selectedChat) currentChat=name; selectedChat=null; save(); renderList(); menu.style.display='none'; }
-    function deleteChat(){ if(!selectedChat) return; if(!confirm('Delete this chat?')) return; delete chats[selectedChat]; if(currentChat===selectedChat){ currentChat=null; chatBox.innerHTML=''; } selectedChat=null; save(); renderList(); menu.style.display='none'; }
-    function pinChat(){ if(!selectedChat) return; chats[selectedChat].pin = !chats[selectedChat].pin; save(); renderList(); menu.style.display='none'; }
+};
 
-    // Settings
-    function toggleSettings(){ const s=$('settingsPanel'); if(s.style.display==='block') s.style.display='none'; else s.style.display='block'; }
-    $('themeColor').addEventListener('input',e=>{ document.documentElement.style.setProperty('--accent', e.target.value); localStorage.setItem('theme',e.target.value); });
-    $('fontSize').addEventListener('input',e=>{ chatBox.style.fontSize = e.target.value + 'px'; localStorage.setItem('fontSize', e.target.value); });
 
-    // Customer support
-    function customerSupport(){ const box=document.createElement('div'); box.id='supportOverlay'; box.style.position='fixed'; box.style.left='50%'; box.style.top='50%'; box.style.transform='translate(-50%,-50%)'; box.style.zIndex='10000'; box.style.background='var(--panel)'; box.style.padding='18px'; box.style.borderRadius='12px'; box.innerHTML=`<div style="font-weight:700;margin-bottom:8px">🎧 Customer Support</div><div style="margin-bottom:10px">Email: <button class="btn secondary" onclick="openEmail()">REQUEST VIA EMAIL</button></div><div>WhatsApp: <button class="btn secondary" onclick="openWhatsApp()">VIA WHATSAPP</button></div><div style="margin-top:12px"><button class="btn secondary" onclick="this.parentElement.parentElement.remove()">Close</button></div>`; document.body.appendChild(box); }
-    function openEmail(){ window.open('https://mail.google.com/mail/?view=cm&fs=1&to=miai.customerservice@gmail.com&su=MI%20AI%20Customer%20Support','_blank'); }
-    function openWhatsApp(){ location.href='https://wa.me/94756390621'; }
+firebase.initializeApp(firebaseConfig);
 
-    // Auth UI
-    function updateAuthControls(){ const loginBtn=$('loginBtn'), logoutBtn=$('logoutBtn'); const has = Boolean(user || localStorage.getItem('mi_supabase_token')); if(loginBtn) loginBtn.style.display = has? 'none':'inline-flex'; if(logoutBtn) logoutBtn.style.display = has? 'inline-flex':'none'; }
 
-    function setAuthMode(mode){ authMode=mode; $('signInTab').classList.toggle('btn',mode==='signin'); $('registerTab').classList.toggle('btn',mode==='register'); const form=$('authForm'); $('authMessage').textContent=''; if(mode==='register'){ form.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px"><input id="fullName" placeholder="Full name"/><input id="age" type="number" placeholder="Age"/><input id="registerEmail" type="email" placeholder="Email"/><input id="registerPassword" type="password" placeholder="New password"/><input id="confirmPassword" type="password" placeholder="Confirm password"/></div><div style="margin-top:8px"><button class="btn" onclick="registerEmail()">Register</button></div>` } else { form.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px"><input id="loginEmail" type="email" placeholder="Email"/><input id="loginPassword" type="password" placeholder="Password"/></div><div style="display:flex;justify-content:space-between;margin-top:8px"><button class="btn" onclick="handlePasswordReset()">Reset password</button><button class="btn" onclick="loginEmail()">Sign in</button></div>` } }
+const auth = firebase.auth();
 
-    // Validation
-    function setAuthMessage(t,err=true){ const m=$('authMessage'); if(!m) return; m.textContent=t; m.style.color = err? 'var(--danger)':'var(--success)'; }
 
-    function validateRegister(){ const full=document.getElementById('fullName')?.value.trim(); const age=Number(document.getElementById('age')?.value||0); const email=document.getElementById('registerEmail')?.value.trim(); const pwd=document.getElementById('registerPassword')?.value||''; const conf=document.getElementById('confirmPassword')?.value||''; if(!full) return 'Full name required'; if(!age||age<1||age>120) return 'Enter a valid age'; if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Enter a valid email'; if(pwd.length<6) return 'Password too short'; if(pwd!==conf) return 'Passwords do not match'; return ''; }
+let user=null;
 
-    // Auth functions
-    async function registerEmail(){ setAuthMessage(''); const v=validateRegister(); if(v){ setAuthMessage(v); return; } const email=document.getElementById('registerEmail').value.trim().toLowerCase(); const password=document.getElementById('registerPassword').value; try{ const auth = await initFirebase(); const res = await auth.createUserWithEmailAndPassword(email,password); const fu = res.user; await fu.sendEmailVerification(); await auth.signOut(); user=null; localStorage.removeItem('mi_supabase_token'); localStorage.removeItem('mi_user_id'); localStorage.removeItem('mi_user_email'); setAuthMessage('Registration successful — verification email sent',false); setTimeout(()=>setAuthMode('signin'),1400); }catch(e){ const msg=String(e.message||e); if(msg.toLowerCase().includes('already')) setAuthMessage('Account already exists. Try sign in.'); else setAuthMessage(msg); } }
+let chatBox=document.getElementById("chat");
+let chatList=document.getElementById("chatList");
+let input=document.getElementById("msg");
+let menu=document.getElementById("menu");
 
-    async function loginEmail(){ setAuthMessage(''); const email=document.getElementById('loginEmail')?.value.trim().toLowerCase(); const password=document.getElementById('loginPassword')?.value||''; if(!email||!password){ setAuthMessage('Enter email and password'); return; } try{ const auth=await initFirebase(); const res = await auth.signInWithEmailAndPassword(email,password); const fu=res.user; if(!fu.emailVerified){ await fu.sendEmailVerification(); await auth.signOut(); setAuthMessage('Email not verified — verification sent'); return; } user={ id:fu.uid, email:fu.email }; const token = await fu.getIdToken(); localStorage.setItem('mi_supabase_token', token); localStorage.setItem('mi_user_id', fu.uid); localStorage.setItem('mi_user_email', fu.email||''); updateAuthControls(); $('loginBox').style.display='none'; setAuthMessage('Signed in',false); await loadUserChats(); }catch(e){ setAuthMessage(String(e.message||e)); } }
+let accountId = localStorage.getItem("mi_account");
 
-    async function handlePasswordReset(){ const email=document.getElementById('loginEmail')?.value.trim().toLowerCase(); if(!email){ setAuthMessage('Enter email first'); return; } try{ const auth=await initFirebase(); await auth.sendPasswordResetEmail(email,{url: window.location.origin}); setAuthMessage('Password reset sent',false); }catch(e){ setAuthMessage(String(e.message||e)); } }
+// if no account exists → create automatically
+if(!accountId){
+    accountId = "acc_" + crypto.randomUUID();
+    localStorage.setItem("mi_account", accountId);
+}
 
-    async function loadUserChats(){ const token=localStorage.getItem('mi_supabase_token'); const userId=localStorage.getItem('mi_user_id'); const email=(localStorage.getItem('mi_user_email')||'').trim().toLowerCase(); if(!token||!userId) return; try{ const res=await fetch('/api/conversations',{ headers:{ Authorization:'Bearer '+token }}); const json=await res.json(); if(res.ok && Array.isArray(json.conversations)){ chats={}; for(const c of json.conversations){ chats[c.id]={title:c.title||c.id,messages:[]}; try{ const mres=await fetch('/api/messages?conversation_id='+encodeURIComponent(c.id),{ headers:{ Authorization:'Bearer '+token }}); const mjson=await mres.json(); if(mres.ok && Array.isArray(mjson.messages)) chats[c.id].messages = mjson.messages.map(m=>({ role: m.role==='me'?'me':'ai', text: m.content })); }catch(e){} } accountId=userId; localStorage.setItem('mi_account',accountId); currentChat=Object.keys(chats)[0]||null; save(); renderList(); if$currentChat) openChat(currentChat); return; } // fallback to local
-    const storageKey = email? `mi_chats_${email}`: `mi_chats_${userId}`; const saved=localStorage.getItem(storageKey); if(saved) chats = JSON.parse(saved)||{}; renderList(); currentChat = currentChat||Object.keys(chats)[0]||null; if(currentChat) openChat(currentChat); }catch(e){ console.warn(e); } }
+let chats={};
+let currentChat=null;
+let selectedChat=null;
 
-    async function createServerConversation(){ const token=localStorage.getItem('mi_supabase_token'); if(!token) return null; try{ const res=await fetch('/api/conversations',{ method:'POST', headers:{ 'Content-Type':'application/json','Authorization':'Bearer '+token }, body: JSON.stringify({ title:'New chat', session_id: accountId }) }); const json=await res.json(); return res.ok && json.conversation? json.conversation: null; }catch{ return null; } }
+window.addEventListener("load", () => {
+  const introOverlay = document.getElementById("introOverlay");
+  const introTitle = document.getElementById("introTitle");
+  const introSubtitle = document.getElementById("introSubtitle");
+  const introLogo = document.getElementById("introLogo");
 
-    // New chat
-    async function newChat(){ const token=localStorage.getItem('mi_supabase_token'); if(token){ try{ const c = await createServerConversation(); if(c){ chats[c.id]= { title: c.title || c.id, messages: [] }; currentChat=c.id; save(); renderList(); openChat(currentChat); return; } }catch(e){} } // guest behavior
-      if(!user){ // keep single guest chat
-        for(const k of Object.keys(chats)) delete chats[k];
-      }
-      const id='chat_'+Date.now(); chats[id]={ title: id, messages: [] }; currentChat=id; save(); renderList(); openChat(id); }
+  introTitle.classList.add("introZoomIn");
+  setTimeout(() => introSubtitle.classList.add("introFadeIn"), 1000);
+  setTimeout(() => {
+    introTitle.classList.add("introFadeOut");
+    introSubtitle.classList.add("introFadeOut");
+  }, 3000);
+  setTimeout(() => introLogo.classList.add("logoZoomIn"), 3300);
+  setTimeout(() => introOverlay.classList.add("slideLeft"), 4300);
+  setTimeout(() => introOverlay.style.display = "none", 5100);
+});
 
-    // Login prompt / UX nudges
-    function getShownLoginPromptChats(){ try{ return JSON.parse(localStorage.getItem('mi_login_prompt_shown_chats')||'[]'); }catch{return [];} }
-    function saveShownLoginPromptChats(a){ localStorage.setItem('mi_login_prompt_shown_chats', JSON.stringify(a)); }
-    function shouldShowLoginPrompt(chatId){ if(!chatId || user) return false; const dismissed = JSON.parse(localStorage.getItem('mi_login_prompt_dismissed_chats')||'[]'); const shown=getShownLoginPromptChats(); return !dismissed.includes(chatId) && !shown.includes(chatId); }
-    function maybeShowLoginPrompt(chatId){ if(!chatId||user) return; const msgs = chats[chatId].messages||[]; const aiReplies = msgs.filter(m=>m.role==='ai').length; if(aiReplies>=3 && msgs.length>=4 && shouldShowLoginPrompt(chatId)){ showLoginPrompt(chatId); } }
-    function showLoginPrompt(chatId){ const box=document.createElement('div'); box.style.position='fixed'; box.style.left='50%'; box.style.top='50%'; box.style.transform='translate(-50%,-50%)'; box.style.zIndex='10001'; box.style.background='var(--panel)'; box.style.padding='16px'; box.style.borderRadius='12px'; box.innerHTML=`<div style="font-weight:700;margin-bottom:8px">Login to unlock more</div><div style="margin-bottom:8px">Save chats, sync across devices, and get faster replies.</div><div style="display:flex;gap:8px"><button class="btn" onclick="(function(){document.body.removeChild(document.querySelector('[data-login-prompt]')); openLogin();})()">Log in</button><button class="btn secondary" onclick="(function(){ const dismissed = JSON.parse(localStorage.getItem('mi_login_prompt_dismissed_chats')||'[]'); dismissed.push('${chatId}'); localStorage.setItem('mi_login_prompt_dismissed_chats',JSON.stringify(dismissed)); document.body.removeChild(document.querySelector('[data-login-prompt]')); })()">Dismiss</button></div>`; box.setAttribute('data-login-prompt','1'); document.body.appendChild(box); const shown = getShownLoginPromptChats(); if(!shown.includes(chatId)){ shown.push(chatId); saveShownLoginPromptChats(shown); } }
+/* LOAD */
+window.onload=function(){
 
-    // Init on load
-    window.addEventListener('load', async ()=>{ try{ await initFirebase(); }catch(e){} // continue even if firebase not reachable
-      // load theme & font
-      const theme = localStorage.getItem('theme'); if(theme) document.documentElement.style.setProperty('--accent',theme); const f = localStorage.getItem('fontSize')||15; chatBox.style.fontSize = f+'px';
-      // load chats
-      const saved = localStorage.getItem(getActiveStorageKey()); if(saved) try{ chats=JSON.parse(saved)||{}; }catch(e){ chats={}; }
-      // ensure at least one chat
-      if(Object.keys(chats).length===0){ const id='chat_'+Date.now(); chats[id]={ title: 'Conversation', messages:[] }; currentChat=id; }
-      renderList(); currentChat = currentChat || Object.keys(chats)[0]; openChat(currentChat);
-      updateAuthControls(); input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
-    });
+let saved=localStorage.getItem("mi_chats_" + accountId);
 
-    // Small accessibility: close login modal on background click
-    document.addEventListener('click', e=>{ if(e.target.id==='loginBox'){ $('loginBox').style.display='none'; } });
+if(saved){
+    chats=JSON.parse(saved);
 
-    // Export functions to global so inline handlers work
-    window.newChat=newChat; window.toggleSettings=toggleSettings; window.customerSupport=customerSupport; window.openEmail=openEmail; window.openWhatsApp=openWhatsApp; window.openLogin=function(){ const b=$('loginBox'); if(!b) return; b.style.display = b.style.display==='block'?'none':'block'; setAuthMode(authMode); }; window.send=send; window.shareChat=shareChat; window.renameChat=renameChat; window.deleteChat=deleteChat; window.pinChat=pinChat; window.setAuthMode=setAuthMode; window.registerEmail=registerEmail; window.loginEmail=loginEmail; window.handlePasswordReset=handlePasswordReset; window.loadUserChats=loadUserChats; window.createServerConversation=createServerConversation; window.openProfilePanel=function(){ /* placeholder keep compatibility: build dynamic panel in future */ alert('Profile panel (use backend)'); };
-  </script>
+    localStorage.setItem("mi_last_account", accountId);
+}else{
+    chats={};
+}
+
+
+let theme=localStorage.getItem("theme");
+
+if(theme){
+document.documentElement.style.setProperty("--main",theme);
+}
+
+
+// AUTO NEW CHAT OPEN
+
+let id="chat_"+Date.now();
+
+chats[id]=[];
+
+currentChat=id;
+
+
+save();
+
+renderList();
+
+openChat(id);
+
+
+input.focus();
+
+};
+
+/* ENTER */
+input.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+if(e.shiftKey) return;
+e.preventDefault();
+send();
+}
+});
+
+/* NEW CHAT */
+function newChat(){
+let id="chat_"+Date.now();
+chats[id]=[];
+currentChat=id;
+save();
+renderList();
+openChat(id);
+}
+
+/* OPEN */
+function openChat(id){
+currentChat=id;
+chatBox.innerHTML="";
+chats[id].forEach(m=>add(m.role,m.text));
+localStorage.setItem("last_chat",id);
+}
+
+/* RENDER LIST */
+function renderList(){
+chatList.innerHTML="";
+
+let ids = Object.keys(chats);
+
+
+ids.sort((a,b)=>{
+
+if(chats[a].pin && !chats[b].pin) return -1;
+
+if(!chats[a].pin && chats[b].pin) return 1;
+
+return 0;
+
+});
+
+ids.forEach(id=>{
+let div=document.createElement("div");
+div.className="chatItem";
+div.dataset.id=id;
+div.innerText=(chats[id].pin ? "📌 " : "")+"💬 "+id;
+
+div.onclick=()=>openChat(id);
+
+/* RIGHT CLICK */
+div.oncontextmenu=(e)=>{
+
+e.preventDefault();
+
+selectedChat=id;
+
+
+document.getElementById("pinOption").innerHTML =
+chats[id].pin ? "📍 Unpin" : "📌 Pin";
+
+
+menu.style.display="block";
+menu.style.left=e.pageX+"px";
+menu.style.top=e.pageY+"px";
+
+};
+
+chatList.appendChild(div);
+});
+}
+
+/* CLOSE MENU */
+document.addEventListener("click", e => {
+  const settingsPanel = document.getElementById("settingsPanel");
+  const loginBox = document.getElementById("loginBox");
+  const supportOverlay = document.getElementById("supportOverlay");
+  const target = e.target;
+
+  if (menu.style.display === "block" && !menu.contains(target)) {
+    menu.style.display = "none";
+  }
+
+  if (settingsPanel && settingsPanel.style.display === "block" &&
+      !settingsPanel.contains(target) && target.id !== "settingsBtn") {
+    settingsPanel.style.display = "none";
+  }
+
+  if (loginBox && loginBox.style.display === "block" &&
+      !loginBox.contains(target) && target.id !== "loginBtn") {
+    loginBox.style.display = "none";
+  }
+
+  if (supportOverlay && !supportOverlay.contains(target) && target.id !== "supportBtn") {
+    supportOverlay.remove();
+  }
+});
+
+/* RENAME */
+function renameChat(){
+if(!selectedChat) return;
+let name=prompt("Rename chat:",selectedChat);
+if(!name) return;
+
+chats[name]=chats[selectedChat];
+delete chats[selectedChat];
+
+if(currentChat===selectedChat) currentChat=name;
+
+save();
+renderList();
+menu.style.display="none";
+}
+
+/* DELETE */
+function deleteChat(){
+if(!selectedChat) return;
+if(!confirm("Delete this chat?")) return;
+
+delete chats[selectedChat];
+
+if(currentChat===selectedChat){
+currentChat=null;
+chatBox.innerHTML="";
+}
+
+save();
+renderList();
+menu.style.display="none";
+}
+
+function pinChat(){
+
+if(!selectedChat)return;
+
+chats[selectedChat].pin =
+!chats[selectedChat].pin;
+
+
+save();
+renderList();
+
+menu.style.display="none";
+
+}
+
+
+
+
+function shareChat(){
+
+if(!selectedChat)return;
+
+
+let copyText="";
+
+
+chats[selectedChat].forEach(m=>{
+
+
+if(m.role==="me"){
+
+copyText += "USER: "+m.text+"\n\n";
+
+}
+else{
+
+copyText += "MI AI ChatBOT -: "+m.text+"\n\n";
+
+}
+
+});
+
+
+navigator.clipboard.writeText(copyText)
+.then(()=>{
+
+alert("Login Success ✅");
+
+// 👉 මෙන්න add කරන්න
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
+
+})
+
+
+menu.style.display="none";
+
+}
+
+/* SEND */
+async function send(){
+
+let msg=input.value.trim();
+if(!msg || !currentChat) return;
+
+input.value="";
+
+add("me",msg);
+
+/* THINKING */
+let t=document.createElement("div");
+t.className="thinking";
+t.innerHTML=`
+<span class="label">MI AI</span>
+<span class="dot"></span>
+<span class="dot"></span>
+<span class="dot"></span>
+`;
+
+chatBox.appendChild(t);
+scroll();
+
+try{
+let res=await fetch("http://127.0.0.1:5000/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({message:msg})
+});
+
+let data=await res.json();
+
+t.remove();
+type(data.reply);
+
+}catch(e){
+t.remove();
+add("ai","Server Error ❌");
+}
+}
+
+/* TYPE */
+function type(text){
+let d=document.createElement("div");
+d.className="ai";
+chatBox.appendChild(d);
+
+let i=0;
+let timer=setInterval(()=>{
+d.innerText+=text[i];
+i++;
+scroll();
+
+if(i>=text.length){
+clearInterval(timer);
+chats[currentChat].push({role:"ai",text});
+save();
+}
+},20);
+}
+
+/* ADD */
+function add(role,text){
+let d=document.createElement("div");
+d.className=role;
+d.innerText=text;
+chatBox.appendChild(d);
+
+if(role==="me"){
+chats[currentChat].push({role,text});
+save();
+}
+
+scroll();
+}
+
+/* SCROLL */
+function scroll(){
+chatBox.scrollTop=chatBox.scrollHeight;
+}
+
+/* SAVE */
+function save(){
+localStorage.setItem("mi_chats_" + accountId, JSON.stringify(chats));
+localStorage.setItem("mi_last_account", accountId);
+}
+
+/* SETTINGS */
+function toggleSettings(){
+let s=document.getElementById("settingsPanel");
+s.style.display=s.style.display==="block"?"none":"block";
+}
+
+/* THEME */
+function applyTheme(){
+let c=document.getElementById("themeColor").value;
+document.documentElement.style.setProperty("--main",c);
+localStorage.setItem("theme",c);
+}
+
+/* FONT */
+function setFont(v){
+chatBox.style.fontSize=v+"px";
+}
+
+/* CUSTOMER SUPPORT */
+
+function customerSupport(){
+
+let box=document.createElement("div");
+box.id = "supportOverlay";
+
+box.style.position="fixed";
+box.style.left="50%";
+box.style.top="50%";
+box.style.transform="translate(-50%,-50%)";
+box.style.background="rgba(17,26,43,0.95)";
+box.style.backdropFilter="blur(15px)";
+box.style.padding="25px";
+box.style.borderRadius="20px";
+box.style.zIndex="9999";
+box.style.width="280px";
+box.style.textAlign="center";
+box.style.boxShadow="0 0 25px #ff7a18";
+
+
+box.innerHTML=`
+
+<h3>🎧 Customer Support</h3>
+
+<p>📧 Email</p>
+
+<button onclick="openEmail()">
+miai.customerservice@gmail.com
+</button>
+
+
+<p>📱 WhatsApp</p>
+
+<button onclick="openWhatsApp()">
+0756390621
+</button>
+
+
+<button onclick="this.parentElement.remove()">
+❌ Close
+</button>
+
+`;
+
+document.body.appendChild(box);
+
+}
+
+
+
+/* EMAIL */
+
+function openEmail(){
+
+window.open(
+"https://mail.google.com/mail/?view=cm&fs=1&to=miai.customerservice@gmail.com&su=MI%20AI%20Customer%20Support",
+"_blank"
+);
+
+}
+
+
+
+/* WHATSAPP */
+
+function openWhatsApp(){
+
+window.open(
+"https://wa.me/94756390621",
+"_blank"
+);
+
+}
+
+function openLogin(){
+
+let box=document.getElementById("loginBox");
+
+box.style.display =
+box.style.display=="block"
+?"none"
+:"block";
+
+}
+
+
+function loginEmail(){
+
+let email=document.getElementById("email").value;
+
+let password=document.getElementById("password").value;
+
+
+auth.signInWithEmailAndPassword(email,password)
+
+.then(()=>{
+
+alert("Login Success ✅");
+
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
+
+})
+
+
+.catch(()=>{
+
+auth.createUserWithEmailAndPassword(email,password)
+
+.then(()=>{
+
+alert("New Account Created ✅");
+
+document.getElementById("loginBox").style.display = "none";
+document.getElementById("email").value = "";
+document.getElementById("password").value = "";
+
+})
+.catch(e=>alert(e.message));
+
+});
+
+
+}
+
+
+
+function logout(){
+
+auth.signOut();
+
+alert("Logout");
+
+location.reload();
+
+}
+
+auth.onAuthStateChanged(function(currentUser){
+
+let loginBtn = document.getElementById("loginBtn");
+let logoutBtn = document.getElementById("logoutBtn");
+
+
+if(currentUser){
+
+    user = currentUser;
+
+    loginBtn.style.display="none";
+
+    logoutBtn.style.display="block";
+
+    console.log(
+    "Logged Account : " + user.email
+    );
+
+
+}else{
+
+    user=null;
+
+    loginBtn.style.display="block";
+
+    logoutBtn.style.display="none";
+
+}
+
+});
+
+</script>
 
 </body>
 </html>
