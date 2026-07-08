@@ -15,7 +15,11 @@ from pprint import pprint
 try:
     from google import genai as google_genai
     from google.genai import types as gemini_types
-except Exception:
+    print("[BOOT] ✓ google-genai imported successfully")
+except Exception as import_error:
+    print(f"[BOOT] ✗ Failed to import google-genai: {import_error}")
+    import traceback as tb
+    tb.print_exc()
     google_genai = None
     gemini_types = None
 
@@ -105,7 +109,7 @@ gemini_client_api_key = None
 
 
 def _get_gemini_api_key():
-    """Read the Gemini API key from server-side environment variables with Vercel-safe handling."""
+    """Read the Gemini API key from environment variables."""
     _load_environment()
     value = os.getenv("GEMINI_API_KEY", "").strip()
     if value:
@@ -129,31 +133,34 @@ def _get_gemini_model():
 
 
 def _format_gemini_error_message(exc):
-    status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
-    body = getattr(exc, "body", None)
-    if isinstance(body, dict):
-        error = body.get("error") or body
-        if isinstance(error, dict):
-            message = error.get("message") or error.get("error") or ""
-            error_type = error.get("type") or ""
-            error_code = error.get("code") or ""
-            if error_type in {"quota_exceeded", "rate_limit_exceeded", "resource_exhausted", "insufficient_quota"} or error_code in {"quota_exceeded", "rate_limit_exceeded", "resource_exhausted", "insufficient_quota"} or status_code == 429:
-                return "The Gemini service is temporarily unavailable because of quota or rate limits. Please verify billing, project quota, or try again shortly."
-            if error_type in {"invalid_api_key", "authentication_error"} or error_code in {"invalid_api_key", "authentication_error"} or status_code in {401, 403}:
-                return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
-            if error_type in {"not_found", "model_not_found"} or error_code in {"not_found", "model_not_found"} or status_code == 404:
-                return "The requested Gemini model is not available. Please try a supported model."
-            if error_type in {"server_error", "internal_error"} or error_code in {"server_error", "internal_error"} or status_code in {500, 503}:
-                return "The Gemini service is temporarily unavailable. Please try again shortly."
-            if message:
-                return str(message)
-    if status_code in {401, 403}:
+    """Format Gemini exception into user-friendly error message."""
+    error_str = str(exc).lower()
+    
+    # Check for quota/rate limit errors from google.genai.errors.ClientError
+    if "429" in str(exc) or "resource_exhausted" in error_str or "quota" in error_str or "rate_limit" in error_str:
+        return "The Gemini service is temporarily unavailable because of quota or rate limits. Your free tier quota has been exceeded. Please wait a few hours or upgrade your plan."
+    
+    # Check for authentication errors
+    if "401" in str(exc) or "403" in str(exc) or "invalid" in error_str or "authentication" in error_str:
         return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
-    if status_code == 404:
+    
+    # Check for model not found errors  
+    if "404" in str(exc) or "not_found" in error_str or "model_not_found" in error_str:
         return "The requested Gemini model is not available. Please try a supported model."
-    if status_code in {429, 500, 503}:
+    
+    # Check for server errors
+    if "500" in str(exc) or "503" in str(exc) or "server_error" in error_str or "internal_error" in error_str:
         return "The Gemini service is temporarily unavailable. Please try again shortly."
-    return str(exc)
+    
+    # Fallback to the original exception message if it's not too long
+    exc_message = str(exc)
+    if len(exc_message) < 200:
+        return exc_message
+    else:
+        # If message is too long, try to extract a meaningful part
+        if "RESOURCE_EXHAUSTED" in exc_message:
+            return "Quota exceeded on the Gemini API. Please try again later."
+        return "An error occurred with the Gemini service. Please try again."
 
 
 def _get_gemini_client():
@@ -188,19 +195,33 @@ def _get_gemini_client():
 
 def _build_gemini_contents(messages_payload):
     contents = []
-    for message in messages_payload:
+    print(f"\n=== Building Gemini contents ===")
+    print(f"Input messages: {len(messages_payload)}")
+    for i, message in enumerate(messages_payload):
         role = (message.get("role") or "").lower()
         content = message.get("content", "") or ""
+        print(f"Message {i}: role={role}, content_len={len(content)}")
         if not content:
+            print(f"  -> Skipping empty content")
             continue
         if role == "system":
-            contents.append({"role": "user", "parts": [{"text": f"System instruction: {content}"}]})
+            mapped_role = "user"
+            text = f"System instruction: {content}"
+            print(f"  -> Mapped system to {mapped_role}")
+            contents.append({"role": mapped_role, "parts": [{"text": text}]})
         elif role == "assistant":
-            contents.append({"role": "model", "parts": [{"text": content}]})
+            mapped_role = "model"
+            text = content
+            print(f"  -> Mapped assistant to {mapped_role}")
+            contents.append({"role": mapped_role, "parts": [{"text": text}]})
         elif role in {"user", "model"}:
+            print(f"  -> Using role as-is: {role}")
             contents.append({"role": role, "parts": [{"text": content}]})
         else:
-            contents.append({"role": "user", "parts": [{"text": content}]})
+            mapped_role = "user"
+            print(f"  -> Mapped unknown role {role} to {mapped_role}")
+            contents.append({"role": mapped_role, "parts": [{"text": content}]})
+    print(f"Final contents: {len(contents)} items")
     return contents
 
 
@@ -209,22 +230,58 @@ def _generate_gemini_content(client, contents, model_name=None, config=None):
         raise RuntimeError("Gemini client is not available")
 
     requested_model = (model_name or _get_gemini_model()).strip() or "gemini-2.0-flash"
+    
+    # Build comprehensive fallback list
     fallback_models = [requested_model]
     if requested_model != "gemini-2.5-flash":
         fallback_models.append("gemini-2.5-flash")
+    if requested_model != "gemini-2.0-flash":
+        fallback_models.append("gemini-2.0-flash")
+    if requested_model != "gemini-2.0-flash-lite":
+        fallback_models.append("gemini-2.0-flash-lite")
+    if requested_model != "gemini-1.5-flash":
+        fallback_models.append("gemini-1.5-flash")
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_models = []
+    for model in fallback_models:
+        if model not in seen:
+            unique_models.append(model)
+            seen.add(model)
+    fallback_models = unique_models
+    
+    print(f"\n=== Gemini content generation ===")
+    print(f"Requested model: {requested_model}")
+    print(f"Fallback models: {fallback_models}")
+    print(f"Contents: {len(contents)} messages")
+    print(f"Config: {config}")
 
     last_error = None
     for candidate_model in fallback_models:
         try:
-            return client.models.generate_content(
+            print(f"\n>>> Trying model: {candidate_model}")
+            response = client.models.generate_content(
                 model=candidate_model,
                 contents=contents,
                 config=config,
             )
+            print(f"<<< Model {candidate_model} succeeded")
+            print(f"Response type: {type(response)}")
+            print(f"Response attributes: {dir(response)}")
+            return response
         except Exception as exc:
             last_error = exc
             status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
             body = getattr(exc, "body", None)
+            error_message = str(exc)
+            
+            print(f"!!! Model {candidate_model} failed")
+            print(f"Exception type: {type(exc).__name__}")
+            print(f"Status code: {status_code}")
+            print(f"Error message: {error_message}")
+            print(f"Body: {body}")
+            
             if isinstance(body, dict):
                 error = body.get("error") or body
                 code = (error.get("code") if isinstance(error, dict) else None) or ""
@@ -234,11 +291,30 @@ def _generate_gemini_content(client, contents, model_name=None, config=None):
                 code = ""
                 error_type = ""
                 message = ""
-            if status_code not in {429, 500, 503} and code not in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"} and error_type not in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"}:
+            
+            # Check if this is a retryable error
+            is_quota_error = (
+                status_code in {429, 500, 503} or
+                code in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"} or
+                error_type in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"} or
+                "quota" in error_message.lower() or
+                "rate_limit" in error_message.lower() or
+                "resource_exhausted" in error_message.lower()
+            )
+            
+            print(f"Is retryable (quota/rate limit): {is_quota_error}")
+            
+            # If not retryable, raise immediately
+            if not is_quota_error:
+                print(f"Non-retryable error, raising")
                 raise
+            
+            # If this is the last model, raise
             if candidate_model == fallback_models[-1]:
+                print(f"Last model in list, raising")
                 raise
-            print(f"Gemini model {candidate_model} hit quota/rate limits; retrying with {fallback_models[-1]}")
+            
+            print(f"Retrying with next model...")
 
     if last_error is not None:
         raise last_error
@@ -1529,11 +1605,70 @@ You can help with:
                     "response_mime_type": "text/plain",
                 },
             )
-            print("=== Gemini response ===")
-            answer = getattr(response, "text", "") or ""
-            print("Text length:", len(answer))
+            print("=== Gemini response received ===")
+            print("Response type:", type(response))
+            print("Response dir:", [x for x in dir(response) if not x.startswith('_')][:10])
+            
+            # Strategy 1: Direct text attribute
+            answer = None
+            if hasattr(response, 'text') and response.text:
+                answer = response.text
+                print("✓ Strategy 1 (text attr): SUCCESS", len(answer), "chars")
+            
+            # Strategy 2: candidates array
+            if not answer and hasattr(response, 'candidates') and response.candidates:
+                print("Trying strategy 2 (candidates)...")
+                first_candidate = response.candidates[0]
+                print("First candidate type:", type(first_candidate))
+                if hasattr(first_candidate, 'content') and first_candidate.content:
+                    print("First candidate has content")
+                    if hasattr(first_candidate.content, 'parts') and first_candidate.content.parts:
+                        parts = first_candidate.content.parts
+                        print(f"Parts count: {len(parts)}")
+                        if parts and hasattr(parts[0], 'text'):
+                            answer = parts[0].text
+                            if answer:
+                                print("✓ Strategy 2 (candidates): SUCCESS", len(answer), "chars")
+            
+            # Strategy 3: dict conversion
+            if not answer:
+                print("Trying strategy 3 (dict conversion)...")
+                try:
+                    response_dict = dict(response) if hasattr(response, '__iter__') else None
+                    if response_dict and 'text' in response_dict:
+                        answer = response_dict['text']
+                        if answer:
+                            print("✓ Strategy 3 (dict): SUCCESS", len(answer), "chars")
+                except Exception as dict_err:
+                    print("Strategy 3 failed:", dict_err)
+            
+            # Strategy 4: JSON serialization fallback
+            if not answer:
+                print("Trying strategy 4 (JSON fallback)...")
+                try:
+                    import json
+                    response_json = json.dumps(response, default=str)
+                    response_obj = json.loads(response_json)
+                    if isinstance(response_obj, dict) and 'text' in response_obj:
+                        answer = response_obj['text']
+                        if answer:
+                            print("✓ Strategy 4 (JSON): SUCCESS", len(answer), "chars")
+                except Exception as json_err:
+                    print("Strategy 4 failed:", json_err)
+            
+            if not answer:
+                print("⚠ WARNING: Could not extract text from response")
+                print("Full response:", response)
+                print("Response string:", str(response))
+                answer = str(response) if response else "No response received from Gemini."
+            
+            print("=== Final answer ===")
+            print("Length:", len(answer))
+            print("Preview:", answer[:100] if len(answer) > 100 else answer)
         except Exception as chat_exc:
             print("=== Gemini request exception ===")
+            print("Exception type:", type(chat_exc).__name__)
+            print("Exception message:", str(chat_exc))
             traceback.print_exc()
             print("status_code:", getattr(chat_exc, "status_code", None))
             print("body:", getattr(chat_exc, "body", None))
@@ -1544,12 +1679,15 @@ You can help with:
         })
 
     except Exception as e:
-        print("=== Gemini request failed ===")
+        print("=== Fatal error in chat route ===")
+        print("Exception type:", type(e).__name__)
+        print("Exception message:", str(e))
         traceback.print_exc()
-        print("Exception type:", type(e))
-        user_message = _format_gemini_error_message(e)
+        error_message = _format_gemini_error_message(e)
+        print("Formatted error:", error_message)
         return jsonify({
-            "reply": "MI AI Error: " + user_message
+            "reply": error_message,
+            "error": str(e)
         })
 
 
