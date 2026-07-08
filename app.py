@@ -12,135 +12,43 @@ from pathlib import Path
 from pprint import pprint
 
 
-def debug_openai_direct():
+try:
+    from google import genai as google_genai
+    from google.genai import types as gemini_types
+except Exception:
+    google_genai = None
+    gemini_types = None
+
+
+def debug_gemini_direct():
     from dotenv import load_dotenv
-    from openai import OpenAI
-    import requests
 
     load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
-    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").strip()
-    organization = os.getenv("OPENAI_ORGANIZATION", "").strip()
-    project = os.getenv("OPENAI_PROJECT", "").strip()
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 
-    print("=== Direct OpenAI environment ===")
-    print("OPENAI_API_KEY length:", len(api_key))
-    print("OPENAI_MODEL:", model)
-    print("OPENAI_BASE_URL:", base_url)
-    print("OPENAI_PROJECT:", project or "<missing>")
-    print("OPENAI_ORGANIZATION:", organization or "<missing>")
+    print("=== Direct Gemini environment ===")
+    print("GEMINI_API_KEY length:", len(api_key))
+    print("GEMINI_MODEL:", model)
 
-    client_kwargs = {"api_key": api_key}
-    if base_url:
-        client_kwargs["base_url"] = base_url
-    if organization:
-        client_kwargs["organization"] = organization
-    if project:
-        client_kwargs["project"] = project
-    print("=== Direct OpenAI client kwargs ===")
-    print(json.dumps({
-        "api_key": "<redacted>",
-        "base_url": client_kwargs.get("base_url", "https://api.openai.com/v1"),
-        "organization": client_kwargs.get("organization", "<missing>"),
-        "project": client_kwargs.get("project", "<missing>"),
-    }, indent=2))
+    if not api_key or google_genai is None:
+        print("Gemini client unavailable")
+        return
 
-    client = OpenAI(**client_kwargs)
-
+    client = google_genai.Client(api_key=api_key)
     try:
-        print("=== GET /v1/models ===")
-        models = client.models.list()
-        print(json.dumps([m.model_dump() for m in list(models.data)[:10]], indent=2, ensure_ascii=False))
-    except Exception as exc:
-        print("GET /v1/models failed")
-        traceback.print_exc()
-
-    try:
-        print("=== GET /v1/projects ===")
-        projects = client.projects.list()
-        print(json.dumps([p.model_dump() for p in list(projects.data)[:10]], indent=2, ensure_ascii=False))
-    except Exception as exc:
-        print("GET /v1/projects failed")
-        traceback.print_exc()
-
-    try:
-        print("=== POST /v1/chat/completions ===")
-        response = client.chat.completions.create(
+        response = client.models.generate_content(
             model=model,
-            messages=[{"role": "user", "content": "hello"}],
-            temperature=0.7,
-            max_tokens=200,
-            timeout=60,
+            contents="Say hello in one short sentence.",
         )
-        print(json.dumps(response.model_dump(), indent=2, ensure_ascii=False))
+        print("=== Gemini generate_content ===")
+        print(getattr(response, "text", ""))
     except Exception as exc:
-        print("POST /v1/chat/completions failed")
+        print("Gemini request failed")
         traceback.print_exc()
         print("status_code:", getattr(exc, "status_code", None))
-        print("headers:", dict(getattr(getattr(exc, "response", None), "headers", {}) or {}))
         print("body:", getattr(exc, "body", None))
-        try:
-            print("response.text:", getattr(exc.response, "text", None))
-        except Exception as text_exc:
-            print("response.text error:", text_exc)
-        try:
-            print("response.json():", getattr(exc.response, "json", lambda: None)())
-        except Exception as json_exc:
-            print("response.json() error:", json_exc)
 
-    try:
-        print("=== POST /v1/responses (gpt-4.1-mini) ===")
-        response = client.responses.create(
-            model="gpt-4.1-mini",
-            input="hello",
-            timeout=60,
-        )
-        print(json.dumps(response.model_dump(), indent=2, ensure_ascii=False))
-    except Exception as exc:
-        print("POST /v1/responses failed")
-        traceback.print_exc()
-        print("status_code:", getattr(exc, "status_code", None))
-        print("headers:", dict(getattr(getattr(exc, "response", None), "headers", {}) or {}))
-        print("body:", getattr(exc, "body", None))
-        try:
-            print("response.text:", getattr(exc.response, "text", None))
-        except Exception as text_exc:
-            print("response.text error:", text_exc)
-        try:
-            print("response.json():", getattr(exc.response, "json", lambda: None)())
-        except Exception as json_exc:
-            print("response.json() error:", json_exc)
-
-    print("=== raw requests comparison ===")
-    headers = {"Authorization": f"Bearer {api_key}"}
-    if organization:
-        headers["OpenAI-Organization"] = organization
-    if project:
-        headers["OpenAI-Project"] = project
-
-    for endpoint, method, payload in [
-        ("https://api.openai.com/v1/models", "GET", None),
-        ("https://api.openai.com/v1/projects", "GET", None),
-        ("https://api.openai.com/v1/chat/completions", "POST", {
-            "model": model,
-            "messages": [{"role": "user", "content": "hello"}],
-            "temperature": 0.7,
-            "max_tokens": 200,
-        }),
-    ]:
-        try:
-            if method == "GET":
-                resp = requests.get(endpoint, headers=headers, timeout=60)
-            else:
-                resp = requests.post(endpoint, headers=headers, json=payload, timeout=60)
-            print(f"=== {method} {endpoint} ===")
-            print("status_code:", resp.status_code)
-            print("headers:", dict(resp.headers))
-            print("text:", resp.text)
-        except Exception as exc:
-            print(f"=== {method} {endpoint} failed ===")
-            traceback.print_exc()
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -158,11 +66,6 @@ def _load_environment() -> list[str]:
 
 
 _load_environment()
-
-try:
-    from openai import OpenAI
-except Exception:
-    OpenAI = None
 
 try:
     import PyPDF2
@@ -197,31 +100,27 @@ except Exception:
 app = Flask(__name__)
 CORS(app)
 
-client = None
-client_api_key = None
+gemini_client = None
+gemini_client_api_key = None
 
 
-def _get_openai_api_key():
-    """Read the OpenAI API key from server-side environment variables with Vercel-safe handling."""
+def _get_gemini_api_key():
+    """Read the Gemini API key from server-side environment variables with Vercel-safe handling."""
     _load_environment()
-    name = "OPENAI_API_KEY"
-    value = os.getenv(name, "")
-    if isinstance(value, str):
-        value = value.strip()
-        if value:
-            return value
-
+    value = os.getenv("GEMINI_API_KEY", "").strip()
+    if value:
+        return value
     return ""
 
 
-def _get_openai_model():
+def _get_gemini_model():
     _load_environment()
-    model = os.getenv("OPENAI_MODEL", "").strip()
-    return model or "gpt-4o-mini"
+    model = os.getenv("GEMINI_MODEL", "").strip()
+    return model or "gemini-2.0-flash"
 
 
-def _format_openai_error_message(exc):
-    status_code = getattr(exc, "status_code", None)
+def _format_gemini_error_message(exc):
+    status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
     body = getattr(exc, "body", None)
     if isinstance(body, dict):
         error = body.get("error") or body
@@ -229,69 +128,54 @@ def _format_openai_error_message(exc):
             message = error.get("message") or error.get("error") or ""
             error_type = error.get("type") or ""
             error_code = error.get("code") or ""
-            if error_type == "insufficient_quota" or error_code == "insufficient_quota":
-                return (
-                    "OpenAI is currently rejecting generation requests because the account or project has no available quota. "
-                    "Please verify billing and quota for the OpenAI project before retrying."
-                )
-            if error_type in {"invalid_api_key", "authentication_error"} or error_code in {"invalid_api_key", "authentication_error"}:
-                return "The OpenAI API key appears invalid or expired. Please verify the key and try again."
-            if error_type in {"permission_error", "model_not_found", "unsupported_model"} or error_code in {"permission_error", "model_not_found", "unsupported_model"}:
-                return "The requested OpenAI model is not available for this account or project. Please check the model name and permissions."
+            if error_type in {"quota_exceeded", "rate_limit_exceeded", "resource_exhausted", "insufficient_quota"} or error_code in {"quota_exceeded", "rate_limit_exceeded", "resource_exhausted", "insufficient_quota"} or status_code == 429:
+                return "The Gemini service is temporarily unavailable because of quota or rate limits. Please verify billing, project quota, or try again shortly."
+            if error_type in {"invalid_api_key", "authentication_error"} or error_code in {"invalid_api_key", "authentication_error"} or status_code in {401, 403}:
+                return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
+            if error_type in {"not_found", "model_not_found"} or error_code in {"not_found", "model_not_found"} or status_code == 404:
+                return "The requested Gemini model is not available. Please try a supported model."
+            if error_type in {"server_error", "internal_error"} or error_code in {"server_error", "internal_error"} or status_code in {500, 503}:
+                return "The Gemini service is temporarily unavailable. Please try again shortly."
             if message:
                 return str(message)
-    if status_code == 429:
-        return "OpenAI rejected the request because of a rate limit or quota issue. Please try again later or verify your billing and quota."
+    if status_code in {401, 403}:
+        return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
+    if status_code == 404:
+        return "The requested Gemini model is not available. Please try a supported model."
+    if status_code in {429, 500, 503}:
+        return "The Gemini service is temporarily unavailable. Please try again shortly."
     return str(exc)
 
 
-def _get_openai_client():
-    global client, client_api_key
+def _get_gemini_client():
+    global gemini_client, gemini_client_api_key
     _load_environment()
-    api_key = _get_openai_api_key()
-    if not api_key or OpenAI is None:
-        client = None
-        client_api_key = None
+    api_key = _get_gemini_api_key()
+    if not api_key or google_genai is None:
+        gemini_client = None
+        gemini_client_api_key = None
         return None
 
-    if client is not None and client_api_key == api_key:
-        return client
+    if gemini_client is not None and gemini_client_api_key == api_key:
+        return gemini_client
 
     try:
-        client_kwargs = {"api_key": api_key}
-        base_url = os.getenv("OPENAI_BASE_URL", "").strip()
-        organization = os.getenv("OPENAI_ORGANIZATION", "").strip()
-        project = os.getenv("OPENAI_PROJECT", "").strip()
-        if base_url:
-            client_kwargs["base_url"] = base_url
-        if organization:
-            client_kwargs["organization"] = organization
-        if project:
-            client_kwargs["project"] = project
-        print("=== OpenAI environment ===")
-        print("OPENAI_API_KEY length:", len(api_key))
-        print("OPENAI_MODEL:", _get_openai_model())
-        print("OPENAI_BASE_URL:", base_url or "https://api.openai.com/v1")
-        print("OPENAI_PROJECT:", project or "<missing>")
-        print("OPENAI_ORGANIZATION:", organization or "<missing>")
+        print("=== Gemini environment ===")
+        print("GEMINI_API_KEY length:", len(api_key))
+        print("GEMINI_MODEL:", _get_gemini_model())
         print("Environment:", os.getcwd())
-        print("=== OpenAI client kwargs ===")
-        print(json.dumps({
-            "api_key": "<redacted>",
-            "base_url": client_kwargs.get("base_url", "https://api.openai.com/v1"),
-            "organization": client_kwargs.get("organization", "<missing>"),
-            "project": client_kwargs.get("project", "<missing>"),
-        }, indent=2))
-        client = OpenAI(**client_kwargs)
-        client_api_key = api_key
+        gemini_client = google_genai.Client(api_key=api_key)
+        gemini_client_api_key = api_key
+        print("=== Gemini client initialized ===")
     except Exception as exc:
-        client = None
-        client_api_key = None
-        print("OpenAI client initialization failed")
+        gemini_client = None
+        gemini_client_api_key = None
+        print("Gemini client initialization failed")
         traceback.print_exc()
-        print("OpenAI init error:", exc)
+        print("Gemini init error:", exc)
 
-    return client
+    return gemini_client
+
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
@@ -845,9 +729,9 @@ def _get_user_scope():
 
 def _get_chat_debug_context():
     return {
-        "openai_key_present": bool(_get_openai_api_key()),
-        "openai_model": _get_openai_model(),
-        "provider": "openai",
+        "gemini_key_present": bool(_get_gemini_api_key()),
+        "gemini_model": _get_gemini_model(),
+        "provider": "gemini",
         "chat_route": "/chat",
     }
 
@@ -899,10 +783,10 @@ def home():
 def debug_chat():
     return jsonify({
         "message": "python-backend",
-        "provider": "openai",
+        "provider": "gemini",
         "chat_route": "/chat",
-        "openai_key_present": bool(_get_openai_api_key()),
-        "openai_model": _get_openai_model(),
+        "gemini_key_present": bool(_get_gemini_api_key()),
+        "gemini_model": _get_gemini_model(),
     })
 
 
@@ -1552,56 +1436,41 @@ You can help with:
 
         messages_payload.append({"role": "user", "content": user_prompt})
 
-        openai_client = _get_openai_client()
-        if openai_client is None:
+        gemini_client = _get_gemini_client()
+        if gemini_client is None:
             return jsonify({
-                "reply": "The AI service is currently unavailable because the OpenAI API key is not configured on the server. Please contact the administrator to set OPENAI_API_KEY in the deployment environment."
+                "reply": "The AI service is currently unavailable because the Gemini API key is not configured on the server. Please contact the administrator to set GEMINI_API_KEY in the deployment environment."
             })
 
-        model_name = _get_openai_model()
-        request_kwargs = {
-            "model": model_name,
-            "messages": messages_payload,
-            "temperature": 0.7,
-            "max_tokens": 800,
-            "response_format": {"type": "text"},
-        }
+        model_name = _get_gemini_model()
+        contents = []
+        for message in messages_payload:
+            if message.get("role") in {"user", "assistant", "system"}:
+                contents.append({"role": message["role"], "parts": [{"text": message.get("content", "")}]})
 
-        print("=== OpenAI request ===")
+        print("=== Gemini request ===")
         print("Model:", model_name)
         print("Messages:", json.dumps(messages_payload, ensure_ascii=False, indent=2))
-        print("Temperature:", request_kwargs["temperature"])
-        print("Max tokens:", request_kwargs["max_tokens"])
-        print("Response format:", request_kwargs["response_format"])
         print("Environment:", os.getcwd())
 
         try:
-            response = openai_client.chat.completions.create(
-                **request_kwargs,
-                timeout=60,
+            response = gemini_client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config={
+                    "temperature": 0.7,
+                    "max_output_tokens": 800,
+                    "response_mime_type": "text/plain",
+                },
             )
-            print("=== OpenAI response ===")
-            print("Status code:", getattr(response, "status_code", None))
-            print("Headers:", dict(getattr(response, "headers", {}) or {}))
-            try:
-                print("JSON:", json.dumps(response.model_dump(), ensure_ascii=False, indent=2))
-            except Exception:
-                print("JSON:", response)
-            answer = response.choices[0].message.content
+            print("=== Gemini response ===")
+            print("Text:", getattr(response, "text", ""))
+            answer = getattr(response, "text", "") or ""
         except Exception as chat_exc:
-            print("=== OpenAI chat completions exception ===")
+            print("=== Gemini request exception ===")
             traceback.print_exc()
             print("status_code:", getattr(chat_exc, "status_code", None))
-            print("headers:", dict(getattr(getattr(chat_exc, "response", None), "headers", {}) or {}))
             print("body:", getattr(chat_exc, "body", None))
-            try:
-                print("response.text:", getattr(chat_exc.response, "text", None))
-            except Exception as text_exc:
-                print("response.text error:", text_exc)
-            try:
-                print("response.json():", getattr(chat_exc.response, "json", lambda: None)())
-            except Exception as json_exc:
-                print("response.json() error:", json_exc)
             raise
 
         return jsonify({
@@ -1609,19 +1478,11 @@ You can help with:
         })
 
     except Exception as e:
-        print("=== OpenAI request failed ===")
+        print("=== Gemini request failed ===")
         traceback.print_exc()
         print("Exception type:", type(e))
         print("Exception args:", getattr(e, "args", None))
-        if hasattr(e, "response"):
-            response = e.response
-            print("Error status code:", getattr(response, "status_code", None))
-            print("Error headers:", dict(getattr(response, "headers", {}) or {}))
-            try:
-                print("Error body:", response.text)
-            except Exception:
-                print("Error body:", response)
-        user_message = _format_openai_error_message(e)
+        user_message = _format_gemini_error_message(e)
         return jsonify({
             "reply": "MI AI Error: " + user_message
         })
@@ -1633,7 +1494,7 @@ def api_chat():
 
 
 if __name__=="__main__":
-    debug_openai_direct()
+    debug_gemini_direct()
     app.run(
         host="0.0.0.0",
         port=int(os.getenv("PORT", "5001")),
