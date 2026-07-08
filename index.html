@@ -3125,7 +3125,11 @@ function getBackendBaseUrl() {
   if (configured) {
     return configured.replace(/\/$/, '');
   }
-  return window.location && window.location.origin ? window.location.origin : '';
+  const currentOrigin = window.location && window.location.origin ? window.location.origin : '';
+  if (currentOrigin) {
+    return currentOrigin;
+  }
+  return '';
 }
 
 function getChatApiCandidates() {

@@ -1775,7 +1775,7 @@ You can help with:
 
         final_json = {"reply": answer}
         print("=== Final JSON to return ===")
-        print(final_json)
+        print(_safe_console_text(final_json))
         return jsonify(final_json)
 
     except Exception as e:
