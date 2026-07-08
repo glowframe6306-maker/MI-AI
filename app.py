@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import traceback
+import sys
 import uuid
 import urllib.error
 import urllib.parse
@@ -13,15 +14,29 @@ from pprint import pprint
 
 
 try:
-    from google import genai as google_genai
-    from google.genai import types as gemini_types
-    print("[BOOT] ✓ google-genai imported successfully")
+    from google import genai
+    print("[BOOT] google-genai imported successfully")
+    try:
+        # Try to read the installed package version
+        try:
+            import importlib.metadata as importlib_metadata
+            gg_version = importlib_metadata.version("google-genai")
+        except Exception:
+            try:
+                import pkg_resources
+                gg_version = pkg_resources.get_distribution("google-genai").version
+            except Exception:
+                gg_version = "unknown"
+        print(f"[BOOT] Python executable: {sys.executable}")
+        print(f"[BOOT] google-genai version: {gg_version}")
+        print("[BOOT] Gemini SDK loaded successfully")
+    except Exception:
+        print("[BOOT] Could not determine google-genai version")
 except Exception as import_error:
-    print(f"[BOOT] ✗ Failed to import google-genai: {import_error}")
+    print(f"[BOOT] Failed to import google-genai: {import_error}")
     import traceback as tb
     tb.print_exc()
-    google_genai = None
-    gemini_types = None
+    genai = None
 
 
 def debug_gemini_direct():
@@ -29,17 +44,17 @@ def debug_gemini_direct():
 
     load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
 
     print("=== Direct Gemini environment ===")
     print("GEMINI_API_KEY length:", len(api_key))
     print("GEMINI_MODEL:", model)
 
-    if not api_key or google_genai is None:
+    if not api_key or genai is None:
         print("Gemini client unavailable")
         return
 
-    client = google_genai.Client(api_key=api_key)
+    client = genai.Client(api_key=api_key)
     try:
         response = client.models.generate_content(
             model=model,
@@ -57,6 +72,17 @@ def debug_gemini_direct():
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+
+
+def _safe_console_text(value) -> str:
+    if value is None:
+        return ""
+    text = str(value)
+    encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+    try:
+        return text.encode(encoding, errors="replace").decode(encoding, errors="replace")
+    except Exception:
+        return text.encode("utf-8", errors="replace").decode("utf-8", errors="replace")
 
 
 def _load_environment() -> list[str]:
@@ -117,19 +143,87 @@ def _get_gemini_api_key():
     return ""
 
 
-def _get_openai_api_key():
-    """Compatibility wrapper for older code paths and tests. The app still uses Gemini end to end."""
-    _load_environment()
-    value = os.getenv("OPENAI_API_KEY", "").strip()
-    if value:
-        return value
-    return ""
+# Removed OpenAI compatibility helper to enforce Gemini-only usage
 
 
 def _get_gemini_model():
     _load_environment()
     model = os.getenv("GEMINI_MODEL", "").strip()
-    return model or "gemini-2.0-flash"
+    return model or "gemini-2.5-flash"
+
+
+def _get_available_models(client):
+    """Fetch list of available models that support generateContent."""
+    if client is None:
+        print("Client is None, cannot fetch models")
+        return []
+
+    try:
+        print("Fetching available models from Gemini API...")
+        models = client.models.list()
+        if models is None:
+            print("Model list returned None")
+            return []
+
+        available = []
+        for model in models:
+            model_name = getattr(model, 'name', None) or str(model)
+            model_id = model_name.replace('models/', '').strip()
+            if not model_id:
+                continue
+
+            model_lower = model_id.lower()
+            if any(tag in model_lower for tag in ['preview', 'tts', 'exp', 'beta', 'alpha']):
+                continue
+
+            supported_actions = getattr(model, 'supported_actions', None)
+            if supported_actions is None:
+                print(f"  Skipping {model_id} because supported_actions is unknown")
+                continue
+
+            if 'generateContent' in supported_actions:
+                available.append(model_id)
+                print(f"  {model_id}")
+
+        print(f"Total models supporting generateContent: {len(available)}")
+        return available
+    except Exception as e:
+        print(f"Error fetching models: {e}")
+        traceback.print_exc()
+        return []
+
+
+def _select_best_model(client, requested_model=None):
+    """Select the best available model, with priority order."""
+    priority_models = ["gemini-2.5-flash"]
+    if requested_model:
+        requested_model = requested_model.replace('models/', '').strip()
+        if requested_model and requested_model not in priority_models:
+            priority_models.insert(0, requested_model)
+
+    available_models = _get_available_models(client)
+
+    if not available_models:
+        print("Warning: Could not fetch available models from API")
+        fallback = [m for m in priority_models if m != requested_model]
+        return requested_model or "gemini-2.5-flash", fallback
+
+    print(f"\nAvailable models: {available_models}")
+    print(f"Priority order: {priority_models}")
+
+    for model in priority_models:
+        if model in available_models:
+            fallback = [m for m in available_models if m != model]
+            print(f"Selected model: {model}")
+            print(f"Fallback models: {fallback}")
+            return model, fallback
+
+    selected = available_models[0]
+    fallback = available_models[1:]
+    print(f"No priority model available, using first available: {selected}")
+    print(f"Selected model: {selected}")
+    print(f"Fallback models: {fallback}")
+    return selected, fallback
 
 
 def _format_gemini_error_message(exc):
@@ -167,7 +261,7 @@ def _get_gemini_client():
     global gemini_client, gemini_client_api_key
     _load_environment()
     api_key = _get_gemini_api_key()
-    if not api_key or google_genai is None:
+    if not api_key or genai is None:
         gemini_client = None
         gemini_client_api_key = None
         return None
@@ -180,7 +274,7 @@ def _get_gemini_client():
         print("GEMINI_API_KEY length:", len(api_key))
         print("GEMINI_MODEL:", _get_gemini_model())
         print("Environment:", os.getcwd())
-        gemini_client = google_genai.Client(api_key=api_key)
+        gemini_client = genai.Client(api_key=api_key)
         gemini_client_api_key = api_key
         print("=== Gemini client initialized ===")
     except Exception as exc:
@@ -229,36 +323,26 @@ def _generate_gemini_content(client, contents, model_name=None, config=None):
     if client is None:
         raise RuntimeError("Gemini client is not available")
 
-    requested_model = (model_name or _get_gemini_model()).strip() or "gemini-2.0-flash"
+    requested_model = (model_name or _get_gemini_model()).strip()
     
-    # Build comprehensive fallback list
-    fallback_models = [requested_model]
-    if requested_model != "gemini-2.5-flash":
-        fallback_models.append("gemini-2.5-flash")
-    if requested_model != "gemini-2.0-flash":
-        fallback_models.append("gemini-2.0-flash")
-    if requested_model != "gemini-2.0-flash-lite":
-        fallback_models.append("gemini-2.0-flash-lite")
-    if requested_model != "gemini-1.5-flash":
-        fallback_models.append("gemini-1.5-flash")
-    
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_models = []
-    for model in fallback_models:
-        if model not in seen:
-            unique_models.append(model)
-            seen.add(model)
-    fallback_models = unique_models
+    # Get best available model and fallback list
+    selected_model, fallback_models = _select_best_model(client, requested_model)
     
     print(f"\n=== Gemini content generation ===")
     print(f"Requested model: {requested_model}")
+    print(f"Selected model: {selected_model}")
     print(f"Fallback models: {fallback_models}")
     print(f"Contents: {len(contents)} messages")
     print(f"Config: {config}")
+    
+    # Use selected model, then fallback to others if it fails
+    fallback_models_to_try = [selected_model]
+    for model in fallback_models:
+        if model != selected_model and model not in fallback_models_to_try:
+            fallback_models_to_try.append(model)
 
     last_error = None
-    for candidate_model in fallback_models:
+    for candidate_model in fallback_models_to_try:
         try:
             print(f"\n>>> Trying model: {candidate_model}")
             response = client.models.generate_content(
@@ -310,7 +394,7 @@ def _generate_gemini_content(client, contents, model_name=None, config=None):
                 raise
             
             # If this is the last model, raise
-            if candidate_model == fallback_models[-1]:
+            if candidate_model == fallback_models_to_try[-1]:
                 print(f"Last model in list, raising")
                 raise
             
@@ -394,7 +478,7 @@ def _classify_search_intent(text):
         return "maps"
     if any(keyword in lowered for keyword in ["news", "latest", "breaking", "current events", "today", "tonight", "recent"]):
         return "news"
-    if any(keyword in lowered for keyword in ["github", "npm", "pypi", "firebase", "supabase", "openai", "groq", "cloudflare", "vercel", "mdn", "stackoverflow", "official docs", "official website"]):
+    if any(keyword in lowered for keyword in ["github", "npm", "pypi", "firebase", "supabase", "cloudflare", "vercel", "mdn", "stackoverflow", "official docs", "official website"]):
         return "developer"
     return "web"
 
@@ -1249,6 +1333,8 @@ def chat():
     try:
 
         data = request.get_json()
+        print("=== Request payload ===")
+        print(data)
         user_message = data.get("message","")
         history = data.get("history") or []
         attachment_ids = data.get("attachment_ids") or []
@@ -1581,6 +1667,7 @@ You can help with:
         messages_payload.append({"role": "user", "content": user_prompt})
 
         gemini_client = _get_gemini_client()
+        print("Route gemini client available:", gemini_client is not None)
         if gemini_client is None:
             return jsonify({
                 "reply": "The AI service is currently unavailable because the Gemini API key is not configured on the server. Please contact the administrator to set GEMINI_API_KEY in the deployment environment."
@@ -1613,7 +1700,7 @@ You can help with:
             answer = None
             if hasattr(response, 'text') and response.text:
                 answer = response.text
-                print("✓ Strategy 1 (text attr): SUCCESS", len(answer), "chars")
+                print("Strategy 1 (text attr): SUCCESS", len(answer), "chars")
             
             # Strategy 2: candidates array
             if not answer and hasattr(response, 'candidates') and response.candidates:
@@ -1628,7 +1715,7 @@ You can help with:
                         if parts and hasattr(parts[0], 'text'):
                             answer = parts[0].text
                             if answer:
-                                print("✓ Strategy 2 (candidates): SUCCESS", len(answer), "chars")
+                                print("Strategy 2 (candidates): SUCCESS", len(answer), "chars")
             
             # Strategy 3: dict conversion
             if not answer:
@@ -1638,7 +1725,7 @@ You can help with:
                     if response_dict and 'text' in response_dict:
                         answer = response_dict['text']
                         if answer:
-                            print("✓ Strategy 3 (dict): SUCCESS", len(answer), "chars")
+                            print("Strategy 3 (dict): SUCCESS", len(answer), "chars")
                 except Exception as dict_err:
                     print("Strategy 3 failed:", dict_err)
             
@@ -1652,7 +1739,7 @@ You can help with:
                     if isinstance(response_obj, dict) and 'text' in response_obj:
                         answer = response_obj['text']
                         if answer:
-                            print("✓ Strategy 4 (JSON): SUCCESS", len(answer), "chars")
+                            print("Strategy 4 (JSON): SUCCESS", len(answer), "chars")
                 except Exception as json_err:
                     print("Strategy 4 failed:", json_err)
             
@@ -1664,30 +1751,46 @@ You can help with:
             
             print("=== Final answer ===")
             print("Length:", len(answer))
-            print("Preview:", answer[:100] if len(answer) > 100 else answer)
+            preview_text = answer[:100] if len(answer) > 100 else answer
+            print("Preview:", _safe_console_text(repr(preview_text)))
+            print("=== Gemini full response ===")
+            try:
+                print(response)
+            except Exception:
+                pass
+
+            # If the answer text contains known API error indicators, raise to expose full traceback
+            lower_ans = (answer or "").lower()
+            if any(keyword in lower_ans for keyword in ["quota", "insufficient_quota", "quota exceeded", "you exceeded your current quota", "rate_limit", "resource_exhausted"]):
+                print("!!! Detected API error-like response in answer, raising to return full traceback")
+                raise RuntimeError(f"Gemini API returned error-like response: {answer}")
         except Exception as chat_exc:
             print("=== Gemini request exception ===")
             print("Exception type:", type(chat_exc).__name__)
-            print("Exception message:", str(chat_exc))
+            print("Exception message:", _safe_console_text(chat_exc))
             traceback.print_exc()
             print("status_code:", getattr(chat_exc, "status_code", None))
             print("body:", getattr(chat_exc, "body", None))
             raise
 
-        return jsonify({
-            "reply": answer
-        })
+        final_json = {"reply": answer}
+        print("=== Final JSON to return ===")
+        print(final_json)
+        return jsonify(final_json)
 
     except Exception as e:
         print("=== Fatal error in chat route ===")
         print("Exception type:", type(e).__name__)
-        print("Exception message:", str(e))
-        traceback.print_exc()
+        print("Exception message:", _safe_console_text(e))
+        tb_text = traceback.format_exc()
+        print(_safe_console_text(tb_text))
         error_message = _format_gemini_error_message(e)
-        print("Formatted error:", error_message)
+        print("Formatted error:", _safe_console_text(error_message))
         return jsonify({
             "reply": error_message,
-            "error": str(e)
+            "error": str(e),
+            "traceback": tb_text,
+            "raw_error": repr(e)
         })
 
 
