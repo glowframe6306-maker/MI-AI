@@ -113,6 +113,15 @@ def _get_gemini_api_key():
     return ""
 
 
+def _get_openai_api_key():
+    """Compatibility wrapper for older code paths and tests. The app still uses Gemini end to end."""
+    _load_environment()
+    value = os.getenv("OPENAI_API_KEY", "").strip()
+    if value:
+        return value
+    return ""
+
+
 def _get_gemini_model():
     _load_environment()
     model = os.getenv("GEMINI_MODEL", "").strip()
@@ -175,6 +184,65 @@ def _get_gemini_client():
         print("Gemini init error:", exc)
 
     return gemini_client
+
+
+def _build_gemini_contents(messages_payload):
+    contents = []
+    for message in messages_payload:
+        role = (message.get("role") or "").lower()
+        content = message.get("content", "") or ""
+        if not content:
+            continue
+        if role == "system":
+            contents.append({"role": "user", "parts": [{"text": f"System instruction: {content}"}]})
+        elif role == "assistant":
+            contents.append({"role": "model", "parts": [{"text": content}]})
+        elif role in {"user", "model"}:
+            contents.append({"role": role, "parts": [{"text": content}]})
+        else:
+            contents.append({"role": "user", "parts": [{"text": content}]})
+    return contents
+
+
+def _generate_gemini_content(client, contents, model_name=None, config=None):
+    if client is None:
+        raise RuntimeError("Gemini client is not available")
+
+    requested_model = (model_name or _get_gemini_model()).strip() or "gemini-2.0-flash"
+    fallback_models = [requested_model]
+    if requested_model != "gemini-2.5-flash":
+        fallback_models.append("gemini-2.5-flash")
+
+    last_error = None
+    for candidate_model in fallback_models:
+        try:
+            return client.models.generate_content(
+                model=candidate_model,
+                contents=contents,
+                config=config,
+            )
+        except Exception as exc:
+            last_error = exc
+            status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+            body = getattr(exc, "body", None)
+            if isinstance(body, dict):
+                error = body.get("error") or body
+                code = (error.get("code") if isinstance(error, dict) else None) or ""
+                error_type = (error.get("type") if isinstance(error, dict) else None) or ""
+                message = (error.get("message") if isinstance(error, dict) else None) or ""
+            else:
+                code = ""
+                error_type = ""
+                message = ""
+            if status_code not in {429, 500, 503} and code not in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"} and error_type not in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"}:
+                raise
+            if candidate_model == fallback_models[-1]:
+                raise
+            print(f"Gemini model {candidate_model} hit quota/rate limits; retrying with {fallback_models[-1]}")
+
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError("Gemini content generation failed")
 
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
@@ -1443,20 +1511,18 @@ You can help with:
             })
 
         model_name = _get_gemini_model()
-        contents = []
-        for message in messages_payload:
-            if message.get("role") in {"user", "assistant", "system"}:
-                contents.append({"role": message["role"], "parts": [{"text": message.get("content", "")}]})
+        contents = _build_gemini_contents(messages_payload)
 
         print("=== Gemini request ===")
         print("Model:", model_name)
-        print("Messages:", json.dumps(messages_payload, ensure_ascii=False, indent=2))
+        print("Message count:", len(messages_payload))
         print("Environment:", os.getcwd())
 
         try:
-            response = gemini_client.models.generate_content(
-                model=model_name,
-                contents=contents,
+            response = _generate_gemini_content(
+                gemini_client,
+                contents,
+                model_name=model_name,
                 config={
                     "temperature": 0.7,
                     "max_output_tokens": 800,
@@ -1464,8 +1530,8 @@ You can help with:
                 },
             )
             print("=== Gemini response ===")
-            print("Text:", getattr(response, "text", ""))
             answer = getattr(response, "text", "") or ""
+            print("Text length:", len(answer))
         except Exception as chat_exc:
             print("=== Gemini request exception ===")
             traceback.print_exc()
@@ -1481,7 +1547,6 @@ You can help with:
         print("=== Gemini request failed ===")
         traceback.print_exc()
         print("Exception type:", type(e))
-        print("Exception args:", getattr(e, "args", None))
         user_message = _format_gemini_error_message(e)
         return jsonify({
             "reply": "MI AI Error: " + user_message
