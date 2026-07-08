@@ -105,6 +105,8 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 LOCAL_PERSISTENCE_FILE = Path(__file__).with_name("local_persistence.json")
 UPLOAD_DIR = Path(__file__).with_name("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+FRONTEND_INDEX = FRONTEND_DIR / "index.html"
 
 
 def _load_local_store():
@@ -648,6 +650,15 @@ def _get_user_scope():
     }
 
 
+def _get_chat_debug_context():
+    return {
+        "openai_key_present": bool(_get_openai_api_key()),
+        "openai_model": _get_openai_model(),
+        "provider": "openai",
+        "chat_route": "/chat",
+    }
+
+
 def _request_supabase(method, path, payload=None, params=None):
     if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
         raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured")
@@ -686,7 +697,20 @@ def _request_supabase(method, path, payload=None, params=None):
 
 @app.route("/")
 def home():
+    if FRONTEND_INDEX.exists():
+        return send_from_directory(str(FRONTEND_DIR), "index.html")
     return "MI AI Running 🚀"
+
+
+@app.route("/debug/chat", methods=["GET"])
+def debug_chat():
+    return jsonify({
+        "message": "python-backend",
+        "provider": "openai",
+        "chat_route": "/chat",
+        "openai_key_present": bool(_get_openai_api_key()),
+        "openai_model": _get_openai_model(),
+    })
 
 
 @app.route("/api/conversations", methods=["GET", "POST"])
@@ -1361,6 +1385,9 @@ You can help with:
         })
 
 
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    return chat()
 
 
 if __name__=="__main__":

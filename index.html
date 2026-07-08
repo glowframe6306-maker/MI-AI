@@ -3120,39 +3120,30 @@ function shareChat(){
   menu.style.display = 'none';
 }
 
+function getBackendBaseUrl() {
+  const configured = (window.__MI_BACKEND_URL__ || '').toString().trim();
+  if (configured) {
+    return configured.replace(/\/$/, '');
+  }
+  return window.location && window.location.origin ? window.location.origin : '';
+}
+
 function getChatApiCandidates() {
   const candidates = [];
-  const origin = window.location && window.location.origin ? window.location.origin : '';
-  if (origin) {
-    candidates.push(`${origin}/chat`);
+  const baseUrl = getBackendBaseUrl();
+  if (baseUrl) {
+    candidates.push(`${baseUrl}/api/chat`);
   }
-  const hostname = window.location && window.location.hostname ? window.location.hostname : '';
-  if (hostname) {
-    candidates.push(`${window.location.protocol}//${hostname}/chat`);
-    candidates.push(`http://${hostname}:5000/chat`);
-    candidates.push(`http://${hostname}:5001/chat`);
-  }
-  candidates.push('http://127.0.0.1:5000/chat');
-  candidates.push('http://localhost:5000/chat');
-
+  candidates.push('/api/chat');
   return candidates.filter((value, index, arr) => arr.indexOf(value) === index);
 }
 
 function getApiBaseCandidates() {
+  const baseUrl = getBackendBaseUrl();
   const candidates = [];
-  const origin = window.location && window.location.origin ? window.location.origin : '';
-  if (origin) {
-    candidates.push(origin);
+  if (baseUrl) {
+    candidates.push(baseUrl);
   }
-  const hostname = window.location && window.location.hostname ? window.location.hostname : '';
-  if (hostname) {
-    candidates.push(`${window.location.protocol}//${hostname}`);
-    candidates.push(`http://${hostname}:5000`);
-    candidates.push(`http://${hostname}:5001`);
-  }
-  candidates.push('http://127.0.0.1:5000');
-  candidates.push('http://localhost:5000');
-
   return candidates.filter((value, index, arr) => arr.indexOf(value) === index);
 }
 
