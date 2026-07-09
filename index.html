@@ -3128,14 +3128,10 @@ function getBackendBaseUrl() {
   return window.location && window.location.origin ? window.location.origin : '';
 }
 
-function getChatApiCandidates() {
-  const candidates = [];
-  const baseUrl = getBackendBaseUrl();
-  if (baseUrl) {
-    candidates.push(`${baseUrl}/api/chat`);
-  }
-  candidates.push('/api/chat');
-  return candidates.filter((value, index, arr) => arr.indexOf(value) === index);
+function getChatApiCandidates(){
+    return [
+        "http://127.0.0.1:5000/chat"
+    ];
 }
 
 function getApiBaseCandidates() {
@@ -3202,22 +3198,19 @@ async function fetchChatReply(payload, signal) {
 }
 
 /* SEND */
-function sendOrStop() {
-  if (replyInProgress) {
-    stopReply();
-    return;
-  }
-  send();
-}
+let res=await fetch("http://127.0.0.1:5000/chat",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+message:msg
+})
+});
 
-async function send(){
+let data=await res.json();
 
-if (replyInProgress) return;
-
-if (sharedChatData && sharedChatData.permission === 'view') {
-    applySharedChatUi('view');
-    return;
-}
+type(data.reply,!isSharedView);
 
 let msg=input.value.trim();
 if(!msg) return;
@@ -3362,12 +3355,17 @@ try {
         }
     }, 30000);
 
-    let res = await fetchChatReply({
-        message: msg,
-        history: history,
-        conversation_id: conversationId,
-        attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((attachment) => attachment.id) : []
-    }, replyAbortController.signal);
+    let res = await fetch("http://127.0.0.1:5000/chat",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+message:msg
+})
+});
+
+let data=await res.json();
 
     clearTimeout(timeoutId);
 
@@ -3375,8 +3373,14 @@ try {
         throw new Error("Server returned " + res.status);
     }
 
-    const data = await res.json();
-    const aiText = data.reply || "";
+    let data = {};
+    try {
+        data = await res.json();
+    } catch (error) {
+        const fallbackText = await res.text().catch(() => '');
+        data = { response: fallbackText };
+    }
+    const aiText = String(data.response || data.reply || data.message || data.error || "").trim() || "The AI is unavailable right now. Please try again.";
 
     t.remove();
 
@@ -3604,24 +3608,10 @@ async function save() {
 
     try {
 
-        await fetch("/api/conversations/" + encodeURIComponent(currentChat), {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token,
-                "X-User-Id": localStorage.getItem("mi_user_id") || "",
-                "X-User-Email": localStorage.getItem("mi_user_email") || ""
-            },
-            body: JSON.stringify({
-                messages: chats[currentChat]
-            })
-        });
-
-    } catch (err) {
-        console.error("Save failed:", err);
-    }
-
-}
+        localStorage.setItem(
+"mi_chats_" + accountId,
+JSON.stringify(chats)
+);
 
 function persistChats() {
     save();
