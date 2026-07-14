@@ -8985,5 +8985,248 @@ document.addEventListener(
 
 /* MI AI CHAT MORE MENU JS - END */
 </script>
+
+<script>
+/* MI AI FOUR CHAT OPTIONS FIX - START */
+
+(function () {
+    "use strict";
+
+    function language() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem("mi_ui_language")
+            || "en"
+        );
+    }
+
+    function label(key) {
+        const values = {
+            en: {
+                rename: "Rename",
+                pin: "Pin",
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete"
+            },
+
+            si: {
+                rename: "නම වෙනස් කරන්න",
+                pin: "ඉහළට අමුණන්න",
+                unpin: "අමුණීම ඉවත් කරන්න",
+                share: "බෙදාගන්න",
+                deleteText: "මකන්න"
+            },
+
+            ta: {
+                rename: "பெயரை மாற்று",
+                pin: "பின் செய்",
+                unpin: "பின்னை நீக்கு",
+                share: "பகிர்",
+                deleteText: "நீக்கு"
+            }
+        };
+
+        return (
+            values[language()]?.[key]
+            || values.en[key]
+            || key
+        );
+    }
+
+    function isPinned(target) {
+        return Boolean(
+            target?.classList.contains("pinned")
+            || target?.dataset.pinned === "true"
+            || target?.getAttribute("aria-pinned") === "true"
+            || target?.querySelector(
+                ".pin-icon, .pinned-icon, [data-pinned='true']"
+            )
+        );
+    }
+
+    function makeButton(
+        action,
+        icon,
+        text,
+        danger
+    ) {
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.dataset.action = action;
+
+        if (danger) {
+            button.classList.add(
+                "mi-menu-danger"
+            );
+        }
+
+        const iconSpan =
+            document.createElement("span");
+
+        iconSpan.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        iconSpan.textContent = icon;
+
+        const textSpan =
+            document.createElement("span");
+
+        textSpan.textContent = text;
+
+        button.append(
+            iconSpan,
+            textSpan
+        );
+
+        return button;
+    }
+
+    function forceFourChatOptions() {
+        const original =
+            window.MIChatMoreMenu;
+
+        if (!original) {
+            return false;
+        }
+
+        const menu =
+            document.getElementById(
+                "miChatMoreMenu"
+            );
+
+        if (!menu) {
+            return false;
+        }
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    const visible =
+                        menu.classList.contains(
+                            "mi-visible"
+                        );
+
+                    if (!visible) {
+                        return;
+                    }
+
+                    /*
+                      A message menu has only Copy.
+                      Leave it unchanged.
+                    */
+                    const hasCopy =
+                        Boolean(
+                            menu.querySelector(
+                                '[data-action="copy"]'
+                            )
+                        );
+
+                    if (hasCopy) {
+                        return;
+                    }
+
+                    const target =
+                        document.querySelector(
+                            ".mi-long-press-active"
+                        );
+
+                    const pinned =
+                        isPinned(target);
+
+                    menu.replaceChildren(
+                        makeButton(
+                            "rename",
+                            "✎",
+                            label("rename"),
+                            false
+                        ),
+
+                        makeButton(
+                            "pin",
+                            pinned ? "⌫" : "⌖",
+                            pinned
+                                ? label("unpin")
+                                : label("pin"),
+                            false
+                        ),
+
+                        makeButton(
+                            "share",
+                            "↗",
+                            label("share"),
+                            false
+                        ),
+
+                        makeButton(
+                            "delete",
+                            "🗑",
+                            label("deleteText"),
+                            true
+                        )
+                    );
+                }
+            );
+
+        observer.observe(
+            menu,
+            {
+                childList: true,
+                subtree: false,
+                attributes: true,
+                attributeFilter: [
+                    "class"
+                ]
+            }
+        );
+
+        return true;
+    }
+
+    function start() {
+        if (forceFourChatOptions()) {
+            return;
+        }
+
+        let attempts = 0;
+
+        const timer = setInterval(
+            function () {
+                attempts += 1;
+
+                if (
+                    forceFourChatOptions()
+                    || attempts >= 40
+                ) {
+                    clearInterval(timer);
+                }
+            },
+            250
+        );
+    }
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI FOUR CHAT OPTIONS FIX - END */
+</script>
 </body>
 </html>
