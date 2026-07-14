@@ -3642,6 +3642,179 @@ body,
 }
 
 /* MI AI CHAT MORE MENU - END */
+
+/* MI AI STRICT VIEW ONLY - START */
+
+/*
+    Activated only when body has:
+    class="mi-view-only"
+*/
+
+body.mi-view-only {
+    user-select: text;
+}
+
+/* Hide all composing and editing controls */
+body.mi-view-only #inputBox,
+body.mi-view-only #inputArea,
+body.mi-view-only #input-area,
+body.mi-view-only .input-area,
+body.mi-view-only .chat-input-area,
+body.mi-view-only .composer,
+body.mi-view-only .composer-container,
+body.mi-view-only .message-composer,
+body.mi-view-only .input-container,
+body.mi-view-only .prompt-container,
+body.mi-view-only #settingsPanel,
+body.mi-view-only #settingsBackdrop,
+body.mi-view-only #menu,
+body.mi-view-only #miChatMoreMenu,
+body.mi-view-only #mobileMenuToggle,
+body.mi-view-only #mobileMenuClose,
+body.mi-view-only #authReminder,
+body.mi-view-only #fileInput,
+body.mi-view-only #fileUpload,
+body.mi-view-only #uploadBtn,
+body.mi-view-only .upload-btn,
+body.mi-view-only .file-upload,
+body.mi-view-only .attachment-button {
+    display: none !important;
+}
+
+/* Hide sidebar actions */
+body.mi-view-only #newChatBtn,
+body.mi-view-only #settingsBtn,
+body.mi-view-only #supportBtn,
+body.mi-view-only #logoutBtn,
+body.mi-view-only #sidebar > button,
+body.mi-view-only .new-chat-btn,
+body.mi-view-only .settings-btn,
+body.mi-view-only .support-btn,
+body.mi-view-only .logout-btn {
+    display: none !important;
+}
+
+/* Hide chat history editing/action controls */
+body.mi-view-only .chatItem button,
+body.mi-view-only .chat-item button,
+body.mi-view-only .history-item button,
+body.mi-view-only .conversation-item button,
+body.mi-view-only [data-chat-id] button,
+body.mi-view-only [data-conversation-id] button {
+    display: none !important;
+}
+
+/* Disable ordinary controls */
+body.mi-view-only input,
+body.mi-view-only textarea,
+body.mi-view-only select,
+body.mi-view-only button {
+    pointer-events: none !important;
+}
+
+/* Copy controls remain active */
+body.mi-view-only .aiCopyButton,
+body.mi-view-only .copy-btn,
+body.mi-view-only .copy-button,
+body.mi-view-only .mi-ai-copy-below,
+body.mi-view-only [data-action="copy"],
+body.mi-view-only .mi-view-copy-allowed {
+    display: inline-flex !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Make shared chat items non-editable */
+body.mi-view-only .chatItem,
+body.mi-view-only .chat-item,
+body.mi-view-only .history-item,
+body.mi-view-only .conversation-item,
+body.mi-view-only [data-chat-id],
+body.mi-view-only [data-conversation-id] {
+    cursor: default !important;
+    user-select: text !important;
+}
+
+/* View-only banner */
+#miViewOnlyBanner {
+    position: sticky;
+    top: 10px;
+    z-index: 20000;
+
+    display: none;
+
+    width: fit-content;
+    max-width: calc(100% - 28px);
+
+    margin: 10px auto 14px;
+    padding: 9px 15px;
+
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.27);
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(40, 51, 72, 0.84),
+            rgba(15, 23, 42, 0.72)
+        );
+
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.22),
+        0 12px 35px
+            rgba(0, 0, 0, 0.28);
+}
+
+body.mi-view-only #miViewOnlyBanner {
+    display: flex;
+}
+
+/* Keep the shared chat readable */
+body.mi-view-only #chat {
+    padding-bottom: 36px !important;
+}
+
+/* Prevent edit-looking hover effects */
+body.mi-view-only .chatItem:hover,
+body.mi-view-only .chat-item:hover,
+body.mi-view-only .history-item:hover,
+body.mi-view-only .conversation-item:hover {
+    transform: none !important;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+    #miViewOnlyBanner {
+        top: 7px;
+        max-width: calc(100% - 18px);
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+/* MI AI STRICT VIEW ONLY - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -9227,6 +9400,945 @@ document.addEventListener(
 })();
 
 /* MI AI FOUR CHAT OPTIONS FIX - END */
+</script>
+
+<script>
+/* MI AI STRICT VIEW ONLY JS - START */
+
+(function () {
+    "use strict";
+
+    let viewOnlyActive = false;
+    let originalFetch = null;
+    let originalXhrOpen = null;
+    let originalXhrSend = null;
+
+    const blockedFunctionNames = [
+        "newChat",
+        "createNewChat",
+        "renameChat",
+        "renameConversation",
+        "editChatName",
+        "pinChat",
+        "togglePinChat",
+        "toggleChatPin",
+        "deleteChat",
+        "deleteConversation",
+        "removeChat",
+        "shareChat",
+        "shareConversation",
+        "send",
+        "sendMessage",
+        "sendOrStop",
+        "submitMessage",
+        "uploadFile",
+        "handleFileUpload",
+        "applyTheme",
+        "setFont",
+        "toggleSettings",
+        "openSettings",
+        "customerSupport",
+        "openProfilePanel",
+        "saveChat",
+        "saveConversation"
+    ];
+
+    const mutationMethods = new Set([
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+    ]);
+
+    function language() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem(
+                "mi_ui_language"
+            )
+            || "en"
+        );
+    }
+
+    function translations() {
+        const values = {
+            en: {
+                banner:
+                    "View only — this shared chat cannot be changed.",
+
+                blocked:
+                    "This is a view-only shared chat."
+            },
+
+            si: {
+                banner:
+                    "බැලීමට පමණයි — මෙම බෙදාගත් කතාබහ වෙනස් කළ නොහැක.",
+
+                blocked:
+                    "මෙය බැලීමට පමණක් ලබාදුන් කතාබහකි."
+            },
+
+            ta: {
+                banner:
+                    "பார்வைக்கு மட்டும் — இந்த பகிரப்பட்ட அரட்டையை மாற்ற முடியாது.",
+
+                blocked:
+                    "இது பார்வைக்கு மட்டும் பகிரப்பட்ட அரட்டை."
+            }
+        };
+
+        return values[language()] || values.en;
+    }
+
+    function showBlockedMessage() {
+        const message =
+            translations().blocked;
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(message);
+            return;
+        }
+
+        console.warn(
+            "[MI AI View Only]",
+            message
+        );
+    }
+
+    function parseBooleanValue(value) {
+        const normalized =
+            String(value || "")
+                .trim()
+                .toLowerCase();
+
+        return [
+            "view",
+            "readonly",
+            "read-only",
+            "read_only",
+            "viewer",
+            "true",
+            "1"
+        ].includes(normalized);
+    }
+
+    function queryIndicatesViewOnly() {
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const possibleValues = [
+            params.get("permission"),
+            params.get("mode"),
+            params.get("access"),
+            params.get("readonly"),
+            params.get("viewOnly"),
+            params.get("view_only")
+        ];
+
+        return possibleValues.some(
+            parseBooleanValue
+        );
+    }
+
+    function hashIndicatesViewOnly() {
+        const hash =
+            String(
+                window.location.hash || ""
+            ).toLowerCase();
+
+        return (
+            hash.includes("permission=view")
+            || hash.includes("mode=view")
+            || hash.includes("readonly=true")
+            || hash.includes("viewonly=true")
+            || hash.includes("view_only=true")
+        );
+    }
+
+    function objectIndicatesViewOnly(value) {
+        if (
+            !value ||
+            typeof value !== "object"
+        ) {
+            return false;
+        }
+
+        const candidates = [
+            value.permission,
+            value.mode,
+            value.access,
+            value.role,
+            value.readonly,
+            value.readOnly,
+            value.viewOnly,
+            value.view_only
+        ];
+
+        return candidates.some(
+            parseBooleanValue
+        );
+    }
+
+    function detectViewOnly() {
+        return Boolean(
+            queryIndicatesViewOnly()
+            || hashIndicatesViewOnly()
+            || objectIndicatesViewOnly(
+                window.sharedChatData
+            )
+            || objectIndicatesViewOnly(
+                window.sharedConversation
+            )
+            || objectIndicatesViewOnly(
+                window.shareData
+            )
+            || objectIndicatesViewOnly(
+                window.currentSharedChat
+            )
+            || document.body?.dataset
+                ?.permission === "view"
+            || document.body?.dataset
+                ?.mode === "view"
+            || document.documentElement
+                ?.dataset?.permission === "view"
+        );
+    }
+
+    function createBanner() {
+        let banner =
+            document.getElementById(
+                "miViewOnlyBanner"
+            );
+
+        if (!banner) {
+            banner =
+                document.createElement(
+                    "div"
+                );
+
+            banner.id =
+                "miViewOnlyBanner";
+
+            banner.setAttribute(
+                "role",
+                "status"
+            );
+
+            banner.setAttribute(
+                "aria-live",
+                "polite"
+            );
+
+            const icon =
+                document.createElement(
+                    "span"
+                );
+
+            icon.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            icon.textContent = "👁";
+
+            const text =
+                document.createElement(
+                    "span"
+                );
+
+            text.className =
+                "mi-view-only-banner-text";
+
+            banner.append(
+                icon,
+                text
+            );
+
+            const chat =
+                document.getElementById(
+                    "chat"
+                );
+
+            const main =
+                document.getElementById(
+                    "main"
+                );
+
+            if (chat?.parentElement) {
+                chat.parentElement.insertBefore(
+                    banner,
+                    chat
+                );
+            }
+            else if (main) {
+                main.prepend(banner);
+            }
+            else {
+                document.body.prepend(
+                    banner
+                );
+            }
+        }
+
+        const bannerText =
+            banner.querySelector(
+                ".mi-view-only-banner-text"
+            );
+
+        if (bannerText) {
+            bannerText.textContent =
+                translations().banner;
+        }
+    }
+
+    function isCopyControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                ".aiCopyButton, " +
+                ".copy-btn, " +
+                ".copy-button, " +
+                ".mi-ai-copy-below, " +
+                "[data-action='copy'], " +
+                ".mi-view-copy-allowed"
+            )
+        );
+    }
+
+    function isBlockedControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        if (isCopyControl(element)) {
+            return false;
+        }
+
+        const selectors = [
+            "button",
+            "input",
+            "textarea",
+            "select",
+            "[contenteditable='true']",
+            "[role='button']",
+            "[onclick]",
+            "[data-action]",
+            ".chatItem",
+            ".chat-item",
+            ".history-item",
+            ".conversation-item",
+            "[data-chat-id]",
+            "[data-conversation-id]"
+        ].join(",");
+
+        return Boolean(
+            element.closest(selectors)
+        );
+    }
+
+    function blockInteractiveEvent(event) {
+        if (!viewOnlyActive) {
+            return;
+        }
+
+        if (isCopyControl(event.target)) {
+            return;
+        }
+
+        if (isBlockedControl(event.target)) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            showBlockedMessage();
+        }
+    }
+
+    function blockContextMenu(event) {
+        if (!viewOnlyActive) {
+            return;
+        }
+
+        const interactive =
+            event.target.closest(
+                ".chatItem, " +
+                ".chat-item, " +
+                ".history-item, " +
+                ".conversation-item, " +
+                "[data-chat-id], " +
+                "[data-conversation-id], " +
+                "#chat > .me, " +
+                "#chat > .ai, " +
+                ".message-bubble"
+            );
+
+        if (!interactive) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+
+    function markCopyButtons() {
+        document
+            .querySelectorAll(
+                ".aiCopyButton, " +
+                ".copy-btn, " +
+                ".copy-button, " +
+                ".mi-ai-copy-below, " +
+                "[data-action='copy']"
+            )
+            .forEach(function (button) {
+                button.classList.add(
+                    "mi-view-copy-allowed"
+                );
+
+                button.disabled = false;
+
+                button.removeAttribute(
+                    "aria-disabled"
+                );
+            });
+    }
+
+    function disableExistingControls() {
+        const controls =
+            document.querySelectorAll(
+                "input, textarea, select, " +
+                "button, [contenteditable='true']"
+            );
+
+        controls.forEach(
+            function (control) {
+                if (isCopyControl(control)) {
+                    return;
+                }
+
+                if (
+                    control instanceof
+                        HTMLInputElement
+                    || control instanceof
+                        HTMLTextAreaElement
+                    || control instanceof
+                        HTMLSelectElement
+                    || control instanceof
+                        HTMLButtonElement
+                ) {
+                    control.disabled = true;
+                }
+
+                if (
+                    control.hasAttribute(
+                        "contenteditable"
+                    )
+                ) {
+                    control.setAttribute(
+                        "contenteditable",
+                        "false"
+                    );
+                }
+
+                control.setAttribute(
+                    "aria-disabled",
+                    "true"
+                );
+            }
+        );
+
+        markCopyButtons();
+    }
+
+    function wrapBlockedFunctions() {
+        blockedFunctionNames.forEach(
+            function (name) {
+                const original =
+                    window[name];
+
+                if (
+                    typeof original !==
+                    "function"
+                ) {
+                    return;
+                }
+
+                if (
+                    original.__miViewOnlyWrapped
+                ) {
+                    return;
+                }
+
+                const wrapper =
+                    function (...args) {
+                        if (
+                            viewOnlyActive
+                        ) {
+                            showBlockedMessage();
+                            return false;
+                        }
+
+                        return original.apply(
+                            this,
+                            args
+                        );
+                    };
+
+                wrapper.__miViewOnlyWrapped =
+                    true;
+
+                wrapper.__miOriginal =
+                    original;
+
+                window[name] = wrapper;
+            }
+        );
+    }
+
+    function isMutationRequest(
+        input,
+        init
+    ) {
+        const method =
+            String(
+                init?.method
+                || input?.method
+                || "GET"
+            ).toUpperCase();
+
+        if (
+            !mutationMethods.has(method)
+        ) {
+            return false;
+        }
+
+        let url = "";
+
+        if (
+            typeof input === "string"
+        ) {
+            url = input;
+        }
+        else if (input?.url) {
+            url = input.url;
+        }
+
+        const normalized =
+            String(url || "")
+                .toLowerCase();
+
+        /*
+            Permit authentication requests.
+            Block chat/conversation mutations.
+        */
+        if (
+            normalized.includes(
+                "identitytoolkit.googleapis.com"
+            )
+            || normalized.includes(
+                "securetoken.googleapis.com"
+            )
+            || normalized.includes(
+                "firebase"
+            )
+        ) {
+            return false;
+        }
+
+        return (
+            normalized.includes("/api/chat")
+            || normalized.includes(
+                "/api/messages"
+            )
+            || normalized.includes(
+                "/api/conversations"
+            )
+            || normalized.includes(
+                "/api/share"
+            )
+            || normalized.includes(
+                "/api/upload"
+            )
+            || normalized.includes(
+                "conversation"
+            )
+            || normalized.includes(
+                "message"
+            )
+            || normalized.includes(
+                "shared-chat"
+            )
+        );
+    }
+
+    function installFetchGuard() {
+        if (
+            originalFetch
+            || typeof window.fetch !==
+                "function"
+        ) {
+            return;
+        }
+
+        originalFetch =
+            window.fetch.bind(window);
+
+        window.fetch =
+            function (input, init) {
+                if (
+                    viewOnlyActive
+                    && isMutationRequest(
+                        input,
+                        init
+                    )
+                ) {
+                    showBlockedMessage();
+
+                    return Promise.reject(
+                        new Error(
+                            "View-only shared chat: mutation blocked."
+                        )
+                    );
+                }
+
+                return originalFetch(
+                    input,
+                    init
+                );
+            };
+    }
+
+    function installXhrGuard() {
+        if (
+            originalXhrOpen
+            || !window.XMLHttpRequest
+        ) {
+            return;
+        }
+
+        originalXhrOpen =
+            XMLHttpRequest
+                .prototype.open;
+
+        originalXhrSend =
+            XMLHttpRequest
+                .prototype.send;
+
+        XMLHttpRequest.prototype.open =
+            function (
+                method,
+                url,
+                ...rest
+            ) {
+                this.__miMethod =
+                    String(method || "GET")
+                        .toUpperCase();
+
+                this.__miUrl =
+                    String(url || "");
+
+                return originalXhrOpen.call(
+                    this,
+                    method,
+                    url,
+                    ...rest
+                );
+            };
+
+        XMLHttpRequest.prototype.send =
+            function (...args) {
+                if (
+                    viewOnlyActive
+                    && isMutationRequest(
+                        {
+                            method:
+                                this.__miMethod,
+                            url:
+                                this.__miUrl
+                        },
+                        {
+                            method:
+                                this.__miMethod
+                        }
+                    )
+                ) {
+                    showBlockedMessage();
+
+                    throw new Error(
+                        "View-only shared chat: mutation blocked."
+                    );
+                }
+
+                return originalXhrSend.apply(
+                    this,
+                    args
+                );
+            };
+    }
+
+    function hideMoreMenus() {
+        document
+            .querySelectorAll(
+                "#miChatMoreMenu, " +
+                "#menu, " +
+                ".context-menu, " +
+                ".chat-context-menu"
+            )
+            .forEach(function (menu) {
+                menu.style.display =
+                    "none";
+
+                menu.classList.remove(
+                    "mi-visible",
+                    "open",
+                    "show"
+                );
+            });
+    }
+
+    function activateViewOnly() {
+        if (viewOnlyActive) {
+            createBanner();
+            disableExistingControls();
+            hideMoreMenus();
+            return;
+        }
+
+        viewOnlyActive = true;
+
+        document.body.classList.add(
+            "mi-view-only"
+        );
+
+        document.body.dataset.permission =
+            "view";
+
+        window.MI_VIEW_ONLY = true;
+
+        createBanner();
+        markCopyButtons();
+        disableExistingControls();
+        wrapBlockedFunctions();
+        installFetchGuard();
+        installXhrGuard();
+        hideMoreMenus();
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-view-only-enabled"
+            )
+        );
+
+        console.log(
+            "[MI AI] Strict view-only mode enabled."
+        );
+    }
+
+    function refreshDetection() {
+        if (detectViewOnly()) {
+            activateViewOnly();
+        }
+    }
+
+    document.addEventListener(
+        "click",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "submit",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "input",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (!viewOnlyActive) {
+                return;
+            }
+
+            const element =
+                event.target;
+
+            if (
+                element?.matches?.(
+                    "input, textarea, " +
+                    "[contenteditable='true']"
+                )
+            ) {
+                blockInteractiveEvent(
+                    event
+                );
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "contextmenu",
+        blockContextMenu,
+        true
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            if (!viewOnlyActive) {
+                return;
+            }
+
+            const chatTarget =
+                event.target.closest(
+                    ".chatItem, " +
+                    ".chat-item, " +
+                    ".history-item, " +
+                    ".conversation-item, " +
+                    "[data-chat-id], " +
+                    "[data-conversation-id]"
+                );
+
+            if (chatTarget) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+            }
+        },
+        true
+    );
+
+    window.addEventListener(
+        "popstate",
+        refreshDetection
+    );
+
+    window.addEventListener(
+        "hashchange",
+        refreshDetection
+    );
+
+    window.addEventListener(
+        "mi-shared-chat-loaded",
+        refreshDetection
+    );
+
+    window.addEventListener(
+        "mi-language-changed",
+        createBanner
+    );
+
+    const observer =
+        new MutationObserver(
+            function () {
+                refreshDetection();
+
+                if (viewOnlyActive) {
+                    createBanner();
+                    markCopyButtons();
+                    disableExistingControls();
+                    wrapBlockedFunctions();
+                    hideMoreMenus();
+                }
+            }
+        );
+
+    function start() {
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "data-permission",
+                    "data-mode",
+                    "data-access"
+                ]
+            }
+        );
+
+        refreshDetection();
+
+        /*
+            Shared-chat data may load after page load.
+        */
+        let attempts = 0;
+
+        const timer =
+            setInterval(
+                function () {
+                    attempts += 1;
+
+                    refreshDetection();
+
+                    if (
+                        viewOnlyActive
+                        || attempts >= 80
+                    ) {
+                        clearInterval(
+                            timer
+                        );
+                    }
+                },
+                250
+            );
+    }
+
+    window.MIViewOnly = {
+        isActive:
+            function () {
+                return viewOnlyActive;
+            },
+
+        activate:
+            activateViewOnly,
+
+        detect:
+            detectViewOnly,
+
+        refresh:
+            refreshDetection
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI STRICT VIEW ONLY JS - END */
 </script>
 </body>
 </html>
