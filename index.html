@@ -2751,7 +2751,7 @@ function linkifyText(text) {
   
   // Pattern: URLs with protocols
   processedText = processedText.replace(/\b(https?|ftp):\/\/[^\s<>]+/gi, (match) => {
-    let url = match.replace(/[.,;:!?\'")\]]*$/, '');
+    let url = match.replace(/[.,;:!?\'"()\[\]]+$/g, '');
     const link = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-link">${escapeHtml(url)}</a>`;
     replacements.push({ original: match, replacement: link });
     return `__LINK_${replacements.length - 1}__`;
@@ -3484,15 +3484,13 @@ async function save() {
     if (!token || !currentChat) return;
 
     try {
+      localStorage.setItem("mi_chats_" + accountId, JSON.stringify(chats));
+    } catch (e) {}
+  }
 
-        localStorage.setItem(
-"mi_chats_" + accountId,
-JSON.stringify(chats)
-);
-
-function persistChats() {
+  function persistChats() {
     save();
-}
+  }
 
 function setReplyControlState(isActive) {
     const sendButton = document.getElementById('sendBtn');
@@ -3925,6 +3923,20 @@ async function loginEmail() {
   }
 }
 
+</script>
+
+<script>
+// Initialization diagnostics
+try {
+  console.log("MI AI frontend initialized successfully");
+  // Expose existing functions globally so inline handlers can call them
+  if (typeof newChat === 'function') window.newChat = newChat;
+  if (typeof sendOrStop === 'function') window.sendOrStop = sendOrStop;
+  if (typeof send === 'function') window.send = send;
+  console.log({ newChat: typeof window.newChat, sendOrStop: typeof window.sendOrStop, send: typeof window.send });
+} catch (e) {
+  console.error('Frontend init diagnostic failed', e);
+}
 </script>
 
 </body>
