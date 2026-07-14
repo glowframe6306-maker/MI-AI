@@ -3121,48 +3121,48 @@ function shareChat(){
 }
 
 function getBackendBaseUrl() {
-  const configured = (window.__MI_BACKEND_URL__ || '').toString().trim();
+  const configured = String(window.__MI_BACKEND_URL__ || '').trim();
+
   if (configured) {
     return configured.replace(/\/$/, '');
   }
-  return window.location && window.location.origin ? window.location.origin : '';
+
+  return window.location.origin || '';
 }
 
-function getChatApiCandidates(){
-    return [
-        "http://127.0.0.1:5000/chat"
-    ];
+function getChatApiCandidates() {
+  const candidates = [];
+  const baseUrl = getBackendBaseUrl();
+
+  if (baseUrl && baseUrl !== 'null') {
+    candidates.push(`${baseUrl}/api/chat`);
+  }
+
+  candidates.push('/api/chat');
+
+  return [...new Set(candidates)];
 }
 
 function getApiBaseCandidates() {
   const baseUrl = getBackendBaseUrl();
   const candidates = [];
-  if (baseUrl) {
-    candidates.push(baseUrl);
-  }
-  return candidates.filter((value, index, arr) => arr.indexOf(value) === index);
+  if (baseUrl) candidates.push(baseUrl);
+  return candidates.filter((v, i, a) => a.indexOf(v) === i);
 }
 
 async function fetchJsonWithFallback(path, options = {}, signal) {
   const endpoints = getApiBaseCandidates().map((base) => `${base}${path}`);
   let lastError = null;
 
-  for (let attempt = 0; attempt < endpoints.length; attempt += 1) {
-    const endpoint = endpoints[attempt];
+  for (let i = 0; i < endpoints.length; i++) {
+    const endpoint = endpoints[i];
     try {
-      const response = await fetch(endpoint, {
-        ...options,
-        signal
-      });
-
-      if (response.ok) {
-        return response;
-      }
-
+      const response = await fetch(endpoint, { ...options, signal });
+      if (response.ok) return response;
       const text = await response.text().catch(() => '');
       lastError = new Error(text || `Server returned ${response.status}`);
-    } catch (error) {
-      lastError = error;
+    } catch (err) {
+      lastError = err;
     }
   }
 
@@ -3173,24 +3173,22 @@ async function fetchChatReply(payload, signal) {
   const endpoints = getChatApiCandidates();
   let lastError = null;
 
-  for (let attempt = 0; attempt < endpoints.length; attempt += 1) {
-    const endpoint = endpoints[attempt];
+  for (let i = 0; i < endpoints.length; i++) {
+    const endpoint = endpoints[i];
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-        signal
+        signal,
       });
 
-      if (response.ok) {
-        return response;
-      }
+      if (response.ok) return response;
 
       const text = await response.text().catch(() => '');
       lastError = new Error(text || `Server returned ${response.status}`);
-    } catch (error) {
-      lastError = error;
+    } catch (err) {
+      lastError = err;
     }
   }
 
@@ -3198,194 +3196,128 @@ async function fetchChatReply(payload, signal) {
 }
 
 /* SEND */
-let res=await fetch("http://127.0.0.1:5000/chat",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-message:msg
-})
-});
-
-let data=await res.json();
-
-type(data.reply,!isSharedView);
-
-let msg=input.value.trim();
-if(!msg) return;
-
-if(!currentChat){
-    const fallbackId="chat_"+Date.now();
-    chats[fallbackId]=[];
-    currentChat=fallbackId;
-    save();
-    renderList();
+function sendOrStop() {
+  if (replyInProgress) {
+    stopReply();
+    return;
+  }
+  send();
 }
 
-const conversationId=currentChat;
-const token = localStorage.getItem('mi_supabase_token');
-const userId = localStorage.getItem('mi_user_id') || '';
-const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+async function send() {
+  if (replyInProgress) return;
 
-input.value="";
-replyInProgress = true;
-setReplyControlState(true);
+  if (sharedChatData && sharedChatData.permission === 'view') {
+    applySharedChatUi('view');
+    return;
+  }
 
-let uploadedAttachments = [];
-let uploadErrors = [];
-try {
+  const msg = (input && input.value || '').trim();
+  if (!msg) return;
+
+  if (!currentChat) {
+    const fallbackId = `chat_${Date.now()}`;
+    chats[fallbackId] = [];
+    currentChat = fallbackId;
+    save();
+    renderList();
+  }
+
+  const conversationId = currentChat;
+  const token = localStorage.getItem('mi_supabase_token');
+  const userId = localStorage.getItem('mi_user_id') || '';
+  const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+
+  input.value = '';
+  replyInProgress = true;
+  setReplyControlState(true);
+
+  let uploadedAttachments = [];
+  let uploadErrors = [];
+  try {
     const uploadResult = pendingAttachments.length ? await uploadPendingAttachments() : { attachments: [], errors: [] };
     uploadedAttachments = uploadResult.attachments || [];
     uploadErrors = uploadResult.errors || [];
     if (pendingAttachments.length && !uploadedAttachments.length) {
-        replyInProgress = false;
-        setReplyControlState(false);
-        setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
-        return;
+      replyInProgress = false;
+      setReplyControlState(false);
+      setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
+      return;
     }
-} catch (e) {
+  } catch (err) {
     replyInProgress = false;
     setReplyControlState(false);
     setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
-    console.error(e);
+    console.error(err);
     return;
-}
+  }
 
-if (uploadedAttachments.length) {
-    if (!Array.isArray(chats[conversationId].attachments)) {
-        chats[conversationId].attachments = [];
-    }
-    uploadedAttachments.forEach((attachment) => {
-        chats[conversationId].attachments = chats[conversationId].attachments.filter((item) => item.id !== attachment.id);
-        chats[conversationId].attachments.push(attachment);
+  if (uploadedAttachments.length) {
+    if (!Array.isArray(chats[conversationId].attachments)) chats[conversationId].attachments = [];
+    uploadedAttachments.forEach((a) => {
+      chats[conversationId].attachments = chats[conversationId].attachments.filter((i) => i.id !== a.id);
+      chats[conversationId].attachments.push(a);
     });
     chats[conversationId].updatedAt = Date.now();
     save();
     pendingAttachment = null;
     renderPendingAttachmentPreview();
-}
+  }
 
-if (uploadErrors.length) {
-    const errorSummary = uploadErrors.slice(0, 3).map((error) => `${error.name}: ${error.message}`).join(' • ');
+  if (uploadErrors.length) {
+    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' • ');
     setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
-}
+  }
 
-const history = (chats[conversationId] || []).map((message) => ({
-    role: message.role === 'me' ? 'user' : 'assistant',
-    content: message.text || ''
-}));
+  const history = (chats[conversationId] || []).map((message) => ({ role: message.role === 'me' ? 'user' : 'assistant', content: message.text || '' }));
 
-let userBubble=document.createElement("div");
-userBubble.className="me";
-userBubble.innerText=msg;
-chatBox.appendChild(userBubble);
+  const userBubble = document.createElement('div');
+  userBubble.className = 'me';
+  userBubble.innerText = msg;
+  chatBox.appendChild(userBubble);
 
-chats[conversationId].push({role:"me",text:msg});
-chats[conversationId].updatedAt = Date.now();
-chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
-chats[conversationId].lastPreview = msg;
-save();
-scroll();
+  chats[conversationId].push({ role: 'me', text: msg });
+  chats[conversationId].updatedAt = Date.now();
+  chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+  chats[conversationId].lastPreview = msg;
+  save();
+  scroll();
 
-try{
+  try {
     if (token && conversationId) {
-        const headers = {
-            "Content-Type":"application/json",
-            "Authorization":"Bearer " + token,
-            "X-Session-Id": accountId || userId || "",
-            "X-User-Id": userId || "",
-            "X-User-Email": storedEmail || ""
-        };
-
-        const messageRes = await fetchJsonWithFallback("/api/messages", {
-            method:"POST",
-            headers: headers,
-            body: JSON.stringify({
-                conversation_id: conversationId,
-                session_id: accountId || userId || "",
-                role: "me",
-                content: msg,
-                attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((attachment) => attachment.id) : [],
-                attachment_meta: uploadedAttachments.length ? uploadedAttachments.map((attachment) => ({
-                    file_name: attachment.file_name,
-                    file_type: attachment.file_type,
-                    file_size: attachment.file_size,
-                    upload_time: attachment.upload_time,
-                    uploaded_file_url: attachment.uploaded_file_url || null
-                })) : null
-            })
-        });
-
-        if (messageRes.ok) {
-            await fetchJsonWithFallback("/api/conversations/" + encodeURIComponent(conversationId), {
-                method:"PATCH",
-                headers: headers,
-                body: JSON.stringify({
-                    title: chats[conversationId].title || "New chat",
-                    updated_at: new Date().toISOString(),
-                    last_preview: msg,
-                    message_count: chats[conversationId].messageCount || 0
-                })
-            }).catch(() => {});
-        }
+      const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
+      const messageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'me', content: msg, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [], attachment_meta: uploadedAttachments.length ? uploadedAttachments.map((attachment) => ({ file_name: attachment.file_name, file_type: attachment.file_type, file_size: attachment.file_size, upload_time: attachment.upload_time, uploaded_file_url: attachment.uploaded_file_url || null })) : null }) }).catch(() => {});
+      if (messageRes && messageRes.ok) {
+        await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: msg, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
+      }
     }
-} catch (e) {
-    console.error("Failed to save user message", e);
-}
+  } catch (err) {
+    console.error('Failed to save user message', err);
+  }
 
-/* THINKING */
-let t=document.createElement("div");
-t.className="thinking";
-t.innerHTML=`
-<span class="label">MI AI</span>
-<span class="dot"></span>
-<span class="dot"></span>
-<span class="dot"></span>
-`;
+  /* THINKING */
+  const t = document.createElement('div');
+  t.className = 'thinking';
+  t.innerHTML = `<span class="label">MI AI</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+  chatBox.appendChild(t);
+  scroll();
 
-chatBox.appendChild(t);
-scroll();
-
-try {
+  try {
     replyAbortController = new AbortController();
-    const timeoutId = setTimeout(() => {
-        if (replyAbortController) {
-            replyAbortController.abort();
-        }
-    }, 30000);
+    const timeoutId = setTimeout(() => { if (replyAbortController) replyAbortController.abort(); }, 30000);
 
-    let res = await fetch("http://127.0.0.1:5000/chat",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-message:msg
-})
-});
-
-let data=await res.json();
+    const res = await fetchChatReply({ message: msg, history, conversation_id: conversationId, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [] }, replyAbortController.signal);
 
     clearTimeout(timeoutId);
+    if (!res.ok) throw new Error('Server returned ' + res.status);
 
-    if (!res.ok) {
-        throw new Error("Server returned " + res.status);
-    }
-
-    let data = {};
-    try {
-        data = await res.json();
-    } catch (error) {
-        const fallbackText = await res.text().catch(() => '');
-        data = { response: fallbackText };
-    }
-    const aiText = String(data.response || data.reply || data.message || data.error || "").trim() || "The AI is unavailable right now. Please try again.";
+    const data = await res.json();
+    const aiText = String(data.reply || data.response || '').trim();
 
     t.remove();
 
-    const d = document.createElement("div");
-    d.className = "ai";
+    const d = document.createElement('div');
+    d.className = 'ai';
     const contentBox = document.createElement('div');
     contentBox.className = isLongWritingResponse(aiText) ? 'aiWritingCard' : 'aiMessageBody';
     d.appendChild(contentBox);
@@ -3394,98 +3326,43 @@ let data=await res.json();
 
     let i = 0;
     replyTypingTimer = setInterval(() => {
-        if (!replyInProgress) {
-            clearInterval(replyTypingTimer);
-            replyTypingTimer = null;
-            return;
-        }
-
-        contentBox.textContent += aiText[i];
-        i++;
+      if (!replyInProgress) { clearInterval(replyTypingTimer); replyTypingTimer = null; return; }
+      contentBox.textContent += aiText[i] || '';
+      i++;
+      scroll();
+      if (i >= aiText.length) {
+        clearInterval(replyTypingTimer); replyTypingTimer = null; replyInProgress = false; setReplyControlState(false);
+        contentBox.innerHTML = linkifyText(aiText);
+        chats[conversationId].push({ role: 'ai', text: aiText });
+        chats[conversationId].updatedAt = Date.now();
+        chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+        chats[conversationId].lastPreview = aiText;
+        save();
         scroll();
+        maybeShowLoginPrompt(conversationId);
 
-        if (i >= aiText.length) {
-            clearInterval(replyTypingTimer);
-            replyTypingTimer = null;
-            replyInProgress = false;
-            setReplyControlState(false);
-
-            contentBox.innerHTML = linkifyText(aiText);
-
-            chats[conversationId].push({ role: "ai", text: aiText });
-            chats[conversationId].updatedAt = Date.now();
-            chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
-            chats[conversationId].lastPreview = aiText;
-            save();
-            scroll();
-            maybeShowLoginPrompt(conversationId);
-
-            (async () => {
-                try {
-                    if (token && conversationId) {
-                        const headers = {
-                            "Content-Type": "application/json",
-                            "Authorization": "Bearer " + token,
-                            "X-Session-Id": accountId || userId || "",
-                            "X-User-Id": userId || "",
-                            "X-User-Email": storedEmail || ""
-                        };
-
-                        const aiMessageRes = await fetchJsonWithFallback("/api/messages", {
-                            method: "POST",
-                            headers: headers,
-                            body: JSON.stringify({
-                                conversation_id: conversationId,
-                                session_id: accountId || userId || "",
-                                role: "ai",
-                                content: aiText
-                            })
-                        });
-
-                        if (aiMessageRes.ok) {
-                            await fetchJsonWithFallback("/api/conversations/" + encodeURIComponent(conversationId), {
-                                method: "PATCH",
-                                headers: headers,
-                                body: JSON.stringify({
-                                    title: chats[conversationId].title || "New chat",
-                                    updated_at: new Date().toISOString(),
-                                    last_preview: aiText,
-                                    message_count: chats[conversationId].messageCount || 0
-                                })
-                            }).catch(() => {});
-                        }
-                    }
-                } catch (e) {
-                    console.error("Failed to save AI reply", e);
-                }
-            })();
-        }
+        (async () => {
+          try {
+            if (token && conversationId) {
+              const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
+              const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'ai', content: aiText }) });
+              if (aiMessageRes && aiMessageRes.ok) {
+                await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: aiText, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
+              }
+            }
+          } catch (e) { console.error('Failed to save AI reply', e); }
+        })();
+      }
     }, 20);
-} catch (e) {
-    if (e && e.name === 'AbortError') {
-        replyInProgress = false;
-        setReplyControlState(false);
-        return;
-    }
-
+  } catch (e) {
+    if (e && e.name === 'AbortError') { replyInProgress = false; setReplyControlState(false); return; }
     console.error(e);
-
-    t.remove();
-    replyInProgress = false;
-    setReplyControlState(false);
-
-    let errorBubble = document.createElement("div");
-    errorBubble.className = "ai";
-    errorBubble.innerText = "The AI is unavailable right now. Please try again.";
-    chatBox.appendChild(errorBubble);
-
-    chats[conversationId].push({ role: "ai", text: "The AI is unavailable right now. Please try again." });
-    chats[conversationId].updatedAt = Date.now();
-    chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
-    chats[conversationId].lastPreview = "The AI is unavailable right now. Please try again.";
-    save();
-    scroll();
-}
+    const thinking = document.querySelector('.thinking'); if (thinking) thinking.remove();
+    replyInProgress = false; setReplyControlState(false);
+    const errorBubble = document.createElement('div'); errorBubble.className = 'ai'; errorBubble.innerText = 'The AI is unavailable right now. Please try again.'; chatBox.appendChild(errorBubble);
+    chats[conversationId].push({ role: 'ai', text: 'The AI is unavailable right now. Please try again.' });
+    chats[conversationId].updatedAt = Date.now(); chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1; chats[conversationId].lastPreview = 'The AI is unavailable right now. Please try again.'; save(); scroll();
+  }
 }
 
 /* TYPE */

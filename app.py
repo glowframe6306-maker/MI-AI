@@ -1,4 +1,5 @@
 import html
+import hashlib
 import json
 import os
 import re
@@ -11,6 +12,9 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 from pprint import pprint
+
+BACKEND_DIR = Path(__file__).resolve().parent
+ENV_FILE = BACKEND_DIR / ".env"
 
 try:
     from google import genai
@@ -40,9 +44,9 @@ except Exception as import_error:
 def debug_gemini_direct():
     from dotenv import load_dotenv
 
-    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+    load_dotenv(dotenv_path=ENV_FILE, override=False)
+    api_key = clean_env_value(os.getenv("GEMINI_API_KEY", ""))
+    model = clean_env_value(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
 
     print("=== Direct Gemini environment ===")
     print("GEMINI_API_KEY length:", len(api_key))
@@ -83,14 +87,32 @@ def _safe_console_text(value) -> str:
         return text.encode("utf-8", errors="replace").decode("utf-8", errors="replace")
 
 
+def clean_env_value(value):
+    if value is None:
+        return ""
+    value = str(value).strip()
+
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        value = value[1:-1].strip()
+
+    if value.startswith("GEMINI_API_KEY="):
+        value = value.split("=", 1)[1].strip()
+
+    return value
+
+
+def secret_fingerprint(value):
+    if not value:
+        return None
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
+    return digest[:8]
+
+
 def _load_environment() -> list[str]:
-    candidates = []
-    for base in [Path.cwd(), Path(__file__).resolve().parent, Path(__file__).resolve().parent.parent]:
-        candidate = base / ".env"
-        candidates.append(candidate)
-        if candidate.exists():
-            load_dotenv(dotenv_path=candidate, override=False)
-    return [str(candidate) for candidate in candidates]
+    if ENV_FILE.exists():
+        load_dotenv(dotenv_path=ENV_FILE, override=False)
+        return [str(ENV_FILE)]
+    return []
 
 
 _load_environment()
@@ -126,25 +148,55 @@ except Exception:
     pytesseract = None
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 gemini_client = None
 gemini_client_api_key = None
 
 
+def _read_env_file_value(key: str):
+    if not ENV_FILE.exists():
+        return None
+    try:
+        for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+            if not line or line.strip().startswith("#"):
+                continue
+            parts = line.split("=", 1)
+            if len(parts) != 2:
+                continue
+            name = parts[0].strip()
+            if name == key:
+                return clean_env_value(parts[1])
+    except Exception:
+        return None
+    return None
+
+
 def _get_gemini_api_key():
-    """Read the Gemini API key from environment variables."""
+    """Read the Gemini API key from backend/.env or environment variables."""
     _load_environment()
-    value = os.getenv("GEMINI_API_KEY", "").strip()
-    if value:
-        return value
+    file_key = _read_env_file_value("GEMINI_API_KEY")
+    if file_key:
+        return file_key
+
+    for env_name in ["GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY"]:
+        value = clean_env_value(os.getenv(env_name, ""))
+        if value:
+            return value
     return ""
 
 
 def _get_gemini_model():
     _load_environment()
-    model = os.getenv("GEMINI_MODEL", "").strip()
-    return model or "gemini-2.5-flash"
+    file_model = _read_env_file_value("GEMINI_MODEL")
+    if file_model:
+        return file_model
+
+    for env_name in ["GEMINI_MODEL", "GOOGLE_GEMINI_MODEL", "GOOGLE_API_MODEL", "MODEL"]:
+        model = clean_env_value(os.getenv(env_name, ""))
+        if model:
+            return model
+    return "gemini-2.5-flash"
 
 
 def _get_available_models(client):
@@ -226,7 +278,11 @@ def _format_gemini_error_message(exc):
     error_str = str(exc).lower()
     if "429" in str(exc) or "resource_exhausted" in error_str or "quota" in error_str or "rate_limit" in error_str:
         return "The Gemini service is temporarily unavailable because of quota or rate limits. Your free tier quota has been exceeded. Please wait a few hours or upgrade your plan."
-    if "401" in str(exc) or "403" in str(exc) or "invalid" in error_str or "authentication" in error_str:
+    if "401" in str(exc) or "403" in str(exc):
+        if "access_token_type_unsupported" in error_str or "expected oauth" in error_str or "oauth 2" in error_str:
+            return "The Gemini authentication credential is not a supported API key type. Please verify GEMINI_API_KEY is a valid Gemini API key."
+        return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
+    if "invalid" in error_str or "authentication" in error_str:
         return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
     if "404" in str(exc) or "not_found" in error_str or "model_not_found" in error_str:
         return "The requested Gemini model is not available. Please try a supported model."
@@ -624,12 +680,30 @@ def home():
 
 @app.route("/debug/chat", methods=["GET"])
 def debug_chat():
+    env_file_exists = ENV_FILE.exists()
+    key_value = _get_gemini_api_key()
+    model_value = _get_gemini_model()
+    file_value = _read_env_file_value("GEMINI_API_KEY") if env_file_exists else ""
+    if file_value and file_value == key_value:
+        key_source = "backend/.env"
+    elif file_value and key_value and file_value != key_value:
+        key_source = "backend/.env and process environment differ"
+    elif key_value:
+        key_source = "process environment"
+    else:
+        key_source = "none"
+
     return jsonify({
         "message": "python-backend",
         "provider": "gemini",
         "chat_route": "/chat",
-        "gemini_key_present": bool(_get_gemini_api_key()),
-        "gemini_model": _get_gemini_model(),
+        "gemini_key_present": bool(key_value),
+        "gemini_key_length": len(key_value),
+        "gemini_key_fingerprint": secret_fingerprint(key_value),
+        "gemini_model": model_value,
+        "env_file_exists": env_file_exists,
+        "env_file_path": str(ENV_FILE) if env_file_exists else None,
+        "key_source": key_source,
     })
 
 
@@ -801,7 +875,7 @@ def _handle_chat_request():
     payload = request.get_json(silent=True) or {}
     user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
     if not user_message:
-        return jsonify({"reply": "Please type a message."})
+        return jsonify({"response": "Please type a message.", "reply": "Please type a message."})
 
     history = payload.get("history") or payload.get("messages") or []
     if not isinstance(history, list):
@@ -818,18 +892,59 @@ def _handle_chat_request():
 
     normalized_messages.append({"role": "user", "content": user_message})
 
-    client = _get_gemini_client()
-    if client is None:
-        return jsonify({"reply": "Gemini API key is not configured."}), 500
-
     try:
+        client = _get_gemini_client()
+        if client is None:
+            message = "The AI service is not configured. Please set a valid GEMINI_API_KEY or GOOGLE_API_KEY in Vercel."
+            print("[CHAT] Missing Gemini client:", message)
+            return jsonify({"response": message, "reply": message}), 503
+
         contents = _build_gemini_contents(normalized_messages)
         response = _generate_gemini_content(client, contents, model_name=_get_gemini_model())
         reply = _extract_text_from_gemini_response(response).strip() or "No response received from Gemini."
-        return jsonify({"reply": reply})
+        return jsonify({"response": reply, "reply": reply})
     except Exception as exc:
-        print("Chat request failed:", exc)
-        return jsonify({"reply": _format_gemini_error_message(exc)}), 500
+        traceback.print_exc()
+        status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+        body = getattr(exc, "body", None)
+        error_message = _format_gemini_error_message(exc) or "The AI service is unavailable right now. Please try again."
+
+        # Build sanitized provider details
+        sanitized_details = None
+        if isinstance(body, dict):
+            error_obj = body.get("error") or body
+            if isinstance(error_obj, dict):
+                sanitized_details = error_obj.get("message") or str(error_obj)
+            else:
+                sanitized_details = str(error_obj)
+        else:
+            sanitized_details = str(body) if body is not None else str(exc)
+
+        error_code = None
+        if status_code in {400}:
+            error_code = "GEMINI_BAD_REQUEST"
+        elif status_code in {401, 403}:
+            error_code = "GEMINI_AUTH_FAILED"
+        elif status_code == 404:
+            error_code = "GEMINI_MODEL_NOT_FOUND"
+        elif status_code == 429:
+            error_code = "GEMINI_RATE_LIMIT"
+        else:
+            error_code = "GEMINI_SERVICE_ERROR"
+
+        print("[CHAT] Request failed:", exc)
+        user_facing_error = "Gemini request failed."
+        if error_code == "GEMINI_AUTH_FAILED":
+            user_facing_error = "Gemini authentication failed."
+
+        return jsonify({
+            "response": user_facing_error,
+            "reply": user_facing_error,
+            "error": user_facing_error,
+            "error_code": error_code,
+            "details": sanitized_details,
+            "status_code": status_code,
+        }), 500
 
 
 @app.route("/chat", methods=["POST"])
@@ -844,7 +959,7 @@ def api_chat():
 
 @app.route("/api/chat", methods=["GET"])
 def api_chat_get():
-    return jsonify({"error": "Method not allowed"}), 405
+    return jsonify({"response": "Method not allowed"}), 405
 
 
 if __name__=="__main__":
