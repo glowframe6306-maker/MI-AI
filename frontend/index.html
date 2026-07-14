@@ -3815,6 +3815,856 @@ body.mi-view-only .conversation-item:hover {
 }
 
 /* MI AI STRICT VIEW ONLY - END */
+
+/* MI AI MOBILE COMFORT LAYOUT - START */
+
+:root {
+    --mi-mobile-safe-top:
+        env(safe-area-inset-top, 0px);
+
+    --mi-mobile-safe-right:
+        env(safe-area-inset-right, 0px);
+
+    --mi-mobile-safe-bottom:
+        env(safe-area-inset-bottom, 0px);
+
+    --mi-mobile-safe-left:
+        env(safe-area-inset-left, 0px);
+
+    --mi-mobile-header-height:
+        64px;
+
+    --mi-mobile-input-height:
+        72px;
+
+    --mi-mobile-content-width:
+        100%;
+}
+
+/* Correct sizing on every device */
+html {
+    width: 100%;
+    min-height: 100%;
+
+    -webkit-text-size-adjust:
+        100%;
+
+    text-size-adjust:
+        100%;
+
+    overflow-x:
+        hidden;
+}
+
+body {
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+
+    overflow-x:
+        hidden;
+
+    overscroll-behavior:
+        none;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing:
+        border-box;
+}
+
+/* Prevent text or media from exceeding the phone screen */
+img,
+video,
+canvas,
+svg,
+iframe,
+table,
+pre,
+code {
+    max-width:
+        100%;
+}
+
+img,
+video {
+    height:
+        auto;
+}
+
+/* Long text and links must wrap */
+p,
+span,
+div,
+a,
+button,
+label,
+input,
+textarea,
+select,
+.message,
+.me,
+.ai,
+.message-bubble,
+.aiMessageBody {
+    overflow-wrap:
+        anywhere;
+
+    word-break:
+        normal;
+}
+
+/* Comfortable mobile layout */
+@media (max-width: 900px) {
+
+    html,
+    body {
+        width:
+            100vw;
+
+        min-height:
+            100dvh;
+
+        max-width:
+            100vw;
+
+        margin:
+            0;
+
+        padding:
+            0;
+    }
+
+    body {
+        font-size:
+            clamp(
+                15px,
+                3.8vw,
+                18px
+            ) !important;
+    }
+
+    #main,
+    main,
+    .main,
+    .app-main,
+    .chat-container,
+    .chat-wrapper {
+        width:
+            100% !important;
+
+        min-width:
+            0 !important;
+
+        max-width:
+            100vw !important;
+
+        margin:
+            0 !important;
+
+        padding-left:
+            max(
+                10px,
+                var(--mi-mobile-safe-left)
+            ) !important;
+
+        padding-right:
+            max(
+                10px,
+                var(--mi-mobile-safe-right)
+            ) !important;
+    }
+
+    /* Header remains visible and comfortable */
+    #header,
+    header,
+    .header,
+    .app-header,
+    .topbar {
+        width:
+            100% !important;
+
+        min-height:
+            var(--mi-mobile-header-height);
+
+        padding-top:
+            max(
+                8px,
+                var(--mi-mobile-safe-top)
+            ) !important;
+
+        padding-left:
+            max(
+                10px,
+                var(--mi-mobile-safe-left)
+            ) !important;
+
+        padding-right:
+            max(
+                10px,
+                var(--mi-mobile-safe-right)
+            ) !important;
+
+        display:
+            flex !important;
+
+        align-items:
+            center !important;
+
+        gap:
+            8px !important;
+
+        overflow:
+            hidden;
+    }
+
+    #headerLogo {
+        width:
+            clamp(
+                38px,
+                11vw,
+                48px
+            ) !important;
+
+        height:
+            clamp(
+                38px,
+                11vw,
+                48px
+            ) !important;
+
+        flex:
+            0 0 auto;
+    }
+
+    #header h1,
+    #header h2,
+    #header h3,
+    .header-title,
+    .app-title {
+        min-width:
+            0;
+
+        margin:
+            0 !important;
+
+        font-size:
+            clamp(
+                18px,
+                5vw,
+                24px
+            ) !important;
+
+        line-height:
+            1.2 !important;
+
+        white-space:
+            nowrap;
+
+        overflow:
+            hidden;
+
+        text-overflow:
+            ellipsis;
+    }
+
+    /* Sidebar becomes a proper mobile drawer */
+    #sidebar,
+    .sidebar {
+        position:
+            fixed !important;
+
+        top:
+            0 !important;
+
+        left:
+            0 !important;
+
+        bottom:
+            0 !important;
+
+        width:
+            min(
+                86vw,
+                340px
+            ) !important;
+
+        max-width:
+            340px !important;
+
+        height:
+            100dvh !important;
+
+        padding-top:
+            max(
+                14px,
+                var(--mi-mobile-safe-top)
+            ) !important;
+
+        padding-bottom:
+            max(
+                14px,
+                var(--mi-mobile-safe-bottom)
+            ) !important;
+
+        overflow-y:
+            auto !important;
+
+        overscroll-behavior:
+            contain;
+
+        z-index:
+            50000;
+    }
+
+    /* Chat should use the complete available width */
+    #chat,
+    .chat,
+    .messages,
+    .chat-messages {
+        width:
+            100% !important;
+
+        min-width:
+            0 !important;
+
+        max-width:
+            100% !important;
+
+        padding:
+            12px 8px
+            calc(
+                var(--mi-mobile-input-height)
+                + var(--mi-mobile-safe-bottom)
+                + 24px
+            )
+            !important;
+
+        overflow-x:
+            hidden !important;
+
+        scroll-padding-bottom:
+            calc(
+                var(--mi-mobile-input-height)
+                + 28px
+            );
+    }
+
+    /* User and AI bubbles large enough to read */
+    #chat > .me,
+    #chat > .ai,
+    .user-message,
+    .ai-message,
+    .assistant-message,
+    .message-bubble {
+        width:
+            fit-content !important;
+
+        min-width:
+            0 !important;
+
+        max-width:
+            92% !important;
+
+        height:
+            auto !important;
+
+        padding:
+            11px 14px !important;
+
+        font-size:
+            clamp(
+                15px,
+                4vw,
+                18px
+            ) !important;
+
+        line-height:
+            1.55 !important;
+
+        overflow-wrap:
+            anywhere !important;
+
+        white-space:
+            pre-wrap !important;
+    }
+
+    #chat > .me {
+        margin-left:
+            auto !important;
+
+        margin-right:
+            2px !important;
+    }
+
+    #chat > .ai {
+        margin-left:
+            2px !important;
+
+        margin-right:
+            auto !important;
+    }
+
+    /* Copy button remains small but easy to tap */
+    #chat > .ai > .mi-ai-copy-below,
+    #chat > .ai > .aiCopyButton,
+    #chat > .ai > .copy-btn,
+    #chat > .ai > .copy-button {
+        width:
+            30px !important;
+
+        min-width:
+            30px !important;
+
+        height:
+            30px !important;
+
+        min-height:
+            30px !important;
+
+        font-size:
+            13px !important;
+    }
+
+    /* Input stays visible above the phone keyboard */
+    #inputBox,
+    #inputArea,
+    #input-area,
+    .input-area,
+    .chat-input-area,
+    .composer,
+    .composer-container,
+    .message-composer,
+    .input-container,
+    .prompt-container {
+        position:
+            sticky !important;
+
+        left:
+            0 !important;
+
+        right:
+            0 !important;
+
+        bottom:
+            0 !important;
+
+        width:
+            100% !important;
+
+        min-height:
+            var(--mi-mobile-input-height);
+
+        margin:
+            0 !important;
+
+        padding:
+            8px
+            max(
+                8px,
+                var(--mi-mobile-safe-right)
+            )
+            max(
+                8px,
+                var(--mi-mobile-safe-bottom)
+            )
+            max(
+                8px,
+                var(--mi-mobile-safe-left)
+            )
+            !important;
+
+        display:
+            flex !important;
+
+        align-items:
+            flex-end !important;
+
+        gap:
+            8px !important;
+
+        z-index:
+            1500;
+    }
+
+    #msg,
+    #messageInput,
+    #chatInput,
+    textarea[name="message"],
+    .chat-input,
+    .message-input {
+        flex:
+            1 1 auto !important;
+
+        width:
+            auto !important;
+
+        min-width:
+            0 !important;
+
+        min-height:
+            48px !important;
+
+        max-height:
+            min(
+                38dvh,
+                190px
+            ) !important;
+
+        padding:
+            12px 14px !important;
+
+        font-size:
+            16px !important;
+
+        line-height:
+            1.4 !important;
+
+        resize:
+            none !important;
+
+        overflow-y:
+            auto !important;
+    }
+
+    /*
+      16px minimum prevents iPhone Safari from zooming
+      when a field receives focus.
+    */
+    input,
+    textarea,
+    select {
+        font-size:
+            max(
+                16px,
+                1em
+            ) !important;
+    }
+
+    /* Touch targets should not be too small */
+    button,
+    .btn,
+    .button,
+    [role="button"],
+    input[type="button"],
+    input[type="submit"] {
+        min-height:
+            44px;
+
+        min-width:
+            44px;
+
+        touch-action:
+            manipulation;
+
+        -webkit-tap-highlight-color:
+            transparent;
+    }
+
+    #sendBtn,
+    #sendButton,
+    .send-btn,
+    button[type="submit"] {
+        width:
+            48px !important;
+
+        min-width:
+            48px !important;
+
+        height:
+            48px !important;
+
+        min-height:
+            48px !important;
+
+        padding:
+            0 !important;
+
+        flex:
+            0 0 48px;
+    }
+
+    /* Settings opens comfortably on phones */
+    #settingsPanel {
+        top:
+            50% !important;
+
+        left:
+            50% !important;
+
+        right:
+            auto !important;
+
+        bottom:
+            auto !important;
+
+        width:
+            calc(
+                100vw
+                - 20px
+                - var(--mi-mobile-safe-left)
+                - var(--mi-mobile-safe-right)
+            ) !important;
+
+        max-width:
+            440px !important;
+
+        max-height:
+            calc(
+                100dvh
+                - 28px
+                - var(--mi-mobile-safe-top)
+                - var(--mi-mobile-safe-bottom)
+            ) !important;
+
+        padding:
+            20px 16px !important;
+
+        overflow-y:
+            auto !important;
+
+        overscroll-behavior:
+            contain;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            !important;
+    }
+
+    #settingsPanel.settings-open {
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            !important;
+    }
+
+    #settingsPanel label {
+        font-size:
+            14px !important;
+    }
+
+    #settingsPanel input,
+    #settingsPanel select,
+    #settingsPanel button {
+        width:
+            100% !important;
+
+        min-height:
+            48px !important;
+    }
+
+    /* Modal windows remain inside the phone display */
+    .modal-content,
+    .popup,
+    .dialog,
+    .dialog-box,
+    .login-box,
+    .login-modal,
+    .confirm-modal,
+    .alert-modal {
+        width:
+            calc(
+                100vw
+                - 20px
+                - var(--mi-mobile-safe-left)
+                - var(--mi-mobile-safe-right)
+            ) !important;
+
+        max-width:
+            460px !important;
+
+        max-height:
+            calc(
+                100dvh
+                - 24px
+                - var(--mi-mobile-safe-top)
+                - var(--mi-mobile-safe-bottom)
+            ) !important;
+
+        margin:
+            auto !important;
+
+        padding:
+            20px 16px !important;
+
+        overflow-y:
+            auto !important;
+    }
+
+    /* Context menu stays within screen */
+    #miChatMoreMenu,
+    #menu,
+    .context-menu,
+    .chat-context-menu {
+        width:
+            min(
+                250px,
+                calc(
+                    100vw
+                    - 20px
+                )
+            ) !important;
+
+        max-height:
+            min(
+                70dvh,
+                460px
+            ) !important;
+
+        overflow-y:
+            auto !important;
+    }
+
+    #miChatMoreMenu button,
+    #menu button,
+    .context-menu button {
+        min-height:
+            46px !important;
+
+        font-size:
+            15px !important;
+    }
+
+    /* Prevent tables and code blocks from breaking layout */
+    pre,
+    table,
+    .code-block {
+        width:
+            100% !important;
+
+        max-width:
+            100% !important;
+
+        overflow-x:
+            auto !important;
+    }
+}
+
+/* Smaller phones */
+@media (max-width: 420px) {
+    :root {
+        --mi-mobile-header-height:
+            58px;
+
+        --mi-mobile-input-height:
+            68px;
+    }
+
+    #chat {
+        padding-left:
+            5px !important;
+
+        padding-right:
+            5px !important;
+    }
+
+    #chat > .me,
+    #chat > .ai,
+    .message-bubble {
+        max-width:
+            94% !important;
+
+        padding:
+            10px 12px !important;
+    }
+
+    #settingsPanel,
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        width:
+            calc(
+                100vw
+                - 12px
+            ) !important;
+
+        border-radius:
+            22px !important;
+    }
+}
+
+/* Landscape phones */
+@media (
+    max-height: 520px
+)
+and (
+    orientation: landscape
+) {
+    #settingsPanel,
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        max-height:
+            calc(
+                100dvh
+                - 12px
+            ) !important;
+
+        padding-top:
+            12px !important;
+
+        padding-bottom:
+            12px !important;
+    }
+
+    #chat {
+        padding-bottom:
+            80px !important;
+    }
+}
+
+/* When the mobile keyboard is visible */
+body.mi-keyboard-visible #header,
+body.mi-keyboard-visible header {
+    min-height:
+        52px !important;
+}
+
+body.mi-keyboard-visible #chat {
+    scroll-padding-bottom:
+        90px !important;
+}
+
+body.mi-keyboard-visible #inputBox,
+body.mi-keyboard-visible #inputArea,
+body.mi-keyboard-visible .input-area,
+body.mi-keyboard-visible .composer {
+    bottom:
+        0 !important;
+}
+
+/* Comfortable accessibility mode */
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior:
+            auto !important;
+
+        animation-duration:
+            0.01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+
+        transition-duration:
+            0.01ms !important;
+    }
+}
+
+/* MI AI MOBILE COMFORT LAYOUT - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -10339,6 +11189,290 @@ document.addEventListener(
 })();
 
 /* MI AI STRICT VIEW ONLY JS - END */
+</script>
+
+<script>
+/* MI AI MOBILE COMFORT JS - START */
+
+(function () {
+    "use strict";
+
+    let initialViewportHeight =
+        window.visualViewport?.height
+        || window.innerHeight;
+
+    function setViewportVariables() {
+        const viewport =
+            window.visualViewport;
+
+        const width =
+            viewport?.width
+            || window.innerWidth;
+
+        const height =
+            viewport?.height
+            || window.innerHeight;
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-viewport-width",
+                width + "px"
+            );
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-viewport-height",
+                height + "px"
+            );
+
+        const keyboardDifference =
+            initialViewportHeight - height;
+
+        const keyboardVisible =
+            keyboardDifference > 140;
+
+        document.body.classList.toggle(
+            "mi-keyboard-visible",
+            keyboardVisible
+        );
+
+        if (
+            !keyboardVisible
+            && height > initialViewportHeight
+        ) {
+            initialViewportHeight =
+                height;
+        }
+    }
+
+    function keepFocusedFieldVisible() {
+        const active =
+            document.activeElement;
+
+        if (
+            !active
+            || !active.matches(
+                "input, textarea, select, " +
+                "[contenteditable='true']"
+            )
+        ) {
+            return;
+        }
+
+        setTimeout(
+            function () {
+                active.scrollIntoView({
+                    behavior:
+                        "smooth",
+
+                    block:
+                        "center",
+
+                    inline:
+                        "nearest"
+                });
+            },
+            180
+        );
+    }
+
+    function autoGrowMessageInput() {
+        const input =
+            document.querySelector(
+                "#msg, #messageInput, " +
+                "#chatInput, " +
+                "textarea[name='message'], " +
+                ".chat-input, .message-input"
+            );
+
+        if (
+            !input
+            || !(input instanceof
+                HTMLTextAreaElement)
+        ) {
+            return;
+        }
+
+        input.style.height =
+            "auto";
+
+        const viewportHeight =
+            window.visualViewport?.height
+            || window.innerHeight;
+
+        const maximum =
+            Math.min(
+                viewportHeight * 0.38,
+                190
+            );
+
+        input.style.height =
+            Math.min(
+                input.scrollHeight,
+                maximum
+            ) + "px";
+
+        input.style.overflowY =
+            input.scrollHeight > maximum
+                ? "auto"
+                : "hidden";
+    }
+
+    function scrollChatToBottom() {
+        const chat =
+            document.getElementById(
+                "chat"
+            );
+
+        if (!chat) {
+            return;
+        }
+
+        const nearBottom =
+            chat.scrollHeight
+            - chat.scrollTop
+            - chat.clientHeight
+            < 180;
+
+        if (nearBottom) {
+            requestAnimationFrame(
+                function () {
+                    chat.scrollTop =
+                        chat.scrollHeight;
+                }
+            );
+        }
+    }
+
+    function initialize() {
+        setViewportVariables();
+        autoGrowMessageInput();
+
+        window.addEventListener(
+            "resize",
+            setViewportVariables,
+            {
+                passive: true
+            }
+        );
+
+        window.addEventListener(
+            "orientationchange",
+            function () {
+                setTimeout(
+                    setViewportVariables,
+                    180
+                );
+            },
+            {
+                passive: true
+            }
+        );
+
+        if (window.visualViewport) {
+            window.visualViewport
+                .addEventListener(
+                    "resize",
+                    function () {
+                        setViewportVariables();
+                        keepFocusedFieldVisible();
+                    },
+                    {
+                        passive: true
+                    }
+                );
+
+            window.visualViewport
+                .addEventListener(
+                    "scroll",
+                    setViewportVariables,
+                    {
+                        passive: true
+                    }
+                );
+        }
+
+        document.addEventListener(
+            "focusin",
+            function (event) {
+                if (
+                    event.target.matches(
+                        "input, textarea, select, " +
+                        "[contenteditable='true']"
+                    )
+                ) {
+                    keepFocusedFieldVisible();
+                }
+            }
+        );
+
+        document.addEventListener(
+            "input",
+            function (event) {
+                if (
+                    event.target.matches(
+                        "#msg, #messageInput, " +
+                        "#chatInput, " +
+                        "textarea[name='message'], " +
+                        ".chat-input, .message-input"
+                    )
+                ) {
+                    autoGrowMessageInput();
+                }
+            }
+        );
+
+        const chat =
+            document.getElementById(
+                "chat"
+            );
+
+        if (chat) {
+            const observer =
+                new MutationObserver(
+                    scrollChatToBottom
+                );
+
+            observer.observe(
+                chat,
+                {
+                    childList: true,
+                    subtree: true,
+                    characterData: true
+                }
+            );
+        }
+    }
+
+    window.MIMobileComfort = {
+        refresh:
+            function () {
+                setViewportVariables();
+                autoGrowMessageInput();
+            },
+
+        growInput:
+            autoGrowMessageInput
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        initialize();
+    }
+})();
+
+/* MI AI MOBILE COMFORT JS - END */
 </script>
 </body>
 </html>
