@@ -14138,6 +14138,14 @@ document.addEventListener(
                 ".modal-close"
             )
             .forEach(function (button) {
+                if (
+                    button.dataset
+                        .miIosIconApplied ===
+                    "true"
+                ) {
+                    return;
+                }
+
                 button.innerHTML =
                     icons.close;
 
@@ -14153,6 +14161,14 @@ document.addEventListener(
                 ".send-btn"
             )
             .forEach(function (button) {
+                if (
+                    button.dataset
+                        .miIosIconApplied ===
+                    "true"
+                ) {
+                    return;
+                }
+
                 button.innerHTML =
                     icons.send;
 
@@ -14170,6 +14186,14 @@ document.addEventListener(
                 ".copy-button"
             )
             .forEach(function (button) {
+                if (
+                    button.dataset
+                        .miIosIconApplied ===
+                    "true"
+                ) {
+                    return;
+                }
+
                 button.innerHTML =
                     icons.copy;
 
@@ -14244,6 +14268,9 @@ document.addEventListener(
         ensurePopup();
         refresh();
 
+        let observerRefreshPending =
+            false;
+
         const observer =
             new MutationObserver(
                 function (mutations) {
@@ -14265,7 +14292,21 @@ document.addEventListener(
                         }
                     );
 
-                    applyIcons();
+                    if (observerRefreshPending) {
+                        return;
+                    }
+
+                    observerRefreshPending =
+                        true;
+
+                    requestAnimationFrame(
+                        function () {
+                            observerRefreshPending =
+                                false;
+
+                            applyIcons();
+                        }
+                    );
                 }
             );
 
