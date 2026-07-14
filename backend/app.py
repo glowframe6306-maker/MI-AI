@@ -72,7 +72,7 @@ def debug_gemini_direct():
         print("body:", getattr(exc, "body", None))
 
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -914,6 +914,61 @@ def _extract_text_from_gemini_response(response):
     return str(response)
 
 
+def _extract_text_from_gemini_chunk(chunk):
+    if chunk is None:
+        return ""
+
+    text = getattr(chunk, "text", None)
+    if text:
+        return text
+
+    candidates = getattr(chunk, "candidates", None) or []
+    parts_text = []
+    for candidate in candidates:
+        content = getattr(candidate, "content", None)
+        parts = getattr(content, "parts", None) or []
+        for part in parts:
+            part_text = getattr(part, "text", None)
+            if part_text:
+                parts_text.append(part_text)
+    return "".join(parts_text)
+
+
+def _iter_gemini_stream(client, contents, model_name=None, config=None):
+    if client is None:
+        raise RuntimeError("Gemini client is not available")
+
+    requested_model = (model_name or _get_gemini_model()).strip()
+    selected_model = requested_model.replace("models/", "").strip() or "gemini-2.5-flash"
+
+    try:
+        stream = client.models.generate_content_stream(
+            model=selected_model,
+            contents=contents,
+            config=config,
+        )
+    except AttributeError:
+        response = client.models.generate_content(
+            model=selected_model,
+            contents=contents,
+            config=config,
+        )
+        full_text = _extract_text_from_gemini_response(response)
+        if full_text:
+            yield full_text
+        return
+
+    for chunk in stream:
+        chunk_text = _extract_text_from_gemini_chunk(chunk)
+        if chunk_text:
+            yield chunk_text
+
+
+def _sse_event(event_type, payload):
+    data = json.dumps(payload, ensure_ascii=False)
+    return f"event: {event_type}\ndata: {data}\n\n"
+
+
 def _handle_chat_request():
     payload = request.get_json(silent=True) or {}
     user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
@@ -993,6 +1048,99 @@ def _handle_chat_request():
 @app.route("/chat", methods=["POST"])
 def chat():
     return _handle_chat_request()
+
+
+@app.route("/api/chat/stream", methods=["POST"])
+def api_chat_stream():
+    payload = request.get_json(silent=True) or {}
+    user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
+    if not user_message:
+        error_message = "Please type a message."
+
+        def empty_stream():
+            yield _sse_event("error", {"error": error_message, "reply": error_message, "done": True})
+
+        return Response(stream_with_context(empty_stream()), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    history = payload.get("history") or payload.get("messages") or []
+    if not isinstance(history, list):
+        history = []
+
+    normalized_messages = []
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "user").strip() or "user"
+        content = item.get("content") or item.get("text") or ""
+        if content:
+            normalized_messages.append({"role": role, "content": str(content)})
+
+    normalized_messages.append({"role": "user", "content": user_message})
+
+    def generate_stream():
+        try:
+            client = _get_gemini_client()
+            if client is None:
+                message = "The AI service is not configured. Please set a valid GEMINI_API_KEY or GOOGLE_API_KEY in Vercel."
+                yield _sse_event("error", {"reply": message, "error": message, "done": True})
+                return
+
+            contents = _build_gemini_contents(normalized_messages)
+            collected_text = []
+            for chunk_text in _iter_gemini_stream(client, contents, model_name=_get_gemini_model()):
+                if not chunk_text:
+                    continue
+                collected_text.append(chunk_text)
+                yield _sse_event("delta", {"delta": chunk_text})
+
+            reply = "".join(collected_text).strip() or "No response received from Gemini."
+            yield _sse_event("done", {"reply": reply, "done": True})
+        except Exception as exc:
+            traceback.print_exc()
+            status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+            body = getattr(exc, "body", None)
+            error_message = _format_gemini_error_message(exc) or "The AI service is unavailable right now. Please try again."
+            sanitized_details = None
+            if isinstance(body, dict):
+                error_obj = body.get("error") or body
+                if isinstance(error_obj, dict):
+                    sanitized_details = error_obj.get("message") or str(error_obj)
+                else:
+                    sanitized_details = str(error_obj)
+            else:
+                sanitized_details = str(body) if body is not None else str(exc)
+
+            yield _sse_event("error", {
+                "reply": error_message,
+                "error": error_message,
+                "details": sanitized_details,
+                "status_code": status_code,
+                "done": True,
+            })
+
+    return Response(
+        stream_with_context(generate_stream()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.route("/api/assistant-info", methods=["GET"])
+def assistant_info():
+    return jsonify({
+        "name": "MI AI",
+        "creator": "M.I. Muhammadh",
+        "owner": "M.I. Muhammadh",
+        "developer": "M.I. Muhammadh",
+        "creator_age": 17,
+        "creator_ambitions": [
+            "Director of Flight Operations",
+            "Software Engineer",
+        ],
+        "customer_support_email": "miai.customerservice@gmail.com",
+        "other_requirements_email": "teamofchatbot.miai@gmail.com",
+        "team_whatsapp_number": "+94756390621",
+    })
 
 
 @app.route("/api/chat", methods=["POST"])
