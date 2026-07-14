@@ -3471,6 +3471,177 @@ body,
 }
 
 /* MI AI COPY BUTTON BELOW REPLY - END */
+
+/* MI AI CHAT MORE MENU - START */
+
+/* Smaller AI copy icon */
+#chat > .ai > .mi-ai-copy-below,
+#chat > .ai > .aiCopyButton,
+#chat > .ai > .copy-btn,
+#chat > .ai > .copy-button {
+    width: 25px !important;
+    min-width: 25px !important;
+    max-width: 25px !important;
+
+    height: 25px !important;
+    min-height: 25px !important;
+    max-height: 25px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    font-size: 12px !important;
+    line-height: 1 !important;
+
+    border-radius: 999px !important;
+
+    opacity: 0.68;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.27),
+        0 5px 14px rgba(0,0,0,0.18)
+        !important;
+}
+
+#chat > .ai > .mi-ai-copy-below:hover,
+#chat > .ai > .aiCopyButton:hover,
+#chat > .ai > .copy-btn:hover,
+#chat > .ai > .copy-button:hover {
+    opacity: 1;
+}
+
+/* Less empty space below AI reply */
+#chat > .ai {
+    margin-bottom: 36px !important;
+}
+
+/* Right-click / long-press menu */
+#miChatMoreMenu {
+    position: fixed;
+    z-index: 999999;
+
+    width: min(230px, calc(100vw - 24px));
+
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+
+    padding: 8px;
+
+    border:
+        1px solid rgba(255,255,255,0.25);
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34,43,61,0.88),
+            rgba(14,22,37,0.82)
+        );
+
+    -webkit-backdrop-filter:
+        blur(28px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(28px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.20),
+        0 20px 65px rgba(0,0,0,0.42);
+
+    opacity: 0;
+    transform:
+        translateY(5px)
+        scale(0.97);
+
+    transform-origin:
+        top left;
+
+    transition:
+        opacity 140ms ease,
+        transform 140ms ease;
+}
+
+#miChatMoreMenu.mi-visible {
+    display: flex;
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+#miChatMoreMenu button {
+    width: 100% !important;
+    min-height: 42px;
+
+    margin: 0 !important;
+    padding: 9px 12px !important;
+
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+
+    border-radius: 13px !important;
+
+    background:
+        rgba(255,255,255,0.075)
+        !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.09)
+        !important;
+
+    color: #ffffff !important;
+
+    text-align: left;
+    font-size: 14px;
+
+    box-shadow: none !important;
+}
+
+#miChatMoreMenu button:hover {
+    background:
+        rgba(255,255,255,0.15)
+        !important;
+
+    transform:
+        none !important;
+}
+
+#miChatMoreMenu button::before,
+#miChatMoreMenu button::after {
+    display: none !important;
+}
+
+#miChatMoreMenu .mi-menu-danger {
+    color: #ffb2b2 !important;
+
+    background:
+        rgba(239,68,68,0.13)
+        !important;
+}
+
+/* Long-press feedback */
+.mi-long-press-active {
+    transform:
+        scale(0.985)
+        !important;
+
+    filter:
+        brightness(1.08);
+}
+
+/* MI AI CHAT MORE MENU - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -8040,5 +8211,779 @@ document.addEventListener(
 /* MI AI UI TRANSLATION SYSTEM - END */
 </script>
 
+
+<script>
+/* MI AI CHAT MORE MENU JS - START */
+
+(function () {
+    "use strict";
+
+    let menu = null;
+    let selectedTarget = null;
+    let selectedType = null;
+
+    let longPressTimer = null;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let longPressTarget = null;
+
+    const LONG_PRESS_TIME = 550;
+    const MOVE_LIMIT = 12;
+
+    const chatItemSelector = [
+        ".chatItem",
+        ".chat-item",
+        ".history-item",
+        ".conversation-item",
+        "#chatList > div",
+        "#historyList > div",
+        "[data-chat-id]",
+        "[data-conversation-id]"
+    ].join(",");
+
+    const messageSelector = [
+        "#chat > .me",
+        "#chat > .ai",
+        ".user-message",
+        ".ai-message",
+        ".assistant-message",
+        ".message-bubble"
+    ].join(",");
+
+    function currentLanguage() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem(
+                "mi_ui_language"
+            )
+            || "en"
+        );
+    }
+
+    function text(key) {
+        const language = currentLanguage();
+
+        const translations = {
+            en: {
+                copy: "Copy",
+                rename: "Rename",
+                pin: "Pin",
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete",
+                copied: "Copied!"
+            },
+
+            si: {
+                copy: "පිටපත් කරන්න",
+                rename: "නම වෙනස් කරන්න",
+                pin: "ඉහළට අමුණන්න",
+                unpin: "අමුණීම ඉවත් කරන්න",
+                share: "බෙදාගන්න",
+                deleteText: "මකන්න",
+                copied: "පිටපත් කළා!"
+            },
+
+            ta: {
+                copy: "நகலெடு",
+                rename: "பெயரை மாற்று",
+                pin: "பின் செய்",
+                unpin: "பின்னை நீக்கு",
+                share: "பகிர்",
+                deleteText: "நீக்கு",
+                copied: "நகலெடுக்கப்பட்டது!"
+            }
+        };
+
+        return (
+            translations[language]?.[key]
+            || translations.en[key]
+            || key
+        );
+    }
+
+    function createMenu() {
+        const existing =
+            document.getElementById(
+                "miChatMoreMenu"
+            );
+
+        if (existing) {
+            menu = existing;
+            return menu;
+        }
+
+        menu = document.createElement("div");
+
+        menu.id = "miChatMoreMenu";
+        menu.setAttribute(
+            "role",
+            "menu"
+        );
+
+        menu.addEventListener(
+            "click",
+            function (event) {
+                const button =
+                    event.target.closest(
+                        "button[data-action]"
+                    );
+
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                runAction(
+                    button.dataset.action
+                );
+            }
+        );
+
+        document.body.appendChild(menu);
+
+        return menu;
+    }
+
+    function findTarget(node) {
+        if (!(node instanceof Element)) {
+            return null;
+        }
+
+        const message =
+            node.closest(messageSelector);
+
+        if (message) {
+            return {
+                element: message,
+                type: "message"
+            };
+        }
+
+        const chatItem =
+            node.closest(chatItemSelector);
+
+        if (
+            chatItem &&
+            !chatItem.closest("#chat")
+        ) {
+            return {
+                element: chatItem,
+                type: "chat"
+            };
+        }
+
+        return null;
+    }
+
+    function isPinned(element) {
+        return (
+            element.classList.contains("pinned")
+            || element.dataset.pinned === "true"
+            || element.getAttribute(
+                "aria-pinned"
+            ) === "true"
+            || Boolean(
+                element.querySelector(
+                    ".pin-icon, .pinned-icon, [data-pinned='true']"
+                )
+            )
+        );
+    }
+
+    function menuButton(
+        action,
+        icon,
+        label,
+        danger
+    ) {
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.dataset.action = action;
+
+        if (danger) {
+            button.classList.add(
+                "mi-menu-danger"
+            );
+        }
+
+        button.innerHTML =
+            "<span aria-hidden='true'>" +
+            icon +
+            "</span>" +
+            "<span>" +
+            label +
+            "</span>";
+
+        return button;
+    }
+
+    function buildMenu(type, target) {
+        menu.replaceChildren();
+
+        if (type === "message") {
+            menu.appendChild(
+                menuButton(
+                    "copy",
+                    "⧉",
+                    text("copy"),
+                    false
+                )
+            );
+
+            return;
+        }
+
+        const pinned = isPinned(target);
+
+        menu.append(
+            menuButton(
+                "rename",
+                "✎",
+                text("rename"),
+                false
+            ),
+
+            menuButton(
+                "pin",
+                pinned ? "⌫" : "⌖",
+                pinned
+                    ? text("unpin")
+                    : text("pin"),
+                false
+            ),
+
+            menuButton(
+                "share",
+                "↗",
+                text("share"),
+                false
+            ),
+
+            menuButton(
+                "delete",
+                "🗑",
+                text("deleteText"),
+                true
+            )
+        );
+    }
+
+    function showMenu(
+        x,
+        y,
+        targetInfo
+    ) {
+        createMenu();
+
+        selectedTarget =
+            targetInfo.element;
+
+        selectedType =
+            targetInfo.type;
+
+        buildMenu(
+            selectedType,
+            selectedTarget
+        );
+
+        menu.classList.add(
+            "mi-visible"
+        );
+
+        menu.style.left = "0px";
+        menu.style.top = "0px";
+
+        const menuWidth =
+            menu.offsetWidth;
+
+        const menuHeight =
+            menu.offsetHeight;
+
+        const safeX = Math.max(
+            8,
+            Math.min(
+                x,
+                window.innerWidth
+                    - menuWidth
+                    - 8
+            )
+        );
+
+        const safeY = Math.max(
+            8,
+            Math.min(
+                y,
+                window.innerHeight
+                    - menuHeight
+                    - 8
+            )
+        );
+
+        menu.style.left =
+            safeX + "px";
+
+        menu.style.top =
+            safeY + "px";
+    }
+
+    function hideMenu() {
+        if (menu) {
+            menu.classList.remove(
+                "mi-visible"
+            );
+        }
+
+        selectedTarget = null;
+        selectedType = null;
+    }
+
+    function getMessageText(element) {
+        const clone =
+            element.cloneNode(true);
+
+        clone.querySelectorAll(
+            "button, .mi-ai-copy-below, " +
+            ".aiCopyButton, .copy-btn, " +
+            ".copy-button"
+        ).forEach(function (item) {
+            item.remove();
+        });
+
+        return (
+            clone.innerText
+            || clone.textContent
+            || ""
+        ).trim();
+    }
+
+    async function copySelectedText() {
+        if (!selectedTarget) {
+            return;
+        }
+
+        const value =
+            getMessageText(selectedTarget);
+
+        if (!value) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(
+                value
+            );
+        }
+        catch (error) {
+            const textarea =
+                document.createElement(
+                    "textarea"
+                );
+
+            textarea.value = value;
+            textarea.style.position =
+                "fixed";
+
+            textarea.style.opacity =
+                "0";
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+        }
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(
+                text("copied")
+            );
+        }
+    }
+
+    function findExistingActionButton(
+        target,
+        action
+    ) {
+        const patterns = {
+            rename:
+                "rename, edit",
+
+            pin:
+                "pin, unpin",
+
+            share:
+                "share",
+
+            delete:
+                "delete, remove, trash"
+        };
+
+        const words =
+            patterns[action]
+                ?.split(",")
+                .map(function (item) {
+                    return item.trim();
+                })
+                || [];
+
+        const buttons =
+            target.querySelectorAll(
+                "button, [role='button'], " +
+                "[onclick], [data-action]"
+            );
+
+        return Array.from(buttons).find(
+            function (button) {
+                const content = [
+                    button.className,
+                    button.id,
+                    button.dataset.action,
+                    button.getAttribute(
+                        "title"
+                    ),
+                    button.getAttribute(
+                        "aria-label"
+                    ),
+                    button.getAttribute(
+                        "onclick"
+                    ),
+                    button.textContent
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+                return words.some(
+                    function (word) {
+                        return content.includes(
+                            word
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+    function targetChatId(target) {
+        return (
+            target.dataset.chatId
+            || target.dataset.conversationId
+            || target.dataset.id
+            || target.getAttribute(
+                "data-chat"
+            )
+            || target.id
+            || null
+        );
+    }
+
+    function callFirstFunction(
+        names,
+        args
+    ) {
+        for (const name of names) {
+            if (
+                typeof window[name] ===
+                "function"
+            ) {
+                window[name](...args);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function runChatAction(action) {
+        if (!selectedTarget) {
+            return;
+        }
+
+        const existingButton =
+            findExistingActionButton(
+                selectedTarget,
+                action
+            );
+
+        if (existingButton) {
+            existingButton.click();
+            return;
+        }
+
+        const chatId =
+            targetChatId(selectedTarget);
+
+        const functionMap = {
+            rename: [
+                "renameChat",
+                "renameConversation",
+                "editChatName"
+            ],
+
+            pin: [
+                "togglePinChat",
+                "pinChat",
+                "toggleChatPin"
+            ],
+
+            share: [
+                "shareChat",
+                "shareConversation"
+            ],
+
+            delete: [
+                "deleteChat",
+                "deleteConversation",
+                "removeChat"
+            ]
+        };
+
+        callFirstFunction(
+            functionMap[action] || [],
+            chatId
+                ? [chatId]
+                : [selectedTarget]
+        );
+    }
+
+    function runAction(action) {
+        const target =
+            selectedTarget;
+
+        const type =
+            selectedType;
+
+        hideMenu();
+
+        if (!target) {
+            return;
+        }
+
+        selectedTarget = target;
+        selectedType = type;
+
+        if (action === "copy") {
+            copySelectedText()
+                .finally(hideMenu);
+
+            return;
+        }
+
+        runChatAction(action);
+        hideMenu();
+    }
+
+    document.addEventListener(
+        "contextmenu",
+        function (event) {
+            const targetInfo =
+                findTarget(event.target);
+
+            if (!targetInfo) {
+                hideMenu();
+                return;
+            }
+
+            event.preventDefault();
+
+            showMenu(
+                event.clientX,
+                event.clientY,
+                targetInfo
+            );
+        }
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            if (
+                event.pointerType ===
+                    "mouse" &&
+                event.button !== 0
+            ) {
+                return;
+            }
+
+            const targetInfo =
+                findTarget(event.target);
+
+            if (!targetInfo) {
+                return;
+            }
+
+            pointerStartX =
+                event.clientX;
+
+            pointerStartY =
+                event.clientY;
+
+            longPressTarget =
+                targetInfo;
+
+            targetInfo.element.classList.add(
+                "mi-long-press-active"
+            );
+
+            clearTimeout(longPressTimer);
+
+            longPressTimer = setTimeout(
+                function () {
+                    if (!longPressTarget) {
+                        return;
+                    }
+
+                    if (
+                        navigator.vibrate
+                    ) {
+                        navigator.vibrate(30);
+                    }
+
+                    showMenu(
+                        pointerStartX,
+                        pointerStartY,
+                        longPressTarget
+                    );
+
+                    longPressTarget.element
+                        .classList.remove(
+                            "mi-long-press-active"
+                        );
+
+                    longPressTarget = null;
+                },
+                LONG_PRESS_TIME
+            );
+        },
+        {
+            passive: true
+        }
+    );
+
+    document.addEventListener(
+        "pointermove",
+        function (event) {
+            if (!longPressTarget) {
+                return;
+            }
+
+            const movedX = Math.abs(
+                event.clientX
+                    - pointerStartX
+            );
+
+            const movedY = Math.abs(
+                event.clientY
+                    - pointerStartY
+            );
+
+            if (
+                movedX > MOVE_LIMIT ||
+                movedY > MOVE_LIMIT
+            ) {
+                cancelLongPress();
+            }
+        },
+        {
+            passive: true
+        }
+    );
+
+    function cancelLongPress() {
+        clearTimeout(longPressTimer);
+
+        if (longPressTarget) {
+            longPressTarget.element
+                .classList.remove(
+                    "mi-long-press-active"
+                );
+        }
+
+        longPressTarget = null;
+    }
+
+    document.addEventListener(
+        "pointerup",
+        cancelLongPress,
+        {
+            passive: true
+        }
+    );
+
+    document.addEventListener(
+        "pointercancel",
+        cancelLongPress,
+        {
+            passive: true
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            if (
+                menu &&
+                !menu.contains(event.target)
+            ) {
+                hideMenu();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "scroll",
+        hideMenu,
+        true
+    );
+
+    window.addEventListener(
+        "resize",
+        hideMenu
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                hideMenu();
+            }
+        }
+    );
+
+    window.MIChatMoreMenu = {
+        openFor:
+            function (
+                element,
+                x,
+                y
+            ) {
+                const targetInfo =
+                    findTarget(element);
+
+                if (targetInfo) {
+                    showMenu(
+                        x || 20,
+                        y || 20,
+                        targetInfo
+                    );
+                }
+            },
+
+        close:
+            hideMenu
+    };
+})();
+
+/* MI AI CHAT MORE MENU JS - END */
+</script>
 </body>
 </html>
