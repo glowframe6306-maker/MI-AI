@@ -2906,6 +2906,571 @@ body.settings-modal-open {
 }
 
 /* MI AI CENTERED SETTINGS - END */
+
+
+/* MI AI LANGUAGE THEME GLASS - START */
+
+:root {
+    --mi-theme-color: #f59e0b;
+    --mi-theme-rgb: 245, 158, 11;
+
+    --mi-glass-border:
+        rgba(255, 255, 255, 0.30);
+
+    --mi-glass-highlight:
+        rgba(255, 255, 255, 0.36);
+}
+
+/* Language option */
+.mi-language-setting {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.mi-language-setting label {
+    display: block;
+    width: 100%;
+    color: rgba(255,255,255,0.84);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#languageSelect {
+    width: 100% !important;
+    min-height: 48px;
+
+    padding: 10px 14px !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.22)
+        !important;
+
+    border-radius:
+        16px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.16),
+            rgba(255,255,255,0.07)
+        ) !important;
+
+    color: #ffffff !important;
+
+    -webkit-backdrop-filter:
+        blur(20px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(20px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.25),
+        0 10px 28px
+            rgba(0,0,0,0.17)
+        !important;
+
+    outline: none;
+    cursor: pointer;
+}
+
+#languageSelect option {
+    background: #182238;
+    color: #ffffff;
+}
+
+/*
+   Theme changes only the colour tint.
+   Blur, shine, border and glass remain unchanged.
+*/
+button:not(.danger):not(.delete-btn):not(#logoutBtn),
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn:not(.danger):not(.delete-btn),
+.button:not(.danger):not(.delete-btn),
+[role="button"]:not(.danger):not(.delete-btn) {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb), 0.62),
+            rgba(var(--mi-theme-rgb), 0.31)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.34)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(22px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.43),
+        inset 0 -1px 0
+            rgba(0,0,0,0.12),
+        0 9px 25px
+            rgba(var(--mi-theme-rgb), 0.20),
+        0 4px 12px
+            rgba(0,0,0,0.16)
+        !important;
+
+    color: #ffffff !important;
+
+    transition:
+        transform 160ms ease,
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease
+        !important;
+}
+
+/* Glass reflection */
+button:not(.danger):not(.delete-btn):not(#logoutBtn)::before,
+.btn:not(.danger):not(.delete-btn)::before,
+.button:not(.danger):not(.delete-btn)::before,
+[role="button"]:not(.danger):not(.delete-btn)::before {
+    content: "";
+
+    position: absolute;
+    top: 1px;
+    left: 5%;
+    right: 5%;
+    height: 46%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.42),
+            rgba(255,255,255,0.04)
+        );
+
+    opacity: 0.70;
+    pointer-events: none;
+}
+
+button:not(.danger):not(.delete-btn):not(#logoutBtn):hover,
+.btn:not(.danger):not(.delete-btn):hover,
+.button:not(.danger):not(.delete-btn):hover,
+[role="button"]:not(.danger):not(.delete-btn):hover {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb), 0.78),
+            rgba(var(--mi-theme-rgb), 0.40)
+        ) !important;
+
+    border-color:
+        rgba(255,255,255,0.52)
+        !important;
+
+    transform:
+        translateY(-1px)
+        scale(1.015);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.56),
+        0 13px 32px
+            rgba(var(--mi-theme-rgb), 0.30),
+        0 5px 14px
+            rgba(0,0,0,0.18)
+        !important;
+}
+
+button:not(.danger):not(.delete-btn):not(#logoutBtn):active,
+.btn:not(.danger):not(.delete-btn):active,
+.button:not(.danger):not(.delete-btn):active,
+[role="button"]:not(.danger):not(.delete-btn):active {
+    transform:
+        translateY(1px)
+        scale(0.97);
+
+    box-shadow:
+        inset 0 2px 5px
+            rgba(0,0,0,0.17),
+        inset 0 1px 0
+            rgba(255,255,255,0.26),
+        0 4px 12px
+            rgba(var(--mi-theme-rgb),0.18)
+        !important;
+}
+
+/* User messages: coloured iPhone glass */
+#chat > .me,
+.me {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb), 0.70),
+            rgba(var(--mi-theme-rgb), 0.34)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.30)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(24px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.36),
+        inset 0 -1px 0
+            rgba(0,0,0,0.10),
+        0 12px 32px
+            rgba(var(--mi-theme-rgb),0.20),
+        0 5px 14px
+            rgba(0,0,0,0.15)
+        !important;
+}
+
+#chat > .me::before,
+.me::before {
+    content: "";
+
+    position: absolute;
+    top: 1px;
+    left: 4%;
+    right: 4%;
+    height: 42%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.34),
+            transparent
+        );
+
+    pointer-events: none;
+    opacity: 0.70;
+}
+
+/* AI messages: neutral dark glass */
+#chat > .ai,
+.ai {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(48, 61, 72, 0.70),
+            rgba(26, 38, 48, 0.54)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.15)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(170%);
+
+    backdrop-filter:
+        blur(24px)
+        saturate(170%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.14),
+        0 10px 28px
+            rgba(0,0,0,0.18)
+        !important;
+}
+
+/* Keep destructive actions red */
+button.danger,
+button.delete-btn,
+button[onclick*="delete"],
+button[onclick*="confirmLogout"],
+#logoutBtn {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(239,68,68,0.76),
+            rgba(185,28,28,0.46)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,190,190,0.38)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(20px)
+        saturate(175%);
+
+    backdrop-filter:
+        blur(20px)
+        saturate(175%);
+}
+
+/* Theme colour must not recolour the complete page */
+html,
+body,
+#main,
+#header,
+#sidebar,
+#inputBox,
+#settingsPanel {
+    transition:
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+/* Neutral chat-list and context-menu hover */
+.chatItem:hover,
+#menu div:hover {
+    background:
+        rgba(255,255,255,0.14)
+        !important;
+
+    border-color:
+        rgba(255,255,255,0.22)
+        !important;
+}
+
+/* MI AI LANGUAGE THEME GLASS - END */
+
+
+/* MI AI COPY BUTTON BELOW REPLY - START */
+
+/*
+   The copy button remains connected to the AI reply,
+   but appears below and outside the reply box.
+*/
+
+#chat > .ai {
+    position: relative !important;
+    overflow: visible !important;
+
+    /*
+       Reserve vertical space for the copy button
+       so it does not overlap the next message.
+    */
+    margin-bottom: 46px !important;
+
+    /*
+       The old layout reserved right-side space
+       for the copy icon. It is no longer required.
+    */
+    padding:
+        12px 14px !important;
+}
+
+/* Remove the old right-side copy-button space */
+#chat > .ai .aiMessageBody,
+#chat > .ai .aiWritingCard {
+    padding-right:
+        12px !important;
+}
+
+/* Position the copy icon below the AI reply */
+#chat > .ai > .aiCopyButton {
+    position:
+        absolute !important;
+
+    top:
+        calc(100% + 7px) !important;
+
+    bottom:
+        auto !important;
+
+    left:
+        8px !important;
+
+    right:
+        auto !important;
+
+    width:
+        32px !important;
+
+    min-width:
+        32px !important;
+
+    max-width:
+        32px !important;
+
+    height:
+        32px !important;
+
+    min-height:
+        32px !important;
+
+    max-height:
+        32px !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    display:
+        inline-flex !important;
+
+    align-items:
+        center !important;
+
+    justify-content:
+        center !important;
+
+    border-radius:
+        999px !important;
+
+    font-size:
+        16px !important;
+
+    line-height:
+        1 !important;
+
+    z-index:
+        5 !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.20),
+            rgba(255, 255, 255, 0.08)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.30),
+        0 7px 20px
+            rgba(0, 0, 0, 0.22)
+        !important;
+
+    opacity:
+        0.76;
+
+    cursor:
+        pointer;
+
+    transform:
+        none !important;
+
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease,
+        background 160ms ease
+        !important;
+}
+
+#chat > .ai > .aiCopyButton:hover {
+    opacity:
+        1;
+
+    transform:
+        translateY(-1px)
+        scale(1.05)
+        !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.29),
+            rgba(255, 255, 255, 0.12)
+        ) !important;
+}
+
+#chat > .ai > .aiCopyButton:active {
+    transform:
+        scale(0.92)
+        !important;
+}
+
+/* Do not apply the large global button shine layers */
+#chat > .ai > .aiCopyButton::before,
+#chat > .ai > .aiCopyButton::after {
+    display:
+        none !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    #chat > .ai {
+        margin-bottom:
+            43px !important;
+
+        padding:
+            10px 13px !important;
+    }
+
+    #chat > .ai > .aiCopyButton {
+        top:
+            calc(100% + 6px)
+            !important;
+
+        left:
+            6px !important;
+
+        width:
+            30px !important;
+
+        min-width:
+            30px !important;
+
+        max-width:
+            30px !important;
+
+        height:
+            30px !important;
+
+        min-height:
+            30px !important;
+
+        max-height:
+            30px !important;
+    }
+}
+
+/* MI AI COPY BUTTON BELOW REPLY - END */
 </style>
 </head>
 
@@ -2974,7 +3539,14 @@ body.settings-modal-open {
 <h3 data-i18n="settings.title">Settings</h3>
 
 <label data-i18n="settings.language">Language</label>
-<select id="languageSelect" onchange="changeLanguage(this.value)"></select>
+<select
+        id="languageSelect"
+        data-mi-i18n-ignore="true"
+        onchange="window.MIAI18N && window.MIAI18N.setLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="si">සිංහල</option>
+        <option value="ta">தமிழ்</option>
+    </select>
 
 <label data-i18n="settings.theme">Theme</label>
 <input type="color" id="themeColor">
@@ -6307,5 +6879,807 @@ document.addEventListener(
 
 /* MI AI CENTERED SETTINGS JS - END */
 </script>
+
+
+<script>
+/* MI AI UI TRANSLATION SYSTEM - START */
+
+(function () {
+    "use strict";
+
+    const translations = {
+        en: {
+            newChat: "New Chat",
+            settings: "Settings",
+            customerSupport: "Customer Support",
+            language: "Language",
+            theme: "Theme",
+            themeColor: "Theme Color",
+            apply: "Apply",
+            fontSize: "Font Size",
+            rename: "Rename",
+            pin: "Pin",
+            unpin: "Unpin",
+            share: "Share",
+            deleteText: "Delete",
+            cancel: "Cancel",
+            saveChanges: "Save changes",
+            yourProfile: "Your profile",
+            name: "Name",
+            age: "Age",
+            email: "Email",
+            password: "Password",
+            confirmPassword: "Confirm Password",
+            signIn: "Sign In",
+            register: "Register",
+            createAccount: "Create Account",
+            forgotPassword: "Forgot Password?",
+            logout: "Logout",
+            loginAction: "Log in",
+            loginUnlock: "Login to unlock more",
+            benefits: "Enjoy these benefits when you sign in:",
+            saveChats: "Save and restore your chats",
+            syncChats: "Sync your history across devices",
+            fasterReplies: "Get faster, more personal replies",
+            logoutQuestion: "Are you sure you want to logout?",
+            askPlaceholder: "Ask from MI AI...",
+            mistakes:
+                "MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
+            creator:
+                "CREATED AND POWERED BY M.I.MUHAMMADH",
+            closeSettings: "Close Settings",
+            closeMenu: "Close menu",
+            openMenu: "Open menu",
+            send: "Send",
+            stop: "Stop",
+            loading: "Loading...",
+            pleaseWait: "Please wait...",
+            verify: "Verify",
+            submit: "Submit",
+            continueText: "Continue",
+            back: "Back",
+            next: "Next",
+            save: "Save",
+            edit: "Edit",
+            close: "Close",
+            copied: "Copied!",
+            copy: "Copy",
+            loginRequired: "Login Required",
+            loginRequiredMessage:
+                "Please log in to use this feature."
+        },
+
+        si: {
+            newChat: "නව කතාබහ",
+            settings: "සැකසුම්",
+            customerSupport: "පාරිභෝගික සහාය",
+            language: "භාෂාව",
+            theme: "තේමාව",
+            themeColor: "තේමා වර්ණය",
+            apply: "යොදන්න",
+            fontSize: "අකුරු ප්‍රමාණය",
+            rename: "නම වෙනස් කරන්න",
+            pin: "ඉහළට අමුණන්න",
+            unpin: "අමුණීම ඉවත් කරන්න",
+            share: "බෙදාගන්න",
+            deleteText: "මකන්න",
+            cancel: "අවලංගු කරන්න",
+            saveChanges: "වෙනස්කම් සුරකින්න",
+            yourProfile: "ඔබගේ පැතිකඩ",
+            name: "නම",
+            age: "වයස",
+            email: "විද්‍යුත් තැපෑල",
+            password: "මුරපදය",
+            confirmPassword: "මුරපදය තහවුරු කරන්න",
+            signIn: "පිවිසෙන්න",
+            register: "ලියාපදිංචි වන්න",
+            createAccount: "ගිණුම සාදන්න",
+            forgotPassword: "මුරපදය අමතකද?",
+            logout: "ඉවත් වන්න",
+            loginAction: "පිවිසෙන්න",
+            loginUnlock: "තවත් පහසුකම් ලබාගැනීමට පිවිසෙන්න",
+            benefits: "පිවිසීමෙන් මෙම පහසුකම් ලබාගන්න:",
+            saveChats: "ඔබගේ කතාබහ සුරකින්න සහ නැවත ලබාගන්න",
+            syncChats: "උපාංග අතර කතාබහ ඉතිහාසය සමමුහුර්ත කරන්න",
+            fasterReplies: "වේගවත් සහ ඔබට ගැළපෙන පිළිතුරු ලබාගන්න",
+            logoutQuestion: "ඔබට ඉවත් වීමට අවශ්‍ය බව තහවුරුද?",
+            askPlaceholder: "MI AI වෙතින් අසන්න...",
+            mistakes:
+                "MI AI වැරදි කළ හැක. වැදගත් තොරතුරු පරීක්ෂා කරන්න.",
+            creator:
+                "M.I.MUHAMMADH විසින් නිර්මාණය කර බලගන්වන ලදී",
+            closeSettings: "සැකසුම් වසන්න",
+            closeMenu: "මෙනුව වසන්න",
+            openMenu: "මෙනුව විවෘත කරන්න",
+            send: "යවන්න",
+            stop: "නවත්වන්න",
+            loading: "පූරණය වෙමින්...",
+            pleaseWait: "කරුණාකර රැඳී සිටින්න...",
+            verify: "තහවුරු කරන්න",
+            submit: "යොමු කරන්න",
+            continueText: "ඉදිරියට යන්න",
+            back: "ආපසු",
+            next: "ඊළඟ",
+            save: "සුරකින්න",
+            edit: "සංස්කරණය කරන්න",
+            close: "වසන්න",
+            copied: "පිටපත් කළා!",
+            copy: "පිටපත් කරන්න",
+            loginRequired: "පිවිසීම අවශ්‍යයි",
+            loginRequiredMessage:
+                "මෙම පහසුකම භාවිත කිරීමට පිවිසෙන්න."
+        },
+
+        ta: {
+            newChat: "புதிய அரட்டை",
+            settings: "அமைப்புகள்",
+            customerSupport: "வாடிக்கையாளர் ஆதரவு",
+            language: "மொழி",
+            theme: "தீம்",
+            themeColor: "தீம் நிறம்",
+            apply: "பயன்படுத்து",
+            fontSize: "எழுத்தளவு",
+            rename: "பெயரை மாற்று",
+            pin: "பின் செய்",
+            unpin: "பின்னை நீக்கு",
+            share: "பகிர்",
+            deleteText: "நீக்கு",
+            cancel: "ரத்து செய்",
+            saveChanges: "மாற்றங்களைச் சேமி",
+            yourProfile: "உங்கள் சுயவிவரம்",
+            name: "பெயர்",
+            age: "வயது",
+            email: "மின்னஞ்சல்",
+            password: "கடவுச்சொல்",
+            confirmPassword: "கடவுச்சொல்லை உறுதிப்படுத்து",
+            signIn: "உள்நுழைய",
+            register: "பதிவு செய்க",
+            createAccount: "கணக்கை உருவாக்கு",
+            forgotPassword: "கடவுச்சொல் மறந்துவிட்டதா?",
+            logout: "வெளியேறு",
+            loginAction: "உள்நுழைய",
+            loginUnlock: "மேலும் வசதிகளைப் பெற உள்நுழையுங்கள்",
+            benefits: "உள்நுழைந்தால் இந்த வசதிகளைப் பெறலாம்:",
+            saveChats: "உங்கள் அரட்டைகளைச் சேமித்து மீட்டெடுக்கவும்",
+            syncChats: "சாதனங்களுக்கு இடையில் வரலாற்றை ஒத்திசைக்கவும்",
+            fasterReplies: "வேகமான தனிப்பயன் பதில்களைப் பெறவும்",
+            logoutQuestion: "நீங்கள் வெளியேற விரும்புகிறீர்களா?",
+            askPlaceholder: "MI AI-யிடம் கேளுங்கள்...",
+            mistakes:
+                "MI AI தவறுகள் செய்யலாம். முக்கிய தகவல்களைச் சரிபார்க்கவும்.",
+            creator:
+                "M.I.MUHAMMADH அவர்களால் உருவாக்கப்பட்டு இயக்கப்படுகிறது",
+            closeSettings: "அமைப்புகளை மூடு",
+            closeMenu: "மெனுவை மூடு",
+            openMenu: "மெனுவைத் திற",
+            send: "அனுப்பு",
+            stop: "நிறுத்து",
+            loading: "ஏற்றப்படுகிறது...",
+            pleaseWait: "தயவுசெய்து காத்திருக்கவும்...",
+            verify: "சரிபார்",
+            submit: "சமர்ப்பி",
+            continueText: "தொடரவும்",
+            back: "பின்செல்",
+            next: "அடுத்து",
+            save: "சேமி",
+            edit: "திருத்து",
+            close: "மூடு",
+            copied: "நகலெடுக்கப்பட்டது!",
+            copy: "நகலெடு",
+            loginRequired: "உள்நுழைவு தேவை",
+            loginRequiredMessage:
+                "இந்த வசதியைப் பயன்படுத்த உள்நுழையவும்."
+        }
+    };
+
+    const languageCodes = {
+        en: "en",
+        si: "si-LK",
+        ta: "ta-LK"
+    };
+
+    const aliasMap = new Map();
+    let translationScheduled = false;
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLocaleLowerCase();
+    }
+
+    Object.keys(translations).forEach(function (language) {
+        Object.entries(translations[language]).forEach(
+            function ([key, value]) {
+                aliasMap.set(normalize(value), key);
+            }
+        );
+    });
+
+    function removeLeadingIcon(value) {
+        return String(value || "")
+            .replace(/^[^\p{L}\p{N}]+/u, "")
+            .trim();
+    }
+
+    function findTranslationKey(value) {
+        const normal = normalize(value);
+
+        if (!normal) {
+            return null;
+        }
+
+        if (aliasMap.has(normal)) {
+            return aliasMap.get(normal);
+        }
+
+        const withoutIcon = normalize(
+            removeLeadingIcon(value)
+        );
+
+        return aliasMap.get(withoutIcon) || null;
+    }
+
+    function preserveIconPrefix(original, translated) {
+        const text = String(original || "").trim();
+
+        const match = text.match(
+            /^([^\p{L}\p{N}]*)(.*)$/u
+        );
+
+        const prefix = match ? match[1] : "";
+
+        return prefix + translated;
+    }
+
+    function isExcluded(node) {
+        const element =
+            node.nodeType === Node.ELEMENT_NODE
+                ? node
+                : node.parentElement;
+
+        if (!element) {
+            return true;
+        }
+
+        /*
+          Do not translate:
+          - Chat messages
+          - Header
+          - Scripts/styles/code
+          - Language options
+        */
+        return Boolean(
+            element.closest(
+                "#chat, #header, script, style, code, pre, " +
+                "textarea, [data-mi-i18n-ignore='true']"
+            )
+        );
+    }
+
+    function translateTextNode(node, language) {
+        if (
+            !node ||
+            node.nodeType !== Node.TEXT_NODE ||
+            isExcluded(node)
+        ) {
+            return;
+        }
+
+        const original = node.nodeValue || "";
+
+        if (!original.trim()) {
+            return;
+        }
+
+        const key = findTranslationKey(original);
+
+        if (
+            !key ||
+            !translations[language] ||
+            !translations[language][key]
+        ) {
+            return;
+        }
+
+        const leading =
+            original.match(/^\s*/)?.[0] || "";
+
+        const trailing =
+            original.match(/\s*$/)?.[0] || "";
+
+        const translated = preserveIconPrefix(
+            original,
+            translations[language][key]
+        );
+
+        const finalValue =
+            leading +
+            translated.trim() +
+            trailing;
+
+        if (node.nodeValue !== finalValue) {
+            node.nodeValue = finalValue;
+        }
+    }
+
+    function translateAttribute(
+        element,
+        attribute,
+        language
+    ) {
+        const value = element.getAttribute(attribute);
+
+        if (!value) {
+            return;
+        }
+
+        const key = findTranslationKey(value);
+
+        if (
+            key &&
+            translations[language] &&
+            translations[language][key]
+        ) {
+            element.setAttribute(
+                attribute,
+                translations[language][key]
+            );
+        }
+    }
+
+    function translateElement(element, language) {
+        if (
+            !element ||
+            element.nodeType !== Node.ELEMENT_NODE ||
+            isExcluded(element)
+        ) {
+            return;
+        }
+
+        [
+            "placeholder",
+            "title",
+            "aria-label"
+        ].forEach(function (attribute) {
+            translateAttribute(
+                element,
+                attribute,
+                language
+            );
+        });
+
+        if (
+            element instanceof HTMLInputElement &&
+            ["button", "submit", "reset"].includes(
+                element.type
+            )
+        ) {
+            const key = findTranslationKey(
+                element.value
+            );
+
+            if (
+                key &&
+                translations[language][key]
+            ) {
+                element.value =
+                    translations[language][key];
+            }
+        }
+    }
+
+    function translateTree(root, language) {
+        if (!root) {
+            return;
+        }
+
+        if (root.nodeType === Node.TEXT_NODE) {
+            translateTextNode(root, language);
+            return;
+        }
+
+        if (root.nodeType !== Node.ELEMENT_NODE) {
+            return;
+        }
+
+        translateElement(root, language);
+
+        const elementWalker =
+            document.createTreeWalker(
+                root,
+                NodeFilter.SHOW_ELEMENT
+            );
+
+        while (elementWalker.nextNode()) {
+            translateElement(
+                elementWalker.currentNode,
+                language
+            );
+        }
+
+        const textWalker =
+            document.createTreeWalker(
+                root,
+                NodeFilter.SHOW_TEXT
+            );
+
+        while (textWalker.nextNode()) {
+            translateTextNode(
+                textWalker.currentNode,
+                language
+            );
+        }
+    }
+
+    function setStaticButton(
+        selector,
+        key,
+        icon,
+        language
+    ) {
+        const element =
+            document.querySelector(selector);
+
+        if (!element || element.closest("#header")) {
+            return;
+        }
+
+        const value =
+            (icon ? icon + " " : "") +
+            translations[language][key];
+
+        if (element.textContent.trim() !== value) {
+            element.textContent = value;
+        }
+    }
+
+    function applyStaticTranslations(language) {
+        setStaticButton(
+            "#sidebar button[onclick*='newChat']",
+            "newChat",
+            "➕",
+            language
+        );
+
+        setStaticButton(
+            "#settingsBtn",
+            "settings",
+            "⚙",
+            language
+        );
+
+        setStaticButton(
+            "#supportBtn",
+            "customerSupport",
+            "🎧",
+            language
+        );
+
+        const settingsHeading =
+            document.querySelector(
+                "#settingsPanel h3"
+            );
+
+        if (
+            settingsHeading &&
+            settingsHeading.textContent !==
+                translations[language].settings
+        ) {
+            settingsHeading.textContent =
+                translations[language].settings;
+        }
+
+        const languageLabel =
+            document.querySelector(
+                "[data-mi-i18n='language']"
+            );
+
+        if (languageLabel) {
+            languageLabel.textContent =
+                translations[language].language;
+        }
+
+        const messageInput =
+            document.getElementById("msg");
+
+        if (messageInput) {
+            messageInput.placeholder =
+                translations[language]
+                    .askPlaceholder;
+        }
+
+        document
+            .querySelectorAll("#watermark")
+            .forEach(function (watermark) {
+                const key = findTranslationKey(
+                    watermark.textContent
+                );
+
+                if (
+                    key &&
+                    translations[language][key]
+                ) {
+                    watermark.textContent =
+                        translations[language][key];
+                }
+            });
+    }
+
+    function getLanguage() {
+        const saved =
+            localStorage.getItem(
+                "mi_ui_language"
+            );
+
+        if (
+            saved &&
+            Object.prototype.hasOwnProperty.call(
+                translations,
+                saved
+            )
+        ) {
+            return saved;
+        }
+
+        return "en";
+    }
+
+    function applyLanguage(
+        language,
+        savePreference
+    ) {
+        if (!translations[language]) {
+            language = "en";
+        }
+
+        if (savePreference !== false) {
+            localStorage.setItem(
+                "mi_ui_language",
+                language
+            );
+        }
+
+        document.documentElement.lang =
+            languageCodes[language] || "en";
+
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (
+            selector &&
+            selector.value !== language
+        ) {
+            selector.value = language;
+        }
+
+        applyStaticTranslations(language);
+        translateTree(
+            document.body,
+            language
+        );
+
+        document.body.dataset.uiLanguage =
+            language;
+    }
+
+    function scheduleTranslation() {
+        if (translationScheduled) {
+            return;
+        }
+
+        translationScheduled = true;
+
+        setTimeout(function () {
+            translationScheduled = false;
+
+            applyLanguage(
+                getLanguage(),
+                false
+            );
+        }, 0);
+    }
+
+    function hexToRgb(hex) {
+        const normalized =
+            String(hex || "")
+                .trim()
+                .replace("#", "");
+
+        if (
+            !/^[0-9a-fA-F]{6}$/.test(
+                normalized
+            )
+        ) {
+            return null;
+        }
+
+        return {
+            r: parseInt(
+                normalized.slice(0, 2),
+                16
+            ),
+            g: parseInt(
+                normalized.slice(2, 4),
+                16
+            ),
+            b: parseInt(
+                normalized.slice(4, 6),
+                16
+            )
+        };
+    }
+
+    function applyThemeColour(colour) {
+        const rgb = hexToRgb(colour);
+
+        if (!rgb) {
+            return false;
+        }
+
+        const safeColour =
+            colour.startsWith("#")
+                ? colour
+                : "#" + colour;
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-theme-color",
+                safeColour
+            );
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-theme-rgb",
+                rgb.r +
+                    ", " +
+                    rgb.g +
+                    ", " +
+                    rgb.b
+            );
+
+        localStorage.setItem(
+            "mi_button_theme_colour",
+            safeColour
+        );
+
+        const input =
+            document.getElementById(
+                "themeColor"
+            );
+
+        if (
+            input &&
+            input.value.toLowerCase() !==
+                safeColour.toLowerCase()
+        ) {
+            input.value = safeColour;
+        }
+
+        return true;
+    }
+
+    /*
+      Replace the old applyTheme behaviour.
+      It changes only the button/message tint,
+      not the whole page background.
+    */
+    window.applyTheme = function () {
+        const input =
+            document.getElementById(
+                "themeColor"
+            );
+
+        const colour =
+            input?.value ||
+            localStorage.getItem(
+                "mi_button_theme_colour"
+            ) ||
+            "#f59e0b";
+
+        applyThemeColour(colour);
+    };
+
+    function initialize() {
+        const languageSelector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (languageSelector) {
+            languageSelector.addEventListener(
+                "change",
+                function () {
+                    applyLanguage(
+                        languageSelector.value,
+                        true
+                    );
+                }
+            );
+        }
+
+        const themeInput =
+            document.getElementById(
+                "themeColor"
+            );
+
+        if (themeInput) {
+            themeInput.addEventListener(
+                "input",
+                function () {
+                    applyThemeColour(
+                        themeInput.value
+                    );
+                }
+            );
+        }
+
+        const savedColour =
+            localStorage.getItem(
+                "mi_button_theme_colour"
+            ) ||
+            themeInput?.value ||
+            "#f59e0b";
+
+        applyThemeColour(savedColour);
+
+        applyLanguage(
+            getLanguage(),
+            false
+        );
+
+        const observer =
+            new MutationObserver(
+                scheduleTranslation
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+    }
+
+    window.MIAI18N = {
+        version: "1.0",
+        translations: translations,
+        getLanguage: getLanguage,
+        setLanguage: function (language) {
+            applyLanguage(
+                language,
+                true
+            );
+        },
+        translatePage: function () {
+            applyLanguage(
+                getLanguage(),
+                false
+            );
+        },
+        applyThemeColour:
+            applyThemeColour
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            { once: true }
+        );
+    }
+    else {
+        initialize();
+    }
+})();
+
+/* MI AI UI TRANSLATION SYSTEM - END */
+</script>
+
 </body>
 </html>
