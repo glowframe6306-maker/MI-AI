@@ -5,6 +5,11 @@ backend/.env
 # Python
 __pycache__/
 *.pyc
+*.pyo
+
+# Runtime artifacts
+backend/local_persistence.json
+backend/uploads/
 
 # Editor
 .vscode/

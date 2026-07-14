@@ -1,5 +1,6 @@
 import json
-from importlib import import_module
+from importlib import import_module, reload
+from pathlib import Path
 
 
 def test_api_chat_route_returns_reply(monkeypatch):
@@ -16,7 +17,7 @@ def test_api_chat_route_returns_reply(monkeypatch):
         def __init__(self):
             self.models = FakeModels()
 
-    monkeypatch.setattr(app_module, "_get_gemini_client", lambda: FakeClient())
+    monkeypatch.setattr(app_module, "get_groq_client", lambda: FakeClient())
 
     client = app_module.app.test_client()
     response = client.post("/api/chat", json={"message": "Hello"})
@@ -25,6 +26,41 @@ def test_api_chat_route_returns_reply(monkeypatch):
     payload = response.get_json()
     assert payload["response"] == "Hello from the test client"
     assert payload["reply"] == "Hello from the test client"
+
+
+def test_api_chat_route_supports_groq_style_client(monkeypatch):
+    app_module = import_module("backend.app")
+
+    class FakeMessage:
+        content = "Hello from Groq"
+
+    class FakeChoice:
+        message = FakeMessage()
+
+    class FakeCompletionResponse:
+        choices = [FakeChoice()]
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            return FakeCompletionResponse()
+
+    class FakeChat:
+        def __init__(self):
+            self.completions = FakeCompletions()
+
+    class FakeGroqClient:
+        def __init__(self):
+            self.chat = FakeChat()
+
+    monkeypatch.setattr(app_module, "get_groq_client", lambda: FakeGroqClient())
+
+    client = app_module.app.test_client()
+    response = client.post("/api/chat", json={"message": "Hello"})
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["response"] == "Hello from Groq"
+    assert payload["reply"] == "Hello from Groq"
 
 
 def test_api_chat_stream_route_emits_deltas(monkeypatch):
@@ -46,7 +82,7 @@ def test_api_chat_stream_route_emits_deltas(monkeypatch):
         def __init__(self):
             self.models = FakeModels()
 
-    monkeypatch.setattr(app_module, "_get_gemini_client", lambda: FakeClient())
+    monkeypatch.setattr(app_module, "get_groq_client", lambda: FakeClient())
 
     client = app_module.app.test_client()
     response = client.post("/api/chat/stream", json={"message": "Hello"})
@@ -59,6 +95,25 @@ def test_api_chat_stream_route_emits_deltas(monkeypatch):
     payloads = [json.loads(line.replace("data: ", "")) for line in lines if line.startswith("data:")]
     assert payloads[0]["type"] == "delta"
     assert payloads[-1]["type"] == "done"
+
+
+def test_backend_dotenv_file_is_loaded_for_groq_settings(tmp_path, monkeypatch):
+    app_module = import_module("backend.app")
+    backend_dir = Path(app_module.__file__).resolve().parent
+    env_path = backend_dir / ".env"
+    original_content = env_path.read_text(encoding="utf-8") if env_path.exists() else None
+
+    try:
+        env_path.write_text("GROQ_API_KEY=from-dotenv\n", encoding="utf-8")
+        monkeypatch.delenv("GROQ_API_KEY", raising=False)
+        reloaded_module = reload(app_module)
+        assert reloaded_module._get_groq_api_key() == "from-dotenv"
+    finally:
+        if original_content is None:
+            env_path.unlink(missing_ok=True)
+        else:
+            env_path.write_text(original_content, encoding="utf-8")
+        reload(app_module)
 
 
 def test_assistant_info_route_returns_identity_and_contacts():
