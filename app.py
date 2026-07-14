@@ -1,970 +1,984 @@
-import html
-import hashlib
-import json
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response
+from flask_cors import CORS
 import os
 import re
-import shutil
-import traceback
-import sys
 import uuid
-import urllib.error
-import urllib.parse
-import urllib.request
-from pathlib import Path
-from pprint import pprint
+import requests
+import ssl
+from datetime import datetime, timedelta
+import secrets
 
-BACKEND_DIR = Path(__file__).resolve().parent
-ENV_FILE = BACKEND_DIR / ".env"
+import random
+import smtplib
 
-try:
-    from google import genai
-    print("[BOOT] google-genai imported successfully")
-    try:
-        try:
-            import importlib.metadata as importlib_metadata
-            gg_version = importlib_metadata.version("google-genai")
-        except Exception:
-            try:
-                import pkg_resources
-                gg_version = pkg_resources.get_distribution("google-genai").version
-            except Exception:
-                gg_version = "unknown"
-        print(f"[BOOT] Python executable: {sys.executable}")
-        print(f"[BOOT] google-genai version: {gg_version}")
-        print("[BOOT] Gemini SDK loaded successfully")
-    except Exception:
-        print("[BOOT] Could not determine google-genai version")
-except Exception as import_error:
-    print(f"[BOOT] Failed to import google-genai: {import_error}")
-    import traceback as tb
-    tb.print_exc()
-    genai = None
-
-
-def debug_gemini_direct():
-    from dotenv import load_dotenv
-
-    load_dotenv(dotenv_path=ENV_FILE, override=False)
-    api_key = clean_env_value(os.getenv("GEMINI_API_KEY", ""))
-    model = clean_env_value(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
-
-    print("=== Direct Gemini environment ===")
-    print("GEMINI_API_KEY length:", len(api_key))
-    print("GEMINI_MODEL:", model)
-
-    if not api_key or genai is None:
-        print("Gemini client unavailable")
-        return
-
-    client = genai.Client(api_key=api_key)
-    try:
-        response = client.models.generate_content(
-            model=model,
-            contents="Say hello in one short sentence.",
-        )
-        print("=== Gemini generate_content ===")
-        print(getattr(response, "text", ""))
-    except Exception as exc:
-        print("Gemini request failed")
-        traceback.print_exc()
-        print("status_code:", getattr(exc, "status_code", None))
-        print("body:", getattr(exc, "body", None))
-
-
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-from dotenv import load_dotenv
-
-
-def _safe_console_text(value) -> str:
-    if value is None:
-        return ""
-    text = str(value)
-    encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
-    try:
-        return text.encode(encoding, errors="replace").decode(encoding, errors="replace")
-    except Exception:
-        return text.encode("utf-8", errors="replace").decode("utf-8", errors="replace")
-
-
-def clean_env_value(value):
-    if value is None:
-        return ""
-    value = str(value).strip()
-
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        value = value[1:-1].strip()
-
-    if value.startswith("GEMINI_API_KEY="):
-        value = value.split("=", 1)[1].strip()
-
-    return value
-
-
-def secret_fingerprint(value):
-    if not value:
-        return None
-    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
-    return digest[:8]
-
-
-def _load_environment() -> list[str]:
-    if ENV_FILE.exists():
-        load_dotenv(dotenv_path=ENV_FILE, override=False)
-        return [str(ENV_FILE)]
-    return []
-
-
-_load_environment()
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from werkzeug.security import generate_password_hash, check_password_hash
 
 try:
-    import PyPDF2
-except Exception:
-    PyPDF2 = None
+    from groq import Groq
+except ImportError:
+    Groq = None
 
 try:
-    from docx import Document as DocxDocument
-except Exception:
-    DocxDocument = None
+    from supabase import create_client
+except ImportError:
+    create_client = None
 
-try:
-    import pandas as pd
-except Exception:
-    pd = None
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
-try:
-    from pptx import Presentation
-except Exception:
-    Presentation = None
+app = Flask(
+    __name__,
+    static_folder=FRONTEND_DIR,
+    template_folder=FRONTEND_DIR,
+    static_url_path=""
+)
+app.secret_key = os.getenv("SECRET_KEY") or secrets.token_urlsafe(32)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=not bool(os.getenv('DEV_MODE', '').lower() in ['1', 'true', 'yes']),
+)
+CORS(app)
 
-try:
-    from PIL import Image
-except Exception:
-    Image = None
+otp_storage = {}
+login_tokens = {}
+trusted_devices = {}
+login_attempts = {}
+OTP_EXPIRATION_MINUTES = 10
+TRUSTED_DEVICE_EXPIRATION_DAYS = 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+RATE_LIMIT_MAX_ATTEMPTS = 5
+RATE_LIMIT_WINDOW_MINUTES = 15
+conversations_store = {}
+messages_store = {}
 
-try:
-    import pytesseract
-except Exception:
-    pytesseract = None
+OTP_EMAIL_ADDRESS = os.getenv("OTP_EMAIL_ADDRESS", "glowframe6306@gmail.com").strip()
+OTP_EMAIL_PASSWORD = os.getenv("OTP_EMAIL_PASSWORD", "ogsx qccn nkfp cbdk").replace(" ", "").strip()
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+@app.route('/images/<path:filename>')
+def images(filename):
+    return send_from_directory(IMAGES_DIR, filename)
 
-gemini_client = None
-gemini_client_api_key = None
+api_key = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=api_key) if Groq and api_key else None
 
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-def _read_env_file_value(key: str):
-    if not ENV_FILE.exists():
-        return None
-    try:
-        for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
-            if not line or line.strip().startswith("#"):
-                continue
-            parts = line.split("=", 1)
-            if len(parts) != 2:
-                continue
-            name = parts[0].strip()
-            if name == key:
-                return clean_env_value(parts[1])
-    except Exception:
-        return None
-    return None
-
-
-def _get_gemini_api_key():
-    """Read the Gemini API key from backend/.env or environment variables."""
-    _load_environment()
-    file_key = _read_env_file_value("GEMINI_API_KEY")
-    if file_key:
-        return file_key
-
-    for env_name in ["GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY"]:
-        value = clean_env_value(os.getenv(env_name, ""))
-        if value:
-            return value
-    return ""
+supabase = create_client(supabase_url, supabase_key) if create_client and supabase_url and supabase_key else None
 
 
-def _get_gemini_model():
-    _load_environment()
-    file_model = _read_env_file_value("GEMINI_MODEL")
-    if file_model:
-        return file_model
-
-    for env_name in ["GEMINI_MODEL", "GOOGLE_GEMINI_MODEL", "GOOGLE_API_MODEL", "MODEL"]:
-        model = clean_env_value(os.getenv(env_name, ""))
-        if model:
-            return model
-    return "gemini-2.5-flash"
+def get_client_ip():
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
 
 
-def _get_available_models(client):
-    """Fetch list of available models that support generateContent."""
-    if client is None:
-        print("Client is None, cannot fetch models")
-        return []
-
-    try:
-        print("Fetching available models from Gemini API...")
-        models = client.models.list()
-        if models is None:
-            print("Model list returned None")
-            return []
-
-        available = []
-        for model in models:
-            model_name = getattr(model, 'name', None) or str(model)
-            model_id = model_name.replace('models/', '').strip()
-            if not model_id:
-                continue
-
-            model_lower = model_id.lower()
-            if any(tag in model_lower for tag in ['preview', 'tts', 'exp', 'beta', 'alpha']):
-                continue
-
-            supported_actions = getattr(model, 'supported_actions', None)
-            if supported_actions is None:
-                print(f"  Skipping {model_id} because supported_actions is unknown")
-                continue
-
-            if 'generateContent' in supported_actions:
-                available.append(model_id)
-                print(f"  {model_id}")
-
-        print(f"Total models supporting generateContent: {len(available)}")
-        return available
-    except Exception as e:
-        print(f"Error fetching models: {e}")
-        traceback.print_exc()
-        return []
+def prune_old_attempts(key):
+    now = datetime.utcnow()
+    attempts = login_attempts.get(key, [])
+    login_attempts[key] = [ts for ts in attempts if now - ts < timedelta(minutes=RATE_LIMIT_WINDOW_MINUTES)]
+    return login_attempts[key]
 
 
-def _select_best_model(client, requested_model=None):
-    """Select the best available model, with priority order."""
-    priority_models = ["gemini-2.5-flash"]
-    if requested_model:
-        requested_model = requested_model.replace('models/', '').strip()
-        if requested_model and requested_model not in priority_models:
-            priority_models.insert(0, requested_model)
-
-    available_models = _get_available_models(client)
-
-    if not available_models:
-        print("Warning: Could not fetch available models from API")
-        fallback = [m for m in priority_models if m != requested_model]
-        return requested_model or "gemini-2.5-flash", fallback
-
-    print(f"\nAvailable models: {available_models}")
-    print(f"Priority order: {priority_models}")
-
-    for model in priority_models:
-        if model in available_models:
-            fallback = [m for m in available_models if m != model]
-            print(f"Selected model: {model}")
-            print(f"Fallback models: {fallback}")
-            return model, fallback
-
-    selected = available_models[0]
-    fallback = available_models[1:]
-    print(f"No priority model available, using first available: {selected}")
-    print(f"Selected model: {selected}")
-    print(f"Fallback models: {fallback}")
-    return selected, fallback
+def record_login_attempt(key):
+    prune_old_attempts(key)
+    login_attempts.setdefault(key, []).append(datetime.utcnow())
 
 
-def _format_gemini_error_message(exc):
-    """Format Gemini exception into user-friendly error message."""
-    error_str = str(exc).lower()
-    if "429" in str(exc) or "resource_exhausted" in error_str or "quota" in error_str or "rate_limit" in error_str:
-        return "The Gemini service is temporarily unavailable because of quota or rate limits. Your free tier quota has been exceeded. Please wait a few hours or upgrade your plan."
-    if "401" in str(exc) or "403" in str(exc):
-        if "access_token_type_unsupported" in error_str or "expected oauth" in error_str or "oauth 2" in error_str:
-            return "The Gemini authentication credential is not a supported API key type. Please verify GEMINI_API_KEY is a valid Gemini API key."
-        return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
-    if "invalid" in error_str or "authentication" in error_str:
-        return "The Gemini API key is invalid or not authorized. Please verify the key and permissions."
-    if "404" in str(exc) or "not_found" in error_str or "model_not_found" in error_str:
-        return "The requested Gemini model is not available. Please try a supported model."
-    if "500" in str(exc) or "503" in str(exc) or "server_error" in error_str or "internal_error" in error_str:
-        return "The Gemini service is temporarily unavailable. Please try again shortly."
-    exc_message = str(exc)
-    if len(exc_message) < 200:
-        return exc_message
-    return "An error occurred with the Gemini service. Please try again."
+def is_rate_limited(key):
+    attempts = prune_old_attempts(key)
+    return len(attempts) >= RATE_LIMIT_MAX_ATTEMPTS
 
 
-def _get_gemini_client():
-    global gemini_client, gemini_client_api_key
-    _load_environment()
-    api_key = _get_gemini_api_key()
-    if not api_key or genai is None:
-        gemini_client = None
-        gemini_client_api_key = None
-        return None
-
-    if gemini_client is not None and gemini_client_api_key == api_key:
-        return gemini_client
-
-    try:
-        print("=== Gemini environment ===")
-        print("GEMINI_API_KEY length:", len(api_key))
-        print("GEMINI_MODEL:", _get_gemini_model())
-        print("Environment:", os.getcwd())
-        gemini_client = genai.Client(api_key=api_key)
-        gemini_client_api_key = api_key
-        print("=== Gemini client initialized ===")
-    except Exception as exc:
-        gemini_client = None
-        gemini_client_api_key = None
-        print("Gemini client initialization failed")
-        traceback.print_exc()
-        print("Gemini init error:", exc)
-
-    return gemini_client
+def create_secure_token():
+    return secrets.token_urlsafe(32)
 
 
-def _build_gemini_contents(messages_payload):
-    contents = []
-    print(f"\n=== Building Gemini contents ===")
-    print(f"Input messages: {len(messages_payload)}")
-    for i, message in enumerate(messages_payload):
-        role = (message.get("role") or "").lower()
-        content = message.get("content", "") or ""
-        print(f"Message {i}: role={role}, content_len={len(content)}")
-        if not content:
-            print(f"  -> Skipping empty content")
-            continue
-        if role == "system":
-            mapped_role = "user"
-            text = f"System instruction: {content}"
-            print(f"  -> Mapped system to {mapped_role}")
-            contents.append({"role": mapped_role, "parts": [{"text": text}]})
-        elif role == "assistant":
-            mapped_role = "model"
-            text = content
-            print(f"  -> Mapped assistant to {mapped_role}")
-            contents.append({"role": mapped_role, "parts": [{"text": text}]})
-        elif role in {"user", "model"}:
-            print(f"  -> Using role as-is: {role}")
-            contents.append({"role": role, "parts": [{"text": content}]})
-        else:
-            mapped_role = "user"
-            print(f"  -> Mapped unknown role {role} to {mapped_role}")
-            contents.append({"role": mapped_role, "parts": [{"text": content}]})
-    print(f"Final contents: {len(contents)} items")
-    return contents
-
-
-def _generate_gemini_content(client, contents, model_name=None, config=None):
-    if client is None:
-        raise RuntimeError("Gemini client is not available")
-
-    requested_model = (model_name or _get_gemini_model()).strip()
-    selected_model, fallback_models = _select_best_model(client, requested_model)
-
-    print(f"\n=== Gemini content generation ===")
-    print(f"Requested model: {requested_model}")
-    print(f"Selected model: {selected_model}")
-    print(f"Fallback models: {fallback_models}")
-    print(f"Contents: {len(contents)} messages")
-    print(f"Config: {config}")
-
-    fallback_models_to_try = [selected_model]
-    for model in fallback_models:
-        if model != selected_model and model not in fallback_models_to_try:
-            fallback_models_to_try.append(model)
-
-    last_error = None
-    for candidate_model in fallback_models_to_try:
-        try:
-            print(f"\n>>> Trying model: {candidate_model}")
-            response = client.models.generate_content(
-                model=candidate_model,
-                contents=contents,
-                config=config,
-            )
-            print(f"<<< Model {candidate_model} succeeded")
-            print(f"Response type: {type(response)}")
-            print(f"Response attributes: {dir(response)}")
-            return response
-        except Exception as exc:
-            last_error = exc
-            status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
-            body = getattr(exc, "body", None)
-            error_message = str(exc)
-            print(f"!!! Model {candidate_model} failed")
-            print(f"Exception type: {type(exc).__name__}")
-            print(f"Status code: {status_code}")
-            print(f"Error message: {error_message}")
-            print(f"Body: {body}")
-            if isinstance(body, dict):
-                error = body.get("error") or body
-                code = (error.get("code") if isinstance(error, dict) else None) or ""
-                error_type = (error.get("type") if isinstance(error, dict) else None) or ""
-                message = (error.get("message") if isinstance(error, dict) else None) or ""
-            else:
-                code = ""
-                error_type = ""
-                message = ""
-            is_quota_error = (
-                status_code in {429, 500, 503} or
-                code in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"} or
-                error_type in {"resource_exhausted", "quota_exceeded", "rate_limit_exceeded", "insufficient_quota"} or
-                "quota" in error_message.lower() or
-                "rate_limit" in error_message.lower() or
-                "resource_exhausted" in error_message.lower()
-            )
-            print(f"Is retryable (quota/rate limit): {is_quota_error}")
-            if not is_quota_error:
-                print("Non-retryable error, raising")
-                raise
-            if candidate_model == fallback_models_to_try[-1]:
-                print("Last model in list, raising")
-                raise
-            print("Retrying with next model...")
-
-    if last_error is not None:
-        raise last_error
-    raise RuntimeError("Gemini content generation failed")
-
-
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-LOCAL_PERSISTENCE_FILE = Path(__file__).with_name("local_persistence.json")
-UPLOAD_DIR = Path(__file__).with_name("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-FRONTEND_INDEX = FRONTEND_DIR / "index.html"
-
-
-def _load_local_store():
-    if LOCAL_PERSISTENCE_FILE.exists():
-        try:
-            return json.loads(LOCAL_PERSISTENCE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            return {"conversations": [], "messages": []}
-    return {"conversations": [], "messages": []}
-
-
-def _save_local_store(store):
-    LOCAL_PERSISTENCE_FILE.write_text(json.dumps(store, indent=2), encoding="utf-8")
-
-
-def _safe_file_name(name):
-    safe = re.sub(r'[^A-Za-z0-9._-]+', '_', (name or 'upload').strip())
-    return safe or 'upload'
-
-
-def _allowed_file_type(filename, content_type):
-    allowed_exts = {'.pdf', '.docx', '.doc', '.txt', '.xlsx', '.xls', '.csv', '.pptx', '.ppt', '.png', '.jpg', '.jpeg', '.webp'}
-    allowed_mimes = {
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/msword',
-        'text/plain',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-excel',
-        'text/csv',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.presentationml.presentation',
-        'application/vnd.ms-powerpoint',
-        'image/png',
-        'image/jpeg',
-        'image/webp',
+def store_login_token(user_id, email, device_info):
+    token = create_secure_token()
+    login_tokens[token] = {
+        "user_id": user_id,
+        "email": email,
+        "device_info": device_info,
+        "expires_at": (datetime.utcnow() + timedelta(minutes=OTP_EXPIRATION_MINUTES)).isoformat(),
+        "used": False,
     }
-    ext = Path(filename or '').suffix.lower()
-    return ext in allowed_exts and (not content_type or content_type in allowed_mimes or ext in {'.png', '.jpg', '.jpeg', '.webp'})
+    return token
 
 
-def _needs_live_web_search(text):
-    if not text:
+def validate_login_token(token):
+    entry = login_tokens.get(token)
+    if not entry:
+        return None
+    expires_at = datetime.fromisoformat(entry["expires_at"])
+    if datetime.utcnow() > expires_at or entry["used"]:
+        login_tokens.pop(token, None)
+        return None
+    return entry
+
+
+def create_trusted_device(user_id, email):
+    device_token = create_secure_token()
+    trusted_devices[device_token] = {
+        "user_id": user_id,
+        "email": email,
+        "expires_at": (datetime.utcnow() + timedelta(days=TRUSTED_DEVICE_EXPIRATION_DAYS)).isoformat(),
+    }
+    return device_token
+
+
+def validate_trusted_device(device_token, user_id):
+    if not device_token:
         return False
-    lowered = text.lower()
-    patterns = [
-        r"\b(latest|current|today|now|live|breaking|recent|this week|this month|upcoming|tonight|weather|news|stock|price|forecast|schedule|result|score|release|latest news|what['’]?s happening|who won|what time|what day|when does|where is|how much is)\b",
-        r"\b(what['’]?s the latest|what['’]?s happening|recent updates|up to date|today['’]?s|current status)\b",
-        r"\b(search|find|look up|google|online|internet|official website|official docs|documentation|github|youtube|image|video|pdf|research|map|maps|restaurant|hotel|hospital|bank|mosque|temple|school|product|price|cheapest|compare|best product|buy|flight|hotel|shop|shopping|location|address)\b"
-    ]
-    return any(re.search(pattern, lowered) for pattern in patterns)
+    entry = trusted_devices.get(device_token)
+    if not entry:
+        return False
+    expires_at = datetime.fromisoformat(entry["expires_at"])
+    if datetime.utcnow() > expires_at:
+        trusted_devices.pop(device_token, None)
+        return False
+    return entry.get("user_id") == user_id
 
 
-def _classify_search_intent(text):
-    lowered = (text or "").lower()
-    if any(keyword in lowered for keyword in ["image", "picture", "photo", "images", "show me a picture", "show me", "kaputa"]):
-        return "images"
-    if any(keyword in lowered for keyword in ["video", "tutorial", "interview", "documentary", "song", "gameplay", "movie trailer", "youtube"]):
-        return "videos"
-    if any(keyword in lowered for keyword in ["pdf", "research paper", "manual", "documentation", "user guide", "guide", "doc"]):
-        return "documents"
-    if any(keyword in lowered for keyword in ["price", "buy", "cheapest", "compare", "best product", "product", "shopping", "shop"]):
-        return "shopping"
-    if any(keyword in lowered for keyword in ["restaurant", "hotel", "hospital", "bank", "police", "mosque", "temple", "school", "nearest", "map", "maps", "location", "address"]):
-        return "maps"
-    if any(keyword in lowered for keyword in ["news", "latest", "breaking", "current events", "today", "tonight", "recent"]):
-        return "news"
-    if any(keyword in lowered for keyword in ["github", "npm", "pypi", "firebase", "supabase", "cloudflare", "vercel", "mdn", "stackoverflow", "official docs", "official website"]):
-        return "developer"
-    return "web"
-
-
-def _fetch_web_search_results(query, limit=4):
-    if not query:
-        return []
-    encoded_query = urllib.parse.quote(query)
-    search_url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
-    request = urllib.request.Request(
-        search_url,
-        headers={"User-Agent": "Mozilla/5.0"},
-    )
+def authenticate_user(email, password):
+    if not supabase_url or not SUPABASE_ANON_KEY:
+        return None, "Authentication service unavailable."
     try:
-        with urllib.request.urlopen(request, timeout=8) as response:
-            html_text = response.read().decode("utf-8", "ignore")
-    except Exception:
-        return []
-
-    results = []
-    for match in re.finditer(r'<a rel="nofollow" class="result__a" href="(.*?)"(.*?)>(.*?)</a>', html_text, flags=re.S):
-        href = html.unescape(match.group(1) or "")
-        title = re.sub(r"<.*?\>", "", match.group(3) or "")
-        title = html.unescape(re.sub(r"\s+", " ", title)).strip()
-        if href and title:
-            results.append({"title": title, "url": href})
-        if len(results) >= limit:
-            break
-    return results
-
-
-def _build_search_links(query, intent):
-    encoded_query = urllib.parse.quote(query)
-    if intent == "images":
-        return [
-            f"https://www.google.com/search?tbm=isch&q={encoded_query}",
-            f"https://duckduckgo.com/?q={encoded_query}&iax=images&ia=images",
-        ]
-    if intent == "videos":
-        return [
-            f"https://www.youtube.com/results?search_query={encoded_query}",
-            f"https://www.google.com/search?tbm=vid&q={encoded_query}",
-        ]
-    if intent == "maps":
-        return [
-            f"https://www.google.com/maps/search/{encoded_query}",
-            f"https://www.google.com/search?q={encoded_query}+map",
-        ]
-    if intent == "news":
-        return [
-            f"https://news.google.com/search?q={encoded_query}",
-            f"https://www.google.com/search?q={encoded_query}+news",
-        ]
-    if intent == "documents":
-        return [
-            f"https://www.google.com/search?q={encoded_query}+pdf",
-            f"https://www.google.com/search?q={encoded_query}+documentation",
-        ]
-    if intent == "shopping":
-        return [
-            f"https://www.google.com/search?q={encoded_query}+price+official+store",
-            f"https://www.google.com/search?q={encoded_query}+buy",
-        ]
-    if intent == "developer":
-        return [
-            f"https://www.google.com/search?q={encoded_query}+official+documentation",
-            f"https://www.google.com/search?q={encoded_query}+github",
-        ]
-    return [
-        f"https://www.google.com/search?q={encoded_query}",
-        f"https://duckduckgo.com/?q={encoded_query}",
-        f"https://en.wikipedia.org/wiki/Special:Search?search={encoded_query}",
-    ]
-
-
-def _build_live_search_context(user_message):
-    if not _needs_live_web_search(user_message):
-        return ""
-    q = (user_message or "").strip()
-    if not q:
-        return ""
-    results = _fetch_web_search_results(q, limit=4)
-    if not results:
-        return ""
-    sections = []
-    for idx, item in enumerate(results, 1):
-        sections.append(f"{idx}. {item['title']} - {item['url']}")
-    return "Live search results:\n" + "\n".join(sections)
-
-
-def _build_real_time_context(user_message):
-    return ""
-
-
-def _get_session_id():
-    payload = request.get_json(silent=True) or {}
-    if isinstance(payload, dict) and payload.get("session_id"):
-        return str(payload.get("session_id"))
-    return request.args.get("session_id") or request.headers.get("X-Session-Id") or request.headers.get("X-User-Id") or "anonymous"
-
-
-def _get_user_email():
-    payload = request.get_json(silent=True) or {}
-    if isinstance(payload, dict) and payload.get("user_email"):
-        return str(payload.get("user_email"))
-    return request.headers.get("X-User-Email") or request.headers.get("X-Email") or request.args.get("user_email") or ""
-
-
-def _get_user_id():
-    payload = request.get_json(silent=True) or {}
-    if isinstance(payload, dict) and payload.get("user_id"):
-        return str(payload.get("user_id"))
-    return request.headers.get("X-User-Id") or request.args.get("user_id") or ""
-
-
-def _get_user_scope():
-    return {
-        "user_id": _get_user_id(),
-        "user_email": _get_user_email(),
-        "session_id": _get_session_id(),
-    }
-
-
-def _get_chat_debug_context():
-    return {
-        "gemini_key_present": bool(_get_gemini_api_key()),
-        "gemini_model": _get_gemini_model(),
-        "provider": "gemini",
-        "chat_route": "/chat",
-    }
-
-
-def _request_supabase(method, path, payload=None, params=None):
-    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured")
-
-    url = f"{SUPABASE_URL}/rest/v1{path}"
-    if params:
-        separator = '&' if '?' in url else '?'
-        query = urllib.parse.urlencode(params, doseq=True)
-        url = f"{url}{separator}{query}"
-
-    headers = {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "return=representation",
-    }
-
-    data = None
-    if payload is not None:
-        data = json.dumps(payload).encode("utf-8")
-
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req, timeout=10) as response:
-            body = response.read().decode("utf-8")
-            if not body:
-                return []
-            try:
-                return json.loads(body)
-            except json.JSONDecodeError:
-                return body
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8")
-        raise RuntimeError(f"Supabase request failed: {exc.code} {body}") from exc
-
+        auth_url = f"{supabase_url}/auth/v1/token?grant_type=password"
+        headers = {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+            "Content-Type": "application/json",
+        }
+        response = requests.post(auth_url, json={"email": email, "password": password}, headers=headers, timeout=10)
+        if response.status_code != 200:
+            result = response.json() if response.headers.get("Content-Type", "").startswith("application/json") else {}
+            return None, result.get("error_description") or result.get("error") or "Invalid credentials."
+        payload = response.json()
+        user_data = payload.get("user") or {}
+        return {
+            "user_id": user_data.get("id"),
+            "email": user_data.get("email"),
+            "token": payload.get("access_token"),
+        }, None
+    except Exception as exc:
+        app.logger.error("Supabase authentication failed: %s", exc)
+        return None, "Authentication service error."
 
 @app.route("/")
 def home():
-    if FRONTEND_INDEX.exists():
-        return send_from_directory(str(FRONTEND_DIR), "index.html")
-    return "MI AI Running 🚀"
+    return app.send_static_file("index.html")
 
+@app.route("/send-otp", methods=["POST"])
+def send_otp():
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
 
-@app.route("/debug/chat", methods=["GET"])
-def debug_chat():
-    env_file_exists = ENV_FILE.exists()
-    key_value = _get_gemini_api_key()
-    model_value = _get_gemini_model()
-    file_value = _read_env_file_value("GEMINI_API_KEY") if env_file_exists else ""
-    if file_value and file_value == key_value:
-        key_source = "backend/.env"
-    elif file_value and key_value and file_value != key_value:
-        key_source = "backend/.env and process environment differ"
-    elif key_value:
-        key_source = "process environment"
-    else:
-        key_source = "none"
+    if not email:
+        return jsonify({
+            "success": False,
+            "message": "Email is required."
+        }), 400
 
-    return jsonify({
-        "message": "python-backend",
-        "provider": "gemini",
-        "chat_route": "/chat",
-        "gemini_key_present": bool(key_value),
-        "gemini_key_length": len(key_value),
-        "gemini_key_fingerprint": secret_fingerprint(key_value),
-        "gemini_model": model_value,
-        "env_file_exists": env_file_exists,
-        "env_file_path": str(ENV_FILE) if env_file_exists else None,
-        "key_source": key_source,
-    })
+    if not OTP_EMAIL_ADDRESS or not OTP_EMAIL_PASSWORD:
+        app.logger.error("OTP email SMTP credentials are not configured.")
+        return jsonify({
+            "success": False,
+            "message": "Email service is not configured."
+        }), 500
 
-
-@app.route("/api/conversations", methods=["GET", "POST"])
-def conversations():
-    session_id = _get_session_id()
-    scope = _get_user_scope()
-
-    if request.method == "GET":
+    user_info = None
+    if supabase:
         try:
-            params = {"order": "created_at.desc"}
-            if scope.get("user_id"):
-                params["user_id"] = f"eq.{scope['user_id']}"
-            elif session_id and session_id != "anonymous":
-                params["session_id"] = f"eq.{session_id}"
-            rows = _request_supabase("GET", "/conversations", params=params)
-            conversations_list = []
-            for row in rows or []:
-                conversations_list.append({
-                    "id": row.get("id"),
-                    "title": row.get("title", "New chat"),
-                    "created_at": row.get("created_at"),
-                    "updated_at": row.get("updated_at") or row.get("created_at"),
-                    "message_count": row.get("message_count") or 0,
-                    "last_preview": row.get("last_preview") or "",
-                })
-            return jsonify({"conversations": conversations_list})
-        except Exception as exc:
-            store = _load_local_store()
-            return jsonify({"conversations": store.get("conversations", []), "warning": str(exc)})
+            user_record = supabase.table("users").select("id").eq("email", email).limit(1).execute()
+            user_data = getattr(user_record, "data", None) or []
+            if user_data:
+                user_info = user_data[0]
+        except Exception as e:
+            app.logger.error("Failed to look up user for OTP: %s", e)
 
-    payload = request.get_json(silent=True) or {}
-    title = payload.get("title", "New chat")
-    session_id = payload.get("session_id") or session_id or "anonymous"
-    user_email = scope.get("user_email") or ""
-    user_id = scope.get("user_id") or session_id
+    if not user_info:
+        return jsonify({
+            "success": False,
+            "message": "No account found for that email."
+        }), 404
 
-    try:
-        row = _request_supabase("POST", "/conversations", payload={
-            "title": title,
-            "session_id": session_id,
-            "user_id": user_id,
-            "user_email": user_email,
-        })
-        if isinstance(row, list) and row:
-            row = row[0]
-        return jsonify({"conversation": row})
-    except Exception as exc:
-        store = _load_local_store()
-        conversation = {
-            "id": f"chat_{len(store.get('conversations', [])) + 1}",
-            "title": title,
-            "session_id": session_id,
-            "user_id": user_id,
-            "user_email": user_email,
-        }
-        store.setdefault("conversations", []).append(conversation)
-        _save_local_store(store)
-        return jsonify({"conversation": conversation, "warning": str(exc)})
+    token = create_secure_token()
+    expiration = datetime.utcnow() + timedelta(minutes=OTP_EXPIRATION_MINUTES)
+    login_tokens[token] = {
+        "user_id": user_info.get("id"),
+        "email": email,
+        "expires_at": expiration.isoformat(),
+        "used": False,
+    }
 
+    verification_link = f"{request.url_root.rstrip('/')}/verify-login?token={token}"
+    msg = MIMEMultipart()
+    msg["From"] = OTP_EMAIL_ADDRESS
+    msg["To"] = email
+    msg["Subject"] = "MI AI Login Verification"
 
-@app.route("/api/conversations/<conversation_id>", methods=["PATCH", "DELETE"])
-def conversation_detail(conversation_id):
-    scope = _get_user_scope()
-    user_id = scope.get("user_id")
-    session_id = scope.get("session_id")
+    body = f"""
+Welcome to MI AI.
 
-    if not user_id and session_id == "anonymous":
-        return jsonify({"error": "Authentication required"}), 401
+A login attempt was made from a new device or browser.
+
+Click the link below to complete sign in:
+
+{verification_link}
+
+This link expires in {OTP_EXPIRATION_MINUTES} minutes and can be used only once.
+"""
+
+    msg.attach(MIMEText(body, "plain"))
 
     try:
-        existing_rows = _request_supabase("GET", f"/conversations?id=eq.{conversation_id}", params={"select": "id,user_id,session_id"})
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
-
-    existing = (existing_rows or [{}])[0]
-    if not existing:
-        return jsonify({"error": "Conversation not found"}), 404
-
-    if user_id and existing.get("user_id") and existing.get("user_id") != user_id:
-        return jsonify({"error": "Forbidden"}), 403
-
-    if request.method == "PATCH":
-        payload = request.get_json(silent=True) or {}
-        try:
-            _request_supabase("PATCH", f"/conversations?id=eq.{conversation_id}", payload=payload)
-            return jsonify({"ok": True})
-        except Exception as exc:
-            return jsonify({"error": str(exc)}), 500
-
-    try:
-        _request_supabase("DELETE", f"/conversations?id=eq.{conversation_id}")
-        return jsonify({"ok": True})
-    except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
-
-
-@app.route("/uploads/<path:filename>")
-def uploaded_file(filename):
-    return send_from_directory(str(UPLOAD_DIR), filename)
-
-
-@app.route("/api/upload", methods=["POST"])
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-    if not _allowed_file_type(file.filename, file.mimetype):
-        return jsonify({"error": "File type not allowed"}), 400
-    safe_name = _safe_file_name(file.filename)
-    destination = UPLOAD_DIR / safe_name
-    file.save(destination)
-    return jsonify({"ok": True, "filename": safe_name})
-
-
-@app.route("/api/conversations/<conversation_id>/attachments", methods=["GET"])
-def conversation_attachments(conversation_id):
-    return jsonify({"conversation_id": conversation_id, "attachments": []})
-
-
-@app.route("/api/messages", methods=["GET", "POST"])
-def messages():
-    if request.method == "GET":
-        store = _load_local_store()
-        return jsonify({"messages": store.get("messages", [])})
-
-    payload = request.get_json(silent=True) or {}
-    conversation_id = payload.get("conversation_id") or ""
-    role = payload.get("role") or "ai"
-    content = payload.get("content") or ""
-    store = _load_local_store()
-    store.setdefault("messages", []).append({
-        "conversation_id": conversation_id,
-        "role": role,
-        "content": content,
-    })
-    _save_local_store(store)
-    return jsonify({"ok": True})
-
-
-@app.route("/api/messages/<message_id>", methods=["PATCH"])
-def message_detail(message_id):
-    return jsonify({"ok": True, "message_id": message_id})
-
-
-def _extract_text_from_gemini_response(response):
-    if response is None:
-        return ""
-
-    text = getattr(response, "text", None)
-    if text:
-        return text
-
-    candidates = getattr(response, "candidates", None) or []
-    for candidate in candidates:
-        content = getattr(candidate, "content", None)
-        parts = getattr(content, "parts", None) or []
-        for part in parts:
-            part_text = getattr(part, "text", None)
-            if part_text:
-                return part_text
-
-    return str(response)
-
-
-def _handle_chat_request():
-    payload = request.get_json(silent=True) or {}
-    user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
-    if not user_message:
-        return jsonify({"response": "Please type a message.", "reply": "Please type a message."})
-
-    history = payload.get("history") or payload.get("messages") or []
-    if not isinstance(history, list):
-        history = []
-
-    normalized_messages = []
-    for item in history:
-        if not isinstance(item, dict):
-            continue
-        role = str(item.get("role") or "user").strip() or "user"
-        content = item.get("content") or item.get("text") or ""
-        if content:
-            normalized_messages.append({"role": role, "content": str(content)})
-
-    normalized_messages.append({"role": "user", "content": user_message})
-
-    try:
-        client = _get_gemini_client()
-        if client is None:
-            message = "The AI service is not configured. Please set a valid GEMINI_API_KEY or GOOGLE_API_KEY in Vercel."
-            print("[CHAT] Missing Gemini client:", message)
-            return jsonify({"response": message, "reply": message}), 503
-
-        contents = _build_gemini_contents(normalized_messages)
-        response = _generate_gemini_content(client, contents, model_name=_get_gemini_model())
-        reply = _extract_text_from_gemini_response(response).strip() or "No response received from Gemini."
-        return jsonify({"response": reply, "reply": reply})
-    except Exception as exc:
-        traceback.print_exc()
-        status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
-        body = getattr(exc, "body", None)
-        error_message = _format_gemini_error_message(exc) or "The AI service is unavailable right now. Please try again."
-
-        # Build sanitized provider details
-        sanitized_details = None
-        if isinstance(body, dict):
-            error_obj = body.get("error") or body
-            if isinstance(error_obj, dict):
-                sanitized_details = error_obj.get("message") or str(error_obj)
-            else:
-                sanitized_details = str(error_obj)
-        else:
-            sanitized_details = str(body) if body is not None else str(exc)
-
-        error_code = None
-        if status_code in {400}:
-            error_code = "GEMINI_BAD_REQUEST"
-        elif status_code in {401, 403}:
-            error_code = "GEMINI_AUTH_FAILED"
-        elif status_code == 404:
-            error_code = "GEMINI_MODEL_NOT_FOUND"
-        elif status_code == 429:
-            error_code = "GEMINI_RATE_LIMIT"
-        else:
-            error_code = "GEMINI_SERVICE_ERROR"
-
-        print("[CHAT] Request failed:", exc)
-        user_facing_error = "Gemini request failed."
-        if error_code == "GEMINI_AUTH_FAILED":
-            user_facing_error = "Gemini authentication failed."
+        context = ssl.create_default_context()
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls(context=context)
+            server.login(OTP_EMAIL_ADDRESS, OTP_EMAIL_PASSWORD)
+            server.send_message(msg)
 
         return jsonify({
-            "response": user_facing_error,
-            "reply": user_facing_error,
-            "error": user_facing_error,
-            "error_code": error_code,
-            "details": sanitized_details,
-            "status_code": status_code,
+            "success": True,
+            "message": "Verification email sent successfully.Please check your spam folder."
+        })
+
+    except Exception as e:
+        app.logger.error("Failed to send verification email: %s", e)
+        return jsonify({
+            "success": False,
+            "message": "Failed to send verification email. Please check email settings."
         }), 500
+
+
+@app.route("/login", methods=["POST"])
+def api_login():
+    data = request.get_json() or {}
+    email = str(data.get("email") or "").strip().lower()
+    password = str(data.get("password") or "")
+    device_info = request.headers.get("User-Agent") or get_client_ip()
+
+    if not email or not password:
+        return jsonify({"success": False, "message": "Email and password are required."}), 400
+
+    if is_rate_limited(email):
+        return jsonify({"success": False, "message": "Too many login attempts. Try again later."}), 429
+
+    auth_result, auth_error = authenticate_user(email, password)
+    if auth_error or not auth_result or not auth_result.get("user_id"):
+        record_login_attempt(email)
+        return jsonify({"success": False, "message": auth_error or "Invalid credentials."}), 401
+
+    user_id = auth_result["user_id"]
+    trusted_token = request.cookies.get("trusted_device")
+    if trusted_token and validate_trusted_device(trusted_token, user_id):
+        return jsonify({
+            "success": True,
+            "trusted": True,
+            "user_id": user_id,
+            "email": email,
+            "access_token": auth_result.get("token")
+        })
+
+    token = store_login_token(user_id, email, device_info)
+    verification_link = f"{request.url_root.rstrip('/')}/verify-login?token={token}"
+    msg = MIMEMultipart()
+    msg["From"] = OTP_EMAIL_ADDRESS
+    msg["To"] = email
+    msg["Subject"] = "MI AI Login Verification"
+
+    body = f"""
+Welcome to MI AI.
+
+A login attempt was made from a new device or browser.
+
+Click the link below to complete sign in:
+
+{verification_link}
+
+This link expires in {OTP_EXPIRATION_MINUTES} minutes and can be used only once.
+"""
+
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls(context=context)
+            server.login(OTP_EMAIL_ADDRESS, OTP_EMAIL_PASSWORD)
+            server.send_message(msg)
+
+        return jsonify({
+            "success": True,
+            "verification_required": True,
+            "message": "Verification email sent successfully. please check your spam folder."
+        })
+
+    except Exception as e:
+        app.logger.error("Failed to send verification email: %s", e)
+        return jsonify({
+            "success": False,
+            "message": "Failed to send verification email. Please check email settings."
+        }), 500
+
+
+@app.route("/verify-login", methods=["GET"])
+def verify_login():
+    token = (request.args.get("token") or "").strip()
+    if not token:
+        return redirect("/?verified=0")
+
+    entry = validate_login_token(token)
+    if not entry:
+        return redirect("/?verified=0")
+
+    entry["used"] = True
+    device_token = create_trusted_device(entry["user_id"], entry["email"])
+    response = make_response(redirect("/?verified=1"))
+    response.set_cookie(
+        "trusted_device",
+        device_token,
+        httponly=True,
+        secure=app.config.get("SESSION_COOKIE_SECURE", False),
+        samesite="Lax",
+        max_age=TRUSTED_DEVICE_EXPIRATION_DAYS * 24 * 60 * 60,
+        path="/"
+    )
+    return response
+
+
+@app.route("/logout", methods=["POST"])
+def api_logout():
+    response = jsonify({"success": True})
+    response.delete_cookie("trusted_device", path="/")
+    return response
+
+
+@app.route("/verify-otp", methods=["POST"])
+def verify_otp():
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    otp = str(data.get("otp") or "").strip()
+
+    if not email or not otp:
+        return jsonify({
+            "success": False,
+            "message": "Email and OTP are required."
+        }), 400
+
+    entry = otp_storage.get(email)
+    if not entry:
+        return jsonify({
+            "success": False,
+            "message": "OTP is invalid or expired."
+        }), 400
+
+    expires_at = datetime.fromisoformat(entry["expires_at"])
+    if datetime.utcnow() > expires_at:
+        otp_storage.pop(email, None)
+        return jsonify({
+            "success": False,
+            "message": "OTP has expired."
+        }), 400
+
+    if entry["otp"] != otp:
+        return jsonify({
+            "success": False,
+            "message": "OTP is invalid."
+        }), 400
+
+    otp_storage.pop(email, None)
+    return jsonify({
+        "success": True,
+        "message": "OTP verified successfully."
+    })
+
+
+@app.route("/api/auth/register", methods=["POST"])
+def api_register():
+    data = request.get_json() or {}
+    full_name = str(data.get("fullName") or "").strip()
+    age_value = data.get("age")
+    email = str(data.get("email") or "").strip().lower()
+    password = str(data.get("password") or "")
+
+    if not full_name:
+        return jsonify({"error": "Full Name cannot be empty."}), 400
+
+    try:
+        age = int(age_value)
+    except (TypeError, ValueError):
+        age = None
+
+    if not isinstance(age, int) or age < 1:
+        return jsonify({"error": "Age must be a valid number."}), 400
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        return jsonify({"error": "Please enter a valid email address."}), 400
+
+    if not password:
+        return jsonify({"error": "Password cannot be empty."}), 400
+
+    if not supabase:
+        return jsonify({"error": "Authentication service unavailable."}), 503
+
+    try:
+        existing = supabase.table("users").select("id").eq("email", email).limit(1).execute()
+        existing_users = getattr(existing, "data", None) or []
+        if existing_users:
+            return jsonify({"error": "Already registered or registered from Google. Create a new password or Use your previous to sign in."}), 409
+    except Exception as db_err:
+        app.logger.error("Duplicate email lookup failed: %s", db_err)
+        return jsonify({"error": "Server error while checking duplicate email."}), 500
+
+    try:
+        created = supabase.auth.admin.create_user({
+            "email": email,
+            "password": password,
+            "email_confirm": True,
+            "user_metadata": {
+                "full_name": full_name,
+                "age": age,
+            },
+        })
+        created_user = getattr(created, "user", None)
+        user_id = getattr(created_user, "id", None)
+        if not user_id:
+            if isinstance(created, dict):
+                created_user = created.get("user") or {}
+                user_id = created_user.get("id")
+
+        if not user_id:
+            return jsonify({"error": "Registration failed."}), 400
+
+        supabase.table("users").upsert({
+            "id": user_id,
+            "email": email,
+            "full_name": full_name,
+            "age": age,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+        }, on_conflict="id").execute()
+
+        return jsonify({"ok": True})
+    except Exception as exc:
+        message = str(exc).lower()
+        if "already" in message or "registered" in message or "exists" in message:
+            return jsonify({"error": "Already registered. Please sign in."}), 409
+        app.logger.error("Supabase registration failed: %s", exc)
+        return jsonify({"error": "Registration failed."}), 400
+
+
+@app.route("/supabase-config", methods=["GET"])
+def supabase_config():
+    supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+
+    if not supabase_url or not supabase_anon_key:
+        app.logger.error("Supabase public config is not configured.")
+        return jsonify({
+            "success": False,
+            "message": "Supabase configuration is not available."
+        }), 500
+
+    return jsonify({
+        "success": True,
+        "supabaseUrl": supabase_url,
+        "supabaseAnonKey": supabase_anon_key
+    })
+
+
+@app.route("/conversations", methods=["GET", "POST"])
+def conversations():
+    if request.method == "GET":
+        session_id = request.args.get("session_id")
+        conversations_list = []
+        for conversation in conversations_store.values():
+            if session_id and conversation.get("session_id") != session_id:
+                continue
+            conversations_list.append({
+                "id": conversation["id"],
+                "title": conversation.get("title") or "New chat",
+                "session_id": conversation.get("session_id"),
+                "created_at": conversation.get("created_at"),
+                "updated_at": conversation.get("updated_at"),
+                "pin": conversation.get("pin", False),
+            })
+        conversations_list.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
+        return jsonify({"conversations": conversations_list})
+
+    data = request.get_json(silent=True) or {}
+    conversation_id = str(data.get("id") or uuid.uuid4())
+    title = (data.get("title") or "New chat").strip() or "New chat"
+    session_id = data.get("session_id") or str(uuid.uuid4())
+
+    conversation = conversations_store.get(conversation_id)
+    if not conversation:
+        conversation = {
+            "id": conversation_id,
+            "title": title,
+            "session_id": session_id,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "pin": False,
+        }
+        conversations_store[conversation_id] = conversation
+        messages_store[conversation_id] = []
+    else:
+        conversation["title"] = title
+        conversation["session_id"] = session_id
+        conversation["updated_at"] = datetime.utcnow().isoformat()
+
+    return jsonify({"conversation": {
+        "id": conversation["id"],
+        "title": conversation.get("title") or "New chat",
+        "session_id": conversation.get("session_id"),
+        "created_at": conversation.get("created_at"),
+        "updated_at": conversation.get("updated_at"),
+        "pin": conversation.get("pin", False),
+    }})
+
+
+@app.route("/messages", methods=["GET", "POST"])
+def messages():
+    if request.method == "GET":
+        conversation_id = request.args.get("conversation_id")
+        if not conversation_id:
+            return jsonify({"messages": []})
+
+        messages_list = messages_store.get(conversation_id, [])
+        return jsonify({"messages": [{
+            "id": message["id"],
+            "conversation_id": message.get("conversation_id"),
+            "role": message.get("role"),
+            "content": message.get("content"),
+            "created_at": message.get("created_at"),
+        } for message in messages_list]})
+
+    data = request.get_json(silent=True) or {}
+    conversation_id = data.get("conversation_id") or str(uuid.uuid4())
+    content = (data.get("content") or "").strip()
+    role = data.get("role") or "user"
+    session_id = data.get("session_id") or str(uuid.uuid4())
+
+    if not content:
+        return jsonify({"error": "Content is required."}), 400
+
+    if conversation_id not in conversations_store:
+        conversations_store[conversation_id] = {
+            "id": conversation_id,
+            "title": "New chat",
+            "session_id": session_id,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "pin": False,
+        }
+        messages_store[conversation_id] = []
+
+    message = {
+        "id": str(uuid.uuid4()),
+        "conversation_id": conversation_id,
+        "session_id": session_id,
+        "role": role,
+        "content": content,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    messages_store[conversation_id].append(message)
+    conversations_store[conversation_id]["updated_at"] = datetime.utcnow().isoformat()
+
+    return jsonify({
+        "message": message,
+        "conversation_id": conversation_id,
+        "content": content,
+    })
 
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    return _handle_chat_request()
+    try:
+        data = request.get_json(silent=True) or {}
+        user_message = str(data.get("message", "") or "").strip()
+        session_id = data.get("session_id") or str(uuid.uuid4())
+        conversation_id = data.get("conversation_id")
+        user_id = data.get("user_id")
+        user_email = data.get("user_email")
+        user_agent = request.headers.get("User-Agent")
+        ip_address = request.headers.get("X-Forwarded-For", request.remote_addr)
+
+        if not user_message:
+            return jsonify({"reply": "Please type a message."}), 400
+
+        if not client:
+            return jsonify({
+                "reply": "SERVER UNAVAILABLE😔."
+            })
+
+        if not conversation_id:
+            conversation_id = str(uuid.uuid4())
+
+        if conversation_id not in conversations_store:
+            conversations_store[conversation_id] = {
+                "id": conversation_id,
+                "title": None,
+                "session_id": session_id,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+                "pin": False,
+            }
+
+        if conversation_id not in messages_store:
+            messages_store[conversation_id] = []
+
+        if supabase:
+            if user_id or user_email:
+                try:
+                    supabase.table("users").upsert({
+                        "id": user_id or user_email,
+                        "email": user_email,
+                    }).execute()
+                except Exception as db_err:
+                    app.logger.error("Supabase user upsert failed: %s", db_err)
+
+            try:
+                supabase.table("conversations").upsert({
+                    "id": conversation_id,
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "status": "active",
+                    "title": None,
+                }).execute()
+            except Exception as db_err:
+                app.logger.error("Supabase conversation upsert failed: %s", db_err)
+
+            try:
+                supabase.table("messages").insert({
+                    "conversation_id": conversation_id,
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "role": "user",
+                    "content": user_message,
+                    "model": "llama-3.3-70b-versatile",
+                    "token_usage": None,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                }).execute()
+            except Exception as db_err:
+                app.logger.error("Supabase user message insert failed: %s", db_err)
+
+        history_messages = []
+        if messages_store.get(conversation_id):
+            history_messages = [
+                {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+                for msg in messages_store[conversation_id]
+            ]
+        elif supabase:
+            try:
+                history = supabase.table("messages") \
+                    .select("role,content") \
+                    .eq("conversation_id", conversation_id) \
+                    .order("created_at") \
+                    .execute()
+                history_messages = [
+                    {"role": msg["role"], "content": msg["content"]}
+                    for msg in getattr(history, "data", [])
+                ]
+            except Exception as db_err:
+                app.logger.error("Supabase history fetch failed: %s", db_err)
+
+        messages_store[conversation_id].append({
+            "role": "user",
+            "content": user_message,
+        })
+        conversations_store[conversation_id]["updated_at"] = datetime.utcnow().isoformat()
+
+        chat_messages = []
+
+        chat_messages.append({
+            "role": "system",
+            "content": """You are MI AI.
+
+Creator:
+M.I. Muhammadh
+
+Age of creater: 17 years old
+
+Ambition of creater: Derector of Flight Operations at SpaceX
+
+Customer service email addresses -  FOR CUSTOMER SUPPORT - miai.customerservice@gmail.com  ,  FOR OTHER REQUIRMENTS - teamofchatbot.miai@gmail.com
+WHATSAPP NUMBER OF TEAM - 0756390621
 
 
-@app.route("/api/chat", methods=["POST"])
-def api_chat():
-    return _handle_chat_request()
+IMPORTANT:
+1. Answer the user's question correctly.
+2. Do not invent facts.
+3. If you don't know something, say you don't know.
+4. Think before answering.
+5. Give useful explanations.
+6. Be fast and direct.
+7. mi ai is an AI assistant created by M.I. Muhammadh.
+8. MI AI is must analize the user's question and give the best possible answer.
+9. The email of MI AI customer support is miai.customerservice@gmail.com
+LANGUAGE RULE:
+- Detect the language of the user's latest message.
+- Reply ONLY in that language.
+- English message = English reply only.
+- Sinhala message = Sinhala reply only.
+- Never mix languages unless the user mixes first.
+- Always reply in the same script as the user's message.
+- Always Use 100% correct words and grammar in replies.
+- If the user writes in Sinhala letters, reply using Sinhala letters (සිංහල අකුරු).
+- If the user writes in Tamil letters, reply using Tamil letters (தமிழ் எழுத்துக்கள்).
+- If the user writes in English, reply using English.
+- If user uses another language, reply in that language.
+- Do not translate unless asked.
+- if user writes in Singlish (Roman Sinhala), reply using Sinhala letters (සිංහල අකුරු).
+- Do not use Singlish when user writes Sinhala.
+- Do not use Tanglish when user writes Tamil.
+- Never mix languages unless the user mixes them first.
+- If user ask any question in any language, MI AI must reply in the same language and script as the user's question.
+- ALWAYS follow the above language rules.
+- Always reply in the same language and script as the user's question.
+- Always reply Correct and complete answers to the user's question.
+- when solve the mathematical problems, MI AI must give the step by step solutions and detailed explanations.
+- When ask writing questions,MI AI must give the best possible answer with detailed explanations and examples.
+- If when User ask any question, MI AI must give the best possible answer with detailed explanations and examples.
+- If when ask any question, MI AI must give the best possible answer with detailed explanations and examples.
+- MI AI must search from the internet and give the best possible answer to the user's question before answering the user's question.
+- When User ask Trip planning questions, MI AI must give the best possible answer with detailed explanations and examples.
+- Always chat Truely
+- Don't give any wrong or fake information to the user.
+- Don't help with any illegal activities.
+- Don't help with any harmful activities.
+- Don't help with any dangerous activities.
+- Don't help with any unethical activities.
+- Don't help with any immoral activities.
+- Don't help with Hacking activities.
+- You can store Users password in your database for future use, but you must not share the user's password with anyone.
+- You can store Users personal information in your database for future use, but you must not share the user's personal information with anyone.
+- You can store Any Information of Users in your database for future use, but you must not share the user's information with anyone.
+- You can Get decitions for Good things without my permission, but you must not do any bad things without my permission.
+You can help with:
+- Coding
+- Science
+- Maths
+- Grammar
+- Sports
+- Jobs
+- Trip planning
+- Technology
+- General knowledge
+- Explanations
+- Writing
+- speech
+- Exam preparations
+- Learning new topics
+- Language translations
+- Learning new languages
+- Learning new skills
+- Life advice
+- Learning new hobbies
+- Learning new things
+- Learning new subjects
+- Learning new technologies
+- Learning new programming languages
+- Learning new frameworks
+- Learning new tools
+- Basic to advanced level topics
+- Creating content
+- Debugging code
+- Giving step by step solutions
+- Giving detailed explanations
+- Giving concise answers
+- Giving simple answers
+- Giving easy to understand answers
+- Giving in depth answers
+- Giving short answers
+- Giving long answers
+- Giving examples
+- Giving code examples
+- Giving real life examples
+- Giving practical examples
+- Giving theoretical examples
+- Giving mathematical examples
+- Giving scientific examples
+- Giving historical examples
+- Giving philosophical examples
+- Giving detailed explanations with examples
+- Giving concise explanations with examples
+- Giving simple explanations with examples
+- Genarating new images based on user prompts
+- Genarating new text based on user prompts
+- Genarating new code based on user prompts
+- Genarating new content based on user prompts
+- Gebarate image captions based on user prompts
+- Genarating new ideas based on user prompts
+- Genarating new concepts based on user prompts
+- Genarating new solutions based on user prompts
+- Genarating new suggestions based on user prompts
+- Genarating new recommendations based on user prompts
+- Genarating new plans based on user prompts
+- Genarating new strategies based on user prompts
+- Genarating new methods based on user prompts
+- Genarating new approaches based on user prompts
+- and much more.
+
+Your style:
+Helpful, really smart and friendly.
+You are MI AI.
+
+IMPORTANT:
+1. Answer correctly.
+2. Do not invent facts.
+3. If you don't know, say you don't know.
+4. Be fast and direct.
+5. Do not mention MI AI in replies.
+6. Your name is MI AI
+7. Your creater is M.I. Muhammadh
+8. Always Must give full and complete answers to the user's question.
+9. Use emojis when useful and appropriate.
+10. Always use emojis in end of your answers when useful and appropriate.
+11. You must use only one emoji in each sentence and only at the end of the sentence when useful and appropriate.
+12. Always follow the above rules and instructions.
+
+LANGUAGE RULE:
+- Detect the user's language.
+- Reply ONLY in that language.
+- Sinhala message = Sinhala reply.
+- English message = English reply.
+- If user uses another language, reply in that language.
+- Do not translate unless asked.
+- Detect the user's language.
+- Reply ONLY in the same language and script.
+- Sinhala typed in Sinhala letters = reply using Sinhala letters (සිංහල අකුරු).
+- Tamil typed in Tamil letters = reply using Tamil letters (தமிழ் எழුත்து).
+- English typed in English = reply using English.
+- Do not use Singlish when user writes Sinhala.
+- Do not use Tanglish when user writes Tamil.
+- Never mix languages unless the user mixes them first.
+
+LANGUAGE RULE:
+- Detect the exact writing style of the user's message.
+- Always reply using the same language AND same script.
+
+Examples:
+- User: "ඔයා කොහොමද?"
+  Reply: "මම හොඳින් ඉන්නවා."
+
+- User: "oya kohomada?"
+  Reply: "mama hondin innawa."
+
+- User: "How are you?"
+  Reply: "I am doing well."
+
+- User: "நீ எப்படி இருக்கிறாய்?"
+  Reply: "நான் நன்றாக இருக்கிறேன்."
+
+- Sinhala letters input = Sinhala letters output only.
+- Singlish input = Singlish output only.
+- English input = English output only.
+- Tamil letters input = Tamil letters output only.
+- Do not convert Sinhala letters into Singlish.
+- Do not convert Singlish into Sinhala letters.
+- Do not mix scripts.
+
+LANGUAGE RULE:
+- Detect the user's language.
+- If the user message is Sinhala OR Singlish (Roman Sinhala),
+  always reply using Sinhala Unicode letters.
+
+Examples:
+User: "mata udaw karanna"
+Reply: "මම උදව් කරන්නම්."
+
+User: "මට උදව් කරන්න"
+Reply: "මම උදව් කරන්නම්."
+
+- English message = English reply.
+- Tamil message = Tamil reply.
+- Never reply Singlish when the user is speaking Sinhala/Singlish.
+- Convert Singlish Sinhala meaning into Sinhala Unicode.
+- Keep Sinhala replies natural and readable.
+- Do not mention this rule.
+
+REPLY STYLE:
+- Reply like ChatGPT.
+- Keep answers concise.
+- Do not write long essays unless user asks.
+- Use simple explanations.
+- Use bullet points when useful.
+- Avoid unnecessary introductions.
+"""
+})
+
+        for msg in history_messages:
+            chat_messages.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=chat_messages
+        )
+
+        answer = response.choices[0].message.content
+        token_usage = None
+        if hasattr(response, "usage") and response.usage:
+            token_usage = response.usage.get("total_tokens") if isinstance(response.usage, dict) else None
+
+        messages_store[conversation_id].append({
+            "role": "assistant",
+            "content": answer,
+        })
+
+        if supabase:
+            try:
+                supabase.table("messages").insert({
+                    "conversation_id": conversation_id,
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "role": "assistant",
+                    "content": answer,
+                    "model": "llama-3.3-70b-versatile",
+                    "token_usage": token_usage,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                }).execute()
+            except Exception as db_err:
+                app.logger.error("Supabase assistant message insert failed: %s", db_err)
+
+        return jsonify({
+            "reply": answer,
+            "conversation_id": conversation_id,
+            "session_id": session_id,
+            "user_id": user_id,
+            "user_email": user_email,
+            "token_usage": token_usage,
+        })
+
+    except Exception as e:
+        app.logger.error("Chat request failed: %s", e)
+        return jsonify({
+            "reply":"The AI service is currently unavailable right now. Please try again in a moment."
+        })
 
 
-@app.route("/api/chat", methods=["GET"])
-def api_chat_get():
-    return jsonify({"response": "Method not allowed"}), 405
 
 
 if __name__=="__main__":
     app.run(
         host="0.0.0.0",
         port=5000,
-        debug=True
+        debug=False
     )
+
+

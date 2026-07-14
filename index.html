@@ -3143,6 +3143,19 @@ function getChatApiCandidates() {
   return [...new Set(candidates)];
 }
 
+function getStreamingChatApiCandidates() {
+  const candidates = [];
+  const baseUrl = getBackendBaseUrl();
+
+  if (baseUrl && baseUrl !== 'null') {
+    candidates.push(`${baseUrl}/api/chat/stream`);
+  }
+
+  candidates.push('/api/chat/stream');
+
+  return [...new Set(candidates)];
+}
+
 function getApiBaseCandidates() {
   const baseUrl = getBackendBaseUrl();
   const candidates = [];
@@ -3169,8 +3182,8 @@ async function fetchJsonWithFallback(path, options = {}, signal) {
   throw lastError || new Error('Unable to contact the AI server.');
 }
 
-async function fetchChatReply(payload, signal) {
-  const endpoints = getChatApiCandidates();
+async function fetchChatReply(payload, signal, useStreaming = false) {
+  const endpoints = useStreaming ? getStreamingChatApiCandidates() : getChatApiCandidates();
   let lastError = null;
 
   for (let i = 0; i < endpoints.length; i++) {
@@ -3193,6 +3206,35 @@ async function fetchChatReply(payload, signal) {
   }
 
   throw lastError || new Error('Unable to contact the AI server.');
+}
+
+function createStreamingReplyBubble(initialText = '') {
+  const d = document.createElement('div');
+  d.className = 'ai';
+  const contentBox = document.createElement('div');
+  contentBox.className = isLongWritingResponse(initialText) ? 'aiWritingCard' : 'aiMessageBody';
+  contentBox.textContent = initialText;
+  d.appendChild(contentBox);
+  d.appendChild(createCopyButton(initialText));
+  chatBox.appendChild(d);
+  scroll();
+  return { container: d, contentBox };
+}
+
+function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
+  if (!contentBox) return;
+  contentBox.innerHTML = linkifyText(text);
+  contentBox.dataset.finalText = text;
+  const existingText = String(text || '').trim();
+  if (conversationId && chats[conversationId]) {
+    chats[conversationId].push({ role: 'ai', text: existingText });
+    chats[conversationId].updatedAt = Date.now();
+    chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+    chats[conversationId].lastPreview = existingText;
+    save();
+    scroll();
+    maybeShowLoginPrompt(conversationId);
+  }
 }
 
 /* SEND */
@@ -3304,58 +3346,143 @@ async function send() {
 
   try {
     replyAbortController = new AbortController();
-    const timeoutId = setTimeout(() => { if (replyAbortController) replyAbortController.abort(); }, 30000);
+    const firstTokenTimeoutId = setTimeout(() => {
+      if (replyAbortController && replyInProgress) {
+        replyAbortController.abort();
+      }
+    }, 10000);
+    const overallTimeoutId = setTimeout(() => {
+      if (replyAbortController && replyInProgress) {
+        replyAbortController.abort();
+      }
+    }, 45000);
 
-    const res = await fetchChatReply({ message: msg, history, conversation_id: conversationId, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [] }, replyAbortController.signal);
+    const streamResponse = await fetchChatReply({ message: msg, history, conversation_id: conversationId, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [] }, replyAbortController.signal, true);
 
-    clearTimeout(timeoutId);
-    if (!res.ok) throw new Error('Server returned ' + res.status);
+    if (!streamResponse.ok) throw new Error('Server returned ' + streamResponse.status);
 
-    const data = await res.json();
-    const aiText = String(data.reply || data.response || '').trim();
+    const streamBubble = createStreamingReplyBubble('');
+    const { contentBox } = streamBubble;
+    let fullText = '';
+    let buffer = '';
+    const reader = streamResponse.body && streamResponse.body.getReader ? streamResponse.body.getReader() : null;
 
+    if (!reader) {
+      throw new Error('Streaming responses are not supported by this browser.');
+    }
+
+    const decoder = new TextDecoder();
+    let streamCompleted = false;
+
+    while (!streamCompleted) {
+      const { value, done } = await reader.read();
+      if (done) {
+        streamCompleted = true;
+        break;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      let boundary = buffer.indexOf('\n\n');
+      while (boundary >= 0) {
+        const chunk = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        const lines = chunk.split('\n').map((line) => line.trim());
+        const eventLine = lines.find((line) => line.startsWith('event:'));
+        const dataLine = lines.find((line) => line.startsWith('data:'));
+        if (!eventLine || !dataLine) {
+          boundary = buffer.indexOf('\n\n');
+          continue;
+        }
+        const eventType = eventLine.replace(/^event:\s*/, '');
+        const payloadText = dataLine.replace(/^data:\s*/, '');
+        try {
+          const payload = JSON.parse(payloadText);
+          if (eventType === 'delta' && payload.delta) {
+            fullText += payload.delta;
+            contentBox.textContent = fullText;
+            scroll();
+          }
+          if (eventType === 'done' && payload.reply) {
+            fullText = payload.reply || fullText;
+            contentBox.textContent = fullText;
+            scroll();
+            streamCompleted = true;
+          }
+          if (eventType === 'error') {
+            throw new Error(payload.error || 'Stream failed');
+          }
+        } catch (err) {
+          console.error('Failed to parse stream payload', err);
+        }
+        boundary = buffer.indexOf('\n\n');
+      }
+      if (replyAbortController && replyAbortController.signal.aborted) {
+        break;
+      }
+    }
+
+    const trailingText = decoder.decode();
+    if (trailingText) {
+      buffer += trailingText;
+    }
+    if (buffer) {
+      const lines = buffer.split('\n').map((line) => line.trim());
+      const eventLine = lines.find((line) => line.startsWith('event:'));
+      const dataLine = lines.find((line) => line.startsWith('data:'));
+      if (eventLine && dataLine) {
+        try {
+          const payload = JSON.parse(dataLine.replace(/^data:\s*/, ''));
+          if (payload.delta) {
+            fullText += payload.delta;
+            contentBox.textContent = fullText;
+            scroll();
+          }
+          if (payload.reply) {
+            fullText = payload.reply;
+            contentBox.textContent = fullText;
+            scroll();
+          }
+        } catch (err) {
+          console.error('Failed to parse stream tail', err);
+        }
+      }
+    }
+
+    clearTimeout(firstTokenTimeoutId);
+    clearTimeout(overallTimeoutId);
     t.remove();
 
-    const d = document.createElement('div');
-    d.className = 'ai';
-    const contentBox = document.createElement('div');
-    contentBox.className = isLongWritingResponse(aiText) ? 'aiWritingCard' : 'aiMessageBody';
-    d.appendChild(contentBox);
-    d.appendChild(createCopyButton(aiText));
-    chatBox.appendChild(d);
+    if (!fullText.trim()) {
+      throw new Error('No response received');
+    }
 
-    let i = 0;
-    replyTypingTimer = setInterval(() => {
-      if (!replyInProgress) { clearInterval(replyTypingTimer); replyTypingTimer = null; return; }
-      contentBox.textContent += aiText[i] || '';
-      i++;
-      scroll();
-      if (i >= aiText.length) {
-        clearInterval(replyTypingTimer); replyTypingTimer = null; replyInProgress = false; setReplyControlState(false);
-        contentBox.innerHTML = linkifyText(aiText);
-        chats[conversationId].push({ role: 'ai', text: aiText });
-        chats[conversationId].updatedAt = Date.now();
-        chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
-        chats[conversationId].lastPreview = aiText;
-        save();
-        scroll();
-        maybeShowLoginPrompt(conversationId);
+    contentBox.innerHTML = linkifyText(fullText);
+    finalizeStreamingReplyBubble(contentBox, fullText, conversationId);
+    replyInProgress = false; setReplyControlState(false);
 
-        (async () => {
-          try {
-            if (token && conversationId) {
-              const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
-              const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'ai', content: aiText }) });
-              if (aiMessageRes && aiMessageRes.ok) {
-                await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: aiText, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
-              }
-            }
-          } catch (e) { console.error('Failed to save AI reply', e); }
-        })();
-      }
-    }, 20);
+    (async () => {
+      try {
+        if (token && conversationId) {
+          const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
+          const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'ai', content: fullText }) });
+          if (aiMessageRes && aiMessageRes.ok) {
+            await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: fullText, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
+          }
+        }
+      } catch (e) { console.error('Failed to save AI reply', e); }
+    })();
   } catch (e) {
-    if (e && e.name === 'AbortError') { replyInProgress = false; setReplyControlState(false); return; }
+    if (e && e.name === 'AbortError') {
+      replyInProgress = false;
+      setReplyControlState(false);
+      const thinking = document.querySelector('.thinking'); if (thinking) thinking.remove();
+      const fallbackBubble = document.createElement('div');
+      fallbackBubble.className = 'ai';
+      fallbackBubble.innerText = 'The AI is taking longer than expected. Please try again in a moment.';
+      chatBox.appendChild(fallbackBubble);
+      chats[conversationId].push({ role: 'ai', text: 'The AI is taking longer than expected. Please try again in a moment.' });
+      chats[conversationId].updatedAt = Date.now(); chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1; chats[conversationId].lastPreview = 'The AI is taking longer than expected. Please try again in a moment.'; save(); scroll();
+      return;
+    }
     console.error(e);
     const thinking = document.querySelector('.thinking'); if (thinking) thinking.remove();
     replyInProgress = false; setReplyControlState(false);
