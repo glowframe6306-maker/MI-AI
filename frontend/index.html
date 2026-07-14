@@ -14859,5 +14859,364 @@ document.addEventListener(
 
 /* MI AI SHARE MODAL CANCEL ONLY CLOSE - END */
 </script>
+
+<script>
+/* MI AI SHARE MODAL STAY OPEN - START */
+
+(function () {
+    "use strict";
+
+    const modalSelectors = [
+        "#shareModal",
+        "#shareDialog",
+        "#sharePopup",
+        ".share-modal",
+        ".share-dialog",
+        ".share-popup",
+        "[data-share-modal]"
+    ].join(",");
+
+    let modalWasOpen = false;
+    let allowCancelClose = false;
+    let repairPending = false;
+
+    function getModal() {
+        return document.querySelector(
+            modalSelectors
+        );
+    }
+
+    function isVisible(element) {
+        if (!element) {
+            return false;
+        }
+
+        const style =
+            window.getComputedStyle(element);
+
+        return (
+            !element.hidden &&
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            style.opacity !== "0"
+        );
+    }
+
+    function textOf(element) {
+        return String(
+            element?.textContent ||
+            element?.value ||
+            element?.getAttribute("aria-label") ||
+            element?.getAttribute("title") ||
+            ""
+        )
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function isCancelControl(element) {
+        const control =
+            element?.closest?.(
+                "button, input, [role='button']"
+            );
+
+        if (!control) {
+            return false;
+        }
+
+        const details = [
+            textOf(control),
+            control.id,
+            control.className,
+            control.dataset.action,
+            control.getAttribute("onclick")
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("cancel") ||
+            details.includes("අවලංගු") ||
+            details.includes("ரத்து")
+        );
+    }
+
+    function isShareControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                modalSelectors + ", " +
+                "#miIosSelectPopup, " +
+                ".mi-ios-popup-option, " +
+                ".mi-ios-select-trigger"
+            )
+        );
+    }
+
+    function forceOpen() {
+        const modal = getModal();
+
+        if (
+            !modal ||
+            allowCancelClose ||
+            !modalWasOpen
+        ) {
+            return;
+        }
+
+        modal.hidden = false;
+
+        modal.removeAttribute(
+            "aria-hidden"
+        );
+
+        modal.setAttribute(
+            "aria-modal",
+            "true"
+        );
+
+        modal.classList.add(
+            "open",
+            "show",
+            "active"
+        );
+
+        modal.style.setProperty(
+            "display",
+            "flex",
+            "important"
+        );
+
+        modal.style.setProperty(
+            "visibility",
+            "visible",
+            "important"
+        );
+
+        modal.style.setProperty(
+            "opacity",
+            "1",
+            "important"
+        );
+    }
+
+    function scheduleRepair() {
+        if (
+            repairPending ||
+            allowCancelClose ||
+            !modalWasOpen
+        ) {
+            return;
+        }
+
+        repairPending = true;
+
+        requestAnimationFrame(
+            function () {
+                repairPending = false;
+                forceOpen();
+            }
+        );
+
+        setTimeout(forceOpen, 50);
+        setTimeout(forceOpen, 180);
+        setTimeout(forceOpen, 450);
+    }
+
+    function rememberOpenModal() {
+        const modal = getModal();
+
+        if (modal && isVisible(modal)) {
+            modalWasOpen = true;
+            allowCancelClose = false;
+        }
+    }
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            rememberOpenModal();
+
+            if (isCancelControl(event.target)) {
+                allowCancelClose = true;
+                modalWasOpen = false;
+                return;
+            }
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            rememberOpenModal();
+
+            if (isCancelControl(event.target)) {
+                allowCancelClose = true;
+                modalWasOpen = false;
+                return;
+            }
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+
+                setTimeout(
+                    scheduleRepair,
+                    0
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    100
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    300
+                );
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        function (event) {
+            rememberOpenModal();
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "input",
+        function (event) {
+            rememberOpenModal();
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key !== "Escape") {
+                return;
+            }
+
+            const modal = getModal();
+
+            if (
+                modal &&
+                isVisible(modal)
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                modalWasOpen = true;
+                allowCancelClose = false;
+
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    const observer =
+        new MutationObserver(
+            function () {
+                const modal = getModal();
+
+                if (!modal) {
+                    return;
+                }
+
+                if (isVisible(modal)) {
+                    modalWasOpen = true;
+                    return;
+                }
+
+                if (
+                    modalWasOpen &&
+                    !allowCancelClose
+                ) {
+                    scheduleRepair();
+                }
+            }
+        );
+
+    function start() {
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "class",
+                    "style",
+                    "hidden",
+                    "aria-hidden"
+                ]
+            }
+        );
+    }
+
+    window.MIShareModalStayOpen = {
+        refresh: scheduleRepair,
+
+        isLocked: function () {
+            return (
+                modalWasOpen &&
+                !allowCancelClose
+            );
+        }
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SHARE MODAL STAY OPEN - END */
+</script>
 </body>
 </html>
