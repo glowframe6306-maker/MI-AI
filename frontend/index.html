@@ -14343,5 +14343,521 @@ document.addEventListener(
 
 /* MI AI IOS SELECT AND ICON SYSTEM JS - END */
 </script>
+
+<script>
+/* MI AI SHARE MODAL CANCEL ONLY CLOSE - START */
+
+(function () {
+    "use strict";
+
+    const modalSelectors = [
+        "#shareModal",
+        "#shareDialog",
+        "#sharePopup",
+        ".share-modal",
+        ".share-dialog",
+        ".share-popup",
+        "[data-share-modal]"
+    ].join(",");
+
+    const closeFunctionNames = [
+        "closeShareModal",
+        "hideShareModal",
+        "closeShareDialog",
+        "hideShareDialog",
+        "closeSharePopup",
+        "hideSharePopup"
+    ];
+
+    let cancelCloseAllowed = false;
+    let shareModalWasOpen = false;
+    let repairPending = false;
+
+    function getShareModal() {
+        return document.querySelector(
+            modalSelectors
+        );
+    }
+
+    function elementText(element) {
+        return String(
+            element?.textContent
+            || element?.value
+            || element?.getAttribute(
+                "aria-label"
+            )
+            || element?.getAttribute(
+                "title"
+            )
+            || ""
+        )
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function isCancelButton(element) {
+        const button =
+            element?.closest?.(
+                "button, input[type='button'], " +
+                "input[type='reset'], [role='button']"
+            );
+
+        if (!button) {
+            return false;
+        }
+
+        const details = [
+            elementText(button),
+            button.id,
+            button.className,
+            button.dataset.action,
+            button.getAttribute("onclick")
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("cancel")
+            || details.includes("අවලංගු")
+            || details.includes("ரத்து")
+            || details.includes("close-share")
+            || details.includes("cancel-share")
+        );
+    }
+
+    function isGenerateButton(element) {
+        const button =
+            element?.closest?.(
+                "button, input[type='button'], " +
+                "input[type='submit'], [role='button']"
+            );
+
+        if (!button) {
+            return false;
+        }
+
+        const details = [
+            elementText(button),
+            button.id,
+            button.className,
+            button.dataset.action,
+            button.getAttribute("onclick")
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("generate link")
+            || details.includes("create link")
+            || details.includes("generate-share")
+            || details.includes("create-share")
+            || details.includes("link සාද")
+            || details.includes("இணைப்பை உருவாக்க")
+        );
+    }
+
+    function modalLooksOpen(modal) {
+        if (!modal) {
+            return false;
+        }
+
+        const style =
+            window.getComputedStyle(modal);
+
+        return (
+            !modal.hidden
+            && style.display !== "none"
+            && style.visibility !== "hidden"
+            && style.opacity !== "0"
+        );
+    }
+
+    function forceModalOpen(modal) {
+        if (
+            !modal
+            || cancelCloseAllowed
+            || !shareModalWasOpen
+        ) {
+            return;
+        }
+
+        modal.hidden = false;
+
+        modal.removeAttribute(
+            "aria-hidden"
+        );
+
+        modal.setAttribute(
+            "aria-modal",
+            "true"
+        );
+
+        modal.classList.add(
+            "open",
+            "show",
+            "active"
+        );
+
+        if (
+            modal.style.display === "none"
+        ) {
+            modal.style.display = "";
+        }
+
+        if (
+            window.getComputedStyle(modal)
+                .display === "none"
+        ) {
+            modal.style.setProperty(
+                "display",
+                "flex",
+                "important"
+            );
+        }
+
+        modal.style.setProperty(
+            "visibility",
+            "visible",
+            "important"
+        );
+
+        modal.style.setProperty(
+            "opacity",
+            "1",
+            "important"
+        );
+    }
+
+    function scheduleRepair() {
+        if (
+            repairPending
+            || cancelCloseAllowed
+            || !shareModalWasOpen
+        ) {
+            return;
+        }
+
+        repairPending = true;
+
+        requestAnimationFrame(
+            function () {
+                repairPending = false;
+
+                forceModalOpen(
+                    getShareModal()
+                );
+            }
+        );
+    }
+
+    function wrapCloseFunctions() {
+        closeFunctionNames.forEach(
+            function (name) {
+                const original =
+                    window[name];
+
+                if (
+                    typeof original !==
+                    "function"
+                    || original
+                        .__miCancelOnlyWrapped
+                ) {
+                    return;
+                }
+
+                const wrapped =
+                    function (...args) {
+                        if (
+                            !cancelCloseAllowed
+                            && shareModalWasOpen
+                        ) {
+                            scheduleRepair();
+                            return false;
+                        }
+
+                        const result =
+                            original.apply(
+                                this,
+                                args
+                            );
+
+                        cancelCloseAllowed =
+                            false;
+
+                        shareModalWasOpen =
+                            false;
+
+                        return result;
+                    };
+
+                wrapped.__miCancelOnlyWrapped =
+                    true;
+
+                wrapped.__miOriginal =
+                    original;
+
+                window[name] = wrapped;
+            }
+        );
+    }
+
+    function closeFromCancel(button) {
+        const modal =
+            button.closest(
+                modalSelectors
+            )
+            || getShareModal();
+
+        cancelCloseAllowed = true;
+        shareModalWasOpen = false;
+
+        /*
+          First allow the existing Cancel handler to run.
+          If no existing handler closes it, close safely here.
+        */
+        setTimeout(
+            function () {
+                if (
+                    modal
+                    && modalLooksOpen(modal)
+                ) {
+                    modal.classList.remove(
+                        "open",
+                        "show",
+                        "active"
+                    );
+
+                    modal.hidden = true;
+
+                    modal.setAttribute(
+                        "aria-hidden",
+                        "true"
+                    );
+
+                    modal.style.setProperty(
+                        "display",
+                        "none",
+                        "important"
+                    );
+                }
+
+                cancelCloseAllowed =
+                    false;
+            },
+            30
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const modal =
+                getShareModal();
+
+            if (!modal) {
+                return;
+            }
+
+            if (modalLooksOpen(modal)) {
+                shareModalWasOpen = true;
+            }
+
+            if (isCancelButton(event.target)) {
+                closeFromCancel(
+                    event.target.closest(
+                        "button, input, [role='button']"
+                    )
+                );
+
+                return;
+            }
+
+            /*
+              Generate Link must continue working,
+              but it must not close the modal.
+            */
+            if (isGenerateButton(event.target)) {
+                cancelCloseAllowed = false;
+                shareModalWasOpen = true;
+
+                setTimeout(
+                    scheduleRepair,
+                    0
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    100
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    400
+                );
+
+                return;
+            }
+
+            /*
+              Clicking the backdrop/outside must not close it.
+            */
+            if (
+                shareModalWasOpen
+                && !modal.contains(event.target)
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            const modal =
+                getShareModal();
+
+            if (
+                modal
+                && modalLooksOpen(modal)
+            ) {
+                shareModalWasOpen = true;
+
+                if (
+                    !modal.contains(event.target)
+                ) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                }
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.key !== "Escape"
+            ) {
+                return;
+            }
+
+            const modal =
+                getShareModal();
+
+            if (
+                modal
+                && modalLooksOpen(modal)
+            ) {
+                shareModalWasOpen = true;
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    function start() {
+        wrapCloseFunctions();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    wrapCloseFunctions();
+
+                    const modal =
+                        getShareModal();
+
+                    if (!modal) {
+                        return;
+                    }
+
+                    if (modalLooksOpen(modal)) {
+                        shareModalWasOpen =
+                            true;
+
+                        return;
+                    }
+
+                    if (
+                        shareModalWasOpen
+                        && !cancelCloseAllowed
+                    ) {
+                        scheduleRepair();
+                    }
+                }
+            );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "class",
+                    "style",
+                    "hidden",
+                    "aria-hidden"
+                ]
+            }
+        );
+
+        setInterval(
+            wrapCloseFunctions,
+            1000
+        );
+    }
+
+    window.MIShareModalLock = {
+        isLocked:
+            function () {
+                return (
+                    shareModalWasOpen
+                    && !cancelCloseAllowed
+                );
+            },
+
+        refresh:
+            function () {
+                wrapCloseFunctions();
+                scheduleRepair();
+            },
+
+        allowCancelClose:
+            function () {
+                cancelCloseAllowed = true;
+            }
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SHARE MODAL CANCEL ONLY CLOSE - END */
+</script>
 </body>
 </html>
