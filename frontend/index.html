@@ -795,6 +795,454 @@ body.force-mobile-layout #settingsPanel {
   top:76px;
 }
 
+
+/* MI AI IPHONE GLASS BUTTONS - START */
+
+:root {
+    --mi-glass-button-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.28) 0%,
+            rgba(255, 255, 255, 0.13) 45%,
+            rgba(255, 255, 255, 0.07) 100%
+        );
+
+    --mi-glass-button-hover-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.38) 0%,
+            rgba(255, 255, 255, 0.20) 48%,
+            rgba(255, 255, 255, 0.10) 100%
+        );
+
+    --mi-glass-button-border: rgba(255, 255, 255, 0.32);
+    --mi-glass-button-border-hover: rgba(255, 255, 255, 0.52);
+}
+
+/* All real and custom buttons */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.button,
+[role="button"] {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    border: 1px solid var(
+        --mi-glass-button-border
+    ) !important;
+
+    border-radius: 16px !important;
+
+    background:
+        var(--mi-glass-button-bg) !important;
+
+    color: var(--text, #ffffff) !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(175%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(175%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.42),
+        inset 0 -1px 0
+            rgba(255, 255, 255, 0.08),
+        0 7px 20px
+            rgba(0, 0, 0, 0.18),
+        0 1px 3px
+            rgba(0, 0, 0, 0.16) !important;
+
+    text-shadow:
+        0 1px 2px
+        rgba(0, 0, 0, 0.16);
+
+    cursor: pointer;
+
+    transform:
+        translateZ(0)
+        scale(1);
+
+    transition:
+        transform 160ms
+            cubic-bezier(.2, .8, .2, 1),
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        opacity 180ms ease,
+        filter 180ms ease !important;
+
+    -webkit-tap-highlight-color:
+        transparent;
+
+    user-select: none;
+}
+
+/* Glass shine layer */
+button::before,
+.btn::before,
+.button::before,
+[role="button"]::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+
+    left: 6%;
+    right: 6%;
+    top: 2px;
+    height: 42%;
+
+    border-radius:
+        inherit;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.38),
+            rgba(255, 255, 255, 0)
+        );
+
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+/* Soft reflected glow */
+button::after,
+.btn::after,
+.button::after,
+[role="button"]::after {
+    content: "";
+    position: absolute;
+    z-index: -2;
+
+    width: 70%;
+    height: 150%;
+    top: -100%;
+    left: -45%;
+
+    transform: rotate(24deg);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.22),
+            transparent
+        );
+
+    transition:
+        left 400ms ease;
+
+    pointer-events: none;
+}
+
+/* Mouse hover */
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+.btn:hover,
+.button:hover,
+[role="button"]:hover {
+    background:
+        var(
+            --mi-glass-button-hover-bg
+        ) !important;
+
+    border-color:
+        var(
+            --mi-glass-button-border-hover
+        ) !important;
+
+    transform:
+        translateY(-2px)
+        scale(1.015);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.58),
+        inset 0 -1px 0
+            rgba(255, 255, 255, 0.10),
+        0 12px 28px
+            rgba(0, 0, 0, 0.23),
+        0 3px 8px
+            rgba(0, 0, 0, 0.15) !important;
+}
+
+button:hover::after,
+.btn:hover::after,
+.button:hover::after,
+[role="button"]:hover::after {
+    left: 120%;
+}
+
+/* iPhone press animation */
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active,
+.btn:active,
+.button:active,
+[role="button"]:active {
+    transform:
+        translateY(1px)
+        scale(0.965);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.20),
+            rgba(255, 255, 255, 0.07)
+        ) !important;
+
+    box-shadow:
+        inset 0 2px 5px
+            rgba(0, 0, 0, 0.14),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.25),
+        0 3px 9px
+            rgba(0, 0, 0, 0.15) !important;
+
+    transition-duration: 70ms !important;
+}
+
+/* Keyboard accessibility */
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible,
+.btn:focus-visible,
+.button:focus-visible,
+[role="button"]:focus-visible {
+    outline: none !important;
+
+    border-color:
+        rgba(110, 190, 255, 0.90)
+        !important;
+
+    box-shadow:
+        0 0 0 3px
+            rgba(0, 122, 255, 0.28),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.50),
+        0 10px 26px
+            rgba(0, 0, 0, 0.22)
+        !important;
+}
+
+/* Disabled buttons */
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+.btn.disabled,
+.button.disabled,
+[role="button"][aria-disabled="true"] {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+
+    transform:
+        none !important;
+
+    filter:
+        grayscale(0.18);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.20),
+        0 3px 10px
+            rgba(0, 0, 0, 0.10)
+        !important;
+}
+
+/* Primary and send buttons: blue iPhone glass */
+.primary,
+.primary-btn,
+.btn-primary,
+.send-btn,
+#sendBtn,
+#sendButton,
+button[type="submit"] {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0, 140, 255, 0.78),
+            rgba(0, 92, 230, 0.48)
+        ) !important;
+
+    border-color:
+        rgba(145, 215, 255, 0.60)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.48),
+        inset 0 -1px 0
+            rgba(0, 54, 160, 0.30),
+        0 9px 24px
+            rgba(0, 112, 255, 0.28)
+        !important;
+}
+
+.primary:hover,
+.primary-btn:hover,
+.btn-primary:hover,
+.send-btn:hover,
+#sendBtn:hover,
+#sendButton:hover,
+button[type="submit"]:hover {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(40, 166, 255, 0.90),
+            rgba(0, 101, 235, 0.62)
+        ) !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.58),
+        0 12px 30px
+            rgba(0, 112, 255, 0.38)
+        !important;
+}
+
+/* Delete and danger buttons: red glass */
+.danger,
+.delete-btn,
+.btn-danger,
+button[data-action="delete"] {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 75, 90, 0.72),
+            rgba(190, 25, 45, 0.42)
+        ) !important;
+
+    border-color:
+        rgba(255, 180, 185, 0.55)
+        !important;
+
+    color:
+        #ffffff !important;
+}
+
+/* Small icon buttons stay compact */
+.icon-btn,
+.icon-button,
+button[aria-label],
+button:has(> svg:only-child) {
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+}
+
+/* Light theme support */
+body.light button,
+body.light input[type="button"],
+body.light input[type="submit"],
+body.light input[type="reset"],
+body.light .btn,
+body.light .button,
+body.light [role="button"],
+[data-theme="light"] button,
+[data-theme="light"] .btn,
+[data-theme="light"] [role="button"] {
+    --mi-glass-button-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.78),
+            rgba(255, 255, 255, 0.43)
+        );
+
+    --mi-glass-button-hover-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.95),
+            rgba(255, 255, 255, 0.57)
+        );
+
+    --mi-glass-button-border:
+        rgba(255, 255, 255, 0.92);
+
+    color:
+        var(--text, #111318) !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.98),
+        0 8px 22px
+            rgba(31, 41, 55, 0.14),
+        0 1px 3px
+            rgba(31, 41, 55, 0.10)
+        !important;
+}
+
+/* Touch-screen behaviour */
+@media (hover: none) {
+    button:hover,
+    input[type="button"]:hover,
+    input[type="submit"]:hover,
+    input[type="reset"]:hover,
+    .btn:hover,
+    .button:hover,
+    [role="button"]:hover {
+        transform:
+            none;
+    }
+
+    button:active,
+    input[type="button"]:active,
+    input[type="submit"]:active,
+    input[type="reset"]:active,
+    .btn:active,
+    .button:active,
+    [role="button"]:active {
+        transform:
+            scale(0.96);
+    }
+}
+
+/* Reduced-motion accessibility */
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    .btn,
+    .button,
+    [role="button"] {
+        transition:
+            none !important;
+    }
+
+    button::after,
+    .btn::after,
+    .button::after,
+    [role="button"]::after {
+        display:
+            none;
+    }
+}
+
+/* MI AI IPHONE GLASS BUTTONS - END */
 </style>
 </head>
 
