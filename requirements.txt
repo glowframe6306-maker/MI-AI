@@ -1,0 +1,7 @@
+Flask
+flask-cors
+groq>=1.5.0
+python-dotenv
+sounddevice
+SpeechRecognition
+vosk

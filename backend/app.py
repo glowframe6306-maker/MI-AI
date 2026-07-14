@@ -1372,77 +1372,6 @@ def messages():
 @app.route("/chat", methods=["POST"])
 def chat():
     return _handle_chat_request()
-
-
-@app.route("/api/chat/stream", methods=["POST"])
-def api_chat_stream():
-    payload = request.get_json(silent=True) or {}
-    user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
-    if not user_message:
-        def empty_stream():
-            yield _sse_event("error", {"reply": "Please type a message.", "error": "Please type a message.", "done": True})
-
-        return Response(stream_with_context(empty_stream()), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-
-    history = payload.get("history") or payload.get("messages") or []
-    if not isinstance(history, list):
-        history = []
-
-    normalized_messages = [
-        {
-            "role": "system",
-            "content": MI_AI_SYSTEM_PROMPT,
-        }
-    ]
-stream", methods=["POST"])
-def api_chat_stream():
-    payload = request.get_json(silent=True) or {}
-    user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
-    if not user_message:
-        def empty_stream():
-            yield _sse_event("error", {"reply": "Please type a message.", "error": "Please type a message.", "done": True})
-
-        return Response(stream_with_context(empty_stream()), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-
-    history = payload.get("history") or payload.get("messages") or []
-    if not isinstance(history, list):
-        history = []
-
-    normalized_messages = [{"role": "system", "content": "You are MI AI. Reply helpfully and concisely in the same language as the user."}]
-    for item in history:
-        if not isinstance(item, dict):
-            continue
-        role = str(item.get("role") or "user").strip() or "user"
-        content = item.get("content") or item.get("text") or ""
-        if content:
-            normalized_messages.append({"role": role, "content": str(content)})
-    normalized_messages.append({"role": "user", "content": user_message})
-
-    def generate_stream():
-        try:
-            try:
-                client = get_groq_client()
-            except RuntimeError:
-                yield _sse_event("error", {"reply": "The AI service is not configured correctly.", "error": "The AI service is not configured correctly.", "done": True, "error_code": "AI_NOT_CONFIGURED"})
-                return
-
-            collected_text = []
-            for chunk_text in _iter_groq_stream(client, normalized_messages, model_name=_get_groq_model()):
-                if not chunk_text:
-                    continue
-                collected_text.append(chunk_text)
-                yield _sse_event("delta", {"delta": chunk_text})
-
-            reply = "".join(collected_text).strip() or "No response received from the AI service."
-            yield _sse_event("done", {"reply": reply, "done": True})
-        except Exception:
-            message = "The AI service is temporarily unavailable. Please try again."
-            yield _sse_event("error", {"reply": message, "error": message, "done": True, "error_code": "AI_SERVICE_UNAVAILABLE"})
-
-    return Response(stream_with_context(generate_stream()), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-
-
-@app.route("/api/assistant-info", methods=["GET"])
 def assistant_info():
     return jsonify({
         "name": "MI AI",
@@ -1458,6 +1387,157 @@ def assistant_info():
         "other_requirements_email": "teamofchatbot.miai@gmail.com",
         "team_whatsapp_number": "+94756390621",
     })
+
+
+@app.route("/api/chat/stream", methods=["POST"])
+def api_chat_stream():
+    payload = request.get_json(silent=True) or {}
+
+    user_message = str(
+        payload.get("message")
+        or payload.get("input")
+        or payload.get("prompt")
+        or ""
+    ).strip()
+
+    if not user_message:
+        def empty_stream():
+            yield _sse_event(
+                "error",
+                {
+                    "reply": "Please type a message.",
+                    "response": "Please type a message.",
+                    "error": "Please type a message.",
+                    "done": True,
+                },
+            )
+
+        return Response(
+            stream_with_context(empty_stream()),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
+        )
+
+    history = payload.get("history") or payload.get("messages") or []
+
+    if not isinstance(history, list):
+        history = []
+
+    normalized_messages = [
+        {
+            "role": "system",
+            "content": MI_AI_SYSTEM_PROMPT,
+        }
+    ]
+
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+
+        role = str(
+            item.get("role") or "user"
+        ).strip() or "user"
+
+        if role not in {"user", "assistant", "system"}:
+            continue
+
+        content = item.get("content") or item.get("text") or ""
+
+        if content:
+            normalized_messages.append(
+                {
+                    "role": role,
+                    "content": str(content),
+                }
+            )
+
+    normalized_messages.append(
+        {
+            "role": "user",
+            "content": user_message,
+        }
+    )
+
+    def generate_stream():
+        try:
+            try:
+                client = get_groq_client()
+            except RuntimeError:
+                message = "The AI service is not configured correctly."
+
+                yield _sse_event(
+                    "error",
+                    {
+                        "reply": message,
+                        "response": message,
+                        "error": message,
+                        "done": True,
+                        "error_code": "AI_NOT_CONFIGURED",
+                    },
+                )
+                return
+
+            collected_text = []
+
+            for chunk_text in _iter_groq_stream(
+                client,
+                normalized_messages,
+                model_name=_get_groq_model(),
+            ):
+                if not chunk_text:
+                    continue
+
+                collected_text.append(chunk_text)
+
+                yield _sse_event(
+                    "delta",
+                    {
+                        "delta": chunk_text,
+                    },
+                )
+
+            reply = "".join(collected_text).strip()
+
+            if not reply:
+                reply = "No response received from the AI service."
+
+            yield _sse_event(
+                "done",
+                {
+                    "reply": reply,
+                    "response": reply,
+                    "done": True,
+                },
+            )
+
+        except Exception:
+            message = (
+                "The AI service is temporarily unavailable. "
+                "Please try again."
+            )
+
+            yield _sse_event(
+                "error",
+                {
+                    "reply": message,
+                    "response": message,
+                    "error": message,
+                    "done": True,
+                    "error_code": "AI_SERVICE_UNAVAILABLE",
+                },
+            )
+
+    return Response(
+        stream_with_context(generate_stream()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.route("/debug/chat", methods=["GET"])
@@ -1491,5 +1571,3 @@ if __name__=="__main__":
         port=5000,
         debug=False
     )
-
-
