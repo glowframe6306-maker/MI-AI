@@ -3472,6 +3472,350 @@ body,
 
 /* MI AI COPY BUTTON BELOW REPLY - END */
 </style>
+
+<!-- MI AI FIREBASE AUTH START -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<script>
+(function () {
+    "use strict";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
+        authDomain: "mi-ai-99e6a.firebaseapp.com",
+        projectId: "mi-ai-99e6a",
+        storageBucket: "mi-ai-99e6a.firebasestorage.app",
+        messagingSenderId: "845086558623",
+        appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
+    };
+
+    function getFirebaseLanguage() {
+        const selected =
+            document.getElementById("languageSelect")?.value;
+
+        const stored =
+            localStorage.getItem("mi_ui_language");
+
+        const language = selected || stored || "en";
+
+        const languageMap = {
+            en: "en",
+            si: "si",
+            ta: "ta"
+        };
+
+        return languageMap[language] || "en";
+    }
+
+    function firebaseErrorMessage(error) {
+        const errorCode = String(error?.code || "");
+
+        const messages = {
+            "auth/invalid-email":
+                "Invalid email address.",
+
+            "auth/missing-password":
+                "Please enter your password.",
+
+            "auth/weak-password":
+                "Password must contain at least 6 characters.",
+
+            "auth/email-already-in-use":
+                "An account already exists with this email.",
+
+            "auth/user-not-found":
+                "No account was found for this email.",
+
+            "auth/wrong-password":
+                "Incorrect email or password.",
+
+            "auth/invalid-credential":
+                "Incorrect email or password.",
+
+            "auth/too-many-requests":
+                "Too many attempts. Please try again later.",
+
+            "auth/network-request-failed":
+                "Network error. Check your internet connection.",
+
+            "auth/operation-not-allowed":
+                "Email and password login is not enabled in Firebase.",
+
+            "auth/unauthorized-domain":
+                "This website domain is not authorized in Firebase."
+        };
+
+        return (
+            messages[errorCode] ||
+            error?.message ||
+            "Firebase authentication failed."
+        );
+    }
+
+    function initializeMIFirebase() {
+        if (typeof window.firebase === "undefined") {
+            throw new Error("Firebase SDK failed to load.");
+        }
+
+        let app;
+
+        if (
+            Array.isArray(window.firebase.apps) &&
+            window.firebase.apps.length > 0
+        ) {
+            app = window.firebase.app();
+        }
+        else {
+            app = window.firebase.initializeApp(
+                firebaseConfig
+            );
+        }
+
+        const auth = window.firebase.auth(app);
+
+        auth.languageCode = getFirebaseLanguage();
+
+        window.miFirebaseApp = app;
+        window.miFirebaseAuth = auth;
+        window.miFirebaseUser = auth.currentUser || null;
+
+        auth.onAuthStateChanged(function (user) {
+            window.miFirebaseUser = user || null;
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-firebase-auth-changed",
+                    {
+                        detail: {
+                            user: user || null
+                        }
+                    }
+                )
+            );
+        });
+
+        window.MIFirebase = {
+            config: Object.freeze({
+                ...firebaseConfig
+            }),
+
+            get auth() {
+                return window.miFirebaseAuth;
+            },
+
+            get user() {
+                return (
+                    window.miFirebaseAuth?.currentUser ||
+                    null
+                );
+            },
+
+            updateLanguage: function () {
+                if (window.miFirebaseAuth) {
+                    window.miFirebaseAuth.languageCode =
+                        getFirebaseLanguage();
+                }
+            },
+
+            register: async function (
+                email,
+                password,
+                profile = {}
+            ) {
+                try {
+                    this.updateLanguage();
+
+                    const credential =
+                        await auth
+                            .createUserWithEmailAndPassword(
+                                String(email || "").trim(),
+                                String(password || "")
+                            );
+
+                    const user = credential.user;
+
+                    const displayName = String(
+                        profile.displayName ||
+                        profile.fullName ||
+                        profile.name ||
+                        ""
+                    ).trim();
+
+                    if (displayName) {
+                        await user.updateProfile({
+                            displayName: displayName
+                        });
+                    }
+
+                    await user.sendEmailVerification({
+                        url: window.location.origin
+                    });
+
+                    return user;
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI Firebase register]",
+                        error
+                    );
+
+                    throw new Error(
+                        firebaseErrorMessage(error)
+                    );
+                }
+            },
+
+            login: async function (
+                email,
+                password
+            ) {
+                try {
+                    this.updateLanguage();
+
+                    const credential =
+                        await auth
+                            .signInWithEmailAndPassword(
+                                String(email || "").trim(),
+                                String(password || "")
+                            );
+
+                    return credential.user;
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI Firebase login]",
+                        error
+                    );
+
+                    throw new Error(
+                        firebaseErrorMessage(error)
+                    );
+                }
+            },
+
+            sendPasswordResetEmail:
+                async function (email) {
+                    try {
+                        this.updateLanguage();
+
+                        await auth.sendPasswordResetEmail(
+                            String(email || "").trim(),
+                            {
+                                url: window.location.origin
+                            }
+                        );
+
+                        return true;
+                    }
+                    catch (error) {
+                        console.error(
+                            "[MI AI Firebase reset]",
+                            error
+                        );
+
+                        throw new Error(
+                            firebaseErrorMessage(error)
+                        );
+                    }
+                },
+
+            resendVerification:
+                async function () {
+                    try {
+                        this.updateLanguage();
+
+                        const user =
+                            auth.currentUser;
+
+                        if (!user) {
+                            throw new Error(
+                                "Please sign in first."
+                            );
+                        }
+
+                        await user.sendEmailVerification({
+                            url: window.location.origin
+                        });
+
+                        return true;
+                    }
+                    catch (error) {
+                        throw new Error(
+                            firebaseErrorMessage(error)
+                        );
+                    }
+                },
+
+            logout: async function () {
+                await auth.signOut();
+                return true;
+            }
+        };
+
+        document.addEventListener(
+            "change",
+            function (event) {
+                if (
+                    event.target &&
+                    event.target.id ===
+                        "languageSelect"
+                ) {
+                    window.MIFirebase.updateLanguage();
+                }
+            }
+        );
+
+        console.log(
+            "[MI AI] Firebase Authentication connected:",
+            firebaseConfig.projectId
+        );
+
+        window.dispatchEvent(
+            new CustomEvent("mi-firebase-ready")
+        );
+    }
+
+    function startFirebase() {
+        try {
+            initializeMIFirebase();
+        }
+        catch (error) {
+            console.error(
+                "[MI AI] Firebase initialization failed:",
+                error
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-firebase-error",
+                    {
+                        detail: {
+                            message: error.message
+                        }
+                    }
+                )
+            );
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startFirebase,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        startFirebase();
+    }
+})();
+</script>
+
+<!-- MI AI FIREBASE AUTH END -->
 </head>
 
 <body>
