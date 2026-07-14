@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import tempfile
 import traceback
 import sys
 import uuid
@@ -361,9 +362,13 @@ def _generate_gemini_content(client, contents, model_name=None, config=None):
         raise RuntimeError("Gemini client is not available")
 
     requested_model = (model_name or _get_gemini_model()).strip()
-    selected_model, fallback_models = _select_best_model(client, requested_model)
+    selected_model = requested_model.replace("models/", "").strip()
 
-    print(f"\n=== Gemini content generation ===")
+    fallback_models = [
+    "gemini-3.1-flash-lite",
+    ]
+
+    print("\n=== Gemini content generation ===")
     print(f"Requested model: {requested_model}")
     print(f"Selected model: {selected_model}")
     print(f"Fallback models: {fallback_models}")
@@ -371,9 +376,6 @@ def _generate_gemini_content(client, contents, model_name=None, config=None):
     print(f"Config: {config}")
 
     fallback_models_to_try = [selected_model]
-    for model in fallback_models:
-        if model != selected_model and model not in fallback_models_to_try:
-            fallback_models_to_try.append(model)
 
     last_error = None
     for candidate_model in fallback_models_to_try:
@@ -431,9 +433,21 @@ def _generate_gemini_content(client, contents, model_name=None, config=None):
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-LOCAL_PERSISTENCE_FILE = Path(__file__).with_name("local_persistence.json")
-UPLOAD_DIR = Path(__file__).with_name("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+
+IS_VERCEL = bool(os.getenv("VERCEL"))
+
+if IS_VERCEL:
+    RUNTIME_DATA_DIR = Path(tempfile.gettempdir()) / "mi-ai"
+else:
+    RUNTIME_DATA_DIR = BACKEND_DIR
+
+RUNTIME_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+LOCAL_PERSISTENCE_FILE = RUNTIME_DATA_DIR / "local_persistence.json"
+
+UPLOAD_DIR = RUNTIME_DATA_DIR / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 FRONTEND_INDEX = FRONTEND_DIR / "index.html"
 
@@ -448,7 +462,15 @@ def _load_local_store():
 
 
 def _save_local_store(store):
-    LOCAL_PERSISTENCE_FILE.write_text(json.dumps(store, indent=2), encoding="utf-8")
+    LOCAL_PERSISTENCE_FILE.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    LOCAL_PERSISTENCE_FILE.write_text(
+        json.dumps(store, indent=2),
+        encoding="utf-8",
+    )
 
 
 def _safe_file_name(name):
@@ -805,26 +827,47 @@ def conversation_detail(conversation_id):
 def uploaded_file(filename):
     return send_from_directory(str(UPLOAD_DIR), filename)
 
-
 @app.route("/api/upload", methods=["POST"])
 def upload_file():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    if "file" not in request.files:
+        return jsonify({
+            "error": "No file uploaded"
+        }), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({
+            "error": "No selected file"
+        }), 400
+
     if not _allowed_file_type(file.filename, file.mimetype):
-        return jsonify({"error": "File type not allowed"}), 400
+        return jsonify({
+            "error": "File type not allowed"
+        }), 400
+
     safe_name = _safe_file_name(file.filename)
+
+    UPLOAD_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
     destination = UPLOAD_DIR / safe_name
     file.save(destination)
-    return jsonify({"ok": True, "filename": safe_name})
+
+    return jsonify({
+        "ok": True,
+        "filename": safe_name,
+    })
 
 
 @app.route("/api/conversations/<conversation_id>/attachments", methods=["GET"])
 def conversation_attachments(conversation_id):
-    return jsonify({"conversation_id": conversation_id, "attachments": []})
-
+    return jsonify({
+        "conversation_id": conversation_id,
+        "attachments": [],
+    })
 
 @app.route("/api/messages", methods=["GET", "POST"])
 def messages():
