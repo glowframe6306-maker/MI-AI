@@ -1876,6 +1876,290 @@ body.light .card,
 }
 
 /* MI AI IOS BLUR EFFECT - END */
+
+/* MI AI AUTO MESSAGE BUBBLE SIZE - START */
+
+/*
+   Short message  = small bubble
+   Long message   = wider bubble and automatic line wrapping
+   User message   = right side
+   AI message     = left side
+*/
+
+/* Message rows must use the full available width */
+.message-row,
+.chat-message-row,
+.message-wrapper,
+.chat-message-wrapper,
+.user-message-row,
+.ai-message-row,
+.assistant-message-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    display: flex !important;
+    align-items: flex-start !important;
+
+    box-sizing: border-box !important;
+}
+
+/* User message row alignment */
+.message-row.user,
+.message-row.user-message,
+.message-wrapper.user,
+.chat-message-row.user,
+.chat-message-wrapper.user,
+.user-message-row,
+[data-role="user"] {
+    justify-content: flex-end !important;
+}
+
+/* AI message row alignment */
+.message-row.ai,
+.message-row.assistant,
+.message-row.ai-message,
+.message-wrapper.ai,
+.message-wrapper.assistant,
+.chat-message-row.ai,
+.chat-message-row.assistant,
+.ai-message-row,
+.assistant-message-row,
+[data-role="ai"],
+[data-role="assistant"] {
+    justify-content: flex-start !important;
+}
+
+/* Actual user and AI message bubbles */
+.message-bubble,
+.chat-bubble,
+.bubble,
+.message-content,
+.message-text,
+.user-message,
+.ai-message,
+.assistant-message,
+.message.user,
+.message.ai,
+.message.assistant,
+[data-role="user"] .message-content,
+[data-role="user"] .message-bubble,
+[data-role="assistant"] .message-content,
+[data-role="assistant"] .message-bubble,
+[data-role="ai"] .message-content,
+[data-role="ai"] .message-bubble {
+    width: fit-content !important;
+    width: -moz-fit-content !important;
+
+    min-width: 0 !important;
+    max-width: min(78%, 760px) !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    display: inline-block !important;
+    box-sizing: border-box !important;
+
+    padding: 11px 15px !important;
+
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-wrap: break-word !important;
+    word-break: normal !important;
+
+    line-height: 1.48 !important;
+    vertical-align: top !important;
+}
+
+/* Keep user bubbles on the right */
+.user-message,
+.message.user,
+.message-bubble.user,
+.chat-bubble.user,
+[data-role="user"] .message-content,
+[data-role="user"] .message-bubble {
+    align-self: flex-end !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+
+    border-bottom-right-radius: 6px !important;
+}
+
+/* Keep AI bubbles on the left */
+.ai-message,
+.assistant-message,
+.message.ai,
+.message.assistant,
+.message-bubble.ai,
+.message-bubble.assistant,
+.chat-bubble.ai,
+.chat-bubble.assistant,
+[data-role="assistant"] .message-content,
+[data-role="assistant"] .message-bubble,
+[data-role="ai"] .message-content,
+[data-role="ai"] .message-bubble {
+    align-self: flex-start !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+
+    border-bottom-left-radius: 6px !important;
+}
+
+/* Do not let inner text force the bubble to full width */
+.message-bubble > *,
+.chat-bubble > *,
+.message-content > *,
+.message-text > *,
+.user-message > *,
+.ai-message > *,
+.assistant-message > * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Normal text should not add unnecessary top or bottom space */
+.message-bubble > p:first-child,
+.chat-bubble > p:first-child,
+.message-content > p:first-child,
+.user-message > p:first-child,
+.ai-message > p:first-child,
+.assistant-message > p:first-child {
+    margin-top: 0 !important;
+}
+
+.message-bubble > p:last-child,
+.chat-bubble > p:last-child,
+.message-content > p:last-child,
+.user-message > p:last-child,
+.ai-message > p:last-child,
+.assistant-message > p:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Long links must stay inside the bubble */
+.message-bubble a,
+.chat-bubble a,
+.message-content a,
+.user-message a,
+.ai-message a,
+.assistant-message a {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Code blocks remain inside the AI reply */
+.message-bubble pre,
+.chat-bubble pre,
+.message-content pre,
+.ai-message pre,
+.assistant-message pre {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow-x: auto !important;
+    white-space: pre !important;
+
+    box-sizing: border-box !important;
+}
+
+.message-bubble code,
+.chat-bubble code,
+.message-content code,
+.ai-message code,
+.assistant-message code {
+    max-width: 100% !important;
+}
+
+/* Images and uploaded-file previews */
+.message-bubble img,
+.chat-bubble img,
+.message-content img,
+.user-message img,
+.ai-message img,
+.assistant-message img,
+.message-bubble video,
+.chat-bubble video,
+.message-content video {
+    display: block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* Streaming AI reply grows automatically while text arrives */
+.streaming,
+.is-streaming,
+.typing-message,
+.message.streaming,
+.ai-message.streaming,
+.assistant-message.streaming {
+    width: fit-content !important;
+    max-width: min(78%, 760px) !important;
+    height: auto !important;
+}
+
+/* Small typing indicator bubble */
+.typing-indicator,
+.ai-typing,
+.assistant-typing {
+    width: fit-content !important;
+    min-width: 54px !important;
+    max-width: 120px !important;
+    height: auto !important;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+    .message-bubble,
+    .chat-bubble,
+    .bubble,
+    .message-content,
+    .message-text,
+    .user-message,
+    .ai-message,
+    .assistant-message,
+    .message.user,
+    .message.ai,
+    .message.assistant,
+    [data-role="user"] .message-content,
+    [data-role="user"] .message-bubble,
+    [data-role="assistant"] .message-content,
+    [data-role="assistant"] .message-bubble,
+    [data-role="ai"] .message-content,
+    [data-role="ai"] .message-bubble {
+        max-width: 88% !important;
+        padding: 10px 13px !important;
+    }
+
+    .streaming,
+    .is-streaming,
+    .typing-message,
+    .message.streaming,
+    .ai-message.streaming,
+    .assistant-message.streaming {
+        max-width: 88% !important;
+    }
+}
+
+/* Very small phone screens */
+@media (max-width: 420px) {
+    .message-bubble,
+    .chat-bubble,
+    .bubble,
+    .message-content,
+    .message-text,
+    .user-message,
+    .ai-message,
+    .assistant-message,
+    .message.user,
+    .message.ai,
+    .message.assistant {
+        max-width: 92% !important;
+    }
+}
+
+/* MI AI AUTO MESSAGE BUBBLE SIZE - END */
 </style>
 </head>
 
