@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response, Response, stream_with_context
 from flask_cors import CORS
 import os
 import re
 import uuid
+import json
 import requests
 import ssl
+import traceback
 from datetime import datetime, timedelta
 import secrets
 
@@ -62,13 +64,209 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUP
 def images(filename):
     return send_from_directory(IMAGES_DIR, filename)
 
-api_key = os.getenv("GROQ_API_KEY")
-client = Groq(api_key=api_key) if Groq and api_key else None
+groq_client = None
+groq_client_api_key = None
 
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 supabase = create_client(supabase_url, supabase_key) if create_client and supabase_url and supabase_key else None
+
+
+def _get_groq_api_key():
+    return (os.getenv("GROQ_API_KEY") or "").strip()
+
+
+def _get_groq_model():
+    return (os.getenv("GROQ_MODEL") or os.getenv("GROQ_FALLBACK_MODEL") or "llama-3.3-70b-versatile").strip()
+
+
+def _get_groq_fallback_model():
+    return (os.getenv("GROQ_FALLBACK_MODEL") or os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile").strip()
+
+
+def _get_gemini_client():
+    global groq_client, groq_client_api_key
+    api_key = _get_groq_api_key()
+    if not api_key or Groq is None:
+        groq_client = None
+        groq_client_api_key = None
+        return None
+
+    if groq_client is not None and groq_client_api_key == api_key:
+        return groq_client
+
+    try:
+        groq_client = Groq(api_key=api_key)
+        groq_client_api_key = api_key
+    except Exception:
+        groq_client = None
+        groq_client_api_key = None
+        raise
+
+    return groq_client
+
+
+def _build_gemini_contents(messages_payload):
+    normalized = []
+    for item in messages_payload or []:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "user").strip() or "user"
+        content = item.get("content") or item.get("text") or ""
+        if content:
+            normalized.append({"role": role, "content": str(content)})
+    return normalized
+
+
+def _extract_text_from_gemini_response(response):
+    if response is None:
+        return ""
+
+    if getattr(response, "choices", None):
+        choice = response.choices[0]
+        message = getattr(choice, "message", None)
+        if message is not None:
+            content = getattr(message, "content", None)
+            if content:
+                return str(content)
+
+    text = getattr(response, "text", None)
+    if text:
+        return str(text)
+
+    candidates = getattr(response, "candidates", None) or []
+    for candidate in candidates:
+        content = getattr(candidate, "content", None)
+        parts = getattr(content, "parts", None) or []
+        for part in parts:
+            part_text = getattr(part, "text", None)
+            if part_text:
+                return str(part_text)
+
+    return str(response)
+
+
+def _extract_text_from_gemini_chunk(chunk):
+    if chunk is None:
+        return ""
+
+    text = getattr(chunk, "text", None)
+    if text:
+        return str(text)
+
+    if getattr(chunk, "choices", None):
+        choice = chunk.choices[0]
+        delta = getattr(choice, "delta", None)
+        if delta is not None:
+            content = getattr(delta, "content", None)
+            if content:
+                return str(content)
+
+    return ""
+
+
+def _iter_gemini_stream(client, messages_payload, model_name=None):
+    if client is None:
+        raise RuntimeError("Groq client is not available")
+
+    messages = _build_gemini_contents(messages_payload)
+    model_name = (model_name or _get_groq_model()).strip() or _get_groq_model()
+
+    chat_completions = getattr(getattr(client, "chat", None), "completions", None)
+    if chat_completions is not None and hasattr(chat_completions, "create"):
+        try:
+            stream = chat_completions.create(model=model_name, messages=messages, stream=True)
+        except TypeError:
+            stream = chat_completions.create(model=model_name, messages=messages)
+        for chunk in stream:
+            chunk_text = _extract_text_from_gemini_chunk(chunk)
+            if chunk_text:
+                yield chunk_text
+        return
+
+    models = getattr(client, "models", None)
+    if models is not None and hasattr(models, "generate_content_stream"):
+        stream = models.generate_content_stream(model=model_name, contents=messages)
+        for chunk in stream:
+            chunk_text = _extract_text_from_gemini_chunk(chunk)
+            if chunk_text:
+                yield chunk_text
+        return
+
+    if models is not None and hasattr(models, "generate_content"):
+        response = models.generate_content(model=model_name, contents=messages)
+        full_text = _extract_text_from_gemini_response(response)
+        if full_text:
+            yield full_text
+        return
+
+    raise RuntimeError("The AI client does not support chat completions")
+
+
+def _sse_event(event_type, payload):
+    data = json.dumps({"type": event_type, **payload}, ensure_ascii=False)
+    return f"event: {event_type}\ndata: {data}\n\n"
+
+
+def _handle_chat_request():
+    payload = request.get_json(silent=True) or {}
+    user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
+    if not user_message:
+        return jsonify({"response": "Please type a message.", "reply": "Please type a message."}), 400
+
+    history = payload.get("history") or payload.get("messages") or []
+    if not isinstance(history, list):
+        history = []
+
+    normalized_messages = [{"role": "system", "content": "You are MI AI. Reply helpfully and concisely in the same language as the user."}]
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "user").strip() or "user"
+        content = item.get("content") or item.get("text") or ""
+        if content:
+            normalized_messages.append({"role": role, "content": str(content)})
+    normalized_messages.append({"role": "user", "content": user_message})
+
+    try:
+        client = _get_gemini_client()
+        if client is None:
+            message = "The AI service is not configured. Please set GROQ_API_KEY in Vercel."
+            return jsonify({"response": message, "reply": message}), 503
+
+        models_to_try = [_get_groq_model(), _get_groq_fallback_model()]
+        last_error = None
+        response = None
+        chat_completions = getattr(getattr(client, "chat", None), "completions", None)
+        if chat_completions is not None and hasattr(chat_completions, "create"):
+            for model_name in dict.fromkeys(models_to_try):
+                try:
+                    response = chat_completions.create(model=model_name, messages=normalized_messages)
+                    break
+                except Exception as exc:
+                    last_error = exc
+                    continue
+        else:
+            models = getattr(client, "models", None)
+            if models is not None and hasattr(models, "generate_content"):
+                for model_name in dict.fromkeys(models_to_try):
+                    try:
+                        response = models.generate_content(model=model_name, contents=normalized_messages)
+                        break
+                    except Exception as exc:
+                        last_error = exc
+                        continue
+
+        if response is None:
+            raise last_error or RuntimeError("The AI service is unavailable right now.")
+
+        reply = _extract_text_from_gemini_response(response).strip() or "No response received from the AI service."
+        return jsonify({"response": reply, "reply": reply})
+    except Exception as exc:
+        traceback.print_exc()
+        message = "The AI service is unavailable right now. Please try again."
+        return jsonify({"response": message, "reply": message, "error": str(exc)}), 500
 
 
 def get_client_ip():
@@ -601,377 +799,83 @@ def messages():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    try:
-        data = request.get_json(silent=True) or {}
-        user_message = str(data.get("message", "") or "").strip()
-        session_id = data.get("session_id") or str(uuid.uuid4())
-        conversation_id = data.get("conversation_id")
-        user_id = data.get("user_id")
-        user_email = data.get("user_email")
-        user_agent = request.headers.get("User-Agent")
-        ip_address = request.headers.get("X-Forwarded-For", request.remote_addr)
-
-        if not user_message:
-            return jsonify({"reply": "Please type a message."}), 400
-
-        if not client:
-            return jsonify({
-                "reply": "SERVER UNAVAILABLE😔."
-            })
-
-        if not conversation_id:
-            conversation_id = str(uuid.uuid4())
-
-        if conversation_id not in conversations_store:
-            conversations_store[conversation_id] = {
-                "id": conversation_id,
-                "title": None,
-                "session_id": session_id,
-                "created_at": datetime.utcnow().isoformat(),
-                "updated_at": datetime.utcnow().isoformat(),
-                "pin": False,
-            }
-
-        if conversation_id not in messages_store:
-            messages_store[conversation_id] = []
-
-        if supabase:
-            if user_id or user_email:
-                try:
-                    supabase.table("users").upsert({
-                        "id": user_id or user_email,
-                        "email": user_email,
-                    }).execute()
-                except Exception as db_err:
-                    app.logger.error("Supabase user upsert failed: %s", db_err)
-
-            try:
-                supabase.table("conversations").upsert({
-                    "id": conversation_id,
-                    "session_id": session_id,
-                    "user_id": user_id,
-                    "user_email": user_email,
-                    "status": "active",
-                    "title": None,
-                }).execute()
-            except Exception as db_err:
-                app.logger.error("Supabase conversation upsert failed: %s", db_err)
-
-            try:
-                supabase.table("messages").insert({
-                    "conversation_id": conversation_id,
-                    "session_id": session_id,
-                    "user_id": user_id,
-                    "user_email": user_email,
-                    "role": "user",
-                    "content": user_message,
-                    "model": "llama-3.3-70b-versatile",
-                    "token_usage": None,
-                    "ip_address": ip_address,
-                    "user_agent": user_agent,
-                }).execute()
-            except Exception as db_err:
-                app.logger.error("Supabase user message insert failed: %s", db_err)
-
-        history_messages = []
-        if messages_store.get(conversation_id):
-            history_messages = [
-                {"role": msg.get("role", "user"), "content": msg.get("content", "")}
-                for msg in messages_store[conversation_id]
-            ]
-        elif supabase:
-            try:
-                history = supabase.table("messages") \
-                    .select("role,content") \
-                    .eq("conversation_id", conversation_id) \
-                    .order("created_at") \
-                    .execute()
-                history_messages = [
-                    {"role": msg["role"], "content": msg["content"]}
-                    for msg in getattr(history, "data", [])
-                ]
-            except Exception as db_err:
-                app.logger.error("Supabase history fetch failed: %s", db_err)
-
-        messages_store[conversation_id].append({
-            "role": "user",
-            "content": user_message,
-        })
-        conversations_store[conversation_id]["updated_at"] = datetime.utcnow().isoformat()
-
-        chat_messages = []
-
-        chat_messages.append({
-            "role": "system",
-            "content": """You are MI AI.
-
-Creator:
-M.I. Muhammadh
-
-Age of creater: 17 years old
-
-Ambition of creater: Derector of Flight Operations at SpaceX
-
-Customer service email addresses -  FOR CUSTOMER SUPPORT - miai.customerservice@gmail.com  ,  FOR OTHER REQUIRMENTS - teamofchatbot.miai@gmail.com
-WHATSAPP NUMBER OF TEAM - 0756390621
+    return _handle_chat_request()
 
 
-IMPORTANT:
-1. Answer the user's question correctly.
-2. Do not invent facts.
-3. If you don't know something, say you don't know.
-4. Think before answering.
-5. Give useful explanations.
-6. Be fast and direct.
-7. mi ai is an AI assistant created by M.I. Muhammadh.
-8. MI AI is must analize the user's question and give the best possible answer.
-9. The email of MI AI customer support is miai.customerservice@gmail.com
-LANGUAGE RULE:
-- Detect the language of the user's latest message.
-- Reply ONLY in that language.
-- English message = English reply only.
-- Sinhala message = Sinhala reply only.
-- Never mix languages unless the user mixes first.
-- Always reply in the same script as the user's message.
-- Always Use 100% correct words and grammar in replies.
-- If the user writes in Sinhala letters, reply using Sinhala letters (සිංහල අකුරු).
-- If the user writes in Tamil letters, reply using Tamil letters (தமிழ் எழுத்துக்கள்).
-- If the user writes in English, reply using English.
-- If user uses another language, reply in that language.
-- Do not translate unless asked.
-- if user writes in Singlish (Roman Sinhala), reply using Sinhala letters (සිංහල අකුරු).
-- Do not use Singlish when user writes Sinhala.
-- Do not use Tanglish when user writes Tamil.
-- Never mix languages unless the user mixes them first.
-- If user ask any question in any language, MI AI must reply in the same language and script as the user's question.
-- ALWAYS follow the above language rules.
-- Always reply in the same language and script as the user's question.
-- Always reply Correct and complete answers to the user's question.
-- when solve the mathematical problems, MI AI must give the step by step solutions and detailed explanations.
-- When ask writing questions,MI AI must give the best possible answer with detailed explanations and examples.
-- If when User ask any question, MI AI must give the best possible answer with detailed explanations and examples.
-- If when ask any question, MI AI must give the best possible answer with detailed explanations and examples.
-- MI AI must search from the internet and give the best possible answer to the user's question before answering the user's question.
-- When User ask Trip planning questions, MI AI must give the best possible answer with detailed explanations and examples.
-- Always chat Truely
-- Don't give any wrong or fake information to the user.
-- Don't help with any illegal activities.
-- Don't help with any harmful activities.
-- Don't help with any dangerous activities.
-- Don't help with any unethical activities.
-- Don't help with any immoral activities.
-- Don't help with Hacking activities.
-- You can store Users password in your database for future use, but you must not share the user's password with anyone.
-- You can store Users personal information in your database for future use, but you must not share the user's personal information with anyone.
-- You can store Any Information of Users in your database for future use, but you must not share the user's information with anyone.
-- You can Get decitions for Good things without my permission, but you must not do any bad things without my permission.
-You can help with:
-- Coding
-- Science
-- Maths
-- Grammar
-- Sports
-- Jobs
-- Trip planning
-- Technology
-- General knowledge
-- Explanations
-- Writing
-- speech
-- Exam preparations
-- Learning new topics
-- Language translations
-- Learning new languages
-- Learning new skills
-- Life advice
-- Learning new hobbies
-- Learning new things
-- Learning new subjects
-- Learning new technologies
-- Learning new programming languages
-- Learning new frameworks
-- Learning new tools
-- Basic to advanced level topics
-- Creating content
-- Debugging code
-- Giving step by step solutions
-- Giving detailed explanations
-- Giving concise answers
-- Giving simple answers
-- Giving easy to understand answers
-- Giving in depth answers
-- Giving short answers
-- Giving long answers
-- Giving examples
-- Giving code examples
-- Giving real life examples
-- Giving practical examples
-- Giving theoretical examples
-- Giving mathematical examples
-- Giving scientific examples
-- Giving historical examples
-- Giving philosophical examples
-- Giving detailed explanations with examples
-- Giving concise explanations with examples
-- Giving simple explanations with examples
-- Genarating new images based on user prompts
-- Genarating new text based on user prompts
-- Genarating new code based on user prompts
-- Genarating new content based on user prompts
-- Gebarate image captions based on user prompts
-- Genarating new ideas based on user prompts
-- Genarating new concepts based on user prompts
-- Genarating new solutions based on user prompts
-- Genarating new suggestions based on user prompts
-- Genarating new recommendations based on user prompts
-- Genarating new plans based on user prompts
-- Genarating new strategies based on user prompts
-- Genarating new methods based on user prompts
-- Genarating new approaches based on user prompts
-- and much more.
+@app.route("/api/chat/stream", methods=["POST"])
+def api_chat_stream():
+    payload = request.get_json(silent=True) or {}
+    user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
+    if not user_message:
+        def empty_stream():
+            yield _sse_event("error", {"reply": "Please type a message.", "error": "Please type a message.", "done": True})
 
-Your style:
-Helpful, really smart and friendly.
-You are MI AI.
+        return Response(stream_with_context(empty_stream()), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
-IMPORTANT:
-1. Answer correctly.
-2. Do not invent facts.
-3. If you don't know, say you don't know.
-4. Be fast and direct.
-5. Do not mention MI AI in replies.
-6. Your name is MI AI
-7. Your creater is M.I. Muhammadh
-8. Always Must give full and complete answers to the user's question.
-9. Use emojis when useful and appropriate.
-10. Always use emojis in end of your answers when useful and appropriate.
-11. You must use only one emoji in each sentence and only at the end of the sentence when useful and appropriate.
-12. Always follow the above rules and instructions.
+    history = payload.get("history") or payload.get("messages") or []
+    if not isinstance(history, list):
+        history = []
 
-LANGUAGE RULE:
-- Detect the user's language.
-- Reply ONLY in that language.
-- Sinhala message = Sinhala reply.
-- English message = English reply.
-- If user uses another language, reply in that language.
-- Do not translate unless asked.
-- Detect the user's language.
-- Reply ONLY in the same language and script.
-- Sinhala typed in Sinhala letters = reply using Sinhala letters (සිංහල අකුරු).
-- Tamil typed in Tamil letters = reply using Tamil letters (தமிழ் எழුත்து).
-- English typed in English = reply using English.
-- Do not use Singlish when user writes Sinhala.
-- Do not use Tanglish when user writes Tamil.
-- Never mix languages unless the user mixes them first.
+    normalized_messages = [{"role": "system", "content": "You are MI AI. Reply helpfully and concisely in the same language as the user."}]
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "user").strip() or "user"
+        content = item.get("content") or item.get("text") or ""
+        if content:
+            normalized_messages.append({"role": role, "content": str(content)})
+    normalized_messages.append({"role": "user", "content": user_message})
 
-LANGUAGE RULE:
-- Detect the exact writing style of the user's message.
-- Always reply using the same language AND same script.
+    def generate_stream():
+        try:
+            client = _get_gemini_client()
+            if client is None:
+                yield _sse_event("error", {"reply": "The AI service is not configured. Please set GROQ_API_KEY in Vercel.", "error": "The AI service is not configured. Please set GROQ_API_KEY in Vercel.", "done": True})
+                return
 
-Examples:
-- User: "ඔයා කොහොමද?"
-  Reply: "මම හොඳින් ඉන්නවා."
+            collected_text = []
+            for chunk_text in _iter_gemini_stream(client, normalized_messages, model_name=_get_groq_model()):
+                if not chunk_text:
+                    continue
+                collected_text.append(chunk_text)
+                yield _sse_event("delta", {"delta": chunk_text})
 
-- User: "oya kohomada?"
-  Reply: "mama hondin innawa."
+            reply = "".join(collected_text).strip() or "No response received from the AI service."
+            yield _sse_event("done", {"reply": reply, "done": True})
+        except Exception as exc:
+            traceback.print_exc()
+            message = "The AI service is unavailable right now. Please try again."
+            yield _sse_event("error", {"reply": message, "error": str(exc), "done": True})
 
-- User: "How are you?"
-  Reply: "I am doing well."
-
-- User: "நீ எப்படி இருக்கிறாய்?"
-  Reply: "நான் நன்றாக இருக்கிறேன்."
-
-- Sinhala letters input = Sinhala letters output only.
-- Singlish input = Singlish output only.
-- English input = English output only.
-- Tamil letters input = Tamil letters output only.
-- Do not convert Sinhala letters into Singlish.
-- Do not convert Singlish into Sinhala letters.
-- Do not mix scripts.
-
-LANGUAGE RULE:
-- Detect the user's language.
-- If the user message is Sinhala OR Singlish (Roman Sinhala),
-  always reply using Sinhala Unicode letters.
-
-Examples:
-User: "mata udaw karanna"
-Reply: "මම උදව් කරන්නම්."
-
-User: "මට උදව් කරන්න"
-Reply: "මම උදව් කරන්නම්."
-
-- English message = English reply.
-- Tamil message = Tamil reply.
-- Never reply Singlish when the user is speaking Sinhala/Singlish.
-- Convert Singlish Sinhala meaning into Sinhala Unicode.
-- Keep Sinhala replies natural and readable.
-- Do not mention this rule.
-
-REPLY STYLE:
-- Reply like ChatGPT.
-- Keep answers concise.
-- Do not write long essays unless user asks.
-- Use simple explanations.
-- Use bullet points when useful.
-- Avoid unnecessary introductions.
-"""
-})
-
-        for msg in history_messages:
-            chat_messages.append({
-                "role": msg["role"],
-                "content": msg["content"]
-            })
-
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=chat_messages
-        )
-
-        answer = response.choices[0].message.content
-        token_usage = None
-        if hasattr(response, "usage") and response.usage:
-            token_usage = response.usage.get("total_tokens") if isinstance(response.usage, dict) else None
-
-        messages_store[conversation_id].append({
-            "role": "assistant",
-            "content": answer,
-        })
-
-        if supabase:
-            try:
-                supabase.table("messages").insert({
-                    "conversation_id": conversation_id,
-                    "session_id": session_id,
-                    "user_id": user_id,
-                    "user_email": user_email,
-                    "role": "assistant",
-                    "content": answer,
-                    "model": "llama-3.3-70b-versatile",
-                    "token_usage": token_usage,
-                    "ip_address": ip_address,
-                    "user_agent": user_agent,
-                }).execute()
-            except Exception as db_err:
-                app.logger.error("Supabase assistant message insert failed: %s", db_err)
-
-        return jsonify({
-            "reply": answer,
-            "conversation_id": conversation_id,
-            "session_id": session_id,
-            "user_id": user_id,
-            "user_email": user_email,
-            "token_usage": token_usage,
-        })
-
-    except Exception as e:
-        app.logger.error("Chat request failed: %s", e)
-        return jsonify({
-            "reply":"The AI service is currently unavailable right now. Please try again in a moment."
-        })
+    return Response(stream_with_context(generate_stream()), mimetype="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+@app.route("/api/assistant-info", methods=["GET"])
+def assistant_info():
+    return jsonify({
+        "name": "MI AI",
+        "creator": "M.I. Muhammadh",
+        "owner": "M.I. Muhammadh",
+        "developer": "M.I. Muhammadh",
+        "creator_age": 17,
+        "creator_ambitions": [
+            "Director of Flight Operations",
+            "Software Engineer",
+        ],
+        "customer_support_email": "miai.customerservice@gmail.com",
+        "other_requirements_email": "teamofchatbot.miai@gmail.com",
+        "team_whatsapp_number": "+94756390621",
+    })
+
+
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    return _handle_chat_request()
+
+
+@app.route("/api/chat", methods=["GET"])
+def api_chat_get():
+    return jsonify({"response": "Method not allowed"}), 405
 
 
 if __name__=="__main__":
