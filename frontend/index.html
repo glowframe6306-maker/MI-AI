@@ -5384,27 +5384,62 @@ body.mi-keyboard-visible .composer {
 
 /* MI AI SETTINGS ACCORDION COPY MOBILE - END */
 
-/* MI AI IOS CUSTOM SELECT - START */
 
-.mi-ios-select {
-    position: relative;
-    width: 100%;
-    z-index: 20;
+
+/* MI AI IOS SELECT AND ICON SYSTEM - START */
+
+:root {
+    --mi-ios-light-top:
+        rgba(255, 255, 255, 0.98);
+
+    --mi-ios-light-bottom:
+        rgba(225, 233, 244, 0.92);
+
+    --mi-ios-dark-text:
+        #111827;
+
+    --mi-ios-muted-text:
+        #4b5563;
+
+    --mi-ios-border:
+        rgba(255, 255, 255, 0.86);
 }
 
-.mi-ios-select-native {
+/* Native selects remain in the document for existing logic,
+   but are visually hidden after enhancement. */
+select[data-mi-ios-ready="true"] {
     position: absolute !important;
+
     width: 1px !important;
     height: 1px !important;
+
+    min-width: 1px !important;
+    min-height: 1px !important;
+
+    margin: -1px !important;
+    padding: 0 !important;
+
     opacity: 0 !important;
+
     pointer-events: none !important;
+
     overflow: hidden !important;
+
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+}
+
+/* Custom trigger */
+.mi-ios-select-shell {
+    width: 100%;
+    position: relative;
 }
 
 .mi-ios-select-trigger {
     width: 100% !important;
     min-height: 50px !important;
 
+    margin: 0 !important;
     padding: 11px 14px !important;
 
     display: flex !important;
@@ -5415,21 +5450,22 @@ body.mi-keyboard-visible .composer {
 
     border:
         1px solid
-        rgba(255, 255, 255, 0.42)
+        var(--mi-ios-border)
         !important;
 
     border-radius:
-        16px !important;
+        17px !important;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255, 255, 255, 0.92),
-            rgba(235, 241, 250, 0.76)
+            var(--mi-ios-light-top),
+            var(--mi-ios-light-bottom)
         ) !important;
 
     color:
-        #111827 !important;
+        var(--mi-ios-dark-text)
+        !important;
 
     font-family:
         "Nirmala UI",
@@ -5441,27 +5477,29 @@ body.mi-keyboard-visible .composer {
         15px !important;
 
     font-weight:
-        650 !important;
+        700 !important;
 
-    text-align:
-        left;
+    line-height:
+        1.3 !important;
+
+    text-align: left !important;
 
     -webkit-backdrop-filter:
-        blur(24px)
-        saturate(180%);
+        blur(25px)
+        saturate(185%);
 
     backdrop-filter:
-        blur(24px)
-        saturate(180%);
+        blur(25px)
+        saturate(185%);
 
     box-shadow:
         inset 0 1px 0
-            rgba(255, 255, 255, 0.96),
-        0 8px 24px
-            rgba(0, 0, 0, 0.16)
+            rgba(255, 255, 255, 1),
+        0 9px 28px
+            rgba(0, 0, 0, 0.19)
         !important;
 
-    cursor: pointer;
+    cursor: pointer !important;
 }
 
 .mi-ios-select-trigger::before,
@@ -5469,92 +5507,109 @@ body.mi-keyboard-visible .composer {
     display: none !important;
 }
 
-.mi-ios-select-trigger:hover {
-    transform: none !important;
-
-    border-color:
+.mi-ios-select-trigger:focus-visible {
+    outline:
+        3px solid
         rgba(
-            var(--mi-theme-rgb, 80, 120, 255),
-            0.66
-        ) !important;
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.32
+        );
+
+    outline-offset: 2px;
 }
 
-.mi-ios-select-arrow {
-    flex: 0 0 auto;
+.mi-ios-select-trigger-text {
+    min-width: 0;
 
     color:
-        #374151;
+        var(--mi-ios-dark-text)
+        !important;
 
-    font-size:
-        14px;
-
-    transition:
-        transform 180ms ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.mi-ios-select.mi-open
-.mi-ios-select-arrow {
+.mi-ios-select-chevron {
+    width: 18px;
+    height: 18px;
+
+    flex: 0 0 18px;
+
+    color:
+        var(--mi-ios-muted-text);
+
+    transition:
+        transform 170ms ease;
+}
+
+.mi-ios-select-trigger[aria-expanded="true"]
+.mi-ios-select-chevron {
     transform: rotate(180deg);
 }
 
-.mi-ios-select-menu {
-    position: absolute;
+/* Popup is appended to body and uses fixed positioning,
+   so the modal cannot clip it. */
+#miIosSelectPopup {
+    position: fixed;
 
-    left: 0;
-    right: 0;
-    top: calc(100% + 8px);
-
-    z-index: 999999;
+    z-index: 2147483000;
 
     display: none;
     flex-direction: column;
 
-    max-height: min(300px, 52vh);
+    min-width: 180px;
+
+    max-width:
+        calc(100vw - 16px);
+
+    max-height:
+        min(360px, 62vh);
 
     padding: 7px;
 
+    overflow-x: hidden;
     overflow-y: auto;
 
     border:
         1px solid
-        rgba(255, 255, 255, 0.76);
+        rgba(255, 255, 255, 0.90);
 
     border-radius:
-        20px;
+        21px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255, 255, 255, 0.94),
-            rgba(232, 239, 249, 0.84)
+            rgba(255, 255, 255, 0.98),
+            rgba(224, 232, 243, 0.94)
         );
 
     -webkit-backdrop-filter:
-        blur(30px)
+        blur(32px)
         saturate(190%);
 
     backdrop-filter:
-        blur(30px)
+        blur(32px)
         saturate(190%);
 
     box-shadow:
         inset 0 1px 0
             rgba(255, 255, 255, 1),
-        0 20px 60px
-            rgba(0, 0, 0, 0.28);
+        0 24px 75px
+            rgba(0, 0, 0, 0.34);
 
     opacity: 0;
 
     transform:
-        translateY(-5px)
+        translateY(-6px)
         scale(0.98);
 
     transform-origin:
         top center;
 }
 
-.mi-ios-select.mi-open
-.mi-ios-select-menu {
+#miIosSelectPopup.mi-open {
     display: flex;
 
     opacity: 1;
@@ -5564,12 +5619,12 @@ body.mi-keyboard-visible .composer {
         scale(1);
 
     animation:
-        miIosSelectOpen
+        miIosPopupOpen
         180ms
         cubic-bezier(.2, .8, .2, 1);
 }
 
-@keyframes miIosSelectOpen {
+@keyframes miIosPopupOpen {
     from {
         opacity: 0;
 
@@ -5587,9 +5642,9 @@ body.mi-keyboard-visible .composer {
     }
 }
 
-.mi-ios-select-option {
+.mi-ios-popup-option {
     width: 100% !important;
-    min-height: 46px !important;
+    min-height: 49px !important;
 
     margin: 0 !important;
     padding: 10px 12px !important;
@@ -5601,7 +5656,7 @@ body.mi-keyboard-visible .composer {
     gap: 12px;
 
     border: 0 !important;
-    border-radius: 13px !important;
+    border-radius: 14px !important;
 
     background:
         transparent !important;
@@ -5609,145 +5664,200 @@ body.mi-keyboard-visible .composer {
     color:
         #111827 !important;
 
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif
+        !important;
+
     font-size:
         15px !important;
 
     font-weight:
-        600 !important;
+        650 !important;
 
-    text-align:
-        left;
+    line-height:
+        1.35 !important;
 
-    box-shadow:
-        none !important;
+    text-align: left !important;
 
-    cursor: pointer;
+    text-shadow: none !important;
+
+    box-shadow: none !important;
+
+    cursor: pointer !important;
 }
 
-.mi-ios-select-option::before,
-.mi-ios-select-option::after {
+.mi-ios-popup-option::before,
+.mi-ios-popup-option::after {
     display: none !important;
 }
 
-.mi-ios-select-option:hover,
-.mi-ios-select-option:focus-visible {
+.mi-ios-popup-option:hover,
+.mi-ios-popup-option:focus-visible {
     background:
         rgba(
-            var(--mi-theme-rgb, 80, 120, 255),
-            0.13
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.15
         ) !important;
 
     color:
         #111827 !important;
 
-    transform:
-        none !important;
+    outline: none !important;
 
-    outline:
-        none;
+    transform: none !important;
 }
 
-.mi-ios-select-option.mi-selected {
+.mi-ios-popup-option.mi-selected {
     background:
         rgba(
-            var(--mi-theme-rgb, 80, 120, 255),
-            0.20
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.23
         ) !important;
 
     color:
         #111827 !important;
 
     font-weight:
-        750 !important;
+        800 !important;
 }
 
-.mi-ios-select-check {
-    width: 24px;
-    height: 24px;
+.mi-ios-option-label {
+    min-width: 0;
+
+    color:
+        #111827 !important;
+
+    overflow-wrap: anywhere;
+}
+
+.mi-ios-option-check {
+    width: 25px;
+    height: 25px;
+
+    flex: 0 0 25px;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    flex: 0 0 24px;
-
     border-radius: 50%;
 
     background:
         rgba(
-            var(--mi-theme-rgb, 80, 120, 255),
-            0.18
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.19
         );
 
     color:
-        rgb(
-            var(--mi-theme-rgb, 80, 120, 255)
-        );
-
-    font-size:
-        13px;
+        #111827;
 
     opacity: 0;
 }
 
-.mi-ios-select-option.mi-selected
-.mi-ios-select-check {
+.mi-ios-popup-option.mi-selected
+.mi-ios-option-check {
     opacity: 1;
 }
 
-.mi-ios-select-menu::-webkit-scrollbar {
-    width: 6px;
+/* iPhone-style SVG icons */
+.mi-ios-icon {
+    width: 18px;
+    height: 18px;
+
+    flex: 0 0 18px;
+
+    display: inline-block;
+
+    fill: none;
+
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    pointer-events: none;
 }
 
-.mi-ios-select-menu::-webkit-scrollbar-thumb {
-    border-radius: 999px;
+.mi-ios-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    background:
-        rgba(17, 24, 39, 0.25);
+    flex: 0 0 auto;
 }
 
-/* Ensure the share modal does not cut the dropdown */
-#shareModal,
-.share-modal,
-.share-dialog,
-.modal-content:has(.mi-ios-select),
-.dialog:has(.mi-ios-select) {
-    overflow: visible !important;
+.mi-ios-icon-label {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 8px;
 }
 
+/* Icon-only controls */
+#settingsCloseBtn,
+.close-btn,
+.modal-close,
+.mi-ai-functional-copy,
+.mi-ai-copy-below,
+.aiCopyButton,
+.copy-btn,
+.copy-button {
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Prevent old emoji from taking space */
+[data-mi-ios-icon-applied="true"]
+.mi-old-icon-text {
+    display: none !important;
+}
+
+/* Larger phone controls */
 @media (max-width: 700px) {
     .mi-ios-select-trigger {
-        min-height:
-            56px !important;
+        min-height: 58px !important;
 
         padding:
             13px 15px !important;
 
+        border-radius:
+            19px !important;
+
         font-size:
-            17px !important;
+            18px !important;
     }
 
-    .mi-ios-select-menu {
+    #miIosSelectPopup {
         max-height:
-            46dvh;
+            min(430px, 65dvh);
 
         border-radius:
-            22px;
+            23px;
     }
 
-    .mi-ios-select-option {
-        min-height:
-            54px !important;
+    .mi-ios-popup-option {
+        min-height: 58px !important;
 
         padding:
-            12px 14px !important;
+            13px 14px !important;
 
         font-size:
-            17px !important;
+            18px !important;
+    }
+
+    .mi-ios-icon {
+        width: 20px;
+        height: 20px;
+
+        flex-basis: 20px;
     }
 }
 
-/* MI AI IOS CUSTOM SELECT - END */
+/* MI AI IOS SELECT AND ICON SYSTEM - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -13439,107 +13549,363 @@ document.addEventListener(
 /* MI AI SETTINGS ACCORDION COPY MOBILE JS - END */
 </script>
 
+
+
 <script>
-/* MI AI IOS CUSTOM SELECT JS - START */
+/* MI AI IOS SELECT AND ICON SYSTEM JS - START */
 
 (function () {
     "use strict";
 
-    const processed =
+    const enhancedSelects =
         new WeakSet();
 
-    function shouldEnhance(select) {
-        if (
-            !(select instanceof
-                HTMLSelectElement)
-            || processed.has(select)
-        ) {
-            return false;
+    let activeSelect = null;
+    let activeTrigger = null;
+    let popup = null;
+
+    const icons = {
+        plus:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+
+        support:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><path d="M4 13a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2"/><path d="M20 13a2 2 0 0 1-2 2h-1V9h1a2 2 0 0 1 2 2"/><path d="M17 18c-1 1-2.5 1.5-5 1.5"/></svg>',
+
+        settings:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>',
+
+        logout:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/></svg>',
+
+        close:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+
+        send:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg>',
+
+        copy:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
+
+        share:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 12v7h14v-7"/></svg>',
+
+        chevron:
+            '<svg class="mi-ios-select-chevron mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"/></svg>'
+    };
+
+    function ensurePopup() {
+        if (popup) {
+            return popup;
         }
 
-        const details = [
-            select.id,
-            select.name,
-            select.className,
-            select.getAttribute(
-                "aria-label"
-            ),
-            select.previousElementSibling
-                ?.textContent,
-            select.closest(
-                "label"
-            )?.textContent,
-            select.parentElement
-                ?.textContent
-        ]
-            .join(" ")
-            .toLowerCase();
+        popup =
+            document.createElement("div");
 
-        const optionText =
-            Array.from(select.options)
-                .map(function (option) {
-                    return option.textContent;
-                })
-                .join(" ")
-                .toLowerCase();
+        popup.id =
+            "miIosSelectPopup";
 
-        return (
-            details.includes("permission")
-            || details.includes("language")
-            || details.includes("භාෂා")
-            || details.includes("மொழி")
-            || optionText.includes("view only")
-            || optionText.includes("can edit")
+        popup.setAttribute(
+            "role",
+            "listbox"
+        );
+
+        document.body.appendChild(
+            popup
+        );
+
+        return popup;
+    }
+
+    function closePopup() {
+        if (popup) {
+            popup.classList.remove(
+                "mi-open"
+            );
+
+            popup.replaceChildren();
+        }
+
+        if (activeTrigger) {
+            activeTrigger.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+
+        activeSelect = null;
+        activeTrigger = null;
+    }
+
+    function positionPopup(trigger) {
+        const menu = ensurePopup();
+        const rect =
+            trigger.getBoundingClientRect();
+
+        const margin = 8;
+
+        const width =
+            Math.min(
+                Math.max(
+                    rect.width,
+                    200
+                ),
+                window.innerWidth
+                    - margin * 2
+            );
+
+        menu.style.width =
+            width + "px";
+
+        menu.style.left =
+            Math.max(
+                margin,
+                Math.min(
+                    rect.left,
+                    window.innerWidth
+                        - width
+                        - margin
+                )
+            ) + "px";
+
+        menu.style.top =
+            rect.bottom + 8 + "px";
+
+        requestAnimationFrame(
+            function () {
+                const menuRect =
+                    menu.getBoundingClientRect();
+
+                if (
+                    menuRect.bottom >
+                    window.innerHeight - margin
+                ) {
+                    const above =
+                        rect.top
+                        - menuRect.height
+                        - 8;
+
+                    menu.style.top =
+                        Math.max(
+                            margin,
+                            above
+                        ) + "px";
+                }
+            }
         );
     }
 
-    function closeAll(except) {
-        document
-            .querySelectorAll(
-                ".mi-ios-select.mi-open"
-            )
-            .forEach(function (wrapper) {
-                if (wrapper !== except) {
-                    wrapper.classList.remove(
-                        "mi-open"
+    function rebuildPopup(
+        select,
+        trigger
+    ) {
+        const menu = ensurePopup();
+
+        menu.replaceChildren();
+
+        Array.from(
+            select.options
+        ).forEach(function (
+            option,
+            index
+        ) {
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "mi-ios-popup-option";
+
+            button.setAttribute(
+                "role",
+                "option"
+            );
+
+            const isSelected =
+                index ===
+                select.selectedIndex;
+
+            button.classList.toggle(
+                "mi-selected",
+                isSelected
+            );
+
+            button.setAttribute(
+                "aria-selected",
+                String(isSelected)
+            );
+
+            const label =
+                document.createElement(
+                    "span"
+                );
+
+            label.className =
+                "mi-ios-option-label";
+
+            label.textContent =
+                option.textContent;
+
+            const check =
+                document.createElement(
+                    "span"
+                );
+
+            check.className =
+                "mi-ios-option-check";
+
+            check.textContent = "✓";
+
+            check.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            button.append(
+                label,
+                check
+            );
+
+            button.addEventListener(
+                "click",
+                function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    select.selectedIndex =
+                        index;
+
+                    select.dispatchEvent(
+                        new Event(
+                            "input",
+                            {
+                                bubbles: true
+                            }
+                        )
                     );
 
-                    wrapper
-                        .querySelector(
-                            ".mi-ios-select-trigger"
+                    select.dispatchEvent(
+                        new Event(
+                            "change",
+                            {
+                                bubbles: true
+                            }
                         )
-                        ?.setAttribute(
-                            "aria-expanded",
-                            "false"
-                        );
+                    );
+
+                    updateTrigger(
+                        select,
+                        trigger
+                    );
+
+                    closePopup();
+
+                    trigger.focus();
                 }
-            });
+            );
+
+            menu.appendChild(
+                button
+            );
+        });
     }
 
-    function selectedOption(select) {
-        return (
+    function updateTrigger(
+        select,
+        trigger
+    ) {
+        const selected =
             select.options[
                 select.selectedIndex
-            ]
-            || select.options[0]
+            ] || select.options[0];
+
+        const text =
+            trigger.querySelector(
+                ".mi-ios-select-trigger-text"
+            );
+
+        if (text) {
+            text.textContent =
+                selected?.textContent
+                || "";
+        }
+
+        trigger.disabled =
+            select.disabled;
+    }
+
+    function openPopup(
+        select,
+        trigger
+    ) {
+        closePopup();
+
+        activeSelect = select;
+        activeTrigger = trigger;
+
+        rebuildPopup(
+            select,
+            trigger
+        );
+
+        positionPopup(trigger);
+
+        const menu = ensurePopup();
+
+        menu.classList.add(
+            "mi-open"
+        );
+
+        trigger.setAttribute(
+            "aria-expanded",
+            "true"
+        );
+
+        requestAnimationFrame(
+            function () {
+                menu.querySelector(
+                    ".mi-selected"
+                )?.focus();
+            }
         );
     }
 
     function enhanceSelect(select) {
-        if (!shouldEnhance(select)) {
+        if (
+            !(select instanceof
+                HTMLSelectElement)
+            || enhancedSelects.has(select)
+        ) {
             return;
         }
 
-        processed.add(select);
+        enhancedSelects.add(select);
 
-        const wrapper =
-            document.createElement("div");
+        select.dataset.miIosReady =
+            "true";
 
-        wrapper.className =
-            "mi-ios-select";
+        const shell =
+            document.createElement(
+                "div"
+            );
+
+        shell.className =
+            "mi-ios-select-shell";
+
+        select.parentNode.insertBefore(
+            shell,
+            select
+        );
+
+        shell.appendChild(select);
 
         const trigger =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
 
         trigger.type = "button";
 
@@ -13556,187 +13922,36 @@ document.addEventListener(
             "false"
         );
 
-        const triggerText =
-            document.createElement("span");
+        const text =
+            document.createElement(
+                "span"
+            );
 
-        triggerText.className =
+        text.className =
             "mi-ios-select-trigger-text";
 
-        const arrow =
-            document.createElement("span");
+        const icon =
+            document.createElement(
+                "span"
+            );
 
-        arrow.className =
-            "mi-ios-select-arrow";
+        icon.className =
+            "mi-ios-icon-wrap";
 
-        arrow.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-
-        arrow.textContent = "⌄";
+        icon.innerHTML =
+            icons.chevron;
 
         trigger.append(
-            triggerText,
-            arrow
+            text,
+            icon
         );
 
-        const menu =
-            document.createElement("div");
+        shell.appendChild(trigger);
 
-        menu.className =
-            "mi-ios-select-menu";
-
-        menu.setAttribute(
-            "role",
-            "listbox"
-        );
-
-        select.parentNode.insertBefore(
-            wrapper,
-            select
-        );
-
-        wrapper.append(
+        updateTrigger(
             select,
-            trigger,
-            menu
+            trigger
         );
-
-        select.classList.add(
-            "mi-ios-select-native"
-        );
-
-        function rebuild() {
-            const current =
-                selectedOption(select);
-
-            triggerText.textContent =
-                current?.textContent
-                || "";
-
-            menu.replaceChildren();
-
-            Array.from(
-                select.options
-            ).forEach(function (
-                option,
-                index
-            ) {
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-                button.type = "button";
-
-                button.className =
-                    "mi-ios-select-option";
-
-                button.setAttribute(
-                    "role",
-                    "option"
-                );
-
-                button.dataset.value =
-                    option.value;
-
-                button.dataset.index =
-                    String(index);
-
-                const text =
-                    document.createElement(
-                        "span"
-                    );
-
-                text.textContent =
-                    option.textContent;
-
-                const check =
-                    document.createElement(
-                        "span"
-                    );
-
-                check.className =
-                    "mi-ios-select-check";
-
-                check.setAttribute(
-                    "aria-hidden",
-                    "true"
-                );
-
-                check.textContent = "✓";
-
-                if (
-                    index ===
-                    select.selectedIndex
-                ) {
-                    button.classList.add(
-                        "mi-selected"
-                    );
-
-                    button.setAttribute(
-                        "aria-selected",
-                        "true"
-                    );
-                }
-                else {
-                    button.setAttribute(
-                        "aria-selected",
-                        "false"
-                    );
-                }
-
-                button.append(
-                    text,
-                    check
-                );
-
-                button.addEventListener(
-                    "click",
-                    function () {
-                        select.selectedIndex =
-                            index;
-
-                        select.dispatchEvent(
-                            new Event(
-                                "input",
-                                {
-                                    bubbles:
-                                        true
-                                }
-                            )
-                        );
-
-                        select.dispatchEvent(
-                            new Event(
-                                "change",
-                                {
-                                    bubbles:
-                                        true
-                                }
-                            )
-                        );
-
-                        rebuild();
-
-                        wrapper.classList.remove(
-                            "mi-open"
-                        );
-
-                        trigger.setAttribute(
-                            "aria-expanded",
-                            "false"
-                        );
-
-                        trigger.focus();
-                    }
-                );
-
-                menu.appendChild(
-                    button
-                );
-            });
-        }
 
         trigger.addEventListener(
             "click",
@@ -13744,146 +13959,66 @@ document.addEventListener(
                 event.preventDefault();
                 event.stopPropagation();
 
-                const willOpen =
-                    !wrapper.classList
-                        .contains("mi-open");
-
-                closeAll(wrapper);
-
-                wrapper.classList.toggle(
-                    "mi-open",
-                    willOpen
-                );
-
-                trigger.setAttribute(
-                    "aria-expanded",
-                    String(willOpen)
-                );
-
-                if (willOpen) {
-                    requestAnimationFrame(
-                        function () {
-                            menu.querySelector(
-                                ".mi-selected"
-                            )?.focus();
-                        }
-                    );
-                }
-            }
-        );
-
-        trigger.addEventListener(
-            "keydown",
-            function (event) {
                 if (
-                    event.key ===
-                        "ArrowDown"
-                    || event.key ===
-                        "Enter"
-                    || event.key === " "
+                    activeSelect === select
                 ) {
-                    event.preventDefault();
-
-                    wrapper.classList.add(
-                        "mi-open"
-                    );
-
-                    trigger.setAttribute(
-                        "aria-expanded",
-                        "true"
-                    );
-
-                    menu.querySelector(
-                        ".mi-selected"
-                    )?.focus();
+                    closePopup();
                 }
-            }
-        );
-
-        menu.addEventListener(
-            "keydown",
-            function (event) {
-                const items =
-                    Array.from(
-                        menu.querySelectorAll(
-                            ".mi-ios-select-option"
-                        )
+                else {
+                    openPopup(
+                        select,
+                        trigger
                     );
-
-                const currentIndex =
-                    items.indexOf(
-                        document.activeElement
-                    );
-
-                if (
-                    event.key ===
-                    "ArrowDown"
-                ) {
-                    event.preventDefault();
-
-                    items[
-                        Math.min(
-                            currentIndex + 1,
-                            items.length - 1
-                        )
-                    ]?.focus();
-                }
-
-                if (
-                    event.key ===
-                    "ArrowUp"
-                ) {
-                    event.preventDefault();
-
-                    items[
-                        Math.max(
-                            currentIndex - 1,
-                            0
-                        )
-                    ]?.focus();
-                }
-
-                if (
-                    event.key ===
-                    "Escape"
-                ) {
-                    wrapper.classList.remove(
-                        "mi-open"
-                    );
-
-                    trigger.setAttribute(
-                        "aria-expanded",
-                        "false"
-                    );
-
-                    trigger.focus();
                 }
             }
         );
 
         select.addEventListener(
             "change",
-            rebuild
+            function () {
+                updateTrigger(
+                    select,
+                    trigger
+                );
+            }
         );
 
-        const optionObserver =
+        const observer =
             new MutationObserver(
-                rebuild
+                function () {
+                    updateTrigger(
+                        select,
+                        trigger
+                    );
+
+                    if (
+                        activeSelect ===
+                        select
+                    ) {
+                        rebuildPopup(
+                            select,
+                            trigger
+                        );
+
+                        positionPopup(
+                            trigger
+                        );
+                    }
+                }
             );
 
-        optionObserver.observe(
+        observer.observe(
             select,
             {
                 childList: true,
                 subtree: true,
-                characterData: true
+                characterData: true,
+                attributes: true
             }
         );
-
-        rebuild();
     }
 
-    function scan(root) {
+    function scanSelects(root) {
         const scope =
             root instanceof Element
                 ? root
@@ -13903,15 +14038,159 @@ document.addEventListener(
         );
     }
 
+    function replaceLeadingIcon(
+        element,
+        svg
+    ) {
+        if (
+            !element
+            || element.dataset
+                .miIosIconApplied ===
+                "true"
+        ) {
+            return;
+        }
+
+        const originalText =
+            element.textContent
+                .replace(
+                    /^[^\p{L}\p{N}]+/u,
+                    ""
+                )
+                .trim();
+
+        element.replaceChildren();
+
+        const label =
+            document.createElement(
+                "span"
+            );
+
+        label.className =
+            "mi-ios-icon-label";
+
+        const iconWrap =
+            document.createElement(
+                "span"
+            );
+
+        iconWrap.className =
+            "mi-ios-icon-wrap";
+
+        iconWrap.innerHTML = svg;
+
+        const text =
+            document.createElement(
+                "span"
+            );
+
+        text.textContent =
+            originalText;
+
+        label.append(
+            iconWrap,
+            text
+        );
+
+        element.appendChild(label);
+
+        element.dataset
+            .miIosIconApplied =
+            "true";
+    }
+
+    function applyIcons() {
+        replaceLeadingIcon(
+            document.querySelector(
+                "#newChatBtn, " +
+                "#sidebar button[onclick*='newChat']"
+            ),
+            icons.plus
+        );
+
+        replaceLeadingIcon(
+            document.querySelector(
+                "#supportBtn"
+            ),
+            icons.support
+        );
+
+        replaceLeadingIcon(
+            document.querySelector(
+                "#settingsBtn"
+            ),
+            icons.settings
+        );
+
+        replaceLeadingIcon(
+            document.querySelector(
+                "#logoutBtn, " +
+                "button[onclick*='logout'], " +
+                "button[onclick*='Logout']"
+            ),
+            icons.logout
+        );
+
+        document
+            .querySelectorAll(
+                "#settingsCloseBtn, " +
+                ".close-btn, " +
+                ".modal-close"
+            )
+            .forEach(function (button) {
+                button.innerHTML =
+                    icons.close;
+
+                button.dataset
+                    .miIosIconApplied =
+                    "true";
+            });
+
+        document
+            .querySelectorAll(
+                "#sendBtn, " +
+                "#sendButton, " +
+                ".send-btn"
+            )
+            .forEach(function (button) {
+                button.innerHTML =
+                    icons.send;
+
+                button.dataset
+                    .miIosIconApplied =
+                    "true";
+            });
+
+        document
+            .querySelectorAll(
+                ".mi-ai-functional-copy, " +
+                ".mi-ai-copy-below, " +
+                ".aiCopyButton, " +
+                ".copy-btn, " +
+                ".copy-button"
+            )
+            .forEach(function (button) {
+                button.innerHTML =
+                    icons.copy;
+
+                button.dataset
+                    .miIosIconApplied =
+                    "true";
+            });
+    }
+
     document.addEventListener(
         "click",
         function (event) {
             if (
                 !event.target.closest(
-                    ".mi-ios-select"
+                    ".mi-ios-select-trigger"
+                )
+                && !event.target.closest(
+                    "#miIosSelectPopup"
                 )
             ) {
-                closeAll();
+                closePopup();
             }
         }
     );
@@ -13920,13 +14199,50 @@ document.addEventListener(
         "keydown",
         function (event) {
             if (event.key === "Escape") {
-                closeAll();
+                closePopup();
             }
         }
     );
 
+    window.addEventListener(
+        "resize",
+        function () {
+            if (
+                activeTrigger
+                && popup?.classList
+                    .contains("mi-open")
+            ) {
+                positionPopup(
+                    activeTrigger
+                );
+            }
+        }
+    );
+
+    window.addEventListener(
+        "scroll",
+        function () {
+            if (
+                activeTrigger
+                && popup?.classList
+                    .contains("mi-open")
+            ) {
+                positionPopup(
+                    activeTrigger
+                );
+            }
+        },
+        true
+    );
+
+    function refresh() {
+        scanSelects(document);
+        applyIcons();
+    }
+
     function start() {
-        scan(document);
+        ensurePopup();
+        refresh();
 
         const observer =
             new MutationObserver(
@@ -13935,21 +14251,21 @@ document.addEventListener(
                         function (mutation) {
                             mutation.addedNodes
                                 .forEach(
-                                    function (
-                                        node
-                                    ) {
+                                    function (node) {
                                         if (
-                                            node
-                                                .nodeType ===
-                                            Node
-                                                .ELEMENT_NODE
+                                            node.nodeType ===
+                                            Node.ELEMENT_NODE
                                         ) {
-                                            scan(node);
+                                            scanSelects(
+                                                node
+                                            );
                                         }
                                     }
                                 );
                         }
                     );
+
+                    applyIcons();
                 }
             );
 
@@ -13962,14 +14278,9 @@ document.addEventListener(
         );
     }
 
-    window.MIIosSelect = {
-        refresh:
-            function () {
-                scan(document);
-            },
-
-        closeAll:
-            closeAll
+    window.MIIosControls = {
+        refresh: refresh,
+        closeDropdown: closePopup
     };
 
     if (
@@ -13989,7 +14300,7 @@ document.addEventListener(
     }
 })();
 
-/* MI AI IOS CUSTOM SELECT JS - END */
+/* MI AI IOS SELECT AND ICON SYSTEM JS - END */
 </script>
 </body>
 </html>
