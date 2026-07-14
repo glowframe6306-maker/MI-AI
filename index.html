@@ -795,7 +795,3198 @@ body.force-mobile-layout #settingsPanel {
   top:76px;
 }
 
+
+/* MI AI IPHONE GLASS BUTTONS - START */
+
+:root {
+    --mi-glass-button-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.28) 0%,
+            rgba(255, 255, 255, 0.13) 45%,
+            rgba(255, 255, 255, 0.07) 100%
+        );
+
+    --mi-glass-button-hover-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.38) 0%,
+            rgba(255, 255, 255, 0.20) 48%,
+            rgba(255, 255, 255, 0.10) 100%
+        );
+
+    --mi-glass-button-border: rgba(255, 255, 255, 0.32);
+    --mi-glass-button-border-hover: rgba(255, 255, 255, 0.52);
+}
+
+/* All real and custom buttons */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.button,
+[role="button"] {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    border: 1px solid var(
+        --mi-glass-button-border
+    ) !important;
+
+    border-radius: 16px !important;
+
+    background:
+        var(--mi-glass-button-bg) !important;
+
+    color: var(--text, #ffffff) !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(175%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(175%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.42),
+        inset 0 -1px 0
+            rgba(255, 255, 255, 0.08),
+        0 7px 20px
+            rgba(0, 0, 0, 0.18),
+        0 1px 3px
+            rgba(0, 0, 0, 0.16) !important;
+
+    text-shadow:
+        0 1px 2px
+        rgba(0, 0, 0, 0.16);
+
+    cursor: pointer;
+
+    transform:
+        translateZ(0)
+        scale(1);
+
+    transition:
+        transform 160ms
+            cubic-bezier(.2, .8, .2, 1),
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        opacity 180ms ease,
+        filter 180ms ease !important;
+
+    -webkit-tap-highlight-color:
+        transparent;
+
+    user-select: none;
+}
+
+/* Glass shine layer */
+button::before,
+.btn::before,
+.button::before,
+[role="button"]::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+
+    left: 6%;
+    right: 6%;
+    top: 2px;
+    height: 42%;
+
+    border-radius:
+        inherit;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.38),
+            rgba(255, 255, 255, 0)
+        );
+
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+/* Soft reflected glow */
+button::after,
+.btn::after,
+.button::after,
+[role="button"]::after {
+    content: "";
+    position: absolute;
+    z-index: -2;
+
+    width: 70%;
+    height: 150%;
+    top: -100%;
+    left: -45%;
+
+    transform: rotate(24deg);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.22),
+            transparent
+        );
+
+    transition:
+        left 400ms ease;
+
+    pointer-events: none;
+}
+
+/* Mouse hover */
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+.btn:hover,
+.button:hover,
+[role="button"]:hover {
+    background:
+        var(
+            --mi-glass-button-hover-bg
+        ) !important;
+
+    border-color:
+        var(
+            --mi-glass-button-border-hover
+        ) !important;
+
+    transform:
+        translateY(-2px)
+        scale(1.015);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.58),
+        inset 0 -1px 0
+            rgba(255, 255, 255, 0.10),
+        0 12px 28px
+            rgba(0, 0, 0, 0.23),
+        0 3px 8px
+            rgba(0, 0, 0, 0.15) !important;
+}
+
+button:hover::after,
+.btn:hover::after,
+.button:hover::after,
+[role="button"]:hover::after {
+    left: 120%;
+}
+
+/* iPhone press animation */
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active,
+.btn:active,
+.button:active,
+[role="button"]:active {
+    transform:
+        translateY(1px)
+        scale(0.965);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.20),
+            rgba(255, 255, 255, 0.07)
+        ) !important;
+
+    box-shadow:
+        inset 0 2px 5px
+            rgba(0, 0, 0, 0.14),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.25),
+        0 3px 9px
+            rgba(0, 0, 0, 0.15) !important;
+
+    transition-duration: 70ms !important;
+}
+
+/* Keyboard accessibility */
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible,
+.btn:focus-visible,
+.button:focus-visible,
+[role="button"]:focus-visible {
+    outline: none !important;
+
+    border-color:
+        rgba(110, 190, 255, 0.90)
+        !important;
+
+    box-shadow:
+        0 0 0 3px
+            rgba(0, 122, 255, 0.28),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.50),
+        0 10px 26px
+            rgba(0, 0, 0, 0.22)
+        !important;
+}
+
+/* Disabled buttons */
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+.btn.disabled,
+.button.disabled,
+[role="button"][aria-disabled="true"] {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+
+    transform:
+        none !important;
+
+    filter:
+        grayscale(0.18);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.20),
+        0 3px 10px
+            rgba(0, 0, 0, 0.10)
+        !important;
+}
+
+/* Primary and send buttons: blue iPhone glass */
+.primary,
+.primary-btn,
+.btn-primary,
+.send-btn,
+#sendBtn,
+#sendButton,
+button[type="submit"] {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0, 140, 255, 0.78),
+            rgba(0, 92, 230, 0.48)
+        ) !important;
+
+    border-color:
+        rgba(145, 215, 255, 0.60)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.48),
+        inset 0 -1px 0
+            rgba(0, 54, 160, 0.30),
+        0 9px 24px
+            rgba(0, 112, 255, 0.28)
+        !important;
+}
+
+.primary:hover,
+.primary-btn:hover,
+.btn-primary:hover,
+.send-btn:hover,
+#sendBtn:hover,
+#sendButton:hover,
+button[type="submit"]:hover {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(40, 166, 255, 0.90),
+            rgba(0, 101, 235, 0.62)
+        ) !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.58),
+        0 12px 30px
+            rgba(0, 112, 255, 0.38)
+        !important;
+}
+
+/* Delete and danger buttons: red glass */
+.danger,
+.delete-btn,
+.btn-danger,
+button[data-action="delete"] {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 75, 90, 0.72),
+            rgba(190, 25, 45, 0.42)
+        ) !important;
+
+    border-color:
+        rgba(255, 180, 185, 0.55)
+        !important;
+
+    color:
+        #ffffff !important;
+}
+
+/* Small icon buttons stay compact */
+.icon-btn,
+.icon-button,
+button[aria-label],
+button:has(> svg:only-child) {
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+}
+
+/* Light theme support */
+body.light button,
+body.light input[type="button"],
+body.light input[type="submit"],
+body.light input[type="reset"],
+body.light .btn,
+body.light .button,
+body.light [role="button"],
+[data-theme="light"] button,
+[data-theme="light"] .btn,
+[data-theme="light"] [role="button"] {
+    --mi-glass-button-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.78),
+            rgba(255, 255, 255, 0.43)
+        );
+
+    --mi-glass-button-hover-bg:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.95),
+            rgba(255, 255, 255, 0.57)
+        );
+
+    --mi-glass-button-border:
+        rgba(255, 255, 255, 0.92);
+
+    color:
+        var(--text, #111318) !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.98),
+        0 8px 22px
+            rgba(31, 41, 55, 0.14),
+        0 1px 3px
+            rgba(31, 41, 55, 0.10)
+        !important;
+}
+
+/* Touch-screen behaviour */
+@media (hover: none) {
+    button:hover,
+    input[type="button"]:hover,
+    input[type="submit"]:hover,
+    input[type="reset"]:hover,
+    .btn:hover,
+    .button:hover,
+    [role="button"]:hover {
+        transform:
+            none;
+    }
+
+    button:active,
+    input[type="button"]:active,
+    input[type="submit"]:active,
+    input[type="reset"]:active,
+    .btn:active,
+    .button:active,
+    [role="button"]:active {
+        transform:
+            scale(0.96);
+    }
+}
+
+/* Reduced-motion accessibility */
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    .btn,
+    .button,
+    [role="button"] {
+        transition:
+            none !important;
+    }
+
+    button::after,
+    .btn::after,
+    .button::after,
+    [role="button"]::after {
+        display:
+            none;
+    }
+}
+
+/* MI AI IPHONE GLASS BUTTONS - END */
+
+/* MI AI IOS BLUR EFFECT - START */
+
+:root {
+    --ios-glass-background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.18),
+            rgba(255, 255, 255, 0.07)
+        );
+
+    --ios-glass-background-strong:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.24),
+            rgba(255, 255, 255, 0.10)
+        );
+
+    --ios-glass-border:
+        rgba(255, 255, 255, 0.24);
+
+    --ios-glass-border-light:
+        rgba(255, 255, 255, 0.38);
+
+    --ios-glass-shadow:
+        0 18px 55px rgba(0, 0, 0, 0.25);
+
+    --ios-glass-blur:
+        blur(28px) saturate(185%);
+
+    --ios-small-blur:
+        blur(18px) saturate(175%);
+}
+
+/* iPhone-style animated background */
+html,
+body {
+    min-height: 100%;
+    background:
+        radial-gradient(
+            circle at 10% 15%,
+            rgba(0, 122, 255, 0.30),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 88% 12%,
+            rgba(175, 82, 222, 0.26),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 80% 88%,
+            rgba(52, 199, 89, 0.18),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 15% 90%,
+            rgba(255, 45, 85, 0.17),
+            transparent 36%
+        ),
+        linear-gradient(
+            145deg,
+            #07111f,
+            #0d1728 48%,
+            #101827
+        ) !important;
+
+    background-attachment: fixed !important;
+}
+
+/* Soft light layer behind the interface */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(255, 255, 255, 0.035),
+            transparent 36%,
+            rgba(255, 255, 255, 0.025)
+        );
+}
+
+/* Main navigation and header glass */
+#header,
+header,
+.topbar,
+.top-bar,
+.navbar,
+.nav-bar,
+.app-header,
+.header {
+    background:
+        var(--ios-glass-background-strong)
+        !important;
+
+    border-bottom:
+        1px solid
+        var(--ios-glass-border)
+        !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-glass-blur);
+
+    backdrop-filter:
+        var(--ios-glass-blur);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.18),
+        0 10px 35px
+            rgba(0, 0, 0, 0.18)
+        !important;
+}
+
+/* Sidebar glass */
+#sidebar,
+.sidebar,
+.side-bar,
+nav.sidebar {
+    background:
+        linear-gradient(
+            160deg,
+            rgba(20, 28, 45, 0.72),
+            rgba(15, 23, 38, 0.48)
+        ) !important;
+
+    border-right:
+        1px solid
+        var(--ios-glass-border)
+        !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-glass-blur);
+
+    backdrop-filter:
+        var(--ios-glass-blur);
+
+    box-shadow:
+        inset -1px 0 0
+            rgba(255, 255, 255, 0.07),
+        15px 0 45px
+            rgba(0, 0, 0, 0.17)
+        !important;
+}
+
+/* Main panels and cards */
+.panel,
+.card,
+.glass,
+.glass-panel,
+.settings-panel,
+.profile-panel,
+.admin-panel,
+.dashboard-card,
+.feature-card,
+.info-card,
+.chat-card,
+.menu-panel,
+.account-panel,
+.preferences-panel {
+    background:
+        var(--ios-glass-background)
+        !important;
+
+    border:
+        1px solid
+        var(--ios-glass-border)
+        !important;
+
+    border-radius:
+        22px !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-glass-blur);
+
+    backdrop-filter:
+        var(--ios-glass-blur);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.20),
+        var(--ios-glass-shadow)
+        !important;
+}
+
+/* Chat input/composer area */
+#inputArea,
+#input-area,
+.input-area,
+.chat-input-area,
+.composer,
+.composer-container,
+.message-composer,
+.input-container,
+.prompt-container {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.19),
+            rgba(255, 255, 255, 0.075)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.26)
+        !important;
+
+    border-radius:
+        24px !important;
+
+    -webkit-backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.27),
+        0 16px 45px
+            rgba(0, 0, 0, 0.24)
+        !important;
+}
+
+/* Text fields */
+input:not([type="button"]):not([type="submit"]):not([type="reset"]),
+textarea,
+select {
+    background:
+        rgba(255, 255, 255, 0.10)
+        !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.20)
+        !important;
+
+    border-radius:
+        16px !important;
+
+    color:
+        var(--text, #ffffff)
+        !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-small-blur);
+
+    backdrop-filter:
+        var(--ios-small-blur);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.14),
+        0 8px 24px
+            rgba(0, 0, 0, 0.12)
+        !important;
+
+    transition:
+        border-color 180ms ease,
+        background 180ms ease,
+        box-shadow 180ms ease
+        !important;
+}
+
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):focus,
+textarea:focus,
+select:focus {
+    outline: none !important;
+
+    background:
+        rgba(255, 255, 255, 0.15)
+        !important;
+
+    border-color:
+        rgba(100, 190, 255, 0.78)
+        !important;
+
+    box-shadow:
+        0 0 0 3px
+            rgba(0, 122, 255, 0.20),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.22),
+        0 12px 32px
+            rgba(0, 0, 0, 0.17)
+        !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color:
+        rgba(255, 255, 255, 0.56)
+        !important;
+}
+
+/* Modals and popup overlays */
+.modal,
+.modal-overlay,
+.popup-overlay,
+.dialog-overlay,
+.login-overlay,
+.settings-overlay {
+    background:
+        rgba(3, 8, 18, 0.40)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(145%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(145%);
+}
+
+.modal-content,
+.popup,
+.dialog,
+.dialog-box,
+.login-box,
+.login-modal,
+.settings-modal,
+.confirm-modal,
+.alert-modal {
+    background:
+        linear-gradient(
+            150deg,
+            rgba(35, 44, 65, 0.78),
+            rgba(19, 27, 44, 0.62)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28)
+        !important;
+
+    border-radius:
+        28px !important;
+
+    -webkit-backdrop-filter:
+        blur(36px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(36px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.25),
+        0 30px 90px
+            rgba(0, 0, 0, 0.46)
+        !important;
+}
+
+/* Dropdowns, context menus and tooltips */
+.dropdown,
+.dropdown-menu,
+.context-menu,
+.menu,
+.popover,
+.tooltip,
+.toast,
+.notification,
+.suggestion-box,
+.autocomplete-list {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 39, 58, 0.82),
+            rgba(18, 25, 40, 0.68)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.24)
+        !important;
+
+    border-radius:
+        18px !important;
+
+    -webkit-backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.18),
+        0 20px 60px
+            rgba(0, 0, 0, 0.38)
+        !important;
+}
+
+/* Chat history items */
+.chat-item,
+.history-item,
+.conversation-item,
+.sidebar-item,
+.menu-item {
+    background:
+        rgba(255, 255, 255, 0.055)
+        !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08)
+        !important;
+
+    border-radius:
+        15px !important;
+
+    -webkit-backdrop-filter:
+        blur(14px)
+        saturate(155%);
+
+    backdrop-filter:
+        blur(14px)
+        saturate(155%);
+
+    transition:
+        background 180ms ease,
+        border-color 180ms ease,
+        transform 180ms ease
+        !important;
+}
+
+.chat-item:hover,
+.history-item:hover,
+.conversation-item:hover,
+.sidebar-item:hover,
+.menu-item:hover {
+    background:
+        rgba(255, 255, 255, 0.13)
+        !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.21)
+        !important;
+
+    transform:
+        translateX(2px);
+}
+
+/* User and AI messages */
+.message,
+.chat-message,
+.user-message,
+.ai-message,
+.assistant-message,
+.message-bubble {
+    -webkit-backdrop-filter:
+        blur(16px)
+        saturate(160%);
+
+    backdrop-filter:
+        blur(16px)
+        saturate(160%);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.10);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.08),
+        0 8px 24px
+            rgba(0, 0, 0, 0.10);
+}
+
+/* Scrollbar like iOS */
+* {
+    scrollbar-width:
+        thin;
+
+    scrollbar-color:
+        rgba(255, 255, 255, 0.25)
+        transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    background:
+        transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background:
+        rgba(255, 255, 255, 0.22);
+
+    border-radius:
+        999px;
+
+    border:
+        2px solid
+        transparent;
+
+    background-clip:
+        padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background:
+        rgba(255, 255, 255, 0.36);
+
+    border:
+        2px solid
+        transparent;
+
+    background-clip:
+        padding-box;
+}
+
+/* Light theme */
+body.light,
+[data-theme="light"] {
+    background:
+        radial-gradient(
+            circle at 12% 15%,
+            rgba(0, 122, 255, 0.20),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 88% 12%,
+            rgba(175, 82, 222, 0.14),
+            transparent 35%
+        ),
+        linear-gradient(
+            145deg,
+            #dce8f4,
+            #edf3f9 48%,
+            #dfe9f4
+        ) !important;
+}
+
+body.light #header,
+body.light header,
+body.light #sidebar,
+body.light .sidebar,
+body.light .panel,
+body.light .card,
+[data-theme="light"] #header,
+[data-theme="light"] #sidebar,
+[data-theme="light"] .panel,
+[data-theme="light"] .card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.72),
+            rgba(255, 255, 255, 0.42)
+        ) !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.78)
+        !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.95),
+        0 18px 50px
+            rgba(30, 45, 70, 0.14)
+        !important;
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+    :root {
+        --ios-glass-blur:
+            blur(22px)
+            saturate(170%);
+    }
+
+    #header,
+    header,
+    #sidebar,
+    .sidebar,
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        -webkit-backdrop-filter:
+            blur(22px)
+            saturate(170%);
+
+        backdrop-filter:
+            blur(22px)
+            saturate(170%);
+    }
+
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        border-radius:
+            24px !important;
+    }
+}
+
+/* Performance fallback */
+@supports not (
+    backdrop-filter:
+    blur(1px)
+) {
+    #header,
+    header,
+    #sidebar,
+    .sidebar,
+    .panel,
+    .card,
+    .modal-content,
+    .popup,
+    .dialog,
+    .dropdown-menu,
+    .context-menu {
+        background:
+            rgba(20, 28, 44, 0.96)
+            !important;
+    }
+}
+
+/* MI AI IOS BLUR EFFECT - END */
+
+/* MI AI AUTO MESSAGE BUBBLE SIZE - START */
+
+/*
+   Short message  = small bubble
+   Long message   = wider bubble and automatic line wrapping
+   User message   = right side
+   AI message     = left side
+*/
+
+/* Message rows must use the full available width */
+.message-row,
+.chat-message-row,
+.message-wrapper,
+.chat-message-wrapper,
+.user-message-row,
+.ai-message-row,
+.assistant-message-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    display: flex !important;
+    align-items: flex-start !important;
+
+    box-sizing: border-box !important;
+}
+
+/* User message row alignment */
+.message-row.user,
+.message-row.user-message,
+.message-wrapper.user,
+.chat-message-row.user,
+.chat-message-wrapper.user,
+.user-message-row,
+[data-role="user"] {
+    justify-content: flex-end !important;
+}
+
+/* AI message row alignment */
+.message-row.ai,
+.message-row.assistant,
+.message-row.ai-message,
+.message-wrapper.ai,
+.message-wrapper.assistant,
+.chat-message-row.ai,
+.chat-message-row.assistant,
+.ai-message-row,
+.assistant-message-row,
+[data-role="ai"],
+[data-role="assistant"] {
+    justify-content: flex-start !important;
+}
+
+/* Actual user and AI message bubbles */
+.message-bubble,
+.chat-bubble,
+.bubble,
+.message-content,
+.message-text,
+.user-message,
+.ai-message,
+.assistant-message,
+.message.user,
+.message.ai,
+.message.assistant,
+[data-role="user"] .message-content,
+[data-role="user"] .message-bubble,
+[data-role="assistant"] .message-content,
+[data-role="assistant"] .message-bubble,
+[data-role="ai"] .message-content,
+[data-role="ai"] .message-bubble {
+    width: fit-content !important;
+    width: -moz-fit-content !important;
+
+    min-width: 0 !important;
+    max-width: min(78%, 760px) !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    display: inline-block !important;
+    box-sizing: border-box !important;
+
+    padding: 11px 15px !important;
+
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-wrap: break-word !important;
+    word-break: normal !important;
+
+    line-height: 1.48 !important;
+    vertical-align: top !important;
+}
+
+/* Keep user bubbles on the right */
+.user-message,
+.message.user,
+.message-bubble.user,
+.chat-bubble.user,
+[data-role="user"] .message-content,
+[data-role="user"] .message-bubble {
+    align-self: flex-end !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+
+    border-bottom-right-radius: 6px !important;
+}
+
+/* Keep AI bubbles on the left */
+.ai-message,
+.assistant-message,
+.message.ai,
+.message.assistant,
+.message-bubble.ai,
+.message-bubble.assistant,
+.chat-bubble.ai,
+.chat-bubble.assistant,
+[data-role="assistant"] .message-content,
+[data-role="assistant"] .message-bubble,
+[data-role="ai"] .message-content,
+[data-role="ai"] .message-bubble {
+    align-self: flex-start !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+
+    border-bottom-left-radius: 6px !important;
+}
+
+/* Do not let inner text force the bubble to full width */
+.message-bubble > *,
+.chat-bubble > *,
+.message-content > *,
+.message-text > *,
+.user-message > *,
+.ai-message > *,
+.assistant-message > * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Normal text should not add unnecessary top or bottom space */
+.message-bubble > p:first-child,
+.chat-bubble > p:first-child,
+.message-content > p:first-child,
+.user-message > p:first-child,
+.ai-message > p:first-child,
+.assistant-message > p:first-child {
+    margin-top: 0 !important;
+}
+
+.message-bubble > p:last-child,
+.chat-bubble > p:last-child,
+.message-content > p:last-child,
+.user-message > p:last-child,
+.ai-message > p:last-child,
+.assistant-message > p:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Long links must stay inside the bubble */
+.message-bubble a,
+.chat-bubble a,
+.message-content a,
+.user-message a,
+.ai-message a,
+.assistant-message a {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Code blocks remain inside the AI reply */
+.message-bubble pre,
+.chat-bubble pre,
+.message-content pre,
+.ai-message pre,
+.assistant-message pre {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    overflow-x: auto !important;
+    white-space: pre !important;
+
+    box-sizing: border-box !important;
+}
+
+.message-bubble code,
+.chat-bubble code,
+.message-content code,
+.ai-message code,
+.assistant-message code {
+    max-width: 100% !important;
+}
+
+/* Images and uploaded-file previews */
+.message-bubble img,
+.chat-bubble img,
+.message-content img,
+.user-message img,
+.ai-message img,
+.assistant-message img,
+.message-bubble video,
+.chat-bubble video,
+.message-content video {
+    display: block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* Streaming AI reply grows automatically while text arrives */
+.streaming,
+.is-streaming,
+.typing-message,
+.message.streaming,
+.ai-message.streaming,
+.assistant-message.streaming {
+    width: fit-content !important;
+    max-width: min(78%, 760px) !important;
+    height: auto !important;
+}
+
+/* Small typing indicator bubble */
+.typing-indicator,
+.ai-typing,
+.assistant-typing {
+    width: fit-content !important;
+    min-width: 54px !important;
+    max-width: 120px !important;
+    height: auto !important;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+    .message-bubble,
+    .chat-bubble,
+    .bubble,
+    .message-content,
+    .message-text,
+    .user-message,
+    .ai-message,
+    .assistant-message,
+    .message.user,
+    .message.ai,
+    .message.assistant,
+    [data-role="user"] .message-content,
+    [data-role="user"] .message-bubble,
+    [data-role="assistant"] .message-content,
+    [data-role="assistant"] .message-bubble,
+    [data-role="ai"] .message-content,
+    [data-role="ai"] .message-bubble {
+        max-width: 88% !important;
+        padding: 10px 13px !important;
+    }
+
+    .streaming,
+    .is-streaming,
+    .typing-message,
+    .message.streaming,
+    .ai-message.streaming,
+    .assistant-message.streaming {
+        max-width: 88% !important;
+    }
+}
+
+/* Very small phone screens */
+@media (max-width: 420px) {
+    .message-bubble,
+    .chat-bubble,
+    .bubble,
+    .message-content,
+    .message-text,
+    .user-message,
+    .ai-message,
+    .assistant-message,
+    .message.user,
+    .message.ai,
+    .message.assistant {
+        max-width: 92% !important;
+    }
+}
+
+/* MI AI AUTO MESSAGE BUBBLE SIZE - END */
+
+/* MI AI NIRMALA UI FONT - START */
+
+/*
+   Main font: Nirmala UI
+   Icon fonts are excluded so icons do not disappear.
+*/
+
+html,
+body {
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        Arial,
+        sans-serif
+        !important;
+}
+
+/* Apply Nirmala UI to all visible text */
+body *:not(.fa):not(.fas):not(.far):not(.fal):not(.fad):not(.fab):not(.material-icons):not(.material-symbols-outlined):not([class^="fa-"]):not([class*=" fa-"]) {
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        Arial,
+        sans-serif
+        !important;
+}
+
+/* Form elements */
+button,
+input,
+textarea,
+select,
+option,
+optgroup,
+label,
+fieldset,
+legend {
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        Arial,
+        sans-serif
+        !important;
+}
+
+/* Headings and normal text */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div,
+a,
+li,
+ul,
+ol,
+table,
+thead,
+tbody,
+tfoot,
+tr,
+td,
+th,
+small,
+strong,
+b,
+em,
+i:not(.fa):not(.fas):not(.far):not(.fal):not(.fad):not(.fab),
+blockquote,
+figcaption {
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        Arial,
+        sans-serif
+        !important;
+}
+
+/* Code and generated AI content */
+pre,
+code,
+kbd,
+samp,
+.message,
+.message-content,
+.message-text,
+.message-bubble,
+.user-message,
+.ai-message,
+.assistant-message {
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        Arial,
+        sans-serif
+        !important;
+}
+
+/* Placeholder text */
+input::placeholder,
+textarea::placeholder {
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        Arial,
+        sans-serif
+        !important;
+}
+
+/* SVG text */
+svg text {
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        Arial,
+        sans-serif
+        !important;
+}
+
+/* Preserve common icon-font libraries */
+.fa,
+.fas,
+.far,
+.fal,
+.fad,
+[class^="fa-"],
+[class*=" fa-"] {
+    font-family:
+        "Font Awesome 6 Free",
+        "Font Awesome 5 Free",
+        "FontAwesome"
+        !important;
+}
+
+.fab {
+    font-family:
+        "Font Awesome 6 Brands",
+        "Font Awesome 5 Brands",
+        "FontAwesome"
+        !important;
+}
+
+.material-icons {
+    font-family:
+        "Material Icons"
+        !important;
+}
+
+.material-symbols-outlined {
+    font-family:
+        "Material Symbols Outlined"
+        !important;
+}
+
+/* MI AI NIRMALA UI FONT - END */
+
+/* MI AI EXACT MESSAGE WIDTH - START */
+
+/*
+  Message bubble width follows its text:
+  .me = user
+  .ai = assistant
+*/
+
+#chat > .me,
+#chat > .ai {
+    width: fit-content !important;
+    inline-size: fit-content !important;
+
+    min-width: 0 !important;
+    min-inline-size: 0 !important;
+
+    max-width: min(78%, 760px) !important;
+    max-inline-size: min(78%, 760px) !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    display: block !important;
+    flex: 0 1 auto !important;
+
+    box-sizing: border-box !important;
+
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-wrap: break-word !important;
+    word-break: normal !important;
+
+    line-height: 1.5 !important;
+}
+
+/* User message: right side */
+#chat > .me {
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+    margin-left: auto !important;
+    margin-right: 8px !important;
+
+    padding: 12px 15px !important;
+
+    border-bottom-right-radius: 6px !important;
+}
+
+/* AI message: left side */
+#chat > .ai {
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+    margin-left: 8px !important;
+    margin-right: auto !important;
+
+    /*
+      Extra right space is reserved for the copy button.
+    */
+    padding: 12px 44px 12px 12px !important;
+
+    border-bottom-left-radius: 6px !important;
+}
+
+/* Inner AI text must not stretch the parent bubble */
+#chat > .ai .aiMessageBody,
+#chat > .ai .aiWritingCard {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    display: block !important;
+
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Remove unnecessary spacing around generated paragraphs */
+#chat > .me > p:first-child,
+#chat > .ai > p:first-child,
+#chat > .ai .aiMessageBody > p:first-child {
+    margin-top: 0 !important;
+}
+
+#chat > .me > p:last-child,
+#chat > .ai > p:last-child,
+#chat > .ai .aiMessageBody > p:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Long links stay inside the bubble */
+#chat > .me a,
+#chat > .ai a {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Code blocks can scroll without stretching the bubble */
+#chat > .ai pre,
+#chat > .me pre {
+    width: auto !important;
+    max-width: 100% !important;
+
+    overflow-x: auto !important;
+    white-space: pre !important;
+
+    box-sizing: border-box !important;
+}
+
+/* Images and attachments */
+#chat > .me img,
+#chat > .ai img,
+#chat > .me video,
+#chat > .ai video {
+    display: block !important;
+
+    width: auto !important;
+    height: auto !important;
+
+    max-width: 100% !important;
+}
+
+/* Thinking bubble also follows its content */
+#chat > .thinking {
+    width: fit-content !important;
+    max-width: 180px !important;
+
+    margin-left: 8px !important;
+    margin-right: auto !important;
+}
+
+/* Phone and tablet */
+@media (max-width: 768px) {
+    #chat > .me,
+    #chat > .ai {
+        max-width: 88% !important;
+        max-inline-size: 88% !important;
+    }
+
+    #chat > .me {
+        padding: 10px 13px !important;
+    }
+
+    #chat > .ai {
+        padding: 10px 42px 10px 13px !important;
+    }
+}
+
+/* Very small phone screens */
+@media (max-width: 420px) {
+    #chat > .me,
+    #chat > .ai {
+        max-width: 92% !important;
+        max-inline-size: 92% !important;
+    }
+}
+
+/* Forced mobile layout */
+body.force-mobile-layout #chat > .me,
+body.force-mobile-layout #chat > .ai {
+    width: fit-content !important;
+    inline-size: fit-content !important;
+
+    max-width: 92% !important;
+    max-inline-size: 92% !important;
+}
+
+/* MI AI EXACT MESSAGE WIDTH - END */
+
+/* MI AI CENTERED SETTINGS - START */
+
+/* Dark blurred background behind Settings */
+#settingsBackdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 14990;
+
+    background:
+        rgba(2, 8, 20, 0.52);
+
+    -webkit-backdrop-filter:
+        blur(14px)
+        saturate(150%);
+
+    backdrop-filter:
+        blur(14px)
+        saturate(150%);
+
+    opacity: 0;
+    transition:
+        opacity 180ms ease;
+}
+
+#settingsBackdrop.settings-open {
+    display: block;
+    opacity: 1;
+}
+
+/* Settings window in the exact middle */
+#settingsPanel {
+    display: none;
+
+    position: fixed !important;
+
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+
+    width:
+        min(92vw, 430px) !important;
+
+    max-height:
+        min(84vh, 680px);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    margin: 0 !important;
+    padding:
+        24px !important;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.96) !important;
+
+    z-index: 15000;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28) !important;
+
+    border-radius:
+        28px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(38, 49, 72, 0.88),
+            rgba(14, 23, 42, 0.76)
+        ) !important;
+
+    -webkit-backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.25),
+        0 30px 90px
+            rgba(0, 0, 0, 0.52)
+        !important;
+
+    color:
+        #ffffff;
+
+    opacity: 0;
+}
+
+#settingsPanel.settings-open {
+    display: flex !important;
+
+    flex-direction:
+        column;
+
+    align-items:
+        stretch;
+
+    gap:
+        12px;
+
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1) !important;
+
+    animation:
+        miSettingsOpen
+        220ms
+        cubic-bezier(.2, .8, .2, 1);
+}
+
+@keyframes miSettingsOpen {
+    from {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -46%)
+            scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1);
+    }
+}
+
+/* Settings title */
+#settingsPanel > h3 {
+    margin:
+        0 50px 10px 0 !important;
+
+    padding:
+        0 0 14px !important;
+
+    text-align:
+        left !important;
+
+    font-size:
+        22px;
+
+    font-weight:
+        750;
+
+    letter-spacing:
+        0.01em;
+
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.15);
+}
+
+/* Close button */
+#settingsCloseBtn {
+    position:
+        absolute !important;
+
+    top:
+        14px !important;
+
+    right:
+        14px !important;
+
+    width:
+        40px !important;
+
+    min-width:
+        40px !important;
+
+    height:
+        40px !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    display:
+        flex !important;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border-radius:
+        50% !important;
+
+    background:
+        rgba(255, 255, 255, 0.13)
+        !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.22)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    font-size:
+        16px;
+
+    z-index:
+        2;
+}
+
+/* Each option heading */
+#settingsPanel > label {
+    display:
+        block;
+
+    width:
+        100%;
+
+    margin:
+        4px 0 0 !important;
+
+    padding:
+        12px 14px 6px;
+
+    border-radius:
+        16px 16px 0 0;
+
+    background:
+        rgba(255, 255, 255, 0.075);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.12);
+
+    border-bottom:
+        none;
+
+    color:
+        rgba(255, 255, 255, 0.82);
+
+    font-size:
+        13px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        0.03em;
+}
+
+/* Language, theme and font controls */
+#settingsPanel > select,
+#settingsPanel > input[type="color"],
+#settingsPanel > input[type="range"] {
+    width:
+        100% !important;
+
+    min-height:
+        48px;
+
+    margin:
+        -12px 0 4px !important;
+
+    padding:
+        12px 14px !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.15)
+        !important;
+
+    border-top:
+        none !important;
+
+    border-radius:
+        0 0 16px 16px !important;
+
+    background:
+        rgba(255, 255, 255, 0.095)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    box-sizing:
+        border-box;
+
+    outline:
+        none;
+
+    -webkit-backdrop-filter:
+        blur(16px);
+
+    backdrop-filter:
+        blur(16px);
+}
+
+/* Language dropdown options */
+#settingsPanel > select option {
+    background:
+        #172033;
+
+    color:
+        #ffffff;
+}
+
+/* Theme colour control */
+#settingsPanel > input[type="color"] {
+    height:
+        58px;
+
+    cursor:
+        pointer;
+}
+
+/* Font size slider */
+#settingsPanel > input[type="range"] {
+    accent-color:
+        var(--main, #1e88e5);
+
+    cursor:
+        pointer;
+}
+
+/* Apply button */
+#settingsPanel > button:not(#settingsCloseBtn) {
+    width:
+        100% !important;
+
+    min-height:
+        48px;
+
+    margin:
+        2px 0 4px !important;
+
+    border-radius:
+        16px !important;
+
+    font-weight:
+        750;
+}
+
+/* Prevent page scrolling behind Settings */
+body.settings-modal-open {
+    overflow:
+        hidden !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #settingsPanel {
+        width:
+            calc(100vw - 24px)
+            !important;
+
+        max-height:
+            calc(100dvh - 40px);
+
+        padding:
+            20px 16px
+            !important;
+
+        border-radius:
+            24px !important;
+    }
+
+    #settingsPanel > h3 {
+        font-size:
+            20px;
+    }
+}
+
+/* Override old mobile corner positions */
+@media (max-width: 900px) {
+    #settingsPanel,
+    body.force-mobile-layout #settingsPanel {
+        top:
+            50% !important;
+
+        left:
+            50% !important;
+
+        right:
+            auto !important;
+
+        bottom:
+            auto !important;
+
+        width:
+            min(92vw, 430px)
+            !important;
+
+        transform:
+            translate(-50%, -50%)
+            scale(0.96)
+            !important;
+    }
+
+    #settingsPanel.settings-open,
+    body.force-mobile-layout #settingsPanel.settings-open {
+        transform:
+            translate(-50%, -50%)
+            scale(1)
+            !important;
+    }
+}
+
+/* MI AI CENTERED SETTINGS - END */
+
+
+/* MI AI LANGUAGE THEME GLASS - START */
+
+:root {
+    --mi-theme-color: #f59e0b;
+    --mi-theme-rgb: 245, 158, 11;
+
+    --mi-glass-border:
+        rgba(255, 255, 255, 0.30);
+
+    --mi-glass-highlight:
+        rgba(255, 255, 255, 0.36);
+}
+
+/* Language option */
+.mi-language-setting {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.mi-language-setting label {
+    display: block;
+    width: 100%;
+    color: rgba(255,255,255,0.84);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#languageSelect {
+    width: 100% !important;
+    min-height: 48px;
+
+    padding: 10px 14px !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.22)
+        !important;
+
+    border-radius:
+        16px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.16),
+            rgba(255,255,255,0.07)
+        ) !important;
+
+    color: #ffffff !important;
+
+    -webkit-backdrop-filter:
+        blur(20px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(20px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.25),
+        0 10px 28px
+            rgba(0,0,0,0.17)
+        !important;
+
+    outline: none;
+    cursor: pointer;
+}
+
+#languageSelect option {
+    background: #182238;
+    color: #ffffff;
+}
+
+/*
+   Theme changes only the colour tint.
+   Blur, shine, border and glass remain unchanged.
+*/
+button:not(.danger):not(.delete-btn):not(#logoutBtn),
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn:not(.danger):not(.delete-btn),
+.button:not(.danger):not(.delete-btn),
+[role="button"]:not(.danger):not(.delete-btn) {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb), 0.62),
+            rgba(var(--mi-theme-rgb), 0.31)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.34)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(22px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.43),
+        inset 0 -1px 0
+            rgba(0,0,0,0.12),
+        0 9px 25px
+            rgba(var(--mi-theme-rgb), 0.20),
+        0 4px 12px
+            rgba(0,0,0,0.16)
+        !important;
+
+    color: #ffffff !important;
+
+    transition:
+        transform 160ms ease,
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease
+        !important;
+}
+
+/* Glass reflection */
+button:not(.danger):not(.delete-btn):not(#logoutBtn)::before,
+.btn:not(.danger):not(.delete-btn)::before,
+.button:not(.danger):not(.delete-btn)::before,
+[role="button"]:not(.danger):not(.delete-btn)::before {
+    content: "";
+
+    position: absolute;
+    top: 1px;
+    left: 5%;
+    right: 5%;
+    height: 46%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.42),
+            rgba(255,255,255,0.04)
+        );
+
+    opacity: 0.70;
+    pointer-events: none;
+}
+
+button:not(.danger):not(.delete-btn):not(#logoutBtn):hover,
+.btn:not(.danger):not(.delete-btn):hover,
+.button:not(.danger):not(.delete-btn):hover,
+[role="button"]:not(.danger):not(.delete-btn):hover {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb), 0.78),
+            rgba(var(--mi-theme-rgb), 0.40)
+        ) !important;
+
+    border-color:
+        rgba(255,255,255,0.52)
+        !important;
+
+    transform:
+        translateY(-1px)
+        scale(1.015);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.56),
+        0 13px 32px
+            rgba(var(--mi-theme-rgb), 0.30),
+        0 5px 14px
+            rgba(0,0,0,0.18)
+        !important;
+}
+
+button:not(.danger):not(.delete-btn):not(#logoutBtn):active,
+.btn:not(.danger):not(.delete-btn):active,
+.button:not(.danger):not(.delete-btn):active,
+[role="button"]:not(.danger):not(.delete-btn):active {
+    transform:
+        translateY(1px)
+        scale(0.97);
+
+    box-shadow:
+        inset 0 2px 5px
+            rgba(0,0,0,0.17),
+        inset 0 1px 0
+            rgba(255,255,255,0.26),
+        0 4px 12px
+            rgba(var(--mi-theme-rgb),0.18)
+        !important;
+}
+
+/* User messages: coloured iPhone glass */
+#chat > .me,
+.me {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb), 0.70),
+            rgba(var(--mi-theme-rgb), 0.34)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.30)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(24px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.36),
+        inset 0 -1px 0
+            rgba(0,0,0,0.10),
+        0 12px 32px
+            rgba(var(--mi-theme-rgb),0.20),
+        0 5px 14px
+            rgba(0,0,0,0.15)
+        !important;
+}
+
+#chat > .me::before,
+.me::before {
+    content: "";
+
+    position: absolute;
+    top: 1px;
+    left: 4%;
+    right: 4%;
+    height: 42%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.34),
+            transparent
+        );
+
+    pointer-events: none;
+    opacity: 0.70;
+}
+
+/* AI messages: neutral dark glass */
+#chat > .ai,
+.ai {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(48, 61, 72, 0.70),
+            rgba(26, 38, 48, 0.54)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.15)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(170%);
+
+    backdrop-filter:
+        blur(24px)
+        saturate(170%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.14),
+        0 10px 28px
+            rgba(0,0,0,0.18)
+        !important;
+}
+
+/* Keep destructive actions red */
+button.danger,
+button.delete-btn,
+button[onclick*="delete"],
+button[onclick*="confirmLogout"],
+#logoutBtn {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(239,68,68,0.76),
+            rgba(185,28,28,0.46)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255,190,190,0.38)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(20px)
+        saturate(175%);
+
+    backdrop-filter:
+        blur(20px)
+        saturate(175%);
+}
+
+/* Theme colour must not recolour the complete page */
+html,
+body,
+#main,
+#header,
+#sidebar,
+#inputBox,
+#settingsPanel {
+    transition:
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+/* Neutral chat-list and context-menu hover */
+.chatItem:hover,
+#menu div:hover {
+    background:
+        rgba(255,255,255,0.14)
+        !important;
+
+    border-color:
+        rgba(255,255,255,0.22)
+        !important;
+}
+
+/* MI AI LANGUAGE THEME GLASS - END */
+
+
+/* MI AI COPY BUTTON BELOW REPLY - START */
+
+/*
+   The copy button remains connected to the AI reply,
+   but appears below and outside the reply box.
+*/
+
+#chat > .ai {
+    position: relative !important;
+    overflow: visible !important;
+
+    /*
+       Reserve vertical space for the copy button
+       so it does not overlap the next message.
+    */
+    margin-bottom: 46px !important;
+
+    /*
+       The old layout reserved right-side space
+       for the copy icon. It is no longer required.
+    */
+    padding:
+        12px 14px !important;
+}
+
+/* Remove the old right-side copy-button space */
+#chat > .ai .aiMessageBody,
+#chat > .ai .aiWritingCard {
+    padding-right:
+        12px !important;
+}
+
+/* Position the copy icon below the AI reply */
+#chat > .ai > .aiCopyButton {
+    position:
+        absolute !important;
+
+    top:
+        calc(100% + 7px) !important;
+
+    bottom:
+        auto !important;
+
+    left:
+        8px !important;
+
+    right:
+        auto !important;
+
+    width:
+        32px !important;
+
+    min-width:
+        32px !important;
+
+    max-width:
+        32px !important;
+
+    height:
+        32px !important;
+
+    min-height:
+        32px !important;
+
+    max-height:
+        32px !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    display:
+        inline-flex !important;
+
+    align-items:
+        center !important;
+
+    justify-content:
+        center !important;
+
+    border-radius:
+        999px !important;
+
+    font-size:
+        16px !important;
+
+    line-height:
+        1 !important;
+
+    z-index:
+        5 !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.20),
+            rgba(255, 255, 255, 0.08)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.30),
+        0 7px 20px
+            rgba(0, 0, 0, 0.22)
+        !important;
+
+    opacity:
+        0.76;
+
+    cursor:
+        pointer;
+
+    transform:
+        none !important;
+
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease,
+        background 160ms ease
+        !important;
+}
+
+#chat > .ai > .aiCopyButton:hover {
+    opacity:
+        1;
+
+    transform:
+        translateY(-1px)
+        scale(1.05)
+        !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.29),
+            rgba(255, 255, 255, 0.12)
+        ) !important;
+}
+
+#chat > .ai > .aiCopyButton:active {
+    transform:
+        scale(0.92)
+        !important;
+}
+
+/* Do not apply the large global button shine layers */
+#chat > .ai > .aiCopyButton::before,
+#chat > .ai > .aiCopyButton::after {
+    display:
+        none !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    #chat > .ai {
+        margin-bottom:
+            43px !important;
+
+        padding:
+            10px 13px !important;
+    }
+
+    #chat > .ai > .aiCopyButton {
+        top:
+            calc(100% + 6px)
+            !important;
+
+        left:
+            6px !important;
+
+        width:
+            30px !important;
+
+        min-width:
+            30px !important;
+
+        max-width:
+            30px !important;
+
+        height:
+            30px !important;
+
+        min-height:
+            30px !important;
+
+        max-height:
+            30px !important;
+    }
+}
+
+/* MI AI COPY BUTTON BELOW REPLY - END */
+
+/* MI AI CHAT MORE MENU - START */
+
+/* Smaller AI copy icon */
+#chat > .ai > .mi-ai-copy-below,
+#chat > .ai > .aiCopyButton,
+#chat > .ai > .copy-btn,
+#chat > .ai > .copy-button {
+    width: 25px !important;
+    min-width: 25px !important;
+    max-width: 25px !important;
+
+    height: 25px !important;
+    min-height: 25px !important;
+    max-height: 25px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    font-size: 12px !important;
+    line-height: 1 !important;
+
+    border-radius: 999px !important;
+
+    opacity: 0.68;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.27),
+        0 5px 14px rgba(0,0,0,0.18)
+        !important;
+}
+
+#chat > .ai > .mi-ai-copy-below:hover,
+#chat > .ai > .aiCopyButton:hover,
+#chat > .ai > .copy-btn:hover,
+#chat > .ai > .copy-button:hover {
+    opacity: 1;
+}
+
+/* Less empty space below AI reply */
+#chat > .ai {
+    margin-bottom: 36px !important;
+}
+
+/* Right-click / long-press menu */
+#miChatMoreMenu {
+    position: fixed;
+    z-index: 999999;
+
+    width: min(230px, calc(100vw - 24px));
+
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+
+    padding: 8px;
+
+    border:
+        1px solid rgba(255,255,255,0.25);
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34,43,61,0.88),
+            rgba(14,22,37,0.82)
+        );
+
+    -webkit-backdrop-filter:
+        blur(28px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(28px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.20),
+        0 20px 65px rgba(0,0,0,0.42);
+
+    opacity: 0;
+    transform:
+        translateY(5px)
+        scale(0.97);
+
+    transform-origin:
+        top left;
+
+    transition:
+        opacity 140ms ease,
+        transform 140ms ease;
+}
+
+#miChatMoreMenu.mi-visible {
+    display: flex;
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+#miChatMoreMenu button {
+    width: 100% !important;
+    min-height: 42px;
+
+    margin: 0 !important;
+    padding: 9px 12px !important;
+
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+
+    border-radius: 13px !important;
+
+    background:
+        rgba(255,255,255,0.075)
+        !important;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.09)
+        !important;
+
+    color: #ffffff !important;
+
+    text-align: left;
+    font-size: 14px;
+
+    box-shadow: none !important;
+}
+
+#miChatMoreMenu button:hover {
+    background:
+        rgba(255,255,255,0.15)
+        !important;
+
+    transform:
+        none !important;
+}
+
+#miChatMoreMenu button::before,
+#miChatMoreMenu button::after {
+    display: none !important;
+}
+
+#miChatMoreMenu .mi-menu-danger {
+    color: #ffb2b2 !important;
+
+    background:
+        rgba(239,68,68,0.13)
+        !important;
+}
+
+/* Long-press feedback */
+.mi-long-press-active {
+    transform:
+        scale(0.985)
+        !important;
+
+    filter:
+        brightness(1.08);
+}
+
+/* MI AI CHAT MORE MENU - END */
 </style>
+
+<!-- MI AI FIREBASE AUTH START -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<script>
+(function () {
+    "use strict";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
+        authDomain: "mi-ai-99e6a.firebaseapp.com",
+        projectId: "mi-ai-99e6a",
+        storageBucket: "mi-ai-99e6a.firebasestorage.app",
+        messagingSenderId: "845086558623",
+        appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
+    };
+
+    function getFirebaseLanguage() {
+        const selected =
+            document.getElementById("languageSelect")?.value;
+
+        const stored =
+            localStorage.getItem("mi_ui_language");
+
+        const language = selected || stored || "en";
+
+        const languageMap = {
+            en: "en",
+            si: "si",
+            ta: "ta"
+        };
+
+        return languageMap[language] || "en";
+    }
+
+    function firebaseErrorMessage(error) {
+        const errorCode = String(error?.code || "");
+
+        const messages = {
+            "auth/invalid-email":
+                "Invalid email address.",
+
+            "auth/missing-password":
+                "Please enter your password.",
+
+            "auth/weak-password":
+                "Password must contain at least 6 characters.",
+
+            "auth/email-already-in-use":
+                "An account already exists with this email.",
+
+            "auth/user-not-found":
+                "No account was found for this email.",
+
+            "auth/wrong-password":
+                "Incorrect email or password.",
+
+            "auth/invalid-credential":
+                "Incorrect email or password.",
+
+            "auth/too-many-requests":
+                "Too many attempts. Please try again later.",
+
+            "auth/network-request-failed":
+                "Network error. Check your internet connection.",
+
+            "auth/operation-not-allowed":
+                "Email and password login is not enabled in Firebase.",
+
+            "auth/unauthorized-domain":
+                "This website domain is not authorized in Firebase."
+        };
+
+        return (
+            messages[errorCode] ||
+            error?.message ||
+            "Firebase authentication failed."
+        );
+    }
+
+    function initializeMIFirebase() {
+        if (typeof window.firebase === "undefined") {
+            throw new Error("Firebase SDK failed to load.");
+        }
+
+        let app;
+
+        if (
+            Array.isArray(window.firebase.apps) &&
+            window.firebase.apps.length > 0
+        ) {
+            app = window.firebase.app();
+        }
+        else {
+            app = window.firebase.initializeApp(
+                firebaseConfig
+            );
+        }
+
+        const auth = window.firebase.auth(app);
+
+        auth.languageCode = getFirebaseLanguage();
+
+        window.miFirebaseApp = app;
+        window.miFirebaseAuth = auth;
+        window.miFirebaseUser = auth.currentUser || null;
+
+        auth.onAuthStateChanged(function (user) {
+            window.miFirebaseUser = user || null;
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-firebase-auth-changed",
+                    {
+                        detail: {
+                            user: user || null
+                        }
+                    }
+                )
+            );
+        });
+
+        window.MIFirebase = {
+            config: Object.freeze({
+                ...firebaseConfig
+            }),
+
+            get auth() {
+                return window.miFirebaseAuth;
+            },
+
+            get user() {
+                return (
+                    window.miFirebaseAuth?.currentUser ||
+                    null
+                );
+            },
+
+            updateLanguage: function () {
+                if (window.miFirebaseAuth) {
+                    window.miFirebaseAuth.languageCode =
+                        getFirebaseLanguage();
+                }
+            },
+
+            register: async function (
+                email,
+                password,
+                profile = {}
+            ) {
+                try {
+                    this.updateLanguage();
+
+                    const credential =
+                        await auth
+                            .createUserWithEmailAndPassword(
+                                String(email || "").trim(),
+                                String(password || "")
+                            );
+
+                    const user = credential.user;
+
+                    const displayName = String(
+                        profile.displayName ||
+                        profile.fullName ||
+                        profile.name ||
+                        ""
+                    ).trim();
+
+                    if (displayName) {
+                        await user.updateProfile({
+                            displayName: displayName
+                        });
+                    }
+
+                    await user.sendEmailVerification({
+                        url: window.location.origin
+                    });
+
+                    return user;
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI Firebase register]",
+                        error
+                    );
+
+                    throw new Error(
+                        firebaseErrorMessage(error)
+                    );
+                }
+            },
+
+            login: async function (
+                email,
+                password
+            ) {
+                try {
+                    this.updateLanguage();
+
+                    const credential =
+                        await auth
+                            .signInWithEmailAndPassword(
+                                String(email || "").trim(),
+                                String(password || "")
+                            );
+
+                    return credential.user;
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI Firebase login]",
+                        error
+                    );
+
+                    throw new Error(
+                        firebaseErrorMessage(error)
+                    );
+                }
+            },
+
+            sendPasswordResetEmail:
+                async function (email) {
+                    try {
+                        this.updateLanguage();
+
+                        await auth.sendPasswordResetEmail(
+                            String(email || "").trim(),
+                            {
+                                url: window.location.origin
+                            }
+                        );
+
+                        return true;
+                    }
+                    catch (error) {
+                        console.error(
+                            "[MI AI Firebase reset]",
+                            error
+                        );
+
+                        throw new Error(
+                            firebaseErrorMessage(error)
+                        );
+                    }
+                },
+
+            resendVerification:
+                async function () {
+                    try {
+                        this.updateLanguage();
+
+                        const user =
+                            auth.currentUser;
+
+                        if (!user) {
+                            throw new Error(
+                                "Please sign in first."
+                            );
+                        }
+
+                        await user.sendEmailVerification({
+                            url: window.location.origin
+                        });
+
+                        return true;
+                    }
+                    catch (error) {
+                        throw new Error(
+                            firebaseErrorMessage(error)
+                        );
+                    }
+                },
+
+            logout: async function () {
+                await auth.signOut();
+                return true;
+            }
+        };
+
+        document.addEventListener(
+            "change",
+            function (event) {
+                if (
+                    event.target &&
+                    event.target.id ===
+                        "languageSelect"
+                ) {
+                    window.MIFirebase.updateLanguage();
+                }
+            }
+        );
+
+        console.log(
+            "[MI AI] Firebase Authentication connected:",
+            firebaseConfig.projectId
+        );
+
+        window.dispatchEvent(
+            new CustomEvent("mi-firebase-ready")
+        );
+    }
+
+    function startFirebase() {
+        try {
+            initializeMIFirebase();
+        }
+        catch (error) {
+            console.error(
+                "[MI AI] Firebase initialization failed:",
+                error
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-firebase-error",
+                    {
+                        detail: {
+                            message: error.message
+                        }
+                    }
+                )
+            );
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startFirebase,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        startFirebase();
+    }
+})();
+</script>
+
+<!-- MI AI FIREBASE AUTH END -->
 </head>
 
 <body>
@@ -822,7 +4013,9 @@ body.force-mobile-layout #settingsPanel {
 <img
     id="headerLogo"
     src="/MIAI.svg"
-    alt="MI AI Logo">
+    alt="MI AI Logo"
+    width="48"
+    height="48">
   <span>MI AI ChatBOT</span>
   <div class="headerActions">
     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
@@ -845,11 +4038,30 @@ body.force-mobile-layout #settingsPanel {
 <div id="chat"></div>
 
 <!-- SETTINGS -->
-<div id="settingsPanel">
+<div
+    id="settingsBackdrop"
+    aria-hidden="true"
+    onclick="closeSettings()">
+</div>
+<div id="settingsPanel" role="dialog" aria-modal="true" aria-hidden="true">
+<button
+    id="settingsCloseBtn"
+    type="button"
+    onclick="closeSettings()"
+    aria-label="Close Settings">
+    ✕
+</button>
 <h3 data-i18n="settings.title">Settings</h3>
 
 <label data-i18n="settings.language">Language</label>
-<select id="languageSelect" onchange="changeLanguage(this.value)"></select>
+<select
+        id="languageSelect"
+        data-mi-i18n-ignore="true"
+        onchange="window.MIAI18N && window.MIAI18N.setLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="si">සිංහල</option>
+        <option value="ta">தமிழ்</option>
+    </select>
 
 <label data-i18n="settings.theme">Theme</label>
 <input type="color" id="themeColor">
@@ -902,6 +4114,8 @@ window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
   authDomain: "mi-ai-99e6a.firebaseapp.com",
   projectId: "mi-ai-99e6a",
+  storageBucket: "mi-ai-99e6a.firebasestorage.app",
+  messagingSenderId: "845086558623",
   appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
 };
 
@@ -964,10 +4178,23 @@ const SUPPORTED_LANGUAGES = [
 ];
 
 function getFirebaseConfig() {
-  if (window.FIREBASE_CONFIG && typeof window.FIREBASE_CONFIG === 'object') {
-    return window.FIREBASE_CONFIG;
+  const config =
+    window.FIREBASE_CONFIG &&
+    typeof window.FIREBASE_CONFIG === "object"
+      ? window.FIREBASE_CONFIG
+      : null;
+
+  if (
+    !config ||
+    !String(config.apiKey || "").trim() ||
+    !String(config.authDomain || "").trim() ||
+    !String(config.projectId || "").trim() ||
+    !String(config.appId || "").trim()
+  ) {
+    return null;
   }
-  return FIREBASE_CONFIG;
+
+  return config;
 }
 
 async function initFirebase() {
@@ -4066,5 +7293,1697 @@ try {
 }
 </script>
 
+<script>
+/* MI AI CENTERED SETTINGS JS - START */
+
+window.closeSettings = function () {
+    const panel =
+        document.getElementById("settingsPanel");
+
+    const backdrop =
+        document.getElementById("settingsBackdrop");
+
+    if (panel) {
+        panel.classList.remove(
+            "settings-open"
+        );
+
+        panel.style.display = "";
+
+        panel.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+    }
+
+    if (backdrop) {
+        backdrop.classList.remove(
+            "settings-open"
+        );
+
+        backdrop.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+    }
+
+    document.body.classList.remove(
+        "settings-modal-open"
+    );
+};
+
+window.toggleSettings = function () {
+    if (
+        typeof window.closeMobileMenu
+        === "function"
+    ) {
+        window.closeMobileMenu();
+    }
+
+    const panel =
+        document.getElementById("settingsPanel");
+
+    const backdrop =
+        document.getElementById("settingsBackdrop");
+
+    if (!panel) {
+        return;
+    }
+
+    const isOpen =
+        panel.classList.contains(
+            "settings-open"
+        );
+
+    if (isOpen) {
+        window.closeSettings();
+        return;
+    }
+
+    panel.style.display = "";
+
+    panel.classList.add(
+        "settings-open"
+    );
+
+    panel.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    if (backdrop) {
+        backdrop.classList.add(
+            "settings-open"
+        );
+
+        backdrop.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+    }
+
+    document.body.classList.add(
+        "settings-modal-open"
+    );
+
+    const firstControl =
+        panel.querySelector(
+            "select, input, button:not(#settingsCloseBtn)"
+        );
+
+    setTimeout(function () {
+        if (firstControl) {
+            firstControl.focus();
+        }
+    }, 100);
+};
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+        if (event.key === "Escape") {
+            window.closeSettings();
+        }
+    }
+);
+
+/* MI AI CENTERED SETTINGS JS - END */
+</script>
+
+
+<script>
+/* MI AI UI TRANSLATION SYSTEM - START */
+
+(function () {
+    "use strict";
+
+    const translations = {
+        en: {
+            newChat: "New Chat",
+            settings: "Settings",
+            customerSupport: "Customer Support",
+            language: "Language",
+            theme: "Theme",
+            themeColor: "Theme Color",
+            apply: "Apply",
+            fontSize: "Font Size",
+            rename: "Rename",
+            pin: "Pin",
+            unpin: "Unpin",
+            share: "Share",
+            deleteText: "Delete",
+            cancel: "Cancel",
+            saveChanges: "Save changes",
+            yourProfile: "Your profile",
+            name: "Name",
+            age: "Age",
+            email: "Email",
+            password: "Password",
+            confirmPassword: "Confirm Password",
+            signIn: "Sign In",
+            register: "Register",
+            createAccount: "Create Account",
+            forgotPassword: "Forgot Password?",
+            logout: "Logout",
+            loginAction: "Log in",
+            loginUnlock: "Login to unlock more",
+            benefits: "Enjoy these benefits when you sign in:",
+            saveChats: "Save and restore your chats",
+            syncChats: "Sync your history across devices",
+            fasterReplies: "Get faster, more personal replies",
+            logoutQuestion: "Are you sure you want to logout?",
+            askPlaceholder: "Ask from MI AI...",
+            mistakes:
+                "MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
+            creator:
+                "CREATED AND POWERED BY M.I.MUHAMMADH",
+            closeSettings: "Close Settings",
+            closeMenu: "Close menu",
+            openMenu: "Open menu",
+            send: "Send",
+            stop: "Stop",
+            loading: "Loading...",
+            pleaseWait: "Please wait...",
+            verify: "Verify",
+            submit: "Submit",
+            continueText: "Continue",
+            back: "Back",
+            next: "Next",
+            save: "Save",
+            edit: "Edit",
+            close: "Close",
+            copied: "Copied!",
+            copy: "Copy",
+            loginRequired: "Login Required",
+            loginRequiredMessage:
+                "Please log in to use this feature."
+        },
+
+        si: {
+            newChat: "නව කතාබහ",
+            settings: "සැකසුම්",
+            customerSupport: "පාරිභෝගික සහාය",
+            language: "භාෂාව",
+            theme: "තේමාව",
+            themeColor: "තේමා වර්ණය",
+            apply: "යොදන්න",
+            fontSize: "අකුරු ප්‍රමාණය",
+            rename: "නම වෙනස් කරන්න",
+            pin: "ඉහළට අමුණන්න",
+            unpin: "අමුණීම ඉවත් කරන්න",
+            share: "බෙදාගන්න",
+            deleteText: "මකන්න",
+            cancel: "අවලංගු කරන්න",
+            saveChanges: "වෙනස්කම් සුරකින්න",
+            yourProfile: "ඔබගේ පැතිකඩ",
+            name: "නම",
+            age: "වයස",
+            email: "විද්‍යුත් තැපෑල",
+            password: "මුරපදය",
+            confirmPassword: "මුරපදය තහවුරු කරන්න",
+            signIn: "පිවිසෙන්න",
+            register: "ලියාපදිංචි වන්න",
+            createAccount: "ගිණුම සාදන්න",
+            forgotPassword: "මුරපදය අමතකද?",
+            logout: "ඉවත් වන්න",
+            loginAction: "පිවිසෙන්න",
+            loginUnlock: "තවත් පහසුකම් ලබාගැනීමට පිවිසෙන්න",
+            benefits: "පිවිසීමෙන් මෙම පහසුකම් ලබාගන්න:",
+            saveChats: "ඔබගේ කතාබහ සුරකින්න සහ නැවත ලබාගන්න",
+            syncChats: "උපාංග අතර කතාබහ ඉතිහාසය සමමුහුර්ත කරන්න",
+            fasterReplies: "වේගවත් සහ ඔබට ගැළපෙන පිළිතුරු ලබාගන්න",
+            logoutQuestion: "ඔබට ඉවත් වීමට අවශ්‍ය බව තහවුරුද?",
+            askPlaceholder: "MI AI වෙතින් අසන්න...",
+            mistakes:
+                "MI AI වැරදි කළ හැක. වැදගත් තොරතුරු පරීක්ෂා කරන්න.",
+            creator:
+                "M.I.MUHAMMADH විසින් නිර්මාණය කර බලගන්වන ලදී",
+            closeSettings: "සැකසුම් වසන්න",
+            closeMenu: "මෙනුව වසන්න",
+            openMenu: "මෙනුව විවෘත කරන්න",
+            send: "යවන්න",
+            stop: "නවත්වන්න",
+            loading: "පූරණය වෙමින්...",
+            pleaseWait: "කරුණාකර රැඳී සිටින්න...",
+            verify: "තහවුරු කරන්න",
+            submit: "යොමු කරන්න",
+            continueText: "ඉදිරියට යන්න",
+            back: "ආපසු",
+            next: "ඊළඟ",
+            save: "සුරකින්න",
+            edit: "සංස්කරණය කරන්න",
+            close: "වසන්න",
+            copied: "පිටපත් කළා!",
+            copy: "පිටපත් කරන්න",
+            loginRequired: "පිවිසීම අවශ්‍යයි",
+            loginRequiredMessage:
+                "මෙම පහසුකම භාවිත කිරීමට පිවිසෙන්න."
+        },
+
+        ta: {
+            newChat: "புதிய அரட்டை",
+            settings: "அமைப்புகள்",
+            customerSupport: "வாடிக்கையாளர் ஆதரவு",
+            language: "மொழி",
+            theme: "தீம்",
+            themeColor: "தீம் நிறம்",
+            apply: "பயன்படுத்து",
+            fontSize: "எழுத்தளவு",
+            rename: "பெயரை மாற்று",
+            pin: "பின் செய்",
+            unpin: "பின்னை நீக்கு",
+            share: "பகிர்",
+            deleteText: "நீக்கு",
+            cancel: "ரத்து செய்",
+            saveChanges: "மாற்றங்களைச் சேமி",
+            yourProfile: "உங்கள் சுயவிவரம்",
+            name: "பெயர்",
+            age: "வயது",
+            email: "மின்னஞ்சல்",
+            password: "கடவுச்சொல்",
+            confirmPassword: "கடவுச்சொல்லை உறுதிப்படுத்து",
+            signIn: "உள்நுழைய",
+            register: "பதிவு செய்க",
+            createAccount: "கணக்கை உருவாக்கு",
+            forgotPassword: "கடவுச்சொல் மறந்துவிட்டதா?",
+            logout: "வெளியேறு",
+            loginAction: "உள்நுழைய",
+            loginUnlock: "மேலும் வசதிகளைப் பெற உள்நுழையுங்கள்",
+            benefits: "உள்நுழைந்தால் இந்த வசதிகளைப் பெறலாம்:",
+            saveChats: "உங்கள் அரட்டைகளைச் சேமித்து மீட்டெடுக்கவும்",
+            syncChats: "சாதனங்களுக்கு இடையில் வரலாற்றை ஒத்திசைக்கவும்",
+            fasterReplies: "வேகமான தனிப்பயன் பதில்களைப் பெறவும்",
+            logoutQuestion: "நீங்கள் வெளியேற விரும்புகிறீர்களா?",
+            askPlaceholder: "MI AI-யிடம் கேளுங்கள்...",
+            mistakes:
+                "MI AI தவறுகள் செய்யலாம். முக்கிய தகவல்களைச் சரிபார்க்கவும்.",
+            creator:
+                "M.I.MUHAMMADH அவர்களால் உருவாக்கப்பட்டு இயக்கப்படுகிறது",
+            closeSettings: "அமைப்புகளை மூடு",
+            closeMenu: "மெனுவை மூடு",
+            openMenu: "மெனுவைத் திற",
+            send: "அனுப்பு",
+            stop: "நிறுத்து",
+            loading: "ஏற்றப்படுகிறது...",
+            pleaseWait: "தயவுசெய்து காத்திருக்கவும்...",
+            verify: "சரிபார்",
+            submit: "சமர்ப்பி",
+            continueText: "தொடரவும்",
+            back: "பின்செல்",
+            next: "அடுத்து",
+            save: "சேமி",
+            edit: "திருத்து",
+            close: "மூடு",
+            copied: "நகலெடுக்கப்பட்டது!",
+            copy: "நகலெடு",
+            loginRequired: "உள்நுழைவு தேவை",
+            loginRequiredMessage:
+                "இந்த வசதியைப் பயன்படுத்த உள்நுழையவும்."
+        }
+    };
+
+    const languageCodes = {
+        en: "en",
+        si: "si-LK",
+        ta: "ta-LK"
+    };
+
+    const aliasMap = new Map();
+    let translationScheduled = false;
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLocaleLowerCase();
+    }
+
+    Object.keys(translations).forEach(function (language) {
+        Object.entries(translations[language]).forEach(
+            function ([key, value]) {
+                aliasMap.set(normalize(value), key);
+            }
+        );
+    });
+
+    function removeLeadingIcon(value) {
+        return String(value || "")
+            .replace(/^[^\p{L}\p{N}]+/u, "")
+            .trim();
+    }
+
+    function findTranslationKey(value) {
+        const normal = normalize(value);
+
+        if (!normal) {
+            return null;
+        }
+
+        if (aliasMap.has(normal)) {
+            return aliasMap.get(normal);
+        }
+
+        const withoutIcon = normalize(
+            removeLeadingIcon(value)
+        );
+
+        return aliasMap.get(withoutIcon) || null;
+    }
+
+    function preserveIconPrefix(original, translated) {
+        const text = String(original || "").trim();
+
+        const match = text.match(
+            /^([^\p{L}\p{N}]*)(.*)$/u
+        );
+
+        const prefix = match ? match[1] : "";
+
+        return prefix + translated;
+    }
+
+    function isExcluded(node) {
+        const element =
+            node.nodeType === Node.ELEMENT_NODE
+                ? node
+                : node.parentElement;
+
+        if (!element) {
+            return true;
+        }
+
+        /*
+          Do not translate:
+          - Chat messages
+          - Header
+          - Scripts/styles/code
+          - Language options
+        */
+        return Boolean(
+            element.closest(
+                "#chat, #header, script, style, code, pre, " +
+                "textarea, [data-mi-i18n-ignore='true']"
+            )
+        );
+    }
+
+    function translateTextNode(node, language) {
+        if (
+            !node ||
+            node.nodeType !== Node.TEXT_NODE ||
+            isExcluded(node)
+        ) {
+            return;
+        }
+
+        const original = node.nodeValue || "";
+
+        if (!original.trim()) {
+            return;
+        }
+
+        const key = findTranslationKey(original);
+
+        if (
+            !key ||
+            !translations[language] ||
+            !translations[language][key]
+        ) {
+            return;
+        }
+
+        const leading =
+            original.match(/^\s*/)?.[0] || "";
+
+        const trailing =
+            original.match(/\s*$/)?.[0] || "";
+
+        const translated = preserveIconPrefix(
+            original,
+            translations[language][key]
+        );
+
+        const finalValue =
+            leading +
+            translated.trim() +
+            trailing;
+
+        if (node.nodeValue !== finalValue) {
+            node.nodeValue = finalValue;
+        }
+    }
+
+    function translateAttribute(
+        element,
+        attribute,
+        language
+    ) {
+        const value = element.getAttribute(attribute);
+
+        if (!value) {
+            return;
+        }
+
+        const key = findTranslationKey(value);
+
+        if (
+            key &&
+            translations[language] &&
+            translations[language][key]
+        ) {
+            element.setAttribute(
+                attribute,
+                translations[language][key]
+            );
+        }
+    }
+
+    function translateElement(element, language) {
+        if (
+            !element ||
+            element.nodeType !== Node.ELEMENT_NODE ||
+            isExcluded(element)
+        ) {
+            return;
+        }
+
+        [
+            "placeholder",
+            "title",
+            "aria-label"
+        ].forEach(function (attribute) {
+            translateAttribute(
+                element,
+                attribute,
+                language
+            );
+        });
+
+        if (
+            element instanceof HTMLInputElement &&
+            ["button", "submit", "reset"].includes(
+                element.type
+            )
+        ) {
+            const key = findTranslationKey(
+                element.value
+            );
+
+            if (
+                key &&
+                translations[language][key]
+            ) {
+                element.value =
+                    translations[language][key];
+            }
+        }
+    }
+
+    function translateTree(root, language) {
+        if (!root) {
+            return;
+        }
+
+        if (root.nodeType === Node.TEXT_NODE) {
+            translateTextNode(root, language);
+            return;
+        }
+
+        if (root.nodeType !== Node.ELEMENT_NODE) {
+            return;
+        }
+
+        translateElement(root, language);
+
+        const elementWalker =
+            document.createTreeWalker(
+                root,
+                NodeFilter.SHOW_ELEMENT
+            );
+
+        while (elementWalker.nextNode()) {
+            translateElement(
+                elementWalker.currentNode,
+                language
+            );
+        }
+
+        const textWalker =
+            document.createTreeWalker(
+                root,
+                NodeFilter.SHOW_TEXT
+            );
+
+        while (textWalker.nextNode()) {
+            translateTextNode(
+                textWalker.currentNode,
+                language
+            );
+        }
+    }
+
+    function setStaticButton(
+        selector,
+        key,
+        icon,
+        language
+    ) {
+        const element =
+            document.querySelector(selector);
+
+        if (!element || element.closest("#header")) {
+            return;
+        }
+
+        const value =
+            (icon ? icon + " " : "") +
+            translations[language][key];
+
+        if (element.textContent.trim() !== value) {
+            element.textContent = value;
+        }
+    }
+
+    function applyStaticTranslations(language) {
+        setStaticButton(
+            "#sidebar button[onclick*='newChat']",
+            "newChat",
+            "➕",
+            language
+        );
+
+        setStaticButton(
+            "#settingsBtn",
+            "settings",
+            "⚙",
+            language
+        );
+
+        setStaticButton(
+            "#supportBtn",
+            "customerSupport",
+            "🎧",
+            language
+        );
+
+        const settingsHeading =
+            document.querySelector(
+                "#settingsPanel h3"
+            );
+
+        if (
+            settingsHeading &&
+            settingsHeading.textContent !==
+                translations[language].settings
+        ) {
+            settingsHeading.textContent =
+                translations[language].settings;
+        }
+
+        const languageLabel =
+            document.querySelector(
+                "[data-mi-i18n='language']"
+            );
+
+        if (languageLabel) {
+            languageLabel.textContent =
+                translations[language].language;
+        }
+
+        const messageInput =
+            document.getElementById("msg");
+
+        if (messageInput) {
+            messageInput.placeholder =
+                translations[language]
+                    .askPlaceholder;
+        }
+
+        document
+            .querySelectorAll("#watermark")
+            .forEach(function (watermark) {
+                const key = findTranslationKey(
+                    watermark.textContent
+                );
+
+                if (
+                    key &&
+                    translations[language][key]
+                ) {
+                    watermark.textContent =
+                        translations[language][key];
+                }
+            });
+    }
+
+    function getLanguage() {
+        const saved =
+            localStorage.getItem(
+                "mi_ui_language"
+            );
+
+        if (
+            saved &&
+            Object.prototype.hasOwnProperty.call(
+                translations,
+                saved
+            )
+        ) {
+            return saved;
+        }
+
+        return "en";
+    }
+
+    function applyLanguage(
+        language,
+        savePreference
+    ) {
+        if (!translations[language]) {
+            language = "en";
+        }
+
+        if (savePreference !== false) {
+            localStorage.setItem(
+                "mi_ui_language",
+                language
+            );
+        }
+
+        document.documentElement.lang =
+            languageCodes[language] || "en";
+
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (
+            selector &&
+            selector.value !== language
+        ) {
+            selector.value = language;
+        }
+
+        applyStaticTranslations(language);
+        translateTree(
+            document.body,
+            language
+        );
+
+        document.body.dataset.uiLanguage =
+            language;
+    }
+
+    function scheduleTranslation() {
+        if (translationScheduled) {
+            return;
+        }
+
+        translationScheduled = true;
+
+        setTimeout(function () {
+            translationScheduled = false;
+
+            applyLanguage(
+                getLanguage(),
+                false
+            );
+        }, 0);
+    }
+
+    function hexToRgb(hex) {
+        const normalized =
+            String(hex || "")
+                .trim()
+                .replace("#", "");
+
+        if (
+            !/^[0-9a-fA-F]{6}$/.test(
+                normalized
+            )
+        ) {
+            return null;
+        }
+
+        return {
+            r: parseInt(
+                normalized.slice(0, 2),
+                16
+            ),
+            g: parseInt(
+                normalized.slice(2, 4),
+                16
+            ),
+            b: parseInt(
+                normalized.slice(4, 6),
+                16
+            )
+        };
+    }
+
+    function applyThemeColour(colour) {
+        const rgb = hexToRgb(colour);
+
+        if (!rgb) {
+            return false;
+        }
+
+        const safeColour =
+            colour.startsWith("#")
+                ? colour
+                : "#" + colour;
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-theme-color",
+                safeColour
+            );
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-theme-rgb",
+                rgb.r +
+                    ", " +
+                    rgb.g +
+                    ", " +
+                    rgb.b
+            );
+
+        localStorage.setItem(
+            "mi_button_theme_colour",
+            safeColour
+        );
+
+        const input =
+            document.getElementById(
+                "themeColor"
+            );
+
+        if (
+            input &&
+            input.value.toLowerCase() !==
+                safeColour.toLowerCase()
+        ) {
+            input.value = safeColour;
+        }
+
+        return true;
+    }
+
+    /*
+      Replace the old applyTheme behaviour.
+      It changes only the button/message tint,
+      not the whole page background.
+    */
+    window.applyTheme = function () {
+        const input =
+            document.getElementById(
+                "themeColor"
+            );
+
+        const colour =
+            input?.value ||
+            localStorage.getItem(
+                "mi_button_theme_colour"
+            ) ||
+            "#f59e0b";
+
+        applyThemeColour(colour);
+    };
+
+    function initialize() {
+        const languageSelector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (languageSelector) {
+            languageSelector.addEventListener(
+                "change",
+                function () {
+                    applyLanguage(
+                        languageSelector.value,
+                        true
+                    );
+                }
+            );
+        }
+
+        const themeInput =
+            document.getElementById(
+                "themeColor"
+            );
+
+        if (themeInput) {
+            themeInput.addEventListener(
+                "input",
+                function () {
+                    applyThemeColour(
+                        themeInput.value
+                    );
+                }
+            );
+        }
+
+        const savedColour =
+            localStorage.getItem(
+                "mi_button_theme_colour"
+            ) ||
+            themeInput?.value ||
+            "#f59e0b";
+
+        applyThemeColour(savedColour);
+
+        applyLanguage(
+            getLanguage(),
+            false
+        );
+
+        const observer =
+            new MutationObserver(
+                scheduleTranslation
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+    }
+
+    window.MIAI18N = {
+        version: "1.0",
+        translations: translations,
+        getLanguage: getLanguage,
+        setLanguage: function (language) {
+            applyLanguage(
+                language,
+                true
+            );
+        },
+        translatePage: function () {
+            applyLanguage(
+                getLanguage(),
+                false
+            );
+        },
+        applyThemeColour:
+            applyThemeColour
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            { once: true }
+        );
+    }
+    else {
+        initialize();
+    }
+})();
+
+/* MI AI UI TRANSLATION SYSTEM - END */
+</script>
+
+
+<script>
+/* MI AI CHAT MORE MENU JS - START */
+
+(function () {
+    "use strict";
+
+    let menu = null;
+    let selectedTarget = null;
+    let selectedType = null;
+
+    let longPressTimer = null;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let longPressTarget = null;
+
+    const LONG_PRESS_TIME = 550;
+    const MOVE_LIMIT = 12;
+
+    const chatItemSelector = [
+        ".chatItem",
+        ".chat-item",
+        ".history-item",
+        ".conversation-item",
+        "#chatList > div",
+        "#historyList > div",
+        "[data-chat-id]",
+        "[data-conversation-id]"
+    ].join(",");
+
+    const messageSelector = [
+        "#chat > .me",
+        "#chat > .ai",
+        ".user-message",
+        ".ai-message",
+        ".assistant-message",
+        ".message-bubble"
+    ].join(",");
+
+    function currentLanguage() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem(
+                "mi_ui_language"
+            )
+            || "en"
+        );
+    }
+
+    function text(key) {
+        const language = currentLanguage();
+
+        const translations = {
+            en: {
+                copy: "Copy",
+                rename: "Rename",
+                pin: "Pin",
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete",
+                copied: "Copied!"
+            },
+
+            si: {
+                copy: "පිටපත් කරන්න",
+                rename: "නම වෙනස් කරන්න",
+                pin: "ඉහළට අමුණන්න",
+                unpin: "අමුණීම ඉවත් කරන්න",
+                share: "බෙදාගන්න",
+                deleteText: "මකන්න",
+                copied: "පිටපත් කළා!"
+            },
+
+            ta: {
+                copy: "நகலெடு",
+                rename: "பெயரை மாற்று",
+                pin: "பின் செய்",
+                unpin: "பின்னை நீக்கு",
+                share: "பகிர்",
+                deleteText: "நீக்கு",
+                copied: "நகலெடுக்கப்பட்டது!"
+            }
+        };
+
+        return (
+            translations[language]?.[key]
+            || translations.en[key]
+            || key
+        );
+    }
+
+    function createMenu() {
+        const existing =
+            document.getElementById(
+                "miChatMoreMenu"
+            );
+
+        if (existing) {
+            menu = existing;
+            return menu;
+        }
+
+        menu = document.createElement("div");
+
+        menu.id = "miChatMoreMenu";
+        menu.setAttribute(
+            "role",
+            "menu"
+        );
+
+        menu.addEventListener(
+            "click",
+            function (event) {
+                const button =
+                    event.target.closest(
+                        "button[data-action]"
+                    );
+
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                runAction(
+                    button.dataset.action
+                );
+            }
+        );
+
+        document.body.appendChild(menu);
+
+        return menu;
+    }
+
+    function findTarget(node) {
+        if (!(node instanceof Element)) {
+            return null;
+        }
+
+        const message =
+            node.closest(messageSelector);
+
+        if (message) {
+            return {
+                element: message,
+                type: "message"
+            };
+        }
+
+        const chatItem =
+            node.closest(chatItemSelector);
+
+        if (
+            chatItem &&
+            !chatItem.closest("#chat")
+        ) {
+            return {
+                element: chatItem,
+                type: "chat"
+            };
+        }
+
+        return null;
+    }
+
+    function isPinned(element) {
+        return (
+            element.classList.contains("pinned")
+            || element.dataset.pinned === "true"
+            || element.getAttribute(
+                "aria-pinned"
+            ) === "true"
+            || Boolean(
+                element.querySelector(
+                    ".pin-icon, .pinned-icon, [data-pinned='true']"
+                )
+            )
+        );
+    }
+
+    function menuButton(
+        action,
+        icon,
+        label,
+        danger
+    ) {
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.dataset.action = action;
+
+        if (danger) {
+            button.classList.add(
+                "mi-menu-danger"
+            );
+        }
+
+        button.innerHTML =
+            "<span aria-hidden='true'>" +
+            icon +
+            "</span>" +
+            "<span>" +
+            label +
+            "</span>";
+
+        return button;
+    }
+
+    function buildMenu(type, target) {
+        menu.replaceChildren();
+
+        if (type === "message") {
+            menu.appendChild(
+                menuButton(
+                    "copy",
+                    "⧉",
+                    text("copy"),
+                    false
+                )
+            );
+
+            return;
+        }
+
+        const pinned = isPinned(target);
+
+        menu.append(
+            menuButton(
+                "rename",
+                "✎",
+                text("rename"),
+                false
+            ),
+
+            menuButton(
+                "pin",
+                pinned ? "⌫" : "⌖",
+                pinned
+                    ? text("unpin")
+                    : text("pin"),
+                false
+            ),
+
+            menuButton(
+                "share",
+                "↗",
+                text("share"),
+                false
+            ),
+
+            menuButton(
+                "delete",
+                "🗑",
+                text("deleteText"),
+                true
+            )
+        );
+    }
+
+    function showMenu(
+        x,
+        y,
+        targetInfo
+    ) {
+        createMenu();
+
+        selectedTarget =
+            targetInfo.element;
+
+        selectedType =
+            targetInfo.type;
+
+        buildMenu(
+            selectedType,
+            selectedTarget
+        );
+
+        menu.classList.add(
+            "mi-visible"
+        );
+
+        menu.style.left = "0px";
+        menu.style.top = "0px";
+
+        const menuWidth =
+            menu.offsetWidth;
+
+        const menuHeight =
+            menu.offsetHeight;
+
+        const safeX = Math.max(
+            8,
+            Math.min(
+                x,
+                window.innerWidth
+                    - menuWidth
+                    - 8
+            )
+        );
+
+        const safeY = Math.max(
+            8,
+            Math.min(
+                y,
+                window.innerHeight
+                    - menuHeight
+                    - 8
+            )
+        );
+
+        menu.style.left =
+            safeX + "px";
+
+        menu.style.top =
+            safeY + "px";
+    }
+
+    function hideMenu() {
+        if (menu) {
+            menu.classList.remove(
+                "mi-visible"
+            );
+        }
+
+        selectedTarget = null;
+        selectedType = null;
+    }
+
+    function getMessageText(element) {
+        const clone =
+            element.cloneNode(true);
+
+        clone.querySelectorAll(
+            "button, .mi-ai-copy-below, " +
+            ".aiCopyButton, .copy-btn, " +
+            ".copy-button"
+        ).forEach(function (item) {
+            item.remove();
+        });
+
+        return (
+            clone.innerText
+            || clone.textContent
+            || ""
+        ).trim();
+    }
+
+    async function copySelectedText() {
+        if (!selectedTarget) {
+            return;
+        }
+
+        const value =
+            getMessageText(selectedTarget);
+
+        if (!value) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(
+                value
+            );
+        }
+        catch (error) {
+            const textarea =
+                document.createElement(
+                    "textarea"
+                );
+
+            textarea.value = value;
+            textarea.style.position =
+                "fixed";
+
+            textarea.style.opacity =
+                "0";
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+        }
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(
+                text("copied")
+            );
+        }
+    }
+
+    function findExistingActionButton(
+        target,
+        action
+    ) {
+        const patterns = {
+            rename:
+                "rename, edit",
+
+            pin:
+                "pin, unpin",
+
+            share:
+                "share",
+
+            delete:
+                "delete, remove, trash"
+        };
+
+        const words =
+            patterns[action]
+                ?.split(",")
+                .map(function (item) {
+                    return item.trim();
+                })
+                || [];
+
+        const buttons =
+            target.querySelectorAll(
+                "button, [role='button'], " +
+                "[onclick], [data-action]"
+            );
+
+        return Array.from(buttons).find(
+            function (button) {
+                const content = [
+                    button.className,
+                    button.id,
+                    button.dataset.action,
+                    button.getAttribute(
+                        "title"
+                    ),
+                    button.getAttribute(
+                        "aria-label"
+                    ),
+                    button.getAttribute(
+                        "onclick"
+                    ),
+                    button.textContent
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+                return words.some(
+                    function (word) {
+                        return content.includes(
+                            word
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+    function targetChatId(target) {
+        return (
+            target.dataset.chatId
+            || target.dataset.conversationId
+            || target.dataset.id
+            || target.getAttribute(
+                "data-chat"
+            )
+            || target.id
+            || null
+        );
+    }
+
+    function callFirstFunction(
+        names,
+        args
+    ) {
+        for (const name of names) {
+            if (
+                typeof window[name] ===
+                "function"
+            ) {
+                window[name](...args);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function runChatAction(action) {
+        if (!selectedTarget) {
+            return;
+        }
+
+        const existingButton =
+            findExistingActionButton(
+                selectedTarget,
+                action
+            );
+
+        if (existingButton) {
+            existingButton.click();
+            return;
+        }
+
+        const chatId =
+            targetChatId(selectedTarget);
+
+        const functionMap = {
+            rename: [
+                "renameChat",
+                "renameConversation",
+                "editChatName"
+            ],
+
+            pin: [
+                "togglePinChat",
+                "pinChat",
+                "toggleChatPin"
+            ],
+
+            share: [
+                "shareChat",
+                "shareConversation"
+            ],
+
+            delete: [
+                "deleteChat",
+                "deleteConversation",
+                "removeChat"
+            ]
+        };
+
+        callFirstFunction(
+            functionMap[action] || [],
+            chatId
+                ? [chatId]
+                : [selectedTarget]
+        );
+    }
+
+    function runAction(action) {
+        const target =
+            selectedTarget;
+
+        const type =
+            selectedType;
+
+        hideMenu();
+
+        if (!target) {
+            return;
+        }
+
+        selectedTarget = target;
+        selectedType = type;
+
+        if (action === "copy") {
+            copySelectedText()
+                .finally(hideMenu);
+
+            return;
+        }
+
+        runChatAction(action);
+        hideMenu();
+    }
+
+    document.addEventListener(
+        "contextmenu",
+        function (event) {
+            const targetInfo =
+                findTarget(event.target);
+
+            if (!targetInfo) {
+                hideMenu();
+                return;
+            }
+
+            event.preventDefault();
+
+            showMenu(
+                event.clientX,
+                event.clientY,
+                targetInfo
+            );
+        }
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            if (
+                event.pointerType ===
+                    "mouse" &&
+                event.button !== 0
+            ) {
+                return;
+            }
+
+            const targetInfo =
+                findTarget(event.target);
+
+            if (!targetInfo) {
+                return;
+            }
+
+            pointerStartX =
+                event.clientX;
+
+            pointerStartY =
+                event.clientY;
+
+            longPressTarget =
+                targetInfo;
+
+            targetInfo.element.classList.add(
+                "mi-long-press-active"
+            );
+
+            clearTimeout(longPressTimer);
+
+            longPressTimer = setTimeout(
+                function () {
+                    if (!longPressTarget) {
+                        return;
+                    }
+
+                    if (
+                        navigator.vibrate
+                    ) {
+                        navigator.vibrate(30);
+                    }
+
+                    showMenu(
+                        pointerStartX,
+                        pointerStartY,
+                        longPressTarget
+                    );
+
+                    longPressTarget.element
+                        .classList.remove(
+                            "mi-long-press-active"
+                        );
+
+                    longPressTarget = null;
+                },
+                LONG_PRESS_TIME
+            );
+        },
+        {
+            passive: true
+        }
+    );
+
+    document.addEventListener(
+        "pointermove",
+        function (event) {
+            if (!longPressTarget) {
+                return;
+            }
+
+            const movedX = Math.abs(
+                event.clientX
+                    - pointerStartX
+            );
+
+            const movedY = Math.abs(
+                event.clientY
+                    - pointerStartY
+            );
+
+            if (
+                movedX > MOVE_LIMIT ||
+                movedY > MOVE_LIMIT
+            ) {
+                cancelLongPress();
+            }
+        },
+        {
+            passive: true
+        }
+    );
+
+    function cancelLongPress() {
+        clearTimeout(longPressTimer);
+
+        if (longPressTarget) {
+            longPressTarget.element
+                .classList.remove(
+                    "mi-long-press-active"
+                );
+        }
+
+        longPressTarget = null;
+    }
+
+    document.addEventListener(
+        "pointerup",
+        cancelLongPress,
+        {
+            passive: true
+        }
+    );
+
+    document.addEventListener(
+        "pointercancel",
+        cancelLongPress,
+        {
+            passive: true
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            if (
+                menu &&
+                !menu.contains(event.target)
+            ) {
+                hideMenu();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "scroll",
+        hideMenu,
+        true
+    );
+
+    window.addEventListener(
+        "resize",
+        hideMenu
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                hideMenu();
+            }
+        }
+    );
+
+    window.MIChatMoreMenu = {
+        openFor:
+            function (
+                element,
+                x,
+                y
+            ) {
+                const targetInfo =
+                    findTarget(element);
+
+                if (targetInfo) {
+                    showMenu(
+                        x || 20,
+                        y || 20,
+                        targetInfo
+                    );
+                }
+            },
+
+        close:
+            hideMenu
+    };
+})();
+
+/* MI AI CHAT MORE MENU JS - END */
+</script>
 </body>
 </html>
