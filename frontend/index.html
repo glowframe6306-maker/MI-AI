@@ -3940,9 +3940,11 @@ body,
 
 <script>
 window.FIREBASE_CONFIG = {
-  apiKey: "",
+  apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
   authDomain: "mi-ai-99e6a.firebaseapp.com",
   projectId: "mi-ai-99e6a",
+  storageBucket: "mi-ai-99e6a.firebasestorage.app",
+  messagingSenderId: "845086558623",
   appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
 };
 
@@ -4005,10 +4007,23 @@ const SUPPORTED_LANGUAGES = [
 ];
 
 function getFirebaseConfig() {
-  if (window.FIREBASE_CONFIG && typeof window.FIREBASE_CONFIG === 'object') {
-    return window.FIREBASE_CONFIG;
+  const config =
+    window.FIREBASE_CONFIG &&
+    typeof window.FIREBASE_CONFIG === "object"
+      ? window.FIREBASE_CONFIG
+      : null;
+
+  if (
+    !config ||
+    !String(config.apiKey || "").trim() ||
+    !String(config.authDomain || "").trim() ||
+    !String(config.projectId || "").trim() ||
+    !String(config.appId || "").trim()
+  ) {
+    return null;
   }
-  return FIREBASE_CONFIG;
+
+  return config;
 }
 
 async function initFirebase() {
