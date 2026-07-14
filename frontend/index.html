@@ -2488,6 +2488,424 @@ body.force-mobile-layout #chat > .ai {
 }
 
 /* MI AI EXACT MESSAGE WIDTH - END */
+
+/* MI AI CENTERED SETTINGS - START */
+
+/* Dark blurred background behind Settings */
+#settingsBackdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 14990;
+
+    background:
+        rgba(2, 8, 20, 0.52);
+
+    -webkit-backdrop-filter:
+        blur(14px)
+        saturate(150%);
+
+    backdrop-filter:
+        blur(14px)
+        saturate(150%);
+
+    opacity: 0;
+    transition:
+        opacity 180ms ease;
+}
+
+#settingsBackdrop.settings-open {
+    display: block;
+    opacity: 1;
+}
+
+/* Settings window in the exact middle */
+#settingsPanel {
+    display: none;
+
+    position: fixed !important;
+
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+
+    width:
+        min(92vw, 430px) !important;
+
+    max-height:
+        min(84vh, 680px);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    margin: 0 !important;
+    padding:
+        24px !important;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.96) !important;
+
+    z-index: 15000;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28) !important;
+
+    border-radius:
+        28px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(38, 49, 72, 0.88),
+            rgba(14, 23, 42, 0.76)
+        ) !important;
+
+    -webkit-backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.25),
+        0 30px 90px
+            rgba(0, 0, 0, 0.52)
+        !important;
+
+    color:
+        #ffffff;
+
+    opacity: 0;
+}
+
+#settingsPanel.settings-open {
+    display: flex !important;
+
+    flex-direction:
+        column;
+
+    align-items:
+        stretch;
+
+    gap:
+        12px;
+
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1) !important;
+
+    animation:
+        miSettingsOpen
+        220ms
+        cubic-bezier(.2, .8, .2, 1);
+}
+
+@keyframes miSettingsOpen {
+    from {
+        opacity: 0;
+
+        transform:
+            translate(-50%, -46%)
+            scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1);
+    }
+}
+
+/* Settings title */
+#settingsPanel > h3 {
+    margin:
+        0 50px 10px 0 !important;
+
+    padding:
+        0 0 14px !important;
+
+    text-align:
+        left !important;
+
+    font-size:
+        22px;
+
+    font-weight:
+        750;
+
+    letter-spacing:
+        0.01em;
+
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.15);
+}
+
+/* Close button */
+#settingsCloseBtn {
+    position:
+        absolute !important;
+
+    top:
+        14px !important;
+
+    right:
+        14px !important;
+
+    width:
+        40px !important;
+
+    min-width:
+        40px !important;
+
+    height:
+        40px !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    display:
+        flex !important;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border-radius:
+        50% !important;
+
+    background:
+        rgba(255, 255, 255, 0.13)
+        !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.22)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    font-size:
+        16px;
+
+    z-index:
+        2;
+}
+
+/* Each option heading */
+#settingsPanel > label {
+    display:
+        block;
+
+    width:
+        100%;
+
+    margin:
+        4px 0 0 !important;
+
+    padding:
+        12px 14px 6px;
+
+    border-radius:
+        16px 16px 0 0;
+
+    background:
+        rgba(255, 255, 255, 0.075);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.12);
+
+    border-bottom:
+        none;
+
+    color:
+        rgba(255, 255, 255, 0.82);
+
+    font-size:
+        13px;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        0.03em;
+}
+
+/* Language, theme and font controls */
+#settingsPanel > select,
+#settingsPanel > input[type="color"],
+#settingsPanel > input[type="range"] {
+    width:
+        100% !important;
+
+    min-height:
+        48px;
+
+    margin:
+        -12px 0 4px !important;
+
+    padding:
+        12px 14px !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.15)
+        !important;
+
+    border-top:
+        none !important;
+
+    border-radius:
+        0 0 16px 16px !important;
+
+    background:
+        rgba(255, 255, 255, 0.095)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    box-sizing:
+        border-box;
+
+    outline:
+        none;
+
+    -webkit-backdrop-filter:
+        blur(16px);
+
+    backdrop-filter:
+        blur(16px);
+}
+
+/* Language dropdown options */
+#settingsPanel > select option {
+    background:
+        #172033;
+
+    color:
+        #ffffff;
+}
+
+/* Theme colour control */
+#settingsPanel > input[type="color"] {
+    height:
+        58px;
+
+    cursor:
+        pointer;
+}
+
+/* Font size slider */
+#settingsPanel > input[type="range"] {
+    accent-color:
+        var(--main, #1e88e5);
+
+    cursor:
+        pointer;
+}
+
+/* Apply button */
+#settingsPanel > button:not(#settingsCloseBtn) {
+    width:
+        100% !important;
+
+    min-height:
+        48px;
+
+    margin:
+        2px 0 4px !important;
+
+    border-radius:
+        16px !important;
+
+    font-weight:
+        750;
+}
+
+/* Prevent page scrolling behind Settings */
+body.settings-modal-open {
+    overflow:
+        hidden !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #settingsPanel {
+        width:
+            calc(100vw - 24px)
+            !important;
+
+        max-height:
+            calc(100dvh - 40px);
+
+        padding:
+            20px 16px
+            !important;
+
+        border-radius:
+            24px !important;
+    }
+
+    #settingsPanel > h3 {
+        font-size:
+            20px;
+    }
+}
+
+/* Override old mobile corner positions */
+@media (max-width: 900px) {
+    #settingsPanel,
+    body.force-mobile-layout #settingsPanel {
+        top:
+            50% !important;
+
+        left:
+            50% !important;
+
+        right:
+            auto !important;
+
+        bottom:
+            auto !important;
+
+        width:
+            min(92vw, 430px)
+            !important;
+
+        transform:
+            translate(-50%, -50%)
+            scale(0.96)
+            !important;
+    }
+
+    #settingsPanel.settings-open,
+    body.force-mobile-layout #settingsPanel.settings-open {
+        transform:
+            translate(-50%, -50%)
+            scale(1)
+            !important;
+    }
+}
+
+/* MI AI CENTERED SETTINGS - END */
 </style>
 </head>
 
@@ -2540,7 +2958,19 @@ body.force-mobile-layout #chat > .ai {
 <div id="chat"></div>
 
 <!-- SETTINGS -->
-<div id="settingsPanel">
+<div
+    id="settingsBackdrop"
+    aria-hidden="true"
+    onclick="closeSettings()">
+</div>
+<div id="settingsPanel" role="dialog" aria-modal="true" aria-hidden="true">
+<button
+    id="settingsCloseBtn"
+    type="button"
+    onclick="closeSettings()"
+    aria-label="Close Settings">
+    ✕
+</button>
 <h3 data-i18n="settings.title">Settings</h3>
 
 <label data-i18n="settings.language">Language</label>
@@ -5761,5 +6191,121 @@ try {
 }
 </script>
 
+<script>
+/* MI AI CENTERED SETTINGS JS - START */
+
+window.closeSettings = function () {
+    const panel =
+        document.getElementById("settingsPanel");
+
+    const backdrop =
+        document.getElementById("settingsBackdrop");
+
+    if (panel) {
+        panel.classList.remove(
+            "settings-open"
+        );
+
+        panel.style.display = "";
+
+        panel.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+    }
+
+    if (backdrop) {
+        backdrop.classList.remove(
+            "settings-open"
+        );
+
+        backdrop.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+    }
+
+    document.body.classList.remove(
+        "settings-modal-open"
+    );
+};
+
+window.toggleSettings = function () {
+    if (
+        typeof window.closeMobileMenu
+        === "function"
+    ) {
+        window.closeMobileMenu();
+    }
+
+    const panel =
+        document.getElementById("settingsPanel");
+
+    const backdrop =
+        document.getElementById("settingsBackdrop");
+
+    if (!panel) {
+        return;
+    }
+
+    const isOpen =
+        panel.classList.contains(
+            "settings-open"
+        );
+
+    if (isOpen) {
+        window.closeSettings();
+        return;
+    }
+
+    panel.style.display = "";
+
+    panel.classList.add(
+        "settings-open"
+    );
+
+    panel.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    if (backdrop) {
+        backdrop.classList.add(
+            "settings-open"
+        );
+
+        backdrop.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+    }
+
+    document.body.classList.add(
+        "settings-modal-open"
+    );
+
+    const firstControl =
+        panel.querySelector(
+            "select, input, button:not(#settingsCloseBtn)"
+        );
+
+    setTimeout(function () {
+        if (firstControl) {
+            firstControl.focus();
+        }
+    }, 100);
+};
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+        if (event.key === "Escape") {
+            window.closeSettings();
+        }
+    }
+);
+
+/* MI AI CENTERED SETTINGS JS - END */
+</script>
 </body>
 </html>
