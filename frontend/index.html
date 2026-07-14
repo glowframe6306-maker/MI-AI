@@ -301,15 +301,15 @@ transform:scale(1.04);
   .ai-link {
     color: #66b3ff;
   }
-  
+
   .ai-link:hover {
     color: #99ccff;
   }
-  
+
   .ai-github {
     color: #e0e0e0 !important;
   }
-  
+
   .ai-github:hover {
     color: #fff !important;
   }
@@ -4665,6 +4665,724 @@ body.mi-keyboard-visible .composer {
 }
 
 /* MI AI MOBILE COMFORT LAYOUT - END */
+
+/* MI AI SETTINGS ACCORDION COPY MOBILE - START */
+
+/* =========================================================
+   SETTINGS: THREE MAIN OPTIONS
+   ========================================================= */
+
+#settingsPanel .mi-settings-accordion {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+
+    margin-top: 8px;
+}
+
+#settingsPanel .mi-settings-section {
+    width: 100%;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.20);
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.13),
+            rgba(255, 255, 255, 0.055)
+        );
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.22),
+        0 10px 30px
+            rgba(0, 0, 0, 0.16);
+}
+
+#settingsPanel .mi-settings-option-button {
+    width: 100% !important;
+    min-height: 56px !important;
+
+    margin: 0 !important;
+
+    padding:
+        12px 15px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px;
+
+    border: 0 !important;
+    border-radius: 18px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb, 245, 158, 11), 0.56),
+            rgba(var(--mi-theme-rgb, 245, 158, 11), 0.27)
+        ) !important;
+
+    color: #ffffff !important;
+
+    font-size: 16px !important;
+    font-weight: 750 !important;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.35),
+        0 8px 24px
+            rgba(0, 0, 0, 0.14)
+        !important;
+}
+
+#settingsPanel .mi-settings-option-button::before,
+#settingsPanel .mi-settings-option-button::after {
+    display: none !important;
+}
+
+#settingsPanel .mi-settings-option-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+}
+
+#settingsPanel .mi-settings-option-icon {
+    width: 34px;
+    height: 34px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 34px;
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.15);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.18);
+
+    font-size: 17px;
+}
+
+#settingsPanel .mi-settings-arrow {
+    display: inline-block;
+
+    opacity: 0.82;
+
+    transform: rotate(0deg);
+
+    transition:
+        transform 180ms ease;
+}
+
+#settingsPanel .mi-settings-section.mi-open
+.mi-settings-arrow {
+    transform: rotate(180deg);
+}
+
+#settingsPanel .mi-settings-option-content {
+    display: grid;
+
+    grid-template-rows: 0fr;
+
+    opacity: 0;
+
+    transition:
+        grid-template-rows 220ms ease,
+        opacity 180ms ease;
+}
+
+#settingsPanel .mi-settings-section.mi-open
+.mi-settings-option-content {
+    grid-template-rows: 1fr;
+
+    opacity: 1;
+}
+
+#settingsPanel .mi-settings-option-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+#settingsPanel .mi-settings-control-box {
+    width: 100%;
+
+    padding:
+        14px;
+
+    border-top:
+        1px solid
+        rgba(255, 255, 255, 0.13);
+}
+
+/* Controls inside expanded option */
+#settingsPanel .mi-settings-control-box label {
+    display: block;
+
+    margin:
+        0 0 8px !important;
+
+    color:
+        rgba(255, 255, 255, 0.82);
+
+    font-size:
+        13px !important;
+
+    font-weight:
+        700;
+}
+
+#settingsPanel .mi-settings-control-box select,
+#settingsPanel .mi-settings-control-box input[type="color"],
+#settingsPanel .mi-settings-control-box input[type="range"] {
+    width: 100% !important;
+    min-height: 50px !important;
+
+    margin: 0 !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.23)
+        !important;
+
+    border-radius:
+        15px !important;
+
+    background:
+        rgba(255, 255, 255, 0.10)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    -webkit-backdrop-filter:
+        blur(16px);
+
+    backdrop-filter:
+        blur(16px);
+}
+
+#settingsPanel .mi-settings-control-box select {
+    padding:
+        10px 13px !important;
+}
+
+#settingsPanel .mi-settings-control-box input[type="color"] {
+    height: 56px !important;
+
+    padding:
+        6px !important;
+
+    cursor: pointer;
+}
+
+#settingsPanel .mi-settings-control-box input[type="range"] {
+    padding:
+        0 4px !important;
+
+    accent-color:
+        var(--mi-theme-color, #f59e0b);
+}
+
+/* Hide controls that have been moved into the accordion
+   from their previous visual positions. */
+#settingsPanel > .mi-settings-original-hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
+   AI COPY BUTTON BELOW REPLY
+   ========================================================= */
+
+#chat > .ai {
+    position: relative !important;
+
+    overflow: visible !important;
+
+    margin-bottom:
+        39px !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy {
+    position:
+        absolute !important;
+
+    top:
+        calc(100% + 7px) !important;
+
+    left:
+        6px !important;
+
+    right:
+        auto !important;
+
+    bottom:
+        auto !important;
+
+    width:
+        27px !important;
+
+    min-width:
+        27px !important;
+
+    max-width:
+        27px !important;
+
+    height:
+        27px !important;
+
+    min-height:
+        27px !important;
+
+    max-height:
+        27px !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    display:
+        inline-flex !important;
+
+    align-items:
+        center !important;
+
+    justify-content:
+        center !important;
+
+    border-radius:
+        999px !important;
+
+    font-size:
+        12px !important;
+
+    line-height:
+        1 !important;
+
+    color:
+        #ffffff !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.23),
+            rgba(255, 255, 255, 0.08)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.30),
+        0 6px 17px
+            rgba(0, 0, 0, 0.22)
+        !important;
+
+    opacity: 0.76;
+
+    cursor: pointer !important;
+
+    pointer-events: auto !important;
+
+    z-index: 8 !important;
+
+    transform: none !important;
+
+    transition:
+        opacity 150ms ease,
+        transform 150ms ease
+        !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy:hover {
+    opacity: 1;
+
+    transform:
+        translateY(-1px)
+        scale(1.07)
+        !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy:active {
+    transform:
+        scale(0.90)
+        !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy::before,
+#chat > .ai > .mi-ai-functional-copy::after {
+    display: none !important;
+}
+
+
+/* =========================================================
+   LARGER AND MORE COMFORTABLE PHONE DISPLAY
+   ========================================================= */
+
+@media (max-width: 900px) {
+    html {
+        -webkit-text-size-adjust:
+            100%;
+
+        text-size-adjust:
+            100%;
+    }
+
+    body {
+        font-size:
+            18px !important;
+    }
+
+    #header,
+    header,
+    .header {
+        min-height:
+            72px !important;
+
+        padding:
+            max(10px, env(safe-area-inset-top))
+            12px
+            10px
+            !important;
+    }
+
+    #headerLogo {
+        width:
+            50px !important;
+
+        height:
+            50px !important;
+
+        flex:
+            0 0 50px;
+    }
+
+    #header h1,
+    #header h2,
+    #header h3,
+    .header-title,
+    .app-title {
+        font-size:
+            24px !important;
+
+        line-height:
+            1.2 !important;
+    }
+
+    #chat,
+    .chat,
+    .messages,
+    .chat-messages {
+        padding-left:
+            8px !important;
+
+        padding-right:
+            8px !important;
+
+        padding-bottom:
+            calc(
+                104px
+                + env(safe-area-inset-bottom)
+            )
+            !important;
+    }
+
+    #chat > .me,
+    #chat > .ai,
+    .message-bubble,
+    .user-message,
+    .ai-message,
+    .assistant-message {
+        max-width:
+            95% !important;
+
+        padding:
+            14px 16px !important;
+
+        font-size:
+            19px !important;
+
+        line-height:
+            1.58 !important;
+
+        border-radius:
+            19px !important;
+    }
+
+    #chat > .me {
+        margin-right:
+            2px !important;
+    }
+
+    #chat > .ai {
+        margin-left:
+            2px !important;
+
+        margin-bottom:
+            44px !important;
+    }
+
+    #chat > .ai > .mi-ai-functional-copy {
+        width:
+            32px !important;
+
+        min-width:
+            32px !important;
+
+        max-width:
+            32px !important;
+
+        height:
+            32px !important;
+
+        min-height:
+            32px !important;
+
+        max-height:
+            32px !important;
+
+        font-size:
+            14px !important;
+    }
+
+    #inputBox,
+    #inputArea,
+    #input-area,
+    .input-area,
+    .chat-input-area,
+    .composer,
+    .composer-container,
+    .message-composer,
+    .input-container,
+    .prompt-container {
+        min-height:
+            82px !important;
+
+        padding:
+            10px
+            10px
+            max(
+                10px,
+                env(safe-area-inset-bottom)
+            )
+            !important;
+
+        gap:
+            9px !important;
+    }
+
+    #msg,
+    #messageInput,
+    #chatInput,
+    textarea[name="message"],
+    .chat-input,
+    .message-input {
+        min-height:
+            56px !important;
+
+        padding:
+            14px 16px !important;
+
+        font-size:
+            18px !important;
+
+        line-height:
+            1.45 !important;
+
+        border-radius:
+            19px !important;
+    }
+
+    #sendBtn,
+    #sendButton,
+    .send-btn {
+        width:
+            56px !important;
+
+        min-width:
+            56px !important;
+
+        height:
+            56px !important;
+
+        min-height:
+            56px !important;
+
+        flex:
+            0 0 56px;
+    }
+
+    button,
+    .btn,
+    .button,
+    [role="button"] {
+        min-height:
+            50px;
+
+        font-size:
+            17px;
+    }
+
+    #settingsPanel {
+        width:
+            calc(
+                100vw
+                - 16px
+            )
+            !important;
+
+        max-width:
+            500px !important;
+
+        max-height:
+            calc(
+                100dvh
+                - 22px
+                - env(safe-area-inset-top)
+                - env(safe-area-inset-bottom)
+            )
+            !important;
+
+        padding:
+            20px 15px !important;
+
+        border-radius:
+            26px !important;
+    }
+
+    #settingsPanel > h1,
+    #settingsPanel > h2,
+    #settingsPanel > h3 {
+        font-size:
+            24px !important;
+    }
+
+    #settingsPanel .mi-settings-option-button {
+        min-height:
+            64px !important;
+
+        padding:
+            14px 16px !important;
+
+        font-size:
+            18px !important;
+    }
+
+    #settingsPanel .mi-settings-option-icon {
+        width:
+            40px;
+
+        height:
+            40px;
+
+        flex-basis:
+            40px;
+
+        font-size:
+            20px;
+    }
+
+    #settingsPanel .mi-settings-control-box {
+        padding:
+            16px !important;
+    }
+
+    #settingsPanel .mi-settings-control-box select,
+    #settingsPanel .mi-settings-control-box input[type="color"],
+    #settingsPanel .mi-settings-control-box input[type="range"] {
+        min-height:
+            56px !important;
+
+        font-size:
+            18px !important;
+    }
+
+    #settingsCloseBtn {
+        width:
+            46px !important;
+
+        min-width:
+            46px !important;
+
+        height:
+            46px !important;
+
+        min-height:
+            46px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    body {
+        font-size:
+            18px !important;
+    }
+
+    #chat > .me,
+    #chat > .ai,
+    .message-bubble {
+        max-width:
+            97% !important;
+
+        font-size:
+            18px !important;
+    }
+
+    #settingsPanel {
+        width:
+            calc(
+                100vw
+                - 10px
+            )
+            !important;
+
+        padding:
+            17px 11px !important;
+    }
+}
+
+/* MI AI SETTINGS ACCORDION COPY MOBILE - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -6987,18 +7705,18 @@ function showShareFeedback(message) {
 
 function linkifyText(text) {
   if (!text || typeof text !== 'string') return text;
-  
+
   // HTML escape helper
   const escapeHtml = (str) => {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
   };
-  
+
   // Track replacements to avoid double-linking
   const replacements = [];
   let processedText = text;
-  
+
   // Pattern: URLs with protocols
   processedText = processedText.replace(/\b(https?|ftp):\/\/[^\s<>]+/gi, (match) => {
     let url = match.replace(/[.,;:!?\'"()\[\]]+$/g, '');
@@ -7006,14 +7724,14 @@ function linkifyText(text) {
     replacements.push({ original: match, replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Email addresses
   processedText = processedText.replace(/\b([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g, (match) => {
     const link = `<a href="mailto:${match}" class="ai-link">${escapeHtml(match)}</a>`;
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Phone numbers
   processedText = processedText.replace(/\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b/g, (match) => {
     const cleanPhone = match.replace(/[^\d+]/g, '');
@@ -7021,7 +7739,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: WhatsApp
   processedText = processedText.replace(/wa\.me\/[^\s<>]+|(?:https?:\/\/)?whatsapp\.com\/[^\s<>]+/gi, (match) => {
     const url = match.match(/^https?:/) ? match : `https://${match}`;
@@ -7029,7 +7747,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Telegram
   processedText = processedText.replace(/t\.me\/[^\s<>]+|@[a-zA-Z0-9_]{5,}/g, (match) => {
     let url = match;
@@ -7042,7 +7760,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Discord
   processedText = processedText.replace(/discord\.gg\/[^\s<>]+/gi, (match) => {
     const url = match.match(/^https?:/) ? match : `https://${match}`;
@@ -7050,7 +7768,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: GitHub
   processedText = processedText.replace(/github\.com\/[a-zA-Z0-9_-]+\/[^\s<>]*/gi, (match) => {
     const url = match.match(/^https?:/) ? match : `https://${match}`;
@@ -7058,47 +7776,47 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Escape remaining HTML and preserve newlines
   let result = escapeHtml(processedText);
-  
+
   // Restore the links (they're already safe)
   replacements.forEach((repl, idx) => {
     result = result.replace(`__LINK_${idx}__`, repl.replacement);
   });
-  
+
   // Preserve line breaks
   result = result.replace(/\n/g, '<br>');
-  
+
   return result;
 }
 
 function isLongWritingResponse(text) {
   const value = String(text || '').trim();
   if (!value) return false;
-  
+
   // Code blocks and structured formats always get the writing card
   if (value.includes('```')) return true; // Markdown code fences
   if (/^(import|from|def|class|function|const|let|var|async|return|if|for|while)\s/m.test(value)) return true; // Common code keywords
   if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP)\s/mi.test(value)) return true; // SQL
   if (/^[\s]*[{[]|^[\s]*</m.test(value)) return true; // JSON, arrays, HTML, XML
   if (/^---/m.test(value)) return true; // YAML/Markdown frontmatter
-  
+
   // Markdown headers (any level)
   if (/^#{1,6}\s/m.test(value)) return true;
-  
+
   // Markdown lists with multiple items (4 or more)
   const listItems = (value.match(/^[-*+]\s|^\d+\.\s/gm) || []).length;
   if (listItems >= 4) return true;
-  
+
   // Multiple paragraphs (3+) with substantial length
   const paragraphs = value.split(/\n\n+/).length;
   const wordCount = value.split(/\s+/).length;
   if (paragraphs >= 3 && wordCount > 120) return true;
-  
+
   // Very long responses (essay/article length)
   if (wordCount > 180) return true;
-  
+
   return false;
 }
 
@@ -8195,26 +8913,26 @@ async function registerEmail() {
 
   try {
     const auth = await initFirebase();
-    
+
     // Create Firebase user
     const result = await auth.createUserWithEmailAndPassword(email, password);
     const firebaseUser = result.user;
-    
+
     // Send verification email
     await firebaseUser.sendEmailVerification();
-    
+
     // Sign out the user immediately
     await auth.signOut();
-    
+
     // Clear any stored auth data
     user = null;
     localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
-    
+
     // Show success message
     setAuthMessage(t('auth.registerSuccess', 'Registration successful! A verification email has been sent. Please check your spam folder or inbox and verify your email before signing in.'), false);
-    
+
     // Switch to sign in mode after a brief delay
     setTimeout(() => {
       setAuthMode('signin');
@@ -8248,33 +8966,33 @@ async function loginEmail() {
 
   try {
     const auth = await initFirebase();
-    
+
     // Sign in with Firebase
     const result = await auth.signInWithEmailAndPassword(email, password);
     const firebaseUser = result.user;
-    
+
     // Check if email is verified
     if (!firebaseUser.emailVerified) {
       // Email not verified - send verification email and sign out
       await firebaseUser.sendEmailVerification();
       await auth.signOut();
-      
+
       // Clear any stored auth data
       user = null;
       localStorage.removeItem('mi_supabase_token');
       localStorage.removeItem('mi_user_id');
       localStorage.removeItem('mi_user_email');
-      
+
       setAuthMessage(t('auth.unverifiedEmail', 'Your email is not verified. A new verification email has been sent. Please verify your email first. Please check your spam folder or inbox.'), true);
       return;
     }
-    
+
     // Email is verified - continue with login
     user = {
       id: firebaseUser.uid,
       email: firebaseUser.email
     };
-    
+
     const idToken = await firebaseUser.getIdToken();
     localStorage.setItem('mi_supabase_token', idToken);
     localStorage.setItem('mi_user_id', firebaseUser.uid);
@@ -11473,6 +12191,887 @@ document.addEventListener(
 })();
 
 /* MI AI MOBILE COMFORT JS - END */
+</script>
+
+<script>
+/* MI AI SETTINGS ACCORDION COPY MOBILE JS - START */
+
+(function () {
+    "use strict";
+
+    const settingsTranslations = {
+        en: {
+            language: "Language",
+            theme: "Theme",
+            fontSize: "Font Size",
+            copy: "Copy",
+            copied: "Copied!"
+        },
+
+        si: {
+            language: "භාෂාව",
+            theme: "තේමාව",
+            fontSize: "අකුරු ප්‍රමාණය",
+            copy: "පිටපත් කරන්න",
+            copied: "පිටපත් කළා!"
+        },
+
+        ta: {
+            language: "மொழி",
+            theme: "தீம்",
+            fontSize: "எழுத்தளவு",
+            copy: "நகலெடு",
+            copied: "நகலெடுக்கப்பட்டது!"
+        }
+    };
+
+    function language() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem(
+                "mi_ui_language"
+            )
+            || "en"
+        );
+    }
+
+    function word(key) {
+        const selected =
+            language();
+
+        return (
+            settingsTranslations[selected]?.[key]
+            || settingsTranslations.en[key]
+            || key
+        );
+    }
+
+    function findLanguageControl(panel) {
+        return (
+            panel.querySelector(
+                "#languageSelect"
+            )
+            || panel.querySelector(
+                'select[name*="language" i]'
+            )
+            || Array.from(
+                panel.querySelectorAll(
+                    "select"
+                )
+            ).find(function (select) {
+                const content = [
+                    select.id,
+                    select.name,
+                    select.getAttribute(
+                        "aria-label"
+                    ),
+                    select.previousElementSibling
+                        ?.textContent
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+                return (
+                    content.includes("language")
+                    || content.includes("භාෂා")
+                    || content.includes("மொழி")
+                );
+            })
+        );
+    }
+
+    function findThemeControl(panel) {
+        return (
+            panel.querySelector(
+                "#themeColor"
+            )
+            || panel.querySelector(
+                'input[type="color"]'
+            )
+            || panel.querySelector(
+                '[name*="theme" i]'
+            )
+        );
+    }
+
+    function findFontSizeControl(panel) {
+        return (
+            panel.querySelector(
+                "#fontSize"
+            )
+            || panel.querySelector(
+                "#fontSizeSlider"
+            )
+            || panel.querySelector(
+                "#fontSlider"
+            )
+            || panel.querySelector(
+                'input[type="range"][name*="font" i]'
+            )
+            || Array.from(
+                panel.querySelectorAll(
+                    'input[type="range"]'
+                )
+            ).find(function (input) {
+                const content = [
+                    input.id,
+                    input.name,
+                    input.getAttribute(
+                        "aria-label"
+                    ),
+                    input.previousElementSibling
+                        ?.textContent
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+                return (
+                    content.includes("font")
+                    || content.includes("size")
+                    || content.includes("අකුරු")
+                    || content.includes("எழுத்த")
+                );
+            })
+        );
+    }
+
+    function associatedLabel(
+        panel,
+        control
+    ) {
+        if (!control) {
+            return null;
+        }
+
+        if (control.id) {
+            const label =
+                panel.querySelector(
+                    'label[for="' +
+                    CSS.escape(control.id) +
+                    '"]'
+                );
+
+            if (label) {
+                return label;
+            }
+        }
+
+        const parentLabel =
+            control.closest("label");
+
+        if (parentLabel) {
+            return parentLabel;
+        }
+
+        const previous =
+            control.previousElementSibling;
+
+        if (
+            previous &&
+            previous.tagName === "LABEL"
+        ) {
+            return previous;
+        }
+
+        return null;
+    }
+
+    function createSection(
+        type,
+        icon,
+        title,
+        control,
+        panel
+    ) {
+        const section =
+            document.createElement("section");
+
+        section.className =
+            "mi-settings-section";
+
+        section.dataset.settingsType =
+            type;
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+
+        button.className =
+            "mi-settings-option-button";
+
+        button.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+
+        const left =
+            document.createElement("span");
+
+        left.className =
+            "mi-settings-option-left";
+
+        const iconElement =
+            document.createElement("span");
+
+        iconElement.className =
+            "mi-settings-option-icon";
+
+        iconElement.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        iconElement.textContent = icon;
+
+        const titleElement =
+            document.createElement("span");
+
+        titleElement.className =
+            "mi-settings-option-title";
+
+        titleElement.textContent = title;
+
+        left.append(
+            iconElement,
+            titleElement
+        );
+
+        const arrow =
+            document.createElement("span");
+
+        arrow.className =
+            "mi-settings-arrow";
+
+        arrow.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        arrow.textContent = "⌄";
+
+        button.append(
+            left,
+            arrow
+        );
+
+        const content =
+            document.createElement("div");
+
+        content.className =
+            "mi-settings-option-content";
+
+        const inner =
+            document.createElement("div");
+
+        inner.className =
+            "mi-settings-option-inner";
+
+        const controlBox =
+            document.createElement("div");
+
+        controlBox.className =
+            "mi-settings-control-box";
+
+        const originalLabel =
+            associatedLabel(
+                panel,
+                control
+            );
+
+        if (originalLabel) {
+            const clonedLabel =
+                originalLabel.cloneNode(true);
+
+            clonedLabel.removeAttribute(
+                "for"
+            );
+
+            controlBox.appendChild(
+                clonedLabel
+            );
+
+            originalLabel.classList.add(
+                "mi-settings-original-hidden"
+            );
+        }
+
+        if (control) {
+            const placeholder =
+                document.createComment(
+                    "MI AI original settings control"
+                );
+
+            control.parentNode?.insertBefore(
+                placeholder,
+                control
+            );
+
+            controlBox.appendChild(
+                control
+            );
+        }
+        else {
+            const missing =
+                document.createElement("div");
+
+            missing.textContent =
+                "Control unavailable";
+
+            missing.style.opacity =
+                "0.65";
+
+            controlBox.appendChild(
+                missing
+            );
+        }
+
+        inner.appendChild(
+            controlBox
+        );
+
+        content.appendChild(
+            inner
+        );
+
+        section.append(
+            button,
+            content
+        );
+
+        button.addEventListener(
+            "click",
+            function () {
+                const accordion =
+                    section.parentElement;
+
+                const willOpen =
+                    !section.classList
+                        .contains("mi-open");
+
+                accordion
+                    .querySelectorAll(
+                        ".mi-settings-section"
+                    )
+                    .forEach(
+                        function (item) {
+                            item.classList.remove(
+                                "mi-open"
+                            );
+
+                            item.querySelector(
+                                ".mi-settings-option-button"
+                            )?.setAttribute(
+                                "aria-expanded",
+                                "false"
+                            );
+                        }
+                    );
+
+                if (willOpen) {
+                    section.classList.add(
+                        "mi-open"
+                    );
+
+                    button.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+                }
+            }
+        );
+
+        return section;
+    }
+
+    function setupSettingsAccordion() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return false;
+        }
+
+        let accordion =
+            panel.querySelector(
+                ".mi-settings-accordion"
+            );
+
+        if (accordion) {
+            updateSettingsTitles();
+            return true;
+        }
+
+        const languageControl =
+            findLanguageControl(panel);
+
+        const themeControl =
+            findThemeControl(panel);
+
+        const fontControl =
+            findFontSizeControl(panel);
+
+        accordion =
+            document.createElement("div");
+
+        accordion.className =
+            "mi-settings-accordion";
+
+        accordion.append(
+            createSection(
+                "language",
+                "🌐",
+                word("language"),
+                languageControl,
+                panel
+            ),
+
+            createSection(
+                "theme",
+                "🎨",
+                word("theme"),
+                themeControl,
+                panel
+            ),
+
+            createSection(
+                "fontSize",
+                "Aa",
+                word("fontSize"),
+                fontControl,
+                panel
+            )
+        );
+
+        const heading =
+            panel.querySelector(
+                "h1, h2, h3"
+            );
+
+        if (heading) {
+            heading.insertAdjacentElement(
+                "afterend",
+                accordion
+            );
+        }
+        else {
+            panel.prepend(
+                accordion
+            );
+        }
+
+        /*
+          Hide old labels/wrappers left empty after
+          moving the controls.
+        */
+        Array.from(panel.children)
+            .forEach(function (child) {
+                if (
+                    child === accordion
+                    || child === heading
+                    || child.id ===
+                        "settingsCloseBtn"
+                ) {
+                    return;
+                }
+
+                if (
+                    child.matches(
+                        "label"
+                    )
+                    && !child.querySelector(
+                        "input, select"
+                    )
+                ) {
+                    child.classList.add(
+                        "mi-settings-original-hidden"
+                    );
+                }
+            });
+
+        return true;
+    }
+
+    function updateSettingsTitles() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return;
+        }
+
+        const titles = {
+            language:
+                word("language"),
+
+            theme:
+                word("theme"),
+
+            fontSize:
+                word("fontSize")
+        };
+
+        panel.querySelectorAll(
+            ".mi-settings-section"
+        ).forEach(function (section) {
+            const type =
+                section.dataset
+                    .settingsType;
+
+            const title =
+                section.querySelector(
+                    ".mi-settings-option-title"
+                );
+
+            if (
+                title &&
+                titles[type]
+            ) {
+                title.textContent =
+                    titles[type];
+            }
+        });
+    }
+
+    function cleanReplyText(aiBubble) {
+        const clone =
+            aiBubble.cloneNode(true);
+
+        clone.querySelectorAll(
+            "button, " +
+            ".aiCopyButton, " +
+            ".copy-btn, " +
+            ".copy-button, " +
+            ".mi-ai-copy-below, " +
+            ".mi-ai-functional-copy, " +
+            "[data-action='copy']"
+        ).forEach(function (element) {
+            element.remove();
+        });
+
+        return String(
+            clone.innerText
+            || clone.textContent
+            || ""
+        ).trim();
+    }
+
+    async function copyText(value) {
+        if (!value) {
+            return false;
+        }
+
+        try {
+            await navigator
+                .clipboard
+                .writeText(value);
+
+            return true;
+        }
+        catch (error) {
+            const textarea =
+                document.createElement(
+                    "textarea"
+                );
+
+            textarea.value =
+                value;
+
+            textarea.style.position =
+                "fixed";
+
+            textarea.style.left =
+                "-9999px";
+
+            textarea.style.opacity =
+                "0";
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.focus();
+            textarea.select();
+
+            const success =
+                document.execCommand(
+                    "copy"
+                );
+
+            textarea.remove();
+
+            return success;
+        }
+    }
+
+    function showCopiedMessage() {
+        const message =
+            word("copied");
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(
+                message
+            );
+
+            return;
+        }
+
+        console.log(
+            "[MI AI]",
+            message
+        );
+    }
+
+    function markCopyButtons(root) {
+        const scope =
+            root instanceof Element
+                ? root
+                : document;
+
+        scope.querySelectorAll(
+            "#chat > .ai"
+        ).forEach(function (aiBubble) {
+            let copyButton =
+                Array.from(
+                    aiBubble.querySelectorAll(
+                        "button"
+                    )
+                ).find(function (button) {
+                    const combined = [
+                        button.className,
+                        button.id,
+                        button.dataset.action,
+                        button.title,
+                        button.getAttribute(
+                            "aria-label"
+                        ),
+                        button.textContent
+                    ]
+                        .join(" ")
+                        .toLowerCase();
+
+                    return (
+                        combined.includes("copy")
+                        || combined.includes(
+                            "පිටපත්"
+                        )
+                        || combined.includes(
+                            "நகலெடு"
+                        )
+                        || combined.includes(
+                            "⧉"
+                        )
+                        || combined.includes(
+                            "📋"
+                        )
+                    );
+                });
+
+            if (!copyButton) {
+                copyButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                copyButton.type =
+                    "button";
+
+                copyButton.textContent =
+                    "⧉";
+
+                aiBubble.appendChild(
+                    copyButton
+                );
+            }
+
+            copyButton.classList.add(
+                "mi-ai-functional-copy"
+            );
+
+            copyButton.dataset.action =
+                "copy-ai-reply";
+
+            copyButton.title =
+                word("copy");
+
+            copyButton.setAttribute(
+                "aria-label",
+                word("copy")
+            );
+        });
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const copyButton =
+                event.target.closest(
+                    ".mi-ai-functional-copy, " +
+                    "[data-action='copy-ai-reply']"
+                );
+
+            if (!copyButton) {
+                return;
+            }
+
+            const aiBubble =
+                copyButton.closest(
+                    "#chat > .ai, " +
+                    ".ai-message, " +
+                    ".assistant-message"
+                );
+
+            if (!aiBubble) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const replyText =
+                cleanReplyText(
+                    aiBubble
+                );
+
+            copyText(replyText)
+                .then(function (success) {
+                    if (success) {
+                        showCopiedMessage();
+
+                        const oldText =
+                            copyButton.textContent;
+
+                        copyButton.textContent =
+                            "✓";
+
+                        setTimeout(
+                            function () {
+                                copyButton.textContent =
+                                    oldText || "⧉";
+                            },
+                            1000
+                        );
+                    }
+                });
+        },
+        true
+    );
+
+    function refresh() {
+        setupSettingsAccordion();
+        updateSettingsTitles();
+        markCopyButtons(document);
+    }
+
+    function start() {
+        refresh();
+
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    let shouldRefresh =
+                        false;
+
+                    for (
+                        const mutation
+                        of mutations
+                    ) {
+                        if (
+                            mutation.addedNodes
+                                .length
+                        ) {
+                            shouldRefresh =
+                                true;
+
+                            break;
+                        }
+                    }
+
+                    if (shouldRefresh) {
+                        requestAnimationFrame(
+                            refresh
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        document.addEventListener(
+            "change",
+            function (event) {
+                if (
+                    event.target.id ===
+                        "languageSelect"
+                ) {
+                    setTimeout(
+                        updateSettingsTitles,
+                        20
+                    );
+                }
+            }
+        );
+
+        window.addEventListener(
+            "mi-language-changed",
+            updateSettingsTitles
+        );
+    }
+
+    window.MISettingsAccordion = {
+        refresh:
+            refresh,
+
+        open:
+            function (type) {
+                const section =
+                    document.querySelector(
+                        '.mi-settings-section' +
+                        '[data-settings-type="' +
+                        type +
+                        '"]'
+                    );
+
+                section
+                    ?.querySelector(
+                        ".mi-settings-option-button"
+                    )
+                    ?.click();
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SETTINGS ACCORDION COPY MOBILE JS - END */
 </script>
 </body>
 </html>
