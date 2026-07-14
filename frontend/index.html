@@ -1243,6 +1243,639 @@ body.light [role="button"],
 }
 
 /* MI AI IPHONE GLASS BUTTONS - END */
+
+/* MI AI IOS BLUR EFFECT - START */
+
+:root {
+    --ios-glass-background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.18),
+            rgba(255, 255, 255, 0.07)
+        );
+
+    --ios-glass-background-strong:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.24),
+            rgba(255, 255, 255, 0.10)
+        );
+
+    --ios-glass-border:
+        rgba(255, 255, 255, 0.24);
+
+    --ios-glass-border-light:
+        rgba(255, 255, 255, 0.38);
+
+    --ios-glass-shadow:
+        0 18px 55px rgba(0, 0, 0, 0.25);
+
+    --ios-glass-blur:
+        blur(28px) saturate(185%);
+
+    --ios-small-blur:
+        blur(18px) saturate(175%);
+}
+
+/* iPhone-style animated background */
+html,
+body {
+    min-height: 100%;
+    background:
+        radial-gradient(
+            circle at 10% 15%,
+            rgba(0, 122, 255, 0.30),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 88% 12%,
+            rgba(175, 82, 222, 0.26),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 80% 88%,
+            rgba(52, 199, 89, 0.18),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 15% 90%,
+            rgba(255, 45, 85, 0.17),
+            transparent 36%
+        ),
+        linear-gradient(
+            145deg,
+            #07111f,
+            #0d1728 48%,
+            #101827
+        ) !important;
+
+    background-attachment: fixed !important;
+}
+
+/* Soft light layer behind the interface */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(255, 255, 255, 0.035),
+            transparent 36%,
+            rgba(255, 255, 255, 0.025)
+        );
+}
+
+/* Main navigation and header glass */
+#header,
+header,
+.topbar,
+.top-bar,
+.navbar,
+.nav-bar,
+.app-header,
+.header {
+    background:
+        var(--ios-glass-background-strong)
+        !important;
+
+    border-bottom:
+        1px solid
+        var(--ios-glass-border)
+        !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-glass-blur);
+
+    backdrop-filter:
+        var(--ios-glass-blur);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.18),
+        0 10px 35px
+            rgba(0, 0, 0, 0.18)
+        !important;
+}
+
+/* Sidebar glass */
+#sidebar,
+.sidebar,
+.side-bar,
+nav.sidebar {
+    background:
+        linear-gradient(
+            160deg,
+            rgba(20, 28, 45, 0.72),
+            rgba(15, 23, 38, 0.48)
+        ) !important;
+
+    border-right:
+        1px solid
+        var(--ios-glass-border)
+        !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-glass-blur);
+
+    backdrop-filter:
+        var(--ios-glass-blur);
+
+    box-shadow:
+        inset -1px 0 0
+            rgba(255, 255, 255, 0.07),
+        15px 0 45px
+            rgba(0, 0, 0, 0.17)
+        !important;
+}
+
+/* Main panels and cards */
+.panel,
+.card,
+.glass,
+.glass-panel,
+.settings-panel,
+.profile-panel,
+.admin-panel,
+.dashboard-card,
+.feature-card,
+.info-card,
+.chat-card,
+.menu-panel,
+.account-panel,
+.preferences-panel {
+    background:
+        var(--ios-glass-background)
+        !important;
+
+    border:
+        1px solid
+        var(--ios-glass-border)
+        !important;
+
+    border-radius:
+        22px !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-glass-blur);
+
+    backdrop-filter:
+        var(--ios-glass-blur);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.20),
+        var(--ios-glass-shadow)
+        !important;
+}
+
+/* Chat input/composer area */
+#inputArea,
+#input-area,
+.input-area,
+.chat-input-area,
+.composer,
+.composer-container,
+.message-composer,
+.input-container,
+.prompt-container {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.19),
+            rgba(255, 255, 255, 0.075)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.26)
+        !important;
+
+    border-radius:
+        24px !important;
+
+    -webkit-backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.27),
+        0 16px 45px
+            rgba(0, 0, 0, 0.24)
+        !important;
+}
+
+/* Text fields */
+input:not([type="button"]):not([type="submit"]):not([type="reset"]),
+textarea,
+select {
+    background:
+        rgba(255, 255, 255, 0.10)
+        !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.20)
+        !important;
+
+    border-radius:
+        16px !important;
+
+    color:
+        var(--text, #ffffff)
+        !important;
+
+    -webkit-backdrop-filter:
+        var(--ios-small-blur);
+
+    backdrop-filter:
+        var(--ios-small-blur);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.14),
+        0 8px 24px
+            rgba(0, 0, 0, 0.12)
+        !important;
+
+    transition:
+        border-color 180ms ease,
+        background 180ms ease,
+        box-shadow 180ms ease
+        !important;
+}
+
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):focus,
+textarea:focus,
+select:focus {
+    outline: none !important;
+
+    background:
+        rgba(255, 255, 255, 0.15)
+        !important;
+
+    border-color:
+        rgba(100, 190, 255, 0.78)
+        !important;
+
+    box-shadow:
+        0 0 0 3px
+            rgba(0, 122, 255, 0.20),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.22),
+        0 12px 32px
+            rgba(0, 0, 0, 0.17)
+        !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color:
+        rgba(255, 255, 255, 0.56)
+        !important;
+}
+
+/* Modals and popup overlays */
+.modal,
+.modal-overlay,
+.popup-overlay,
+.dialog-overlay,
+.login-overlay,
+.settings-overlay {
+    background:
+        rgba(3, 8, 18, 0.40)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(145%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(145%);
+}
+
+.modal-content,
+.popup,
+.dialog,
+.dialog-box,
+.login-box,
+.login-modal,
+.settings-modal,
+.confirm-modal,
+.alert-modal {
+    background:
+        linear-gradient(
+            150deg,
+            rgba(35, 44, 65, 0.78),
+            rgba(19, 27, 44, 0.62)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28)
+        !important;
+
+    border-radius:
+        28px !important;
+
+    -webkit-backdrop-filter:
+        blur(36px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(36px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.25),
+        0 30px 90px
+            rgba(0, 0, 0, 0.46)
+        !important;
+}
+
+/* Dropdowns, context menus and tooltips */
+.dropdown,
+.dropdown-menu,
+.context-menu,
+.menu,
+.popover,
+.tooltip,
+.toast,
+.notification,
+.suggestion-box,
+.autocomplete-list {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30, 39, 58, 0.82),
+            rgba(18, 25, 40, 0.68)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.24)
+        !important;
+
+    border-radius:
+        18px !important;
+
+    -webkit-backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.18),
+        0 20px 60px
+            rgba(0, 0, 0, 0.38)
+        !important;
+}
+
+/* Chat history items */
+.chat-item,
+.history-item,
+.conversation-item,
+.sidebar-item,
+.menu-item {
+    background:
+        rgba(255, 255, 255, 0.055)
+        !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08)
+        !important;
+
+    border-radius:
+        15px !important;
+
+    -webkit-backdrop-filter:
+        blur(14px)
+        saturate(155%);
+
+    backdrop-filter:
+        blur(14px)
+        saturate(155%);
+
+    transition:
+        background 180ms ease,
+        border-color 180ms ease,
+        transform 180ms ease
+        !important;
+}
+
+.chat-item:hover,
+.history-item:hover,
+.conversation-item:hover,
+.sidebar-item:hover,
+.menu-item:hover {
+    background:
+        rgba(255, 255, 255, 0.13)
+        !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.21)
+        !important;
+
+    transform:
+        translateX(2px);
+}
+
+/* User and AI messages */
+.message,
+.chat-message,
+.user-message,
+.ai-message,
+.assistant-message,
+.message-bubble {
+    -webkit-backdrop-filter:
+        blur(16px)
+        saturate(160%);
+
+    backdrop-filter:
+        blur(16px)
+        saturate(160%);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.10);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.08),
+        0 8px 24px
+            rgba(0, 0, 0, 0.10);
+}
+
+/* Scrollbar like iOS */
+* {
+    scrollbar-width:
+        thin;
+
+    scrollbar-color:
+        rgba(255, 255, 255, 0.25)
+        transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+    background:
+        transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background:
+        rgba(255, 255, 255, 0.22);
+
+    border-radius:
+        999px;
+
+    border:
+        2px solid
+        transparent;
+
+    background-clip:
+        padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background:
+        rgba(255, 255, 255, 0.36);
+
+    border:
+        2px solid
+        transparent;
+
+    background-clip:
+        padding-box;
+}
+
+/* Light theme */
+body.light,
+[data-theme="light"] {
+    background:
+        radial-gradient(
+            circle at 12% 15%,
+            rgba(0, 122, 255, 0.20),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 88% 12%,
+            rgba(175, 82, 222, 0.14),
+            transparent 35%
+        ),
+        linear-gradient(
+            145deg,
+            #dce8f4,
+            #edf3f9 48%,
+            #dfe9f4
+        ) !important;
+}
+
+body.light #header,
+body.light header,
+body.light #sidebar,
+body.light .sidebar,
+body.light .panel,
+body.light .card,
+[data-theme="light"] #header,
+[data-theme="light"] #sidebar,
+[data-theme="light"] .panel,
+[data-theme="light"] .card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.72),
+            rgba(255, 255, 255, 0.42)
+        ) !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.78)
+        !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.95),
+        0 18px 50px
+            rgba(30, 45, 70, 0.14)
+        !important;
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+    :root {
+        --ios-glass-blur:
+            blur(22px)
+            saturate(170%);
+    }
+
+    #header,
+    header,
+    #sidebar,
+    .sidebar,
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        -webkit-backdrop-filter:
+            blur(22px)
+            saturate(170%);
+
+        backdrop-filter:
+            blur(22px)
+            saturate(170%);
+    }
+
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        border-radius:
+            24px !important;
+    }
+}
+
+/* Performance fallback */
+@supports not (
+    backdrop-filter:
+    blur(1px)
+) {
+    #header,
+    header,
+    #sidebar,
+    .sidebar,
+    .panel,
+    .card,
+    .modal-content,
+    .popup,
+    .dialog,
+    .dropdown-menu,
+    .context-menu {
+        background:
+            rgba(20, 28, 44, 0.96)
+            !important;
+    }
+}
+
+/* MI AI IOS BLUR EFFECT - END */
 </style>
 </head>
 
