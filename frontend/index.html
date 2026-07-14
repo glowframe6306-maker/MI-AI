@@ -5383,6 +5383,371 @@ body.mi-keyboard-visible .composer {
 }
 
 /* MI AI SETTINGS ACCORDION COPY MOBILE - END */
+
+/* MI AI IOS CUSTOM SELECT - START */
+
+.mi-ios-select {
+    position: relative;
+    width: 100%;
+    z-index: 20;
+}
+
+.mi-ios-select-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+}
+
+.mi-ios-select-trigger {
+    width: 100% !important;
+    min-height: 50px !important;
+
+    padding: 11px 14px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.42)
+        !important;
+
+    border-radius:
+        16px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.92),
+            rgba(235, 241, 250, 0.76)
+        ) !important;
+
+    color:
+        #111827 !important;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif
+        !important;
+
+    font-size:
+        15px !important;
+
+    font-weight:
+        650 !important;
+
+    text-align:
+        left;
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(24px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.96),
+        0 8px 24px
+            rgba(0, 0, 0, 0.16)
+        !important;
+
+    cursor: pointer;
+}
+
+.mi-ios-select-trigger::before,
+.mi-ios-select-trigger::after {
+    display: none !important;
+}
+
+.mi-ios-select-trigger:hover {
+    transform: none !important;
+
+    border-color:
+        rgba(
+            var(--mi-theme-rgb, 80, 120, 255),
+            0.66
+        ) !important;
+}
+
+.mi-ios-select-arrow {
+    flex: 0 0 auto;
+
+    color:
+        #374151;
+
+    font-size:
+        14px;
+
+    transition:
+        transform 180ms ease;
+}
+
+.mi-ios-select.mi-open
+.mi-ios-select-arrow {
+    transform: rotate(180deg);
+}
+
+.mi-ios-select-menu {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+
+    z-index: 999999;
+
+    display: none;
+    flex-direction: column;
+
+    max-height: min(300px, 52vh);
+
+    padding: 7px;
+
+    overflow-y: auto;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.76);
+
+    border-radius:
+        20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.94),
+            rgba(232, 239, 249, 0.84)
+        );
+
+    -webkit-backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 1),
+        0 20px 60px
+            rgba(0, 0, 0, 0.28);
+
+    opacity: 0;
+
+    transform:
+        translateY(-5px)
+        scale(0.98);
+
+    transform-origin:
+        top center;
+}
+
+.mi-ios-select.mi-open
+.mi-ios-select-menu {
+    display: flex;
+
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+
+    animation:
+        miIosSelectOpen
+        180ms
+        cubic-bezier(.2, .8, .2, 1);
+}
+
+@keyframes miIosSelectOpen {
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(-7px)
+            scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+.mi-ios-select-option {
+    width: 100% !important;
+    min-height: 46px !important;
+
+    margin: 0 !important;
+    padding: 10px 12px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px;
+
+    border: 0 !important;
+    border-radius: 13px !important;
+
+    background:
+        transparent !important;
+
+    color:
+        #111827 !important;
+
+    font-size:
+        15px !important;
+
+    font-weight:
+        600 !important;
+
+    text-align:
+        left;
+
+    box-shadow:
+        none !important;
+
+    cursor: pointer;
+}
+
+.mi-ios-select-option::before,
+.mi-ios-select-option::after {
+    display: none !important;
+}
+
+.mi-ios-select-option:hover,
+.mi-ios-select-option:focus-visible {
+    background:
+        rgba(
+            var(--mi-theme-rgb, 80, 120, 255),
+            0.13
+        ) !important;
+
+    color:
+        #111827 !important;
+
+    transform:
+        none !important;
+
+    outline:
+        none;
+}
+
+.mi-ios-select-option.mi-selected {
+    background:
+        rgba(
+            var(--mi-theme-rgb, 80, 120, 255),
+            0.20
+        ) !important;
+
+    color:
+        #111827 !important;
+
+    font-weight:
+        750 !important;
+}
+
+.mi-ios-select-check {
+    width: 24px;
+    height: 24px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 24px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(
+            var(--mi-theme-rgb, 80, 120, 255),
+            0.18
+        );
+
+    color:
+        rgb(
+            var(--mi-theme-rgb, 80, 120, 255)
+        );
+
+    font-size:
+        13px;
+
+    opacity: 0;
+}
+
+.mi-ios-select-option.mi-selected
+.mi-ios-select-check {
+    opacity: 1;
+}
+
+.mi-ios-select-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mi-ios-select-menu::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+
+    background:
+        rgba(17, 24, 39, 0.25);
+}
+
+/* Ensure the share modal does not cut the dropdown */
+#shareModal,
+.share-modal,
+.share-dialog,
+.modal-content:has(.mi-ios-select),
+.dialog:has(.mi-ios-select) {
+    overflow: visible !important;
+}
+
+@media (max-width: 700px) {
+    .mi-ios-select-trigger {
+        min-height:
+            56px !important;
+
+        padding:
+            13px 15px !important;
+
+        font-size:
+            17px !important;
+    }
+
+    .mi-ios-select-menu {
+        max-height:
+            46dvh;
+
+        border-radius:
+            22px;
+    }
+
+    .mi-ios-select-option {
+        min-height:
+            54px !important;
+
+        padding:
+            12px 14px !important;
+
+        font-size:
+            17px !important;
+    }
+}
+
+/* MI AI IOS CUSTOM SELECT - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -13072,6 +13437,559 @@ document.addEventListener(
 })();
 
 /* MI AI SETTINGS ACCORDION COPY MOBILE JS - END */
+</script>
+
+<script>
+/* MI AI IOS CUSTOM SELECT JS - START */
+
+(function () {
+    "use strict";
+
+    const processed =
+        new WeakSet();
+
+    function shouldEnhance(select) {
+        if (
+            !(select instanceof
+                HTMLSelectElement)
+            || processed.has(select)
+        ) {
+            return false;
+        }
+
+        const details = [
+            select.id,
+            select.name,
+            select.className,
+            select.getAttribute(
+                "aria-label"
+            ),
+            select.previousElementSibling
+                ?.textContent,
+            select.closest(
+                "label"
+            )?.textContent,
+            select.parentElement
+                ?.textContent
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        const optionText =
+            Array.from(select.options)
+                .map(function (option) {
+                    return option.textContent;
+                })
+                .join(" ")
+                .toLowerCase();
+
+        return (
+            details.includes("permission")
+            || details.includes("language")
+            || details.includes("භාෂා")
+            || details.includes("மொழி")
+            || optionText.includes("view only")
+            || optionText.includes("can edit")
+        );
+    }
+
+    function closeAll(except) {
+        document
+            .querySelectorAll(
+                ".mi-ios-select.mi-open"
+            )
+            .forEach(function (wrapper) {
+                if (wrapper !== except) {
+                    wrapper.classList.remove(
+                        "mi-open"
+                    );
+
+                    wrapper
+                        .querySelector(
+                            ".mi-ios-select-trigger"
+                        )
+                        ?.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+                }
+            });
+    }
+
+    function selectedOption(select) {
+        return (
+            select.options[
+                select.selectedIndex
+            ]
+            || select.options[0]
+        );
+    }
+
+    function enhanceSelect(select) {
+        if (!shouldEnhance(select)) {
+            return;
+        }
+
+        processed.add(select);
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "mi-ios-select";
+
+        const trigger =
+            document.createElement("button");
+
+        trigger.type = "button";
+
+        trigger.className =
+            "mi-ios-select-trigger";
+
+        trigger.setAttribute(
+            "aria-haspopup",
+            "listbox"
+        );
+
+        trigger.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+
+        const triggerText =
+            document.createElement("span");
+
+        triggerText.className =
+            "mi-ios-select-trigger-text";
+
+        const arrow =
+            document.createElement("span");
+
+        arrow.className =
+            "mi-ios-select-arrow";
+
+        arrow.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        arrow.textContent = "⌄";
+
+        trigger.append(
+            triggerText,
+            arrow
+        );
+
+        const menu =
+            document.createElement("div");
+
+        menu.className =
+            "mi-ios-select-menu";
+
+        menu.setAttribute(
+            "role",
+            "listbox"
+        );
+
+        select.parentNode.insertBefore(
+            wrapper,
+            select
+        );
+
+        wrapper.append(
+            select,
+            trigger,
+            menu
+        );
+
+        select.classList.add(
+            "mi-ios-select-native"
+        );
+
+        function rebuild() {
+            const current =
+                selectedOption(select);
+
+            triggerText.textContent =
+                current?.textContent
+                || "";
+
+            menu.replaceChildren();
+
+            Array.from(
+                select.options
+            ).forEach(function (
+                option,
+                index
+            ) {
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+                button.type = "button";
+
+                button.className =
+                    "mi-ios-select-option";
+
+                button.setAttribute(
+                    "role",
+                    "option"
+                );
+
+                button.dataset.value =
+                    option.value;
+
+                button.dataset.index =
+                    String(index);
+
+                const text =
+                    document.createElement(
+                        "span"
+                    );
+
+                text.textContent =
+                    option.textContent;
+
+                const check =
+                    document.createElement(
+                        "span"
+                    );
+
+                check.className =
+                    "mi-ios-select-check";
+
+                check.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+                check.textContent = "✓";
+
+                if (
+                    index ===
+                    select.selectedIndex
+                ) {
+                    button.classList.add(
+                        "mi-selected"
+                    );
+
+                    button.setAttribute(
+                        "aria-selected",
+                        "true"
+                    );
+                }
+                else {
+                    button.setAttribute(
+                        "aria-selected",
+                        "false"
+                    );
+                }
+
+                button.append(
+                    text,
+                    check
+                );
+
+                button.addEventListener(
+                    "click",
+                    function () {
+                        select.selectedIndex =
+                            index;
+
+                        select.dispatchEvent(
+                            new Event(
+                                "input",
+                                {
+                                    bubbles:
+                                        true
+                                }
+                            )
+                        );
+
+                        select.dispatchEvent(
+                            new Event(
+                                "change",
+                                {
+                                    bubbles:
+                                        true
+                                }
+                            )
+                        );
+
+                        rebuild();
+
+                        wrapper.classList.remove(
+                            "mi-open"
+                        );
+
+                        trigger.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+
+                        trigger.focus();
+                    }
+                );
+
+                menu.appendChild(
+                    button
+                );
+            });
+        }
+
+        trigger.addEventListener(
+            "click",
+            function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const willOpen =
+                    !wrapper.classList
+                        .contains("mi-open");
+
+                closeAll(wrapper);
+
+                wrapper.classList.toggle(
+                    "mi-open",
+                    willOpen
+                );
+
+                trigger.setAttribute(
+                    "aria-expanded",
+                    String(willOpen)
+                );
+
+                if (willOpen) {
+                    requestAnimationFrame(
+                        function () {
+                            menu.querySelector(
+                                ".mi-selected"
+                            )?.focus();
+                        }
+                    );
+                }
+            }
+        );
+
+        trigger.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key ===
+                        "ArrowDown"
+                    || event.key ===
+                        "Enter"
+                    || event.key === " "
+                ) {
+                    event.preventDefault();
+
+                    wrapper.classList.add(
+                        "mi-open"
+                    );
+
+                    trigger.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+
+                    menu.querySelector(
+                        ".mi-selected"
+                    )?.focus();
+                }
+            }
+        );
+
+        menu.addEventListener(
+            "keydown",
+            function (event) {
+                const items =
+                    Array.from(
+                        menu.querySelectorAll(
+                            ".mi-ios-select-option"
+                        )
+                    );
+
+                const currentIndex =
+                    items.indexOf(
+                        document.activeElement
+                    );
+
+                if (
+                    event.key ===
+                    "ArrowDown"
+                ) {
+                    event.preventDefault();
+
+                    items[
+                        Math.min(
+                            currentIndex + 1,
+                            items.length - 1
+                        )
+                    ]?.focus();
+                }
+
+                if (
+                    event.key ===
+                    "ArrowUp"
+                ) {
+                    event.preventDefault();
+
+                    items[
+                        Math.max(
+                            currentIndex - 1,
+                            0
+                        )
+                    ]?.focus();
+                }
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+                    wrapper.classList.remove(
+                        "mi-open"
+                    );
+
+                    trigger.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+
+                    trigger.focus();
+                }
+            }
+        );
+
+        select.addEventListener(
+            "change",
+            rebuild
+        );
+
+        const optionObserver =
+            new MutationObserver(
+                rebuild
+            );
+
+        optionObserver.observe(
+            select,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+
+        rebuild();
+    }
+
+    function scan(root) {
+        const scope =
+            root instanceof Element
+                ? root
+                : document;
+
+        if (
+            scope instanceof
+            HTMLSelectElement
+        ) {
+            enhanceSelect(scope);
+        }
+
+        scope.querySelectorAll(
+            "select"
+        ).forEach(
+            enhanceSelect
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            if (
+                !event.target.closest(
+                    ".mi-ios-select"
+                )
+            ) {
+                closeAll();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                closeAll();
+            }
+        }
+    );
+
+    function start() {
+        scan(document);
+
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    mutations.forEach(
+                        function (mutation) {
+                            mutation.addedNodes
+                                .forEach(
+                                    function (
+                                        node
+                                    ) {
+                                        if (
+                                            node
+                                                .nodeType ===
+                                            Node
+                                                .ELEMENT_NODE
+                                        ) {
+                                            scan(node);
+                                        }
+                                    }
+                                );
+                        }
+                    );
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+    }
+
+    window.MIIosSelect = {
+        refresh:
+            function () {
+                scan(document);
+            },
+
+        closeAll:
+            closeAll
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI IOS CUSTOM SELECT JS - END */
 </script>
 </body>
 </html>
