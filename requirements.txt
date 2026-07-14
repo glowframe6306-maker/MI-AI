@@ -1,0 +1,9 @@
+Flask
+flask-cors
+google-genai>=2.11.0
+python-dotenv
+PyPDF2
+python-docx
+pandas
+python-pptx
+Pillow
