@@ -14399,5 +14399,990 @@ document.addEventListener(
 
 /* MI AI STABLE SHARE WINDOW V2 - END */
 </script>
+
+<script>
+/* MI AI SAFE ACCOUNT CHAT RESTORE V4 - START */
+
+(function () {
+    "use strict";
+
+    const ARCHIVE_PREFIX =
+        "mi_safe_account_chat_v4_";
+
+    const LAST_CHAT_PREFIX =
+        "mi_safe_last_chat_v4_";
+
+    let saveTimer = null;
+    let restoreRunning = false;
+    let authListenerInstalled = false;
+    let lastIdentity = "";
+
+    function normalize(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function firebaseUser() {
+        try {
+            return (
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth === "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                ) ||
+                null
+            );
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function accountIdentity() {
+        const firebaseAccount =
+            firebaseUser();
+
+        return normalize(
+            firebaseAccount?.email ||
+            localStorage.getItem(
+                "mi_user_email"
+            ) ||
+            firebaseAccount?.uid ||
+            localStorage.getItem(
+                "mi_user_id"
+            ) ||
+            ""
+        );
+    }
+
+    function authenticated() {
+        return Boolean(
+            accountIdentity() &&
+            (
+                firebaseUser() ||
+                localStorage.getItem(
+                    "mi_supabase_token"
+                ) ||
+                localStorage.getItem(
+                    "mi_user_id"
+                )
+            )
+        );
+    }
+
+    function archiveKey(identity) {
+        return (
+            ARCHIVE_PREFIX +
+            encodeURIComponent(
+                normalize(identity)
+            )
+        );
+    }
+
+    function lastChatKey(identity) {
+        return (
+            LAST_CHAT_PREFIX +
+            encodeURIComponent(
+                normalize(identity)
+            )
+        );
+    }
+
+    function safeParse(value, fallback) {
+        try {
+            const parsed =
+                JSON.parse(value);
+
+            return (
+                parsed === null
+                    ? fallback
+                    : parsed
+            );
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function clone(value, fallback) {
+        try {
+            return JSON.parse(
+                JSON.stringify(value)
+            );
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function currentChats() {
+        try {
+            if (
+                typeof chats !== "undefined" &&
+                chats &&
+                typeof chats === "object" &&
+                !Array.isArray(chats)
+            ) {
+                return clone(chats, {});
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible binding.
+        }
+
+        if (
+            window.chats &&
+            typeof window.chats === "object" &&
+            !Array.isArray(window.chats)
+        ) {
+            return clone(
+                window.chats,
+                {}
+            );
+        }
+
+        return {};
+    }
+
+    function currentChatId() {
+        try {
+            if (
+                typeof currentChat !==
+                    "undefined" &&
+                currentChat
+            ) {
+                return currentChat;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible binding.
+        }
+
+        return (
+            window.currentChat ||
+            localStorage.getItem(
+                "last_chat"
+            ) ||
+            null
+        );
+    }
+
+    function accountStorageKey() {
+        try {
+            if (
+                typeof getUserChatStorageKey ===
+                    "function"
+            ) {
+                return (
+                    getUserChatStorageKey() ||
+                    ""
+                );
+            }
+        }
+        catch (error) {
+            // Fall back below.
+        }
+
+        const identity =
+            accountIdentity();
+
+        return identity
+            ? "mi_chats_" + identity
+            : "";
+    }
+
+    function validChats(value) {
+        return Boolean(
+            value &&
+            typeof value === "object" &&
+            !Array.isArray(value)
+        );
+    }
+
+    function chatCount(value) {
+        return validChats(value)
+            ? Object.keys(value).length
+            : 0;
+    }
+
+    function messageCount(chatMap) {
+        if (!validChats(chatMap)) {
+            return 0;
+        }
+
+        return Object.values(chatMap)
+            .reduce(
+                function (total, messages) {
+                    return (
+                        total +
+                        (
+                            Array.isArray(messages)
+                                ? messages.length
+                                : 0
+                        )
+                    );
+                },
+                0
+            );
+    }
+
+    function mergeChats(
+        first,
+        second
+    ) {
+        const left =
+            validChats(first)
+                ? clone(first, {})
+                : {};
+
+        const right =
+            validChats(second)
+                ? clone(second, {})
+                : {};
+
+        const merged = {
+            ...left
+        };
+
+        Object.entries(right)
+            .forEach(
+                function (entry) {
+                    const chatId =
+                        entry[0];
+
+                    const incoming =
+                        entry[1];
+
+                    const existing =
+                        merged[chatId];
+
+                    if (
+                        !Array.isArray(existing)
+                    ) {
+                        merged[chatId] =
+                            incoming;
+
+                        return;
+                    }
+
+                    if (
+                        !Array.isArray(incoming)
+                    ) {
+                        return;
+                    }
+
+                    /*
+                      Prefer the version containing more
+                      messages to prevent data loss.
+                    */
+                    if (
+                        incoming.length >
+                        existing.length
+                    ) {
+                        merged[chatId] =
+                            incoming;
+                    }
+                }
+            );
+
+        return merged;
+    }
+
+    function readArchive(identity) {
+        const normalized =
+            normalize(identity);
+
+        if (!normalized) {
+            return null;
+        }
+
+        const state =
+            safeParse(
+                localStorage.getItem(
+                    archiveKey(normalized)
+                ),
+                null
+            );
+
+        if (
+            !state ||
+            state.version !== 4 ||
+            !validChats(state.chats)
+        ) {
+            return null;
+        }
+
+        return state;
+    }
+
+    function readNativeCache() {
+        const key =
+            accountStorageKey();
+
+        if (!key) {
+            return {};
+        }
+
+        return safeParse(
+            localStorage.getItem(key),
+            {}
+        );
+    }
+
+    function buildBestSnapshot() {
+        const identity =
+            accountIdentity();
+
+        const memoryChats =
+            currentChats();
+
+        const nativeChats =
+            readNativeCache();
+
+        const archive =
+            readArchive(identity);
+
+        let best =
+            mergeChats(
+                nativeChats,
+                archive?.chats || {}
+            );
+
+        best =
+            mergeChats(
+                best,
+                memoryChats
+            );
+
+        return best;
+    }
+
+    function saveNow(reason) {
+        if (!authenticated()) {
+            return false;
+        }
+
+        const identity =
+            accountIdentity();
+
+        if (!identity) {
+            return false;
+        }
+
+        const bestChats =
+            buildBestSnapshot();
+
+        /*
+          Never replace a non-empty backup with an
+          empty state during initial page loading.
+        */
+        const previous =
+            readArchive(identity);
+
+        if (
+            chatCount(bestChats) === 0 &&
+            chatCount(
+                previous?.chats
+            ) > 0
+        ) {
+            console.warn(
+                "[MI AI Restore] Empty save ignored:",
+                reason
+            );
+
+            return false;
+        }
+
+        const selectedChat =
+            currentChatId() ||
+            previous?.currentChat ||
+            Object.keys(bestChats)[0] ||
+            null;
+
+        const state = {
+            version: 4,
+            identity: identity,
+            savedAt: Date.now(),
+            reason:
+                reason || "update",
+            currentChat:
+                selectedChat,
+            chats:
+                bestChats
+        };
+
+        localStorage.setItem(
+            archiveKey(identity),
+            JSON.stringify(state)
+        );
+
+        if (selectedChat) {
+            localStorage.setItem(
+                lastChatKey(identity),
+                selectedChat
+            );
+
+            localStorage.setItem(
+                "last_chat",
+                selectedChat
+            );
+        }
+
+        const nativeKey =
+            accountStorageKey();
+
+        if (nativeKey) {
+            localStorage.setItem(
+                nativeKey,
+                JSON.stringify(
+                    bestChats
+                )
+            );
+        }
+
+        lastIdentity =
+            identity;
+
+        console.log(
+            "[MI AI Restore] Saved:",
+            reason,
+            identity,
+            chatCount(bestChats),
+            messageCount(bestChats)
+        );
+
+        return true;
+    }
+
+    function scheduleSave(
+        reason,
+        delay
+    ) {
+        clearTimeout(saveTimer);
+
+        saveTimer =
+            setTimeout(
+                function () {
+                    saveNow(reason);
+                },
+                typeof delay ===
+                    "number"
+                    ? delay
+                    : 180
+            );
+    }
+
+    function applyChats(
+        restoredChats,
+        requestedChat
+    ) {
+        if (
+            !validChats(restoredChats) ||
+            chatCount(restoredChats) === 0
+        ) {
+            return false;
+        }
+
+        const safeChats =
+            clone(
+                restoredChats,
+                {}
+            );
+
+        try {
+            if (
+                typeof chats !==
+                    "undefined"
+            ) {
+                chats =
+                    safeChats;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible binding.
+        }
+
+        window.chats =
+            safeChats;
+
+        const ids =
+            Object.keys(safeChats);
+
+        const selected =
+            requestedChat &&
+            safeChats[requestedChat]
+                ? requestedChat
+                : ids[0];
+
+        try {
+            if (
+                typeof currentChat !==
+                    "undefined"
+            ) {
+                currentChat =
+                    selected;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible binding.
+        }
+
+        window.currentChat =
+            selected;
+
+        localStorage.setItem(
+            "last_chat",
+            selected
+        );
+
+        const nativeKey =
+            accountStorageKey();
+
+        if (nativeKey) {
+            localStorage.setItem(
+                nativeKey,
+                JSON.stringify(
+                    safeChats
+                )
+            );
+        }
+
+        try {
+            if (
+                typeof renderList ===
+                    "function"
+            ) {
+                renderList();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Restore] List render failed:",
+                error
+            );
+        }
+
+        try {
+            if (
+                typeof openChat ===
+                    "function"
+            ) {
+                openChat(selected);
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Restore] Chat open failed:",
+                error
+            );
+        }
+
+        return true;
+    }
+
+    async function restoreNow(reason) {
+        if (
+            restoreRunning ||
+            !authenticated()
+        ) {
+            return false;
+        }
+
+        const identity =
+            accountIdentity();
+
+        if (!identity) {
+            return false;
+        }
+
+        restoreRunning = true;
+
+        try {
+            const archive =
+                readArchive(identity);
+
+            const nativeChats =
+                readNativeCache();
+
+            let restored =
+                mergeChats(
+                    archive?.chats || {},
+                    nativeChats
+                );
+
+            const requestedChat =
+                localStorage.getItem(
+                    lastChatKey(identity)
+                ) ||
+                archive?.currentChat ||
+                localStorage.getItem(
+                    "last_chat"
+                );
+
+            /*
+              Restore local data immediately before any
+              network request. This protects hard refresh.
+            */
+            if (
+                chatCount(restored) > 0
+            ) {
+                applyChats(
+                    restored,
+                    requestedChat
+                );
+            }
+
+            /*
+              Load server/Firebase data if the app has
+              its normal loader. Never allow an empty
+              server response to erase local data.
+            */
+            try {
+                if (
+                    typeof loadUserChats ===
+                        "function"
+                ) {
+                    await loadUserChats();
+                }
+            }
+            catch (error) {
+                console.warn(
+                    "[MI AI Restore] Server load failed; local chats retained.",
+                    error
+                );
+            }
+
+            const loadedChats =
+                currentChats();
+
+            restored =
+                mergeChats(
+                    restored,
+                    loadedChats
+                );
+
+            if (
+                chatCount(restored) > 0
+            ) {
+                applyChats(
+                    restored,
+                    requestedChat
+                );
+            }
+
+            saveNow(
+                "restore-" +
+                (
+                    reason ||
+                    "session"
+                )
+            );
+
+            console.log(
+                "[MI AI Restore] Restored:",
+                identity,
+                chatCount(restored),
+                messageCount(restored)
+            );
+
+            return true;
+        }
+        finally {
+            restoreRunning = false;
+        }
+    }
+
+    function installAuthListener() {
+        if (authListenerInstalled) {
+            return true;
+        }
+
+        let auth = null;
+
+        try {
+            auth =
+                window.miFirebaseAuth ||
+                window.firebaseAuth ||
+                (
+                    window.firebase &&
+                    typeof window.firebase
+                        .auth === "function"
+                        ? window.firebase.auth()
+                        : null
+                );
+        }
+        catch (error) {
+            auth = null;
+        }
+
+        if (
+            !auth ||
+            typeof auth
+                .onAuthStateChanged !==
+                "function"
+        ) {
+            return false;
+        }
+
+        authListenerInstalled =
+            true;
+
+        auth.onAuthStateChanged(
+            async function (account) {
+                if (account?.email) {
+                    localStorage.setItem(
+                        "mi_user_email",
+                        account.email
+                    );
+
+                    localStorage.setItem(
+                        "mi_user_id",
+                        account.uid || ""
+                    );
+
+                    try {
+                        const token =
+                            await account
+                                .getIdToken();
+
+                        if (token) {
+                            localStorage.setItem(
+                                "mi_supabase_token",
+                                token
+                            );
+                        }
+                    }
+                    catch (error) {
+                        console.warn(
+                            "[MI AI Restore] Token refresh failed.",
+                            error
+                        );
+                    }
+
+                    await restoreNow(
+                        "auth"
+                    );
+                }
+                else {
+                    lastIdentity = "";
+                }
+            }
+        );
+
+        return true;
+    }
+
+    function installSaveHooks() {
+        /*
+          Capture normal actions without preventing
+          or stopping their original click handlers.
+        */
+        document.addEventListener(
+            "click",
+            function (event) {
+                if (!authenticated()) {
+                    return;
+                }
+
+                const details =
+                    [
+                        event.target?.id,
+                        event.target?.className,
+                        event.target
+                            ?.getAttribute?.(
+                                "data-action"
+                            ),
+                        event.target
+                            ?.textContent
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                if (
+                    details.includes("send") ||
+                    details.includes("new chat") ||
+                    details.includes("rename") ||
+                    details.includes("delete") ||
+                    details.includes("pin")
+                ) {
+                    scheduleSave(
+                        "action",
+                        350
+                    );
+                }
+            },
+            false
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    authenticated() &&
+                    event.key === "Enter"
+                ) {
+                    scheduleSave(
+                        "enter",
+                        700
+                    );
+                }
+            },
+            false
+        );
+
+        window.addEventListener(
+            "pagehide",
+            function () {
+                saveNow("pagehide");
+            }
+        );
+
+        window.addEventListener(
+            "beforeunload",
+            function () {
+                saveNow(
+                    "beforeunload"
+                );
+            }
+        );
+
+        document.addEventListener(
+            "visibilitychange",
+            function () {
+                if (
+                    document.visibilityState ===
+                        "hidden"
+                ) {
+                    saveNow(
+                        "hidden"
+                    );
+                }
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                restoreNow(
+                    "pageshow"
+                );
+            }
+        );
+
+        window.addEventListener(
+            "popstate",
+            function () {
+                restoreNow(
+                    "history"
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                restoreNow(
+                    "user-change"
+                );
+            }
+        );
+    }
+
+    function start() {
+        installSaveHooks();
+
+        /*
+          Restore immediately from existing auth storage.
+        */
+        if (authenticated()) {
+            restoreNow(
+                "startup"
+            );
+        }
+
+        if (!installAuthListener()) {
+            let attempts = 0;
+
+            const timer =
+                setInterval(
+                    function () {
+                        attempts += 1;
+
+                        if (
+                            installAuthListener() ||
+                            attempts >= 40
+                        ) {
+                            clearInterval(
+                                timer
+                            );
+                        }
+                    },
+                    250
+                );
+        }
+
+        /*
+          Low-frequency safety backup only.
+          It does not touch click events or block UI.
+        */
+        setInterval(
+            function () {
+                if (authenticated()) {
+                    saveNow(
+                        "safety"
+                    );
+                }
+            },
+            15000
+        );
+    }
+
+    window.MISafeAccountChatRestore = {
+        save:
+            function () {
+                return saveNow(
+                    "manual"
+                );
+            },
+
+        restore:
+            function () {
+                return restoreNow(
+                    "manual"
+                );
+            },
+
+        getState:
+            function () {
+                return readArchive(
+                    accountIdentity()
+                );
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SAFE ACCOUNT CHAT RESTORE V4 - END */
+</script>
 </body>
 </html>
