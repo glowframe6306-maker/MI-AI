@@ -8296,6 +8296,13 @@ if (token && isAuthenticated()) {
   }).catch(() => {});
 }
 
+// Auto-save chat title to Firestore
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveChat(selectedChat, { title: name }).catch(err =>
+        console.error('[Persistence] Chat rename error:', err)
+    );
+}
+
 save();
 renderList();
 menu.style.display="none";
@@ -8326,6 +8333,17 @@ currentChat=null;
 chatBox.innerHTML="";
 }
 
+// Auto-delete from Firestore
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    try {
+        const db = window.firebase.firestore();
+        db.collection('users').doc(window.miFirebaseUser.uid).collection('chats').doc(chatId).delete()
+            .catch(err => console.error('[Persistence] Chat delete error:', err));
+    } catch (err) {
+        console.error('[Persistence] Error deleting chat from Firestore:', err);
+    }
+}
+
 save();
 renderList();
 menu.style.display="none";
@@ -8338,6 +8356,12 @@ if(!selectedChat)return;
 chats[selectedChat].pin =
 !chats[selectedChat].pin;
 
+// Auto-save pin status to Firestore
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveChat(selectedChat, { pin: chats[selectedChat].pin }).catch(err =>
+        console.error('[Persistence] Chat pin error:', err)
+    );
+}
 
 save();
 renderList();
@@ -19362,6 +19386,519 @@ document.addEventListener(
 })();
 
 /* MI AI FULL UI TRANSLATION V2 - END */
+</script>
+
+<script>
+/* MI AI ALL LANGUAGE MAP V3 - START */
+
+(function () {
+    "use strict";
+
+    const LANGUAGE_MAP = [
+        { code: "en", label: "English" },
+        { code: "si", label: "Sinhala" },
+        { code: "ta", label: "Tamil" },
+        { code: "ar", label: "Arabic" },
+        { code: "hi", label: "Hindi" },
+        { code: "ur", label: "Urdu" },
+
+        {
+            code: "zh-cn",
+            label: "Chinese (Simplified)",
+            aliases: [
+                "zh",
+                "zh-hans",
+                "chinese simplified"
+            ]
+        },
+
+        {
+            code: "zh-tw",
+            label: "Chinese (Traditional)",
+            aliases: [
+                "zh-hant",
+                "chinese traditional"
+            ]
+        },
+
+        { code: "ja", label: "Japanese" },
+        { code: "ko", label: "Korean" },
+        { code: "fr", label: "French" },
+        { code: "de", label: "German" },
+        { code: "es", label: "Spanish" },
+        { code: "pt", label: "Portuguese" },
+        { code: "ru", label: "Russian" },
+        { code: "it", label: "Italian" },
+        { code: "nl", label: "Dutch" },
+        { code: "tr", label: "Turkish" },
+        { code: "th", label: "Thai" },
+        { code: "ml", label: "Malayalam" },
+        { code: "mr", label: "Marathi" },
+        { code: "gu", label: "Gujarati" },
+        { code: "pl", label: "Polish" },
+        { code: "uk", label: "Ukrainian" },
+        { code: "cs", label: "Czech" },
+        { code: "el", label: "Greek" },
+        { code: "he", label: "Hebrew" },
+        { code: "fa", label: "Persian" },
+        { code: "ro", label: "Romanian" },
+        { code: "sv", label: "Swedish" },
+        { code: "no", label: "Norwegian" },
+        { code: "da", label: "Danish" },
+        { code: "fi", label: "Finnish" },
+        { code: "hu", label: "Hungarian" },
+        { code: "sk", label: "Slovak" },
+        { code: "hr", label: "Croatian" },
+        { code: "sr", label: "Serbian" },
+        { code: "bg", label: "Bulgarian" },
+        { code: "lt", label: "Lithuanian" },
+
+        { code: "bn", label: "Bengali" },
+        { code: "te", label: "Telugu" },
+        { code: "kn", label: "Kannada" },
+        { code: "pa", label: "Punjabi" },
+        { code: "ne", label: "Nepali" },
+        { code: "id", label: "Indonesian" },
+        { code: "ms", label: "Malay" },
+        { code: "vi", label: "Vietnamese" },
+        { code: "fil", label: "Filipino" },
+        { code: "sw", label: "Swahili" },
+        { code: "af", label: "Afrikaans" }
+    ];
+
+    const CODE_ALIASES = new Map();
+
+    function normalize(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/_/g, "-")
+            .replace(/\s+/g, " ");
+    }
+
+    LANGUAGE_MAP.forEach(function (language) {
+        CODE_ALIASES.set(
+            normalize(language.code),
+            language
+        );
+
+        CODE_ALIASES.set(
+            normalize(language.label),
+            language
+        );
+
+        (
+            language.aliases || []
+        ).forEach(function (alias) {
+            CODE_ALIASES.set(
+                normalize(alias),
+                language
+            );
+        });
+    });
+
+    function findLanguage(value, label) {
+        const normalizedValue =
+            normalize(value);
+
+        const normalizedLabel =
+            normalize(label);
+
+        return (
+            CODE_ALIASES.get(
+                normalizedValue
+            ) ||
+            CODE_ALIASES.get(
+                normalizedLabel
+            ) ||
+            LANGUAGE_MAP.find(
+                function (language) {
+                    return (
+                        normalizedValue.startsWith(
+                            normalize(
+                                language.code
+                            ) + "-"
+                        )
+                    );
+                }
+            ) ||
+            null
+        );
+    }
+
+    function languageSelect() {
+        return document.getElementById(
+            "languageSelect"
+        );
+    }
+
+    function selectedLanguage() {
+        const selector =
+            languageSelect();
+
+        if (!selector) {
+            return {
+                code:
+                    localStorage.getItem(
+                        "mi_ui_language"
+                    ) || "en",
+
+                label:
+                    "English"
+            };
+        }
+
+        const option =
+            selector.options[
+                selector.selectedIndex
+            ];
+
+        const detected =
+            findLanguage(
+                selector.value,
+                option?.textContent
+            );
+
+        return detected || {
+            code:
+                normalize(
+                    selector.value
+                ) || "en",
+
+            label:
+                String(
+                    option?.textContent ||
+                    selector.value ||
+                    "English"
+                ).trim()
+        };
+    }
+
+    function saveSelectedLanguage() {
+        const selected =
+            selectedLanguage();
+
+        localStorage.setItem(
+            "mi_ui_language",
+            selected.code
+        );
+
+        localStorage.setItem(
+            "mi_ui_language_name",
+            selected.label
+        );
+
+        return selected;
+    }
+
+    function refreshTranslation() {
+        const selected =
+            saveSelectedLanguage();
+
+        document.documentElement.lang =
+            selected.code;
+
+        const rtlLanguages =
+            new Set([
+                "ar",
+                "fa",
+                "he",
+                "ur"
+            ]);
+
+        document.documentElement.dir =
+            rtlLanguages.has(
+                selected.code
+                    .split("-")[0]
+            )
+                ? "rtl"
+                : "ltr";
+
+        if (
+            window.MIFullUiTranslation &&
+            typeof window
+                .MIFullUiTranslation
+                .refresh === "function"
+        ) {
+            window
+                .MIFullUiTranslation
+                .refresh();
+        }
+
+        if (
+            window.MIAnyLanguage &&
+            typeof window
+                .MIAnyLanguage
+                .refresh === "function"
+        ) {
+            window
+                .MIAnyLanguage
+                .refresh();
+        }
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-language-changed",
+                {
+                    detail: {
+                        language:
+                            selected.code,
+
+                        languageName:
+                            selected.label
+                    }
+                }
+            )
+        );
+    }
+
+    function attachLanguageSelector() {
+        const selector =
+            languageSelect();
+
+        if (
+            !selector ||
+            selector.dataset
+                .miAllLanguageMapAttached ===
+                "true"
+        ) {
+            return;
+        }
+
+        selector.dataset
+            .miAllLanguageMapAttached =
+            "true";
+
+        selector.addEventListener(
+            "change",
+            function () {
+                setTimeout(
+                    refreshTranslation,
+                    20
+                );
+            },
+            true
+        );
+
+        selector.addEventListener(
+            "input",
+            function () {
+                setTimeout(
+                    refreshTranslation,
+                    20
+                );
+            },
+            true
+        );
+    }
+
+    function isLanguageOption(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        const settings =
+            element.closest(
+                [
+                    "#settingsPanel",
+                    "#settingsModal",
+                    ".settings-panel",
+                    ".settings-modal",
+                    ".mi-settings-section"
+                ].join(",")
+            );
+
+        if (!settings) {
+            return false;
+        }
+
+        const text =
+            normalize(
+                element.textContent
+            );
+
+        return Boolean(
+            CODE_ALIASES.has(text) ||
+            LANGUAGE_MAP.some(
+                function (language) {
+                    return (
+                        text ===
+                        normalize(
+                            language.label
+                        )
+                    );
+                }
+            )
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            if (
+                isLanguageOption(
+                    event.target
+                )
+            ) {
+                setTimeout(
+                    refreshTranslation,
+                    80
+                );
+
+                setTimeout(
+                    refreshTranslation,
+                    350
+                );
+            }
+
+            const button =
+                event.target.closest(
+                    "button"
+                );
+
+            const text =
+                normalize(
+                    button?.textContent
+                );
+
+            if (
+                button &&
+                (
+                    text === "apply" ||
+                    text.includes(
+                        "apply setting"
+                    )
+                )
+            ) {
+                setTimeout(
+                    refreshTranslation,
+                    80
+                );
+
+                setTimeout(
+                    refreshTranslation,
+                    400
+                );
+            }
+        },
+        true
+    );
+
+    function exposeLanguageList() {
+        const current =
+            Array.isArray(
+                window.SUPPORTED_LANGUAGES
+            )
+                ? window.SUPPORTED_LANGUAGES
+                : [];
+
+        const merged =
+            new Map();
+
+        current.forEach(
+            function (language) {
+                if (language?.code) {
+                    merged.set(
+                        normalize(
+                            language.code
+                        ),
+                        language
+                    );
+                }
+            }
+        );
+
+        LANGUAGE_MAP.forEach(
+            function (language) {
+                if (
+                    !merged.has(
+                        normalize(
+                            language.code
+                        )
+                    )
+                ) {
+                    merged.set(
+                        normalize(
+                            language.code
+                        ),
+                        {
+                            code:
+                                language.code,
+
+                            label:
+                                language.label,
+
+                            name:
+                                language.label
+                        }
+                    );
+                }
+            }
+        );
+
+        window.SUPPORTED_LANGUAGES =
+            Array.from(
+                merged.values()
+            );
+    }
+
+    function start() {
+        exposeLanguageList();
+        attachLanguageSelector();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    attachLanguageSelector();
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        setTimeout(
+            refreshTranslation,
+            250
+        );
+    }
+
+    window.MIAllLanguageMap = {
+        languages:
+            LANGUAGE_MAP,
+
+        getSelected:
+            selectedLanguage,
+
+        refresh:
+            refreshTranslation,
+
+        resolve:
+            findLanguage
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI ALL LANGUAGE MAP V3 - END */
 </script>
 </body>
 </html>
