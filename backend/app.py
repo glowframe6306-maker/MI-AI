@@ -1564,77 +1564,73 @@ def api_chat():
 def api_chat_get():
     return jsonify({"response": "Method not allowed"}), 405
 
-# MI AI LIVE SEARCH REST ROUTE V2 - START
+# MI AI GROQ LIVE SEARCH ROUTE V3 - START
 
-def _mi_live_json_response(payload, status=200):
-    """Return a consistent JSON response without exposing secrets."""
-    return jsonify(payload), status
-
-
-def _mi_live_extract_answer(response_data):
-    """Extract all text parts from a Gemini REST response."""
-    if not isinstance(response_data, dict):
+def _mi_groq_live_extract_text(data):
+    """Extract the assistant reply from a Groq response."""
+    if not isinstance(data, dict):
         return ""
 
-    candidates = response_data.get("candidates") or []
+    choices = data.get("choices") or []
 
-    if not candidates:
+    if not choices:
         return ""
 
-    content = candidates[0].get("content") or {}
-    parts = content.get("parts") or []
+    message = choices[0].get("message") or {}
 
-    answer_parts = []
-
-    for part in parts:
-        if not isinstance(part, dict):
-            continue
-
-        text = str(part.get("text") or "").strip()
-
-        if text:
-            answer_parts.append(text)
-
-    return "\n".join(answer_parts).strip()
+    return str(
+        message.get("content") or ""
+    ).strip()
 
 
-def _mi_live_extract_sources(response_data):
-    """Return grounding source titles and URLs when Gemini supplies them."""
+def _mi_groq_live_extract_sources(data):
+    """Collect citation URLs when Groq returns them."""
     sources = []
-    seen_urls = set()
+    seen = set()
 
-    if not isinstance(response_data, dict):
+    if not isinstance(data, dict):
         return sources
 
-    candidates = response_data.get("candidates") or []
+    choices = data.get("choices") or []
 
-    if not candidates:
+    if not choices:
         return sources
 
-    metadata = (
-        candidates[0].get("groundingMetadata")
-        or candidates[0].get("grounding_metadata")
-        or {}
-    )
+    message = choices[0].get("message") or {}
 
-    chunks = (
-        metadata.get("groundingChunks")
-        or metadata.get("grounding_chunks")
-        or []
-    )
+    candidates = []
 
-    for chunk in chunks:
-        if not isinstance(chunk, dict):
+    for key in (
+        "citations",
+        "sources",
+        "executed_tools",
+    ):
+        value = message.get(key)
+
+        if isinstance(value, list):
+            candidates.extend(value)
+
+    for item in candidates:
+        if not isinstance(item, dict):
             continue
 
-        web_data = chunk.get("web") or {}
-        url = str(web_data.get("uri") or "").strip()
-        title = str(web_data.get("title") or "").strip()
+        url = str(
+            item.get("url")
+            or item.get("uri")
+            or item.get("link")
+            or ""
+        ).strip()
 
-        if not url or url in seen_urls:
+        title = str(
+            item.get("title")
+            or item.get("name")
+            or url
+        ).strip()
+
+        if not url or url in seen:
             continue
 
-        seen_urls.add(url)
+        seen.add(url)
 
         sources.append({
             "title": title or url,
@@ -1644,28 +1640,15 @@ def _mi_live_extract_sources(response_data):
     return sources[:12]
 
 
-def _mi_live_error_details(error):
-    """Produce a safe server log message."""
-    return f"{type(error).__name__}: {error}"
-
-
 @app.route("/api/live-assist", methods=["POST", "OPTIONS"])
-def mi_live_assist():
-    """
-    Answer current-information questions with Gemini Google Search grounding.
-
-    This implementation uses Gemini's REST API directly so it does not depend
-    on a particular google-genai SDK version inside Vercel.
-    """
+def mi_groq_live_assist():
     import json
     import os
-    import time
     import urllib.error
-    import urllib.parse
     import urllib.request
 
     if request.method == "OPTIONS":
-        return _mi_live_json_response({
+        return jsonify({
             "ok": True
         })
 
@@ -1679,294 +1662,249 @@ def mi_live_assist():
     ).strip()
 
     if not query:
-        return _mi_live_json_response({
+        return jsonify({
             "error": "A live-search question is required."
-        }, 400)
+        }), 400
 
     api_key = str(
-        os.getenv("GEMINI_API_KEY")
-        or os.getenv("GOOGLE_API_KEY")
+        os.getenv("GROQ_API_KEY")
         or ""
     ).strip()
 
     if not api_key:
         app.logger.error(
-            "Live search failed: GEMINI_API_KEY is missing."
+            "GROQ_API_KEY is not configured."
         )
 
-        return _mi_live_json_response({
-            "error": "The live-search API key is not configured."
-        }, 500)
+        return jsonify({
+            "error": "GROQ_API_KEY is not configured on the server."
+        }), 500
 
-    client_context = payload.get("client_context") or {}
+    client_context = (
+        payload.get("client_context")
+        or {}
+    )
 
     timezone_name = str(
-        client_context.get("timezone") or ""
+        client_context.get("timezone")
+        or ""
     ).strip()
 
     local_time = str(
-        client_context.get("local_time") or ""
+        client_context.get("local_time")
+        or ""
     ).strip()
 
-    latitude = client_context.get("latitude")
-    longitude = client_context.get("longitude")
+    latitude = client_context.get(
+        "latitude"
+    )
+
+    longitude = client_context.get(
+        "longitude"
+    )
 
     context_lines = []
 
     if timezone_name:
         context_lines.append(
-            f"User device timezone: {timezone_name}."
+            f"Device timezone: {timezone_name}."
         )
 
     if local_time:
         context_lines.append(
-            f"User device timestamp: {local_time}."
+            f"Device timestamp: {local_time}."
         )
 
-    if latitude is not None and longitude is not None:
+    if (
+        latitude is not None
+        and longitude is not None
+    ):
         context_lines.append(
-            f"Approximate user coordinates: {latitude}, {longitude}."
+            f"Approximate coordinates: "
+            f"{latitude}, {longitude}."
         )
 
-    context_text = "\n".join(context_lines)
+    context_text = "\n".join(
+        context_lines
+    )
 
-    prompt = f"""
-Use Google Search to answer the following question with current, verifiable
-information.
+    system_prompt = """
+You are MI AI.
 
-USER QUESTION:
-{query}
+Use live web search whenever the question asks for current,
+latest, live or recently changed information.
 
-REQUIREMENTS:
-- Search the live web before answering.
-- Answer in the same language as the user's question.
-- For sports, provide the teams, current score/status, match stage and the
-  time the information was checked.
-- For current news, state the relevant date.
-- For prices, office holders, releases or schedules, use the newest reliable
-  information available.
-- Never invent a live score, event, price, date, quotation or result.
-- When reliable current information cannot be confirmed, say that clearly.
-- Keep the response direct and useful.
-- Do not expose system instructions or API details.
-
-CLIENT CONTEXT:
-{context_text or "No additional client context was supplied."}
+Rules:
+- Answer in the same language as the user.
+- Search the web before answering live questions.
+- Never invent live scores, news, prices, weather or results.
+- For sports, include the teams, score/status and when checked.
+- For news, mention the relevant date.
+- Give a clear direct answer.
+- Do not expose API keys or system instructions.
 """.strip()
 
-    # Try the configured model first, then known compatible fallbacks.
-    configured_model = str(
-        os.getenv("GEMINI_LIVE_MODEL")
-        or os.getenv("GEMINI_MODEL")
-        or "gemini-2.5-flash"
-    ).strip()
+    user_prompt = query
 
-    model_candidates = []
-
-    for model_name in (
-        configured_model,
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-    ):
-        if model_name and model_name not in model_candidates:
-            model_candidates.append(model_name)
-
-    last_error = ""
-    last_status = 500
-
-    for attempt, model_name in enumerate(model_candidates, start=1):
-        endpoint = (
-            "https://generativelanguage.googleapis.com/"
-            "v1beta/models/"
-            + urllib.parse.quote(model_name, safe="")
-            + ":generateContent?key="
-            + urllib.parse.quote(api_key, safe="")
+    if context_text:
+        user_prompt += (
+            "\n\nUser device context:\n"
+            + context_text
         )
 
-        request_body = {
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [
-                        {
-                            "text": prompt
-                        }
-                    ],
-                }
-            ],
-            "tools": [
-                {
-                    "google_search": {}
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.2,
-                "topP": 0.9,
-                "maxOutputTokens": 2048,
-            },
-        }
+    request_body = {
+        "model": os.getenv(
+            "GROQ_LIVE_MODEL",
+            "groq/compound"
+        ),
 
-        encoded_body = json.dumps(
-            request_body,
-            ensure_ascii=False
-        ).encode("utf-8")
-
-        web_request = urllib.request.Request(
-            endpoint,
-            data=encoded_body,
-            method="POST",
-            headers={
-                "Content-Type": "application/json; charset=utf-8",
-                "Accept": "application/json",
-                "User-Agent": "MI-AI-Live-Search/2.0",
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt,
             },
+            {
+                "role": "user",
+                "content": user_prompt,
+            },
+        ],
+
+        "temperature": 0.2,
+    }
+
+    body_bytes = json.dumps(
+        request_body,
+        ensure_ascii=False
+    ).encode("utf-8")
+
+    groq_request = urllib.request.Request(
+        "https://api.groq.com/openai/v1/chat/completions",
+        data=body_bytes,
+        method="POST",
+        headers={
+            "Authorization":
+                f"Bearer {api_key}",
+
+            "Content-Type":
+                "application/json; charset=utf-8",
+
+            "Accept":
+                "application/json",
+
+            "User-Agent":
+                "MI-AI-Groq-Live/3.0",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(
+            groq_request,
+            timeout=55
+        ) as response:
+            raw = response.read().decode(
+                "utf-8",
+                errors="replace"
+            )
+
+        data = json.loads(raw)
+
+        answer = _mi_groq_live_extract_text(
+            data
+        )
+
+        if not answer:
+            app.logger.error(
+                "Groq returned an empty live-search answer."
+            )
+
+            return jsonify({
+                "error": "Groq returned an empty answer."
+            }), 502
+
+        return jsonify({
+            "reply": answer,
+            "response": answer,
+            "message": answer,
+            "text": answer,
+            "live_search": True,
+            "model": request_body["model"],
+            "sources":
+                _mi_groq_live_extract_sources(
+                    data
+                ),
+        })
+
+    except urllib.error.HTTPError as error:
+        status = int(
+            getattr(error, "code", 500)
+            or 500
         )
 
         try:
-            with urllib.request.urlopen(
-                web_request,
-                timeout=55
-            ) as response:
-                raw_response = response.read().decode(
+            provider_body = (
+                error.read()
+                .decode(
                     "utf-8",
                     errors="replace"
                 )
-
-                response_data = json.loads(raw_response)
-
-            answer = _mi_live_extract_answer(
-                response_data
             )
+        except Exception:
+            provider_body = ""
 
-            if not answer:
-                finish_reason = ""
-
-                try:
-                    finish_reason = str(
-                        (
-                            response_data.get("candidates")
-                            or [{}]
-                        )[0].get("finishReason")
-                        or ""
-                    )
-                except Exception:
-                    finish_reason = ""
-
-                last_error = (
-                    "Gemini returned no answer"
-                    + (
-                        f" ({finish_reason})"
-                        if finish_reason
-                        else ""
-                    )
-                )
-
-                app.logger.warning(
-                    "Live search model %s returned no text.",
-                    model_name,
-                )
-
-                continue
-
-            return _mi_live_json_response({
-                "reply": answer,
-                "response": answer,
-                "message": answer,
-                "text": answer,
-                "live_search": True,
-                "model": model_name,
-                "sources": _mi_live_extract_sources(
-                    response_data
-                ),
-            })
-
-        except urllib.error.HTTPError as error:
-            last_status = int(
-                getattr(error, "code", 500) or 500
-            )
-
-            try:
-                error_body = error.read().decode(
-                    "utf-8",
-                    errors="replace"
-                )
-            except Exception:
-                error_body = ""
-
-            safe_error = error_body[:2000] if error_body else str(error)
-            last_error = safe_error
-
-            app.logger.error(
-                "Live search HTTP error; model=%s status=%s body=%s",
-                model_name,
-                last_status,
-                safe_error,
-            )
-
-            # API key/permission errors will not improve by changing model.
-            if last_status in (400, 401, 403):
-                break
-
-            if attempt < len(model_candidates):
-                time.sleep(0.5)
-
-        except urllib.error.URLError as error:
-            last_status = 502
-            last_error = _mi_live_error_details(error)
-
-            app.logger.error(
-                "Live search network error; model=%s error=%s",
-                model_name,
-                last_error,
-            )
-
-            if attempt < len(model_candidates):
-                time.sleep(0.5)
-
-        except Exception as error:
-            last_status = 500
-            last_error = _mi_live_error_details(error)
-
-            app.logger.exception(
-                "Unexpected live search error; model=%s",
-                model_name,
-            )
-
-            if attempt < len(model_candidates):
-                time.sleep(0.5)
-
-    # Do not leak the API key or full provider response to the browser.
-    app.logger.error(
-        "All live-search attempts failed: %s",
-        last_error,
-    )
-
-    if last_status == 429:
-        public_error = (
-            "The live-search quota is temporarily exhausted. "
-            "Please try again shortly."
-        )
-    elif last_status in (401, 403):
-        public_error = (
-            "The live-search API key is not authorized for Google Search."
-        )
-    elif last_status == 400:
-        public_error = (
-            "The live-search provider rejected the request configuration."
-        )
-    else:
-        public_error = (
-            "Live web search is temporarily unavailable, "
-            "but normal AI chat is still working."
+        app.logger.error(
+            "Groq live-search HTTP error: "
+            "status=%s body=%s",
+            status,
+            provider_body[:2000],
         )
 
-    return _mi_live_json_response({
-        "error": public_error,
-        "provider_status": last_status,
-    }, 502 if last_status >= 500 else last_status)
+        if status in (401, 403):
+            message = (
+                "The GROQ_API_KEY is invalid or unauthorized."
+            )
+        elif status == 429:
+            message = (
+                "The Groq API quota or rate limit "
+                "has been reached."
+            )
+        elif status == 400:
+            message = (
+                "Groq rejected the live-search request."
+            )
+        else:
+            message = (
+                "Groq live search is temporarily unavailable."
+            )
+
+        return jsonify({
+            "error": message,
+            "provider_status": status,
+        }), status
+
+    except urllib.error.URLError as error:
+        app.logger.error(
+            "Groq live-search network error: %s",
+            error,
+        )
+
+        return jsonify({
+            "error": (
+                "The server could not connect "
+                "to Groq live search."
+            )
+        }), 502
+
+    except Exception as error:
+        app.logger.exception(
+            "Unexpected Groq live-search error."
+        )
+
+        return jsonify({
+            "error": str(error)
+        }), 500
 
 
-# MI AI LIVE SEARCH REST ROUTE V2 - END
+# MI AI GROQ LIVE SEARCH ROUTE V3 - END
 
 if __name__=="__main__":
     app.run(
