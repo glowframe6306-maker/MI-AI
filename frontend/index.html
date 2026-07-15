@@ -16755,5 +16755,551 @@ document.addEventListener(
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - END */
 </script>
 
+
+<script>
+/* MI AI SETTINGS LOGIN REQUIRED - START */
+
+(function () {
+    "use strict";
+
+    const protectedTypes = new Set([
+        "language",
+        "theme",
+        "fontsize",
+        "font-size",
+        "font_size"
+    ]);
+
+    const previousValues =
+        new WeakMap();
+
+    let openingLogin =
+        false;
+
+    function authenticated() {
+        try {
+            if (
+                typeof window.isAuthenticated ===
+                    "function"
+            ) {
+                return Boolean(
+                    window.isAuthenticated()
+                );
+            }
+
+            if (
+                typeof isAuthenticated ===
+                    "function"
+            ) {
+                return Boolean(
+                    isAuthenticated()
+                );
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Settings Guard]",
+                error
+            );
+        }
+
+        return Boolean(
+            window.user ||
+            localStorage.getItem(
+                "mi_supabase_token"
+            ) ||
+            window.miFirebaseAuth
+                ?.currentUser
+        );
+    }
+
+    function selectedLanguage() {
+        return (
+            document.getElementById(
+                "languageSelect"
+            )?.value ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            "en"
+        );
+    }
+
+    function message() {
+        const language =
+            selectedLanguage();
+
+        const messages = {
+            en:
+                "Please log in to change Language, Theme or Font Size.",
+
+            si:
+                "භාෂාව, තේමාව හෝ අකුරු ප්‍රමාණය වෙනස් කිරීමට පිවිසෙන්න.",
+
+            ta:
+                "மொழி, தீம் அல்லது எழுத்தளவை மாற்ற உள்நுழையவும்."
+        };
+
+        return (
+            messages[language] ||
+            messages.en
+        );
+    }
+
+    function showLoginRequired() {
+        const text =
+            message();
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(text);
+        }
+        else if (
+            typeof window.showShareFeedback ===
+            "function"
+        ) {
+            window.showShareFeedback(
+                text
+            );
+        }
+        else {
+            const reminder =
+                document.getElementById(
+                    "authReminder"
+                );
+
+            if (reminder) {
+                reminder.textContent =
+                    text;
+
+                reminder.style.display =
+                    "block";
+
+                setTimeout(
+                    function () {
+                        reminder.style.display =
+                            "none";
+                    },
+                    3500
+                );
+            }
+        }
+
+        if (openingLogin) {
+            return;
+        }
+
+        openingLogin = true;
+
+        setTimeout(
+            function () {
+                try {
+                    if (
+                        typeof window.openLogin ===
+                            "function"
+                    ) {
+                        window.openLogin();
+                    }
+                    else if (
+                        typeof openLogin ===
+                            "function"
+                    ) {
+                        openLogin();
+                    }
+                }
+                finally {
+                    openingLogin =
+                        false;
+                }
+            },
+            30
+        );
+    }
+
+    function settingsType(element) {
+        if (!(element instanceof Element)) {
+            return "";
+        }
+
+        const section =
+            element.closest(
+                ".mi-settings-section"
+            );
+
+        const explicitType =
+            section?.dataset
+                ?.settingsType;
+
+        if (explicitType) {
+            return String(
+                explicitType
+            )
+                .trim()
+                .toLowerCase();
+        }
+
+        const details = [
+            element.id,
+            element.getAttribute(
+                "name"
+            ),
+            element.className,
+            element.getAttribute(
+                "aria-label"
+            ),
+            element.getAttribute(
+                "title"
+            ),
+            element.closest(
+                "label"
+            )?.textContent,
+            element.parentElement
+                ?.textContent
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        if (
+            details.includes(
+                "language"
+            ) ||
+            details.includes(
+                "භාෂා"
+            ) ||
+            details.includes(
+                "மொழி"
+            )
+        ) {
+            return "language";
+        }
+
+        if (
+            details.includes(
+                "theme"
+            ) ||
+            details.includes(
+                "color"
+            ) ||
+            details.includes(
+                "colour"
+            ) ||
+            details.includes(
+                "තේමා"
+            ) ||
+            details.includes(
+                "வண்ண"
+            ) ||
+            details.includes(
+                "தீம்"
+            )
+        ) {
+            return "theme";
+        }
+
+        if (
+            details.includes(
+                "font"
+            ) ||
+            details.includes(
+                "අකුරු"
+            ) ||
+            details.includes(
+                "எழுத்த"
+            )
+        ) {
+            return "fontsize";
+        }
+
+        return "";
+    }
+
+    function isProtectedControl(
+        element
+    ) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        if (
+            !element.closest(
+                "#settingsPanel"
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            element.closest(
+                "#settingsCloseBtn, " +
+                ".close-btn, " +
+                ".modal-close"
+            )
+        ) {
+            return false;
+        }
+
+        const type =
+            settingsType(element);
+
+        return protectedTypes.has(
+            type
+        );
+    }
+
+    function rememberValue(control) {
+        if (
+            control instanceof
+                HTMLInputElement ||
+            control instanceof
+                HTMLSelectElement ||
+            control instanceof
+                HTMLTextAreaElement
+        ) {
+            previousValues.set(
+                control,
+                {
+                    value:
+                        control.value,
+
+                    checked:
+                        control.checked
+                }
+            );
+        }
+    }
+
+    function restoreValue(control) {
+        const previous =
+            previousValues.get(
+                control
+            );
+
+        if (
+            !previous ||
+            !control
+        ) {
+            return;
+        }
+
+        if (
+            "value" in control
+        ) {
+            control.value =
+                previous.value;
+        }
+
+        if (
+            "checked" in control
+        ) {
+            control.checked =
+                previous.checked;
+        }
+    }
+
+    function blockEvent(event) {
+        const target =
+            event.target;
+
+        if (
+            authenticated() ||
+            !isProtectedControl(
+                target
+            )
+        ) {
+            if (
+                event.type ===
+                    "focusin" ||
+                event.type ===
+                    "pointerdown"
+            ) {
+                rememberValue(
+                    target
+                );
+            }
+
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        restoreValue(target);
+        showLoginRequired();
+    }
+
+    document.addEventListener(
+        "pointerdown",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "click",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "focusin",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "input",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                authenticated() ||
+                !isProtectedControl(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            if (
+                [
+                    "Enter",
+                    " ",
+                    "ArrowUp",
+                    "ArrowDown",
+                    "ArrowLeft",
+                    "ArrowRight"
+                ].includes(
+                    event.key
+                )
+            ) {
+                blockEvent(event);
+            }
+        },
+        true
+    );
+
+    function refreshAppearance() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return;
+        }
+
+        panel
+            .querySelectorAll(
+                ".mi-settings-section"
+            )
+            .forEach(
+                function (section) {
+                    const type =
+                        String(
+                            section.dataset
+                                .settingsType ||
+                            ""
+                        )
+                            .toLowerCase();
+
+                    if (
+                        !protectedTypes.has(
+                            type
+                        )
+                    ) {
+                        return;
+                    }
+
+                    section.dataset
+                        .loginRequired =
+                        authenticated()
+                            ? "false"
+                            : "true";
+
+                    const button =
+                        section.querySelector(
+                            ".mi-settings-option-button"
+                        );
+
+                    if (button) {
+                        button.title =
+                            authenticated()
+                                ? ""
+                                : message();
+                    }
+                }
+            );
+    }
+
+    function start() {
+        refreshAppearance();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    requestAnimationFrame(
+                        refreshAppearance
+                    );
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            refreshAppearance
+        );
+
+        window.addEventListener(
+            "mi-firebase-auth-changed",
+            refreshAppearance
+        );
+    }
+
+    window.MISettingsLoginGuard = {
+        isAuthenticated:
+            authenticated,
+
+        refresh:
+            refreshAppearance
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SETTINGS LOGIN REQUIRED - END */
+</script>
 </body>
 </html>
