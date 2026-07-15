@@ -8396,7 +8396,7 @@ function showLinkShareOptions(chatId) {
 
   body.innerHTML = `
     <label style="display:block;font-size:12px;margin-bottom:6px;color:#cbd5e1;">Permission</label>
-    <select id="sharePermissionSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+    <select id="sharePermissionSelect" onchange="event.stopPropagation();" onclick="event.stopPropagation();" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
       <option value="edit">Can edit</option>
       <option value="view">View only</option>
     </select>
@@ -8406,7 +8406,7 @@ function showLinkShareOptions(chatId) {
       <div id="moreSecurityPanel" style="display:none;margin-top:10px;">
         <div style="margin-bottom:10px;">
           <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">How many times can I open it?</div>
-          <select id="shareOpenLimitSelect" onchange="toggleCustomOpenLimitInput()" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+          <select id="shareOpenLimitSelect" onchange="event.stopPropagation(); toggleCustomOpenLimitInput();" onclick="event.stopPropagation();" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
             <option value="no-expiry">No Expiry</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -8419,13 +8419,13 @@ function showLinkShareOptions(chatId) {
             <option value="9">9</option>
             <option value="custom">Custom</option>
           </select>
-          <input id="shareOpenLimitCustom" type="number" min="1" placeholder="Custom number" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+          <input id="shareOpenLimitCustom" onclick="event.stopPropagation();" onchange="event.stopPropagation();" oninput="event.stopPropagation();" type="number" min="1" placeholder="Custom number" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
         </div>
 
         <div style="margin-bottom:10px;">
           <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">After how many times, how many hours can it be used next time?</div>
           <div style="display:flex;gap:8px;">
-            <input id="shareTimeLimitValue" type="number" min="1" placeholder="Value" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+            <input id="shareTimeLimitValue" onclick="event.stopPropagation();" onchange="event.stopPropagation();" oninput="event.stopPropagation();" type="number" min="1" placeholder="Value" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
             <select id="shareTimeLimitUnit" onchange="toggleTimeLimitValueInput()" style="padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
               <option value="no-expiry">No Expiry</option>
               <option value="hour">Hour</option>
@@ -8437,16 +8437,16 @@ function showLinkShareOptions(chatId) {
 
         <div style="margin-bottom:10px;">
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;">
-            <input id="sharePasswordEnabled" type="checkbox" />
+            <input id="sharePasswordEnabled" type="checkbox" onclick="event.stopPropagation();" onchange="event.stopPropagation();" />
             Password
           </label>
-          <input id="sharePassword" type="password" placeholder="Password" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
-          <input id="sharePasswordConfirm" type="password" placeholder="Confirm password" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+          <input id="sharePassword" onclick="event.stopPropagation();" onchange="event.stopPropagation();" oninput="event.stopPropagation();" type="password" placeholder="Password" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
+          <input id="sharePasswordConfirm" onclick="event.stopPropagation();" onchange="event.stopPropagation();" oninput="event.stopPropagation();" type="password" placeholder="Confirm password" style="display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;" />
         </div>
 
         <div style="margin-bottom:10px;">
           <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px;">Get notification</div>
-          <select id="shareNotificationSelect" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
+          <select id="shareNotificationSelect" onchange="event.stopPropagation();" onclick="event.stopPropagation();" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
             <option value="off">Off</option>
             <option value="on">On</option>
           </select>
@@ -15594,505 +15594,122 @@ document.addEventListener(
 /* MI AI LIVE SEARCH AND DEVICE TIME V1 - END */
 </script>
 
+
+
 <script>
-/* MI AI RUNTIME SHARE GUARD V6 - START */
+/* MI AI SHARE DROPDOWN FIX V7 - START */
 
 (function () {
     "use strict";
 
-    let closePermission = null;
-    let originalRemove = null;
-    let wrapperInstalled = false;
-    let protectionObserver = null;
-
     function getShareOverlay() {
-        return (
-            document.getElementById(
-                "shareOverlay"
-            ) ||
-            window.shareOverlay ||
-            null
+        return document.getElementById(
+            "shareOverlay"
         );
     }
 
-    function elementDetails(element) {
-        if (!(element instanceof Element)) {
-            return "";
-        }
-
-        const control =
-            element.closest(
-                [
-                    "button",
-                    "[role='button']",
-                    "input[type='button']",
-                    "input[type='submit']"
-                ].join(",")
-            );
-
-        return [
-            element.id,
-            element.className,
-            element.getAttribute(
-                "data-action"
-            ),
-            element.getAttribute(
-                "onclick"
-            ),
-            element.textContent,
-            control?.id,
-            control?.className,
-            control?.getAttribute(
-                "data-action"
-            ),
-            control?.getAttribute(
-                "onclick"
-            ),
-            control?.textContent
-        ]
-            .filter(Boolean)
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim()
-            .toLowerCase();
-    }
-
-    function isCancelControl(element) {
-        const details =
-            elementDetails(element);
-
-        return (
-            details.includes(
-                "sharecancelbtn"
-            ) ||
-            details.includes(
-                "cancelshareoverlay"
-            ) ||
-            details.includes(
-                "cancel share"
-            ) ||
-            details === "cancel" ||
-            details.endsWith(" cancel")
-        );
-    }
-
-    function isGenerateControl(element) {
-        const details =
-            elementDetails(element);
-
-        return (
-            details.includes(
-                "generatesharedchatlink"
-            ) ||
-            details.includes(
-                "generate a link"
-            ) ||
-            details.includes(
-                "generate link"
-            )
-        );
-    }
-
-    function actualRemove() {
-        if (
-            typeof originalRemove ===
-                "function"
-        ) {
-            return originalRemove();
-        }
-
+    function protectShareControls() {
         const overlay =
             getShareOverlay();
 
         if (
-            overlay &&
-            overlay.parentNode
-        ) {
-            overlay.parentNode.removeChild(
-                overlay
-            );
-        }
-
-        try {
-            window.shareOverlay = null;
-        }
-        catch (error) {
-            // Ignore.
-        }
-
-        closePermission = null;
-        document.body.classList.remove(
-            "mi-share-runtime-open"
-        );
-
-        return true;
-    }
-
-    function guardedRemove(force) {
-        const overlay =
-            getShareOverlay();
-
-        /*
-          No Share popup is currently open.
-          Allow the app's normal cleanup.
-        */
-        if (!overlay) {
-            return actualRemove();
-        }
-
-        /*
-          A new Share popup may explicitly force cleanup.
-        */
-        if (force === true) {
-            closePermission =
-                "forced";
-
-            return actualRemove();
-        }
-
-        /*
-          Only Cancel and successful Generate may close it.
-        */
-        if (
-            closePermission ===
-                "cancel" ||
-            closePermission ===
-                "generated"
-        ) {
-            const result =
-                actualRemove();
-
-            closePermission = null;
-
-            return result;
-        }
-
-        console.log(
-            "[MI AI Share] Unauthorised close ignored."
-        );
-
-        return false;
-    }
-
-    function installWrapper() {
-        if (wrapperInstalled) {
-            return true;
-        }
-
-        let currentFunction = null;
-
-        try {
-            if (
-                typeof window
-                    .removeShareOverlay ===
-                    "function"
-            ) {
-                currentFunction =
-                    window
-                        .removeShareOverlay;
-            }
-            else if (
-                typeof removeShareOverlay ===
-                    "function"
-            ) {
-                currentFunction =
-                    removeShareOverlay;
-            }
-        }
-        catch (error) {
-            currentFunction = null;
-        }
-
-        if (
-            typeof currentFunction !==
-                "function"
-        ) {
-            return false;
-        }
-
-        /*
-          Do not wrap this guard again.
-        */
-        if (
-            currentFunction
-                .__miRuntimeShareGuard ===
-                true
-        ) {
-            wrapperInstalled = true;
-            return true;
-        }
-
-        originalRemove =
-            currentFunction.bind(window);
-
-        guardedRemove
-            .__miRuntimeShareGuard =
-            true;
-
-        window.removeShareOverlay =
-            guardedRemove;
-
-        try {
-            removeShareOverlay =
-                guardedRemove;
-        }
-        catch (error) {
-            /*
-              Inline onclick uses window.removeShareOverlay,
-              so the guard still works.
-            */
-        }
-
-        wrapperInstalled = true;
-
-        console.log(
-            "[MI AI Share] Close guard installed."
-        );
-
-        return true;
-    }
-
-    function makeCancelAuthorised() {
-        closePermission =
-            "cancel";
-    }
-
-    function makeGenerateAuthorised() {
-        /*
-          Keep this permission while the async Generate
-          operation completes. Validation failures do not call
-          removeShareOverlay, so the popup stays open.
-        */
-        closePermission =
-            "generated";
-    }
-
-    function cancelSharePopup() {
-        makeCancelAuthorised();
-
-        return guardedRemove();
-    }
-
-    function protectOverlay() {
-        const overlay =
-            getShareOverlay();
-
-        if (!overlay) {
-            document.body.classList.remove(
-                "mi-share-runtime-open"
-            );
-
-            return;
-        }
-
-        document.body.classList.add(
-            "mi-share-runtime-open"
-        );
-
-        if (
+            !overlay ||
             overlay.dataset
-                .miRuntimeShareProtected ===
+                .miDropdownProtection ===
                 "true"
         ) {
             return;
         }
 
         overlay.dataset
-            .miRuntimeShareProtected =
+            .miDropdownProtection =
             "true";
 
         /*
-          All Share control events remain inside the popup.
-          Their original handlers and value changes still run.
+          Allow every control to work normally,
+          but prevent its events reaching old
+          document-level close handlers.
+        */
+        overlay.querySelectorAll(
+            [
+                "select",
+                "input",
+                "textarea",
+                "label",
+                "#moreSecurityPanel",
+                "#shareOptionsBody"
+            ].join(",")
+        ).forEach(function (control) {
+            [
+                "click",
+                "change",
+                "input",
+                "pointerdown",
+                "pointerup",
+                "mousedown",
+                "mouseup",
+                "touchstart",
+                "touchend"
+            ].forEach(function (eventName) {
+                control.addEventListener(
+                    eventName,
+                    function (event) {
+                        event.stopPropagation();
+                    },
+                    false
+                );
+            });
+        });
+
+        /*
+          Clicking inside the Share popup must never
+          be interpreted as an outside click.
         */
         [
             "click",
             "change",
             "input",
-            "pointerup",
-            "mouseup",
-            "touchend"
+            "pointerdown",
+            "pointerup"
         ].forEach(function (eventName) {
             overlay.addEventListener(
                 eventName,
                 function (event) {
-                    if (
-                        isCancelControl(
-                            event.target
-                        )
-                    ) {
-                        makeCancelAuthorised();
-                    }
-                    else if (
-                        isGenerateControl(
-                            event.target
-                        )
-                    ) {
-                        makeGenerateAuthorised();
-                    }
-
                     event.stopPropagation();
                 },
                 false
             );
         });
-
-        /*
-          Replace the visible X/Cancel action with the
-          authorised Cancel close.
-        */
-        overlay
-            .querySelectorAll(
-                "button"
-            )
-            .forEach(function (button) {
-                if (
-                    !isCancelControl(
-                        button
-                    )
-                ) {
-                    return;
-                }
-
-                button.id =
-                    button.id ||
-                    "shareCancelBtn";
-
-                button.onclick =
-                    function (event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-
-                        cancelSharePopup();
-                    };
-
-                if (
-                    button.textContent
-                        .trim() === "✕" ||
-                    button.textContent
-                        .trim() === "×"
-                ) {
-                    button.textContent =
-                        "Cancel";
-                }
-            });
     }
 
-    /*
-      Capture permission before old document handlers run.
-      Do not prevent Share controls from working.
-    */
-    document.addEventListener(
-        "click",
-        function (event) {
-            const overlay =
-                getShareOverlay();
+    function scan() {
+        protectShareControls();
+    }
 
-            if (!overlay) {
-                return;
-            }
+    const observer =
+        new MutationObserver(
+            function (mutations) {
+                const added =
+                    mutations.some(
+                        function (mutation) {
+                            return (
+                                mutation
+                                    .addedNodes
+                                    .length > 0
+                            );
+                        }
+                    );
 
-            if (
-                overlay.contains(
-                    event.target
-                )
-            ) {
-                if (
-                    isCancelControl(
-                        event.target
-                    )
-                ) {
-                    makeCancelAuthorised();
+                if (added) {
+                    scan();
                 }
-                else if (
-                    isGenerateControl(
-                        event.target
-                    )
-                ) {
-                    makeGenerateAuthorised();
-                }
-
-                return;
             }
+        );
 
-            /*
-              Outside click cannot close the Share popup.
-            */
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-        },
-        true
-    );
+    function start() {
+        scan();
 
-    document.addEventListener(
-        "pointerdown",
-        function (event) {
-            const overlay =
-                getShareOverlay();
-
-            if (
-                !overlay ||
-                overlay.contains(
-                    event.target
-                )
-            ) {
-                return;
-            }
-
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-        },
-        true
-    );
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-            if (
-                event.key !==
-                    "Escape" ||
-                !getShareOverlay()
-            ) {
-                return;
-            }
-
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-        },
-        true
-    );
-
-    /*
-      If selecting Can edit/View only triggers an old close call,
-      guardedRemove() rejects that call. This observer only protects
-      newly-created Share popup elements.
-    */
-    function startObserver() {
-        protectionObserver =
-            new MutationObserver(
-                function (mutations) {
-                    const added =
-                        mutations.some(
-                            function (mutation) {
-                                return (
-                                    mutation
-                                        .addedNodes
-                                        .length > 0
-                                );
-                            }
-                        );
-
-                    if (added) {
-                        installWrapper();
-                        protectOverlay();
-                    }
-                }
-            );
-
-        protectionObserver.observe(
+        observer.observe(
             document.body,
             {
                 childList: true,
@@ -16101,51 +15718,8 @@ document.addEventListener(
         );
     }
 
-    function start() {
-        if (!installWrapper()) {
-            let attempts = 0;
-
-            const timer =
-                setInterval(
-                    function () {
-                        attempts += 1;
-
-                        if (
-                            installWrapper() ||
-                            attempts >= 80
-                        ) {
-                            clearInterval(
-                                timer
-                            );
-                        }
-                    },
-                    100
-                );
-        }
-
-        protectOverlay();
-        startObserver();
-    }
-
-    window.MIRuntimeShareGuard = {
-        refresh:
-            function () {
-                installWrapper();
-                protectOverlay();
-            },
-
-        cancel:
-            cancelSharePopup,
-
-        allowGeneratedClose:
-            makeGenerateAuthorised,
-
-        isOpen:
-            function () {
-                return Boolean(
-                    getShareOverlay()
-                );
-            }
+    window.MIShareDropdownFix = {
+        refresh: scan
     };
 
     if (
@@ -16165,7 +15739,7 @@ document.addEventListener(
     }
 })();
 
-/* MI AI RUNTIME SHARE GUARD V6 - END */
+/* MI AI SHARE DROPDOWN FIX V7 - END */
 </script>
 </body>
 </html>
