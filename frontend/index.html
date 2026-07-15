@@ -8040,10 +8040,17 @@ function closeAllOverlays(target) {
     supportOverlay.remove();
   }
 
-  if (shareOverlay && !shareOverlay.contains(target)) {
-    shareOverlay.remove();
-    shareOverlay = null;
-  }
+  /*
+    Share popup is intentionally excluded here.
+
+    Native select options can be rendered outside the popup DOM.
+    Therefore changing Can edit / View only must never be treated
+    as an outside click.
+
+    Share is closed only by:
+    - cancelShareOverlay()
+    - closeShareOverlayAfterGenerate()
+  */
 }
 
 document.addEventListener("pointerdown", e => {
