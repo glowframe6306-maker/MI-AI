@@ -301,15 +301,15 @@ transform:scale(1.04);
   .ai-link {
     color: #66b3ff;
   }
-  
+
   .ai-link:hover {
     color: #99ccff;
   }
-  
+
   .ai-github {
     color: #e0e0e0 !important;
   }
-  
+
   .ai-github:hover {
     color: #fff !important;
   }
@@ -3642,6 +3642,2222 @@ body,
 }
 
 /* MI AI CHAT MORE MENU - END */
+
+/* MI AI STRICT VIEW ONLY - START */
+
+/*
+    Activated only when body has:
+    class="mi-view-only"
+*/
+
+body.mi-view-only {
+    user-select: text;
+}
+
+/* Hide all composing and editing controls */
+body.mi-view-only #inputBox,
+body.mi-view-only #inputArea,
+body.mi-view-only #input-area,
+body.mi-view-only .input-area,
+body.mi-view-only .chat-input-area,
+body.mi-view-only .composer,
+body.mi-view-only .composer-container,
+body.mi-view-only .message-composer,
+body.mi-view-only .input-container,
+body.mi-view-only .prompt-container,
+body.mi-view-only #settingsPanel,
+body.mi-view-only #settingsBackdrop,
+body.mi-view-only #menu,
+body.mi-view-only #miChatMoreMenu,
+body.mi-view-only #mobileMenuToggle,
+body.mi-view-only #mobileMenuClose,
+body.mi-view-only #authReminder,
+body.mi-view-only #fileInput,
+body.mi-view-only #fileUpload,
+body.mi-view-only #uploadBtn,
+body.mi-view-only .upload-btn,
+body.mi-view-only .file-upload,
+body.mi-view-only .attachment-button {
+    display: none !important;
+}
+
+/* Hide sidebar actions */
+body.mi-view-only #newChatBtn,
+body.mi-view-only #settingsBtn,
+body.mi-view-only #supportBtn,
+body.mi-view-only #logoutBtn,
+body.mi-view-only #sidebar > button,
+body.mi-view-only .new-chat-btn,
+body.mi-view-only .settings-btn,
+body.mi-view-only .support-btn,
+body.mi-view-only .logout-btn {
+    display: none !important;
+}
+
+/* Hide chat history editing/action controls */
+body.mi-view-only .chatItem button,
+body.mi-view-only .chat-item button,
+body.mi-view-only .history-item button,
+body.mi-view-only .conversation-item button,
+body.mi-view-only [data-chat-id] button,
+body.mi-view-only [data-conversation-id] button {
+    display: none !important;
+}
+
+/* Disable ordinary controls */
+body.mi-view-only input,
+body.mi-view-only textarea,
+body.mi-view-only select,
+body.mi-view-only button {
+    pointer-events: none !important;
+}
+
+/* Copy controls remain active */
+body.mi-view-only .aiCopyButton,
+body.mi-view-only .copy-btn,
+body.mi-view-only .copy-button,
+body.mi-view-only .mi-ai-copy-below,
+body.mi-view-only [data-action="copy"],
+body.mi-view-only .mi-view-copy-allowed {
+    display: inline-flex !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Make shared chat items non-editable */
+body.mi-view-only .chatItem,
+body.mi-view-only .chat-item,
+body.mi-view-only .history-item,
+body.mi-view-only .conversation-item,
+body.mi-view-only [data-chat-id],
+body.mi-view-only [data-conversation-id] {
+    cursor: default !important;
+    user-select: text !important;
+}
+
+/* View-only banner */
+#miViewOnlyBanner {
+    position: sticky;
+    top: 10px;
+    z-index: 20000;
+
+    display: none;
+
+    width: fit-content;
+    max-width: calc(100% - 28px);
+
+    margin: 10px auto 14px;
+    padding: 9px 15px;
+
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.27);
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(40, 51, 72, 0.84),
+            rgba(15, 23, 42, 0.72)
+        );
+
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.22),
+        0 12px 35px
+            rgba(0, 0, 0, 0.28);
+}
+
+body.mi-view-only #miViewOnlyBanner {
+    display: flex;
+}
+
+/* Keep the shared chat readable */
+body.mi-view-only #chat {
+    padding-bottom: 36px !important;
+}
+
+/* Prevent edit-looking hover effects */
+body.mi-view-only .chatItem:hover,
+body.mi-view-only .chat-item:hover,
+body.mi-view-only .history-item:hover,
+body.mi-view-only .conversation-item:hover {
+    transform: none !important;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+    #miViewOnlyBanner {
+        top: 7px;
+        max-width: calc(100% - 18px);
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+/* MI AI STRICT VIEW ONLY - END */
+
+/* MI AI MOBILE COMFORT LAYOUT - START */
+
+:root {
+    --mi-mobile-safe-top:
+        env(safe-area-inset-top, 0px);
+
+    --mi-mobile-safe-right:
+        env(safe-area-inset-right, 0px);
+
+    --mi-mobile-safe-bottom:
+        env(safe-area-inset-bottom, 0px);
+
+    --mi-mobile-safe-left:
+        env(safe-area-inset-left, 0px);
+
+    --mi-mobile-header-height:
+        64px;
+
+    --mi-mobile-input-height:
+        72px;
+
+    --mi-mobile-content-width:
+        100%;
+}
+
+/* Correct sizing on every device */
+html {
+    width: 100%;
+    min-height: 100%;
+
+    -webkit-text-size-adjust:
+        100%;
+
+    text-size-adjust:
+        100%;
+
+    overflow-x:
+        hidden;
+}
+
+body {
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+
+    overflow-x:
+        hidden;
+
+    overscroll-behavior:
+        none;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing:
+        border-box;
+}
+
+/* Prevent text or media from exceeding the phone screen */
+img,
+video,
+canvas,
+svg,
+iframe,
+table,
+pre,
+code {
+    max-width:
+        100%;
+}
+
+img,
+video {
+    height:
+        auto;
+}
+
+/* Long text and links must wrap */
+p,
+span,
+div,
+a,
+button,
+label,
+input,
+textarea,
+select,
+.message,
+.me,
+.ai,
+.message-bubble,
+.aiMessageBody {
+    overflow-wrap:
+        anywhere;
+
+    word-break:
+        normal;
+}
+
+/* Comfortable mobile layout */
+@media (max-width: 900px) {
+
+    html,
+    body {
+        width:
+            100vw;
+
+        min-height:
+            100dvh;
+
+        max-width:
+            100vw;
+
+        margin:
+            0;
+
+        padding:
+            0;
+    }
+
+    body {
+        font-size:
+            clamp(
+                15px,
+                3.8vw,
+                18px
+            ) !important;
+    }
+
+    #main,
+    main,
+    .main,
+    .app-main,
+    .chat-container,
+    .chat-wrapper {
+        width:
+            100% !important;
+
+        min-width:
+            0 !important;
+
+        max-width:
+            100vw !important;
+
+        margin:
+            0 !important;
+
+        padding-left:
+            max(
+                10px,
+                var(--mi-mobile-safe-left)
+            ) !important;
+
+        padding-right:
+            max(
+                10px,
+                var(--mi-mobile-safe-right)
+            ) !important;
+    }
+
+    /* Header remains visible and comfortable */
+    #header,
+    header,
+    .header,
+    .app-header,
+    .topbar {
+        width:
+            100% !important;
+
+        min-height:
+            var(--mi-mobile-header-height);
+
+        padding-top:
+            max(
+                8px,
+                var(--mi-mobile-safe-top)
+            ) !important;
+
+        padding-left:
+            max(
+                10px,
+                var(--mi-mobile-safe-left)
+            ) !important;
+
+        padding-right:
+            max(
+                10px,
+                var(--mi-mobile-safe-right)
+            ) !important;
+
+        display:
+            flex !important;
+
+        align-items:
+            center !important;
+
+        gap:
+            8px !important;
+
+        overflow:
+            hidden;
+    }
+
+    #headerLogo {
+        width:
+            clamp(
+                38px,
+                11vw,
+                48px
+            ) !important;
+
+        height:
+            clamp(
+                38px,
+                11vw,
+                48px
+            ) !important;
+
+        flex:
+            0 0 auto;
+    }
+
+    #header h1,
+    #header h2,
+    #header h3,
+    .header-title,
+    .app-title {
+        min-width:
+            0;
+
+        margin:
+            0 !important;
+
+        font-size:
+            clamp(
+                18px,
+                5vw,
+                24px
+            ) !important;
+
+        line-height:
+            1.2 !important;
+
+        white-space:
+            nowrap;
+
+        overflow:
+            hidden;
+
+        text-overflow:
+            ellipsis;
+    }
+
+    /* Sidebar becomes a proper mobile drawer */
+    #sidebar,
+    .sidebar {
+        position:
+            fixed !important;
+
+        top:
+            0 !important;
+
+        left:
+            0 !important;
+
+        bottom:
+            0 !important;
+
+        width:
+            min(
+                86vw,
+                340px
+            ) !important;
+
+        max-width:
+            340px !important;
+
+        height:
+            100dvh !important;
+
+        padding-top:
+            max(
+                14px,
+                var(--mi-mobile-safe-top)
+            ) !important;
+
+        padding-bottom:
+            max(
+                14px,
+                var(--mi-mobile-safe-bottom)
+            ) !important;
+
+        overflow-y:
+            auto !important;
+
+        overscroll-behavior:
+            contain;
+
+        z-index:
+            50000;
+    }
+
+    /* Chat should use the complete available width */
+    #chat,
+    .chat,
+    .messages,
+    .chat-messages {
+        width:
+            100% !important;
+
+        min-width:
+            0 !important;
+
+        max-width:
+            100% !important;
+
+        padding:
+            12px 8px
+            calc(
+                var(--mi-mobile-input-height)
+                + var(--mi-mobile-safe-bottom)
+                + 24px
+            )
+            !important;
+
+        overflow-x:
+            hidden !important;
+
+        scroll-padding-bottom:
+            calc(
+                var(--mi-mobile-input-height)
+                + 28px
+            );
+    }
+
+    /* User and AI bubbles large enough to read */
+    #chat > .me,
+    #chat > .ai,
+    .user-message,
+    .ai-message,
+    .assistant-message,
+    .message-bubble {
+        width:
+            fit-content !important;
+
+        min-width:
+            0 !important;
+
+        max-width:
+            92% !important;
+
+        height:
+            auto !important;
+
+        padding:
+            11px 14px !important;
+
+        font-size:
+            clamp(
+                15px,
+                4vw,
+                18px
+            ) !important;
+
+        line-height:
+            1.55 !important;
+
+        overflow-wrap:
+            anywhere !important;
+
+        white-space:
+            pre-wrap !important;
+    }
+
+    #chat > .me {
+        margin-left:
+            auto !important;
+
+        margin-right:
+            2px !important;
+    }
+
+    #chat > .ai {
+        margin-left:
+            2px !important;
+
+        margin-right:
+            auto !important;
+    }
+
+    /* Copy button remains small but easy to tap */
+    #chat > .ai > .mi-ai-copy-below,
+    #chat > .ai > .aiCopyButton,
+    #chat > .ai > .copy-btn,
+    #chat > .ai > .copy-button {
+        width:
+            30px !important;
+
+        min-width:
+            30px !important;
+
+        height:
+            30px !important;
+
+        min-height:
+            30px !important;
+
+        font-size:
+            13px !important;
+    }
+
+    /* Input stays visible above the phone keyboard */
+    #inputBox,
+    #inputArea,
+    #input-area,
+    .input-area,
+    .chat-input-area,
+    .composer,
+    .composer-container,
+    .message-composer,
+    .input-container,
+    .prompt-container {
+        position:
+            sticky !important;
+
+        left:
+            0 !important;
+
+        right:
+            0 !important;
+
+        bottom:
+            0 !important;
+
+        width:
+            100% !important;
+
+        min-height:
+            var(--mi-mobile-input-height);
+
+        margin:
+            0 !important;
+
+        padding:
+            8px
+            max(
+                8px,
+                var(--mi-mobile-safe-right)
+            )
+            max(
+                8px,
+                var(--mi-mobile-safe-bottom)
+            )
+            max(
+                8px,
+                var(--mi-mobile-safe-left)
+            )
+            !important;
+
+        display:
+            flex !important;
+
+        align-items:
+            flex-end !important;
+
+        gap:
+            8px !important;
+
+        z-index:
+            1500;
+    }
+
+    #msg,
+    #messageInput,
+    #chatInput,
+    textarea[name="message"],
+    .chat-input,
+    .message-input {
+        flex:
+            1 1 auto !important;
+
+        width:
+            auto !important;
+
+        min-width:
+            0 !important;
+
+        min-height:
+            48px !important;
+
+        max-height:
+            min(
+                38dvh,
+                190px
+            ) !important;
+
+        padding:
+            12px 14px !important;
+
+        font-size:
+            16px !important;
+
+        line-height:
+            1.4 !important;
+
+        resize:
+            none !important;
+
+        overflow-y:
+            auto !important;
+    }
+
+    /*
+      16px minimum prevents iPhone Safari from zooming
+      when a field receives focus.
+    */
+    input,
+    textarea,
+    select {
+        font-size:
+            max(
+                16px,
+                1em
+            ) !important;
+    }
+
+    /* Touch targets should not be too small */
+    button,
+    .btn,
+    .button,
+    [role="button"],
+    input[type="button"],
+    input[type="submit"] {
+        min-height:
+            44px;
+
+        min-width:
+            44px;
+
+        touch-action:
+            manipulation;
+
+        -webkit-tap-highlight-color:
+            transparent;
+    }
+
+    #sendBtn,
+    #sendButton,
+    .send-btn,
+    button[type="submit"] {
+        width:
+            48px !important;
+
+        min-width:
+            48px !important;
+
+        height:
+            48px !important;
+
+        min-height:
+            48px !important;
+
+        padding:
+            0 !important;
+
+        flex:
+            0 0 48px;
+    }
+
+    /* Settings opens comfortably on phones */
+    #settingsPanel {
+        top:
+            50% !important;
+
+        left:
+            50% !important;
+
+        right:
+            auto !important;
+
+        bottom:
+            auto !important;
+
+        width:
+            calc(
+                100vw
+                - 20px
+                - var(--mi-mobile-safe-left)
+                - var(--mi-mobile-safe-right)
+            ) !important;
+
+        max-width:
+            440px !important;
+
+        max-height:
+            calc(
+                100dvh
+                - 28px
+                - var(--mi-mobile-safe-top)
+                - var(--mi-mobile-safe-bottom)
+            ) !important;
+
+        padding:
+            20px 16px !important;
+
+        overflow-y:
+            auto !important;
+
+        overscroll-behavior:
+            contain;
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            !important;
+    }
+
+    #settingsPanel.settings-open {
+        transform:
+            translate(
+                -50%,
+                -50%
+            )
+            !important;
+    }
+
+    #settingsPanel label {
+        font-size:
+            14px !important;
+    }
+
+    #settingsPanel input,
+    #settingsPanel select,
+    #settingsPanel button {
+        width:
+            100% !important;
+
+        min-height:
+            48px !important;
+    }
+
+    /* Modal windows remain inside the phone display */
+    .modal-content,
+    .popup,
+    .dialog,
+    .dialog-box,
+    .login-box,
+    .login-modal,
+    .confirm-modal,
+    .alert-modal {
+        width:
+            calc(
+                100vw
+                - 20px
+                - var(--mi-mobile-safe-left)
+                - var(--mi-mobile-safe-right)
+            ) !important;
+
+        max-width:
+            460px !important;
+
+        max-height:
+            calc(
+                100dvh
+                - 24px
+                - var(--mi-mobile-safe-top)
+                - var(--mi-mobile-safe-bottom)
+            ) !important;
+
+        margin:
+            auto !important;
+
+        padding:
+            20px 16px !important;
+
+        overflow-y:
+            auto !important;
+    }
+
+    /* Context menu stays within screen */
+    #miChatMoreMenu,
+    #menu,
+    .context-menu,
+    .chat-context-menu {
+        width:
+            min(
+                250px,
+                calc(
+                    100vw
+                    - 20px
+                )
+            ) !important;
+
+        max-height:
+            min(
+                70dvh,
+                460px
+            ) !important;
+
+        overflow-y:
+            auto !important;
+    }
+
+    #miChatMoreMenu button,
+    #menu button,
+    .context-menu button {
+        min-height:
+            46px !important;
+
+        font-size:
+            15px !important;
+    }
+
+    /* Prevent tables and code blocks from breaking layout */
+    pre,
+    table,
+    .code-block {
+        width:
+            100% !important;
+
+        max-width:
+            100% !important;
+
+        overflow-x:
+            auto !important;
+    }
+}
+
+/* Smaller phones */
+@media (max-width: 420px) {
+    :root {
+        --mi-mobile-header-height:
+            58px;
+
+        --mi-mobile-input-height:
+            68px;
+    }
+
+    #chat {
+        padding-left:
+            5px !important;
+
+        padding-right:
+            5px !important;
+    }
+
+    #chat > .me,
+    #chat > .ai,
+    .message-bubble {
+        max-width:
+            94% !important;
+
+        padding:
+            10px 12px !important;
+    }
+
+    #settingsPanel,
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        width:
+            calc(
+                100vw
+                - 12px
+            ) !important;
+
+        border-radius:
+            22px !important;
+    }
+}
+
+/* Landscape phones */
+@media (
+    max-height: 520px
+)
+and (
+    orientation: landscape
+) {
+    #settingsPanel,
+    .modal-content,
+    .popup,
+    .dialog,
+    .login-box {
+        max-height:
+            calc(
+                100dvh
+                - 12px
+            ) !important;
+
+        padding-top:
+            12px !important;
+
+        padding-bottom:
+            12px !important;
+    }
+
+    #chat {
+        padding-bottom:
+            80px !important;
+    }
+}
+
+/* When the mobile keyboard is visible */
+body.mi-keyboard-visible #header,
+body.mi-keyboard-visible header {
+    min-height:
+        52px !important;
+}
+
+body.mi-keyboard-visible #chat {
+    scroll-padding-bottom:
+        90px !important;
+}
+
+body.mi-keyboard-visible #inputBox,
+body.mi-keyboard-visible #inputArea,
+body.mi-keyboard-visible .input-area,
+body.mi-keyboard-visible .composer {
+    bottom:
+        0 !important;
+}
+
+/* Comfortable accessibility mode */
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior:
+            auto !important;
+
+        animation-duration:
+            0.01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+
+        transition-duration:
+            0.01ms !important;
+    }
+}
+
+/* MI AI MOBILE COMFORT LAYOUT - END */
+
+/* MI AI SETTINGS ACCORDION COPY MOBILE - START */
+
+/* =========================================================
+   SETTINGS: THREE MAIN OPTIONS
+   ========================================================= */
+
+#settingsPanel .mi-settings-accordion {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+
+    margin-top: 8px;
+}
+
+#settingsPanel .mi-settings-section {
+    width: 100%;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.20);
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.13),
+            rgba(255, 255, 255, 0.055)
+        );
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.22),
+        0 10px 30px
+            rgba(0, 0, 0, 0.16);
+}
+
+#settingsPanel .mi-settings-option-button {
+    width: 100% !important;
+    min-height: 56px !important;
+
+    margin: 0 !important;
+
+    padding:
+        12px 15px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px;
+
+    border: 0 !important;
+    border-radius: 18px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(var(--mi-theme-rgb, 245, 158, 11), 0.56),
+            rgba(var(--mi-theme-rgb, 245, 158, 11), 0.27)
+        ) !important;
+
+    color: #ffffff !important;
+
+    font-size: 16px !important;
+    font-weight: 750 !important;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.35),
+        0 8px 24px
+            rgba(0, 0, 0, 0.14)
+        !important;
+}
+
+#settingsPanel .mi-settings-option-button::before,
+#settingsPanel .mi-settings-option-button::after {
+    display: none !important;
+}
+
+#settingsPanel .mi-settings-option-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+}
+
+#settingsPanel .mi-settings-option-icon {
+    width: 34px;
+    height: 34px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 34px;
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.15);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.18);
+
+    font-size: 17px;
+}
+
+#settingsPanel .mi-settings-arrow {
+    display: inline-block;
+
+    opacity: 0.82;
+
+    transform: rotate(0deg);
+
+    transition:
+        transform 180ms ease;
+}
+
+#settingsPanel .mi-settings-section.mi-open
+.mi-settings-arrow {
+    transform: rotate(180deg);
+}
+
+#settingsPanel .mi-settings-option-content {
+    display: grid;
+
+    grid-template-rows: 0fr;
+
+    opacity: 0;
+
+    transition:
+        grid-template-rows 220ms ease,
+        opacity 180ms ease;
+}
+
+#settingsPanel .mi-settings-section.mi-open
+.mi-settings-option-content {
+    grid-template-rows: 1fr;
+
+    opacity: 1;
+}
+
+#settingsPanel .mi-settings-option-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+#settingsPanel .mi-settings-control-box {
+    width: 100%;
+
+    padding:
+        14px;
+
+    border-top:
+        1px solid
+        rgba(255, 255, 255, 0.13);
+}
+
+/* Controls inside expanded option */
+#settingsPanel .mi-settings-control-box label {
+    display: block;
+
+    margin:
+        0 0 8px !important;
+
+    color:
+        rgba(255, 255, 255, 0.82);
+
+    font-size:
+        13px !important;
+
+    font-weight:
+        700;
+}
+
+#settingsPanel .mi-settings-control-box select,
+#settingsPanel .mi-settings-control-box input[type="color"],
+#settingsPanel .mi-settings-control-box input[type="range"] {
+    width: 100% !important;
+    min-height: 50px !important;
+
+    margin: 0 !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.23)
+        !important;
+
+    border-radius:
+        15px !important;
+
+    background:
+        rgba(255, 255, 255, 0.10)
+        !important;
+
+    color:
+        #ffffff !important;
+
+    -webkit-backdrop-filter:
+        blur(16px);
+
+    backdrop-filter:
+        blur(16px);
+}
+
+#settingsPanel .mi-settings-control-box select {
+    padding:
+        10px 13px !important;
+}
+
+#settingsPanel .mi-settings-control-box input[type="color"] {
+    height: 56px !important;
+
+    padding:
+        6px !important;
+
+    cursor: pointer;
+}
+
+#settingsPanel .mi-settings-control-box input[type="range"] {
+    padding:
+        0 4px !important;
+
+    accent-color:
+        var(--mi-theme-color, #f59e0b);
+}
+
+/* Hide controls that have been moved into the accordion
+   from their previous visual positions. */
+#settingsPanel > .mi-settings-original-hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
+   AI COPY BUTTON BELOW REPLY
+   ========================================================= */
+
+#chat > .ai {
+    position: relative !important;
+
+    overflow: visible !important;
+
+    margin-bottom:
+        39px !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy {
+    position:
+        absolute !important;
+
+    top:
+        calc(100% + 7px) !important;
+
+    left:
+        6px !important;
+
+    right:
+        auto !important;
+
+    bottom:
+        auto !important;
+
+    width:
+        27px !important;
+
+    min-width:
+        27px !important;
+
+    max-width:
+        27px !important;
+
+    height:
+        27px !important;
+
+    min-height:
+        27px !important;
+
+    max-height:
+        27px !important;
+
+    margin:
+        0 !important;
+
+    padding:
+        0 !important;
+
+    display:
+        inline-flex !important;
+
+    align-items:
+        center !important;
+
+    justify-content:
+        center !important;
+
+    border-radius:
+        999px !important;
+
+    font-size:
+        12px !important;
+
+    line-height:
+        1 !important;
+
+    color:
+        #ffffff !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.23),
+            rgba(255, 255, 255, 0.08)
+        ) !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28)
+        !important;
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(18px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.30),
+        0 6px 17px
+            rgba(0, 0, 0, 0.22)
+        !important;
+
+    opacity: 0.76;
+
+    cursor: pointer !important;
+
+    pointer-events: auto !important;
+
+    z-index: 8 !important;
+
+    transform: none !important;
+
+    transition:
+        opacity 150ms ease,
+        transform 150ms ease
+        !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy:hover {
+    opacity: 1;
+
+    transform:
+        translateY(-1px)
+        scale(1.07)
+        !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy:active {
+    transform:
+        scale(0.90)
+        !important;
+}
+
+#chat > .ai > .mi-ai-functional-copy::before,
+#chat > .ai > .mi-ai-functional-copy::after {
+    display: none !important;
+}
+
+
+/* =========================================================
+   LARGER AND MORE COMFORTABLE PHONE DISPLAY
+   ========================================================= */
+
+@media (max-width: 900px) {
+    html {
+        -webkit-text-size-adjust:
+            100%;
+
+        text-size-adjust:
+            100%;
+    }
+
+    body {
+        font-size:
+            18px !important;
+    }
+
+    #header,
+    header,
+    .header {
+        min-height:
+            72px !important;
+
+        padding:
+            max(10px, env(safe-area-inset-top))
+            12px
+            10px
+            !important;
+    }
+
+    #headerLogo {
+        width:
+            50px !important;
+
+        height:
+            50px !important;
+
+        flex:
+            0 0 50px;
+    }
+
+    #header h1,
+    #header h2,
+    #header h3,
+    .header-title,
+    .app-title {
+        font-size:
+            24px !important;
+
+        line-height:
+            1.2 !important;
+    }
+
+    #chat,
+    .chat,
+    .messages,
+    .chat-messages {
+        padding-left:
+            8px !important;
+
+        padding-right:
+            8px !important;
+
+        padding-bottom:
+            calc(
+                104px
+                + env(safe-area-inset-bottom)
+            )
+            !important;
+    }
+
+    #chat > .me,
+    #chat > .ai,
+    .message-bubble,
+    .user-message,
+    .ai-message,
+    .assistant-message {
+        max-width:
+            95% !important;
+
+        padding:
+            14px 16px !important;
+
+        font-size:
+            19px !important;
+
+        line-height:
+            1.58 !important;
+
+        border-radius:
+            19px !important;
+    }
+
+    #chat > .me {
+        margin-right:
+            2px !important;
+    }
+
+    #chat > .ai {
+        margin-left:
+            2px !important;
+
+        margin-bottom:
+            44px !important;
+    }
+
+    #chat > .ai > .mi-ai-functional-copy {
+        width:
+            32px !important;
+
+        min-width:
+            32px !important;
+
+        max-width:
+            32px !important;
+
+        height:
+            32px !important;
+
+        min-height:
+            32px !important;
+
+        max-height:
+            32px !important;
+
+        font-size:
+            14px !important;
+    }
+
+    #inputBox,
+    #inputArea,
+    #input-area,
+    .input-area,
+    .chat-input-area,
+    .composer,
+    .composer-container,
+    .message-composer,
+    .input-container,
+    .prompt-container {
+        min-height:
+            82px !important;
+
+        padding:
+            10px
+            10px
+            max(
+                10px,
+                env(safe-area-inset-bottom)
+            )
+            !important;
+
+        gap:
+            9px !important;
+    }
+
+    #msg,
+    #messageInput,
+    #chatInput,
+    textarea[name="message"],
+    .chat-input,
+    .message-input {
+        min-height:
+            56px !important;
+
+        padding:
+            14px 16px !important;
+
+        font-size:
+            18px !important;
+
+        line-height:
+            1.45 !important;
+
+        border-radius:
+            19px !important;
+    }
+
+    #sendBtn,
+    #sendButton,
+    .send-btn {
+        width:
+            56px !important;
+
+        min-width:
+            56px !important;
+
+        height:
+            56px !important;
+
+        min-height:
+            56px !important;
+
+        flex:
+            0 0 56px;
+    }
+
+    button,
+    .btn,
+    .button,
+    [role="button"] {
+        min-height:
+            50px;
+
+        font-size:
+            17px;
+    }
+
+    #settingsPanel {
+        width:
+            calc(
+                100vw
+                - 16px
+            )
+            !important;
+
+        max-width:
+            500px !important;
+
+        max-height:
+            calc(
+                100dvh
+                - 22px
+                - env(safe-area-inset-top)
+                - env(safe-area-inset-bottom)
+            )
+            !important;
+
+        padding:
+            20px 15px !important;
+
+        border-radius:
+            26px !important;
+    }
+
+    #settingsPanel > h1,
+    #settingsPanel > h2,
+    #settingsPanel > h3 {
+        font-size:
+            24px !important;
+    }
+
+    #settingsPanel .mi-settings-option-button {
+        min-height:
+            64px !important;
+
+        padding:
+            14px 16px !important;
+
+        font-size:
+            18px !important;
+    }
+
+    #settingsPanel .mi-settings-option-icon {
+        width:
+            40px;
+
+        height:
+            40px;
+
+        flex-basis:
+            40px;
+
+        font-size:
+            20px;
+    }
+
+    #settingsPanel .mi-settings-control-box {
+        padding:
+            16px !important;
+    }
+
+    #settingsPanel .mi-settings-control-box select,
+    #settingsPanel .mi-settings-control-box input[type="color"],
+    #settingsPanel .mi-settings-control-box input[type="range"] {
+        min-height:
+            56px !important;
+
+        font-size:
+            18px !important;
+    }
+
+    #settingsCloseBtn {
+        width:
+            46px !important;
+
+        min-width:
+            46px !important;
+
+        height:
+            46px !important;
+
+        min-height:
+            46px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    body {
+        font-size:
+            18px !important;
+    }
+
+    #chat > .me,
+    #chat > .ai,
+    .message-bubble {
+        max-width:
+            97% !important;
+
+        font-size:
+            18px !important;
+    }
+
+    #settingsPanel {
+        width:
+            calc(
+                100vw
+                - 10px
+            )
+            !important;
+
+        padding:
+            17px 11px !important;
+    }
+}
+
+/* MI AI SETTINGS ACCORDION COPY MOBILE - END */
+
+
+
+/* MI AI IOS SELECT AND ICON SYSTEM - START */
+
+:root {
+    --mi-ios-light-top:
+        rgba(255, 255, 255, 0.98);
+
+    --mi-ios-light-bottom:
+        rgba(225, 233, 244, 0.92);
+
+    --mi-ios-dark-text:
+        #111827;
+
+    --mi-ios-muted-text:
+        #4b5563;
+
+    --mi-ios-border:
+        rgba(255, 255, 255, 0.86);
+}
+
+/* Native selects remain in the document for existing logic,
+   but are visually hidden after enhancement. */
+select[data-mi-ios-ready="true"] {
+    position: absolute !important;
+
+    width: 1px !important;
+    height: 1px !important;
+
+    min-width: 1px !important;
+    min-height: 1px !important;
+
+    margin: -1px !important;
+    padding: 0 !important;
+
+    opacity: 0 !important;
+
+    pointer-events: none !important;
+
+    overflow: hidden !important;
+
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+}
+
+/* Custom trigger */
+.mi-ios-select-shell {
+    width: 100%;
+    position: relative;
+}
+
+.mi-ios-select-trigger {
+    width: 100% !important;
+    min-height: 50px !important;
+
+    margin: 0 !important;
+    padding: 11px 14px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px;
+
+    border:
+        1px solid
+        var(--mi-ios-border)
+        !important;
+
+    border-radius:
+        17px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            var(--mi-ios-light-top),
+            var(--mi-ios-light-bottom)
+        ) !important;
+
+    color:
+        var(--mi-ios-dark-text)
+        !important;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif
+        !important;
+
+    font-size:
+        15px !important;
+
+    font-weight:
+        700 !important;
+
+    line-height:
+        1.3 !important;
+
+    text-align: left !important;
+
+    -webkit-backdrop-filter:
+        blur(25px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(25px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 1),
+        0 9px 28px
+            rgba(0, 0, 0, 0.19)
+        !important;
+
+    cursor: pointer !important;
+}
+
+.mi-ios-select-trigger::before,
+.mi-ios-select-trigger::after {
+    display: none !important;
+}
+
+.mi-ios-select-trigger:focus-visible {
+    outline:
+        3px solid
+        rgba(
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.32
+        );
+
+    outline-offset: 2px;
+}
+
+.mi-ios-select-trigger-text {
+    min-width: 0;
+
+    color:
+        var(--mi-ios-dark-text)
+        !important;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mi-ios-select-chevron {
+    width: 18px;
+    height: 18px;
+
+    flex: 0 0 18px;
+
+    color:
+        var(--mi-ios-muted-text);
+
+    transition:
+        transform 170ms ease;
+}
+
+.mi-ios-select-trigger[aria-expanded="true"]
+.mi-ios-select-chevron {
+    transform: rotate(180deg);
+}
+
+/* Popup is appended to body and uses fixed positioning,
+   so the modal cannot clip it. */
+#miIosSelectPopup {
+    position: fixed;
+
+    z-index: 2147483000;
+
+    display: none;
+    flex-direction: column;
+
+    min-width: 180px;
+
+    max-width:
+        calc(100vw - 16px);
+
+    max-height:
+        min(360px, 62vh);
+
+    padding: 7px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.90);
+
+    border-radius:
+        21px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.98),
+            rgba(224, 232, 243, 0.94)
+        );
+
+    -webkit-backdrop-filter:
+        blur(32px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(32px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 1),
+        0 24px 75px
+            rgba(0, 0, 0, 0.34);
+
+    opacity: 0;
+
+    transform:
+        translateY(-6px)
+        scale(0.98);
+
+    transform-origin:
+        top center;
+}
+
+#miIosSelectPopup.mi-open {
+    display: flex;
+
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+
+    animation:
+        miIosPopupOpen
+        180ms
+        cubic-bezier(.2, .8, .2, 1);
+}
+
+@keyframes miIosPopupOpen {
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(-7px)
+            scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+.mi-ios-popup-option {
+    width: 100% !important;
+    min-height: 49px !important;
+
+    margin: 0 !important;
+    padding: 10px 12px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px;
+
+    border: 0 !important;
+    border-radius: 14px !important;
+
+    background:
+        transparent !important;
+
+    color:
+        #111827 !important;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif
+        !important;
+
+    font-size:
+        15px !important;
+
+    font-weight:
+        650 !important;
+
+    line-height:
+        1.35 !important;
+
+    text-align: left !important;
+
+    text-shadow: none !important;
+
+    box-shadow: none !important;
+
+    cursor: pointer !important;
+}
+
+.mi-ios-popup-option::before,
+.mi-ios-popup-option::after {
+    display: none !important;
+}
+
+.mi-ios-popup-option:hover,
+.mi-ios-popup-option:focus-visible {
+    background:
+        rgba(
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.15
+        ) !important;
+
+    color:
+        #111827 !important;
+
+    outline: none !important;
+
+    transform: none !important;
+}
+
+.mi-ios-popup-option.mi-selected {
+    background:
+        rgba(
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.23
+        ) !important;
+
+    color:
+        #111827 !important;
+
+    font-weight:
+        800 !important;
+}
+
+.mi-ios-option-label {
+    min-width: 0;
+
+    color:
+        #111827 !important;
+
+    overflow-wrap: anywhere;
+}
+
+.mi-ios-option-check {
+    width: 25px;
+    height: 25px;
+
+    flex: 0 0 25px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        rgba(
+            var(--mi-theme-rgb, 69, 135, 245),
+            0.19
+        );
+
+    color:
+        #111827;
+
+    opacity: 0;
+}
+
+.mi-ios-popup-option.mi-selected
+.mi-ios-option-check {
+    opacity: 1;
+}
+
+/* iPhone-style SVG icons */
+.mi-ios-icon {
+    width: 18px;
+    height: 18px;
+
+    flex: 0 0 18px;
+
+    display: inline-block;
+
+    fill: none;
+
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    pointer-events: none;
+}
+
+.mi-ios-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+}
+
+.mi-ios-icon-label {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+/* Icon-only controls */
+#settingsCloseBtn,
+.close-btn,
+.modal-close,
+.mi-ai-functional-copy,
+.mi-ai-copy-below,
+.aiCopyButton,
+.copy-btn,
+.copy-button {
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Prevent old emoji from taking space */
+[data-mi-ios-icon-applied="true"]
+.mi-old-icon-text {
+    display: none !important;
+}
+
+/* Larger phone controls */
+@media (max-width: 700px) {
+    .mi-ios-select-trigger {
+        min-height: 58px !important;
+
+        padding:
+            13px 15px !important;
+
+        border-radius:
+            19px !important;
+
+        font-size:
+            18px !important;
+    }
+
+    #miIosSelectPopup {
+        max-height:
+            min(430px, 65dvh);
+
+        border-radius:
+            23px;
+    }
+
+    .mi-ios-popup-option {
+        min-height: 58px !important;
+
+        padding:
+            13px 14px !important;
+
+        font-size:
+            18px !important;
+    }
+
+    .mi-ios-icon {
+        width: 20px;
+        height: 20px;
+
+        flex-basis: 20px;
+    }
+}
+
+/* MI AI IOS SELECT AND ICON SYSTEM - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -4907,31 +7123,38 @@ function confirmLogout() {
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
         <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
-        <button type="button" onclick="logout()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.logout', 'Logout')}</button>
+        <button type="button" onclick="handleLogoutConfirmation()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.logout', 'Logout')}</button>
       </div>
     `;
 }
 
+function handleLogoutConfirmation() {
+    const message = t('auth.logoutConfirm.message', 'You are about to log out. Continue?');
+    const shouldLogout = window.confirm(message);
+    if (shouldLogout) {
+        logout();
+    }
+}
+
 async function logout() {
-    try {
+
+    if (
+        window.MIAccountSettings &&
+        typeof window.MIAccountSettings.save === "function"
+    ) {
+        window.MIAccountSettings.save();
+    }
+
+try {
         const auth = await initFirebase();
         await auth.signOut();
     } catch (e) {
         console.error('Logout error:', e);
     }
-
-    const previousEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-    const previousUserId = (localStorage.getItem('mi_user_id') || '').trim().toLowerCase();
-    localStorage.removeItem('mi_supabase_token');
+localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
-    if (previousEmail) {
-        localStorage.removeItem(getAccountScopedChatStorageKey(previousEmail));
-    }
-    if (previousUserId) {
-        localStorage.removeItem(getAccountScopedChatStorageKey(previousUserId));
-    }
-    user = null;
+user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
 
@@ -5964,18 +8187,18 @@ function showShareFeedback(message) {
 
 function linkifyText(text) {
   if (!text || typeof text !== 'string') return text;
-  
+
   // HTML escape helper
   const escapeHtml = (str) => {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
   };
-  
+
   // Track replacements to avoid double-linking
   const replacements = [];
   let processedText = text;
-  
+
   // Pattern: URLs with protocols
   processedText = processedText.replace(/\b(https?|ftp):\/\/[^\s<>]+/gi, (match) => {
     let url = match.replace(/[.,;:!?\'"()\[\]]+$/g, '');
@@ -5983,14 +8206,14 @@ function linkifyText(text) {
     replacements.push({ original: match, replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Email addresses
   processedText = processedText.replace(/\b([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g, (match) => {
     const link = `<a href="mailto:${match}" class="ai-link">${escapeHtml(match)}</a>`;
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Phone numbers
   processedText = processedText.replace(/\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b/g, (match) => {
     const cleanPhone = match.replace(/[^\d+]/g, '');
@@ -5998,7 +8221,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: WhatsApp
   processedText = processedText.replace(/wa\.me\/[^\s<>]+|(?:https?:\/\/)?whatsapp\.com\/[^\s<>]+/gi, (match) => {
     const url = match.match(/^https?:/) ? match : `https://${match}`;
@@ -6006,7 +8229,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Telegram
   processedText = processedText.replace(/t\.me\/[^\s<>]+|@[a-zA-Z0-9_]{5,}/g, (match) => {
     let url = match;
@@ -6019,7 +8242,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: Discord
   processedText = processedText.replace(/discord\.gg\/[^\s<>]+/gi, (match) => {
     const url = match.match(/^https?:/) ? match : `https://${match}`;
@@ -6027,7 +8250,7 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Pattern: GitHub
   processedText = processedText.replace(/github\.com\/[a-zA-Z0-9_-]+\/[^\s<>]*/gi, (match) => {
     const url = match.match(/^https?:/) ? match : `https://${match}`;
@@ -6035,47 +8258,47 @@ function linkifyText(text) {
     replacements.push({ replacement: link });
     return `__LINK_${replacements.length - 1}__`;
   });
-  
+
   // Escape remaining HTML and preserve newlines
   let result = escapeHtml(processedText);
-  
+
   // Restore the links (they're already safe)
   replacements.forEach((repl, idx) => {
     result = result.replace(`__LINK_${idx}__`, repl.replacement);
   });
-  
+
   // Preserve line breaks
   result = result.replace(/\n/g, '<br>');
-  
+
   return result;
 }
 
 function isLongWritingResponse(text) {
   const value = String(text || '').trim();
   if (!value) return false;
-  
+
   // Code blocks and structured formats always get the writing card
   if (value.includes('```')) return true; // Markdown code fences
   if (/^(import|from|def|class|function|const|let|var|async|return|if|for|while)\s/m.test(value)) return true; // Common code keywords
   if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP)\s/mi.test(value)) return true; // SQL
   if (/^[\s]*[{[]|^[\s]*</m.test(value)) return true; // JSON, arrays, HTML, XML
   if (/^---/m.test(value)) return true; // YAML/Markdown frontmatter
-  
+
   // Markdown headers (any level)
   if (/^#{1,6}\s/m.test(value)) return true;
-  
+
   // Markdown lists with multiple items (4 or more)
   const listItems = (value.match(/^[-*+]\s|^\d+\.\s/gm) || []).length;
   if (listItems >= 4) return true;
-  
+
   // Multiple paragraphs (3+) with substantial length
   const paragraphs = value.split(/\n\n+/).length;
   const wordCount = value.split(/\s+/).length;
   if (paragraphs >= 3 && wordCount > 120) return true;
-  
+
   // Very long responses (essay/article length)
   if (wordCount > 180) return true;
-  
+
   return false;
 }
 
@@ -7172,26 +9395,26 @@ async function registerEmail() {
 
   try {
     const auth = await initFirebase();
-    
+
     // Create Firebase user
     const result = await auth.createUserWithEmailAndPassword(email, password);
     const firebaseUser = result.user;
-    
+
     // Send verification email
     await firebaseUser.sendEmailVerification();
-    
+
     // Sign out the user immediately
     await auth.signOut();
-    
+
     // Clear any stored auth data
     user = null;
     localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
-    
+
     // Show success message
     setAuthMessage(t('auth.registerSuccess', 'Registration successful! A verification email has been sent. Please check your spam folder or inbox and verify your email before signing in.'), false);
-    
+
     // Switch to sign in mode after a brief delay
     setTimeout(() => {
       setAuthMode('signin');
@@ -7225,33 +9448,33 @@ async function loginEmail() {
 
   try {
     const auth = await initFirebase();
-    
+
     // Sign in with Firebase
     const result = await auth.signInWithEmailAndPassword(email, password);
     const firebaseUser = result.user;
-    
+
     // Check if email is verified
     if (!firebaseUser.emailVerified) {
       // Email not verified - send verification email and sign out
       await firebaseUser.sendEmailVerification();
       await auth.signOut();
-      
+
       // Clear any stored auth data
       user = null;
       localStorage.removeItem('mi_supabase_token');
       localStorage.removeItem('mi_user_id');
       localStorage.removeItem('mi_user_email');
-      
+
       setAuthMessage(t('auth.unverifiedEmail', 'Your email is not verified. A new verification email has been sent. Please verify your email first. Please check your spam folder or inbox.'), true);
       return;
     }
-    
+
     // Email is verified - continue with login
     user = {
       id: firebaseUser.uid,
       email: firebaseUser.email
     };
-    
+
     const idToken = await firebaseUser.getIdToken();
     localStorage.setItem('mi_supabase_token', idToken);
     localStorage.setItem('mi_user_id', firebaseUser.uid);
@@ -8984,6 +11207,6107 @@ document.addEventListener(
 })();
 
 /* MI AI CHAT MORE MENU JS - END */
+</script>
+
+<script>
+/* MI AI FOUR CHAT OPTIONS FIX - START */
+
+(function () {
+    "use strict";
+
+    function language() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem("mi_ui_language")
+            || "en"
+        );
+    }
+
+    function label(key) {
+        const values = {
+            en: {
+                rename: "Rename",
+                pin: "Pin",
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete"
+            },
+
+            si: {
+                rename: "නම වෙනස් කරන්න",
+                pin: "ඉහළට අමුණන්න",
+                unpin: "අමුණීම ඉවත් කරන්න",
+                share: "බෙදාගන්න",
+                deleteText: "මකන්න"
+            },
+
+            ta: {
+                rename: "பெயரை மாற்று",
+                pin: "பின் செய்",
+                unpin: "பின்னை நீக்கு",
+                share: "பகிர்",
+                deleteText: "நீக்கு"
+            }
+        };
+
+        return (
+            values[language()]?.[key]
+            || values.en[key]
+            || key
+        );
+    }
+
+    function isPinned(target) {
+        return Boolean(
+            target?.classList.contains("pinned")
+            || target?.dataset.pinned === "true"
+            || target?.getAttribute("aria-pinned") === "true"
+            || target?.querySelector(
+                ".pin-icon, .pinned-icon, [data-pinned='true']"
+            )
+        );
+    }
+
+    function makeButton(
+        action,
+        icon,
+        text,
+        danger
+    ) {
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.dataset.action = action;
+
+        if (danger) {
+            button.classList.add(
+                "mi-menu-danger"
+            );
+        }
+
+        const iconSpan =
+            document.createElement("span");
+
+        iconSpan.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        iconSpan.textContent = icon;
+
+        const textSpan =
+            document.createElement("span");
+
+        textSpan.textContent = text;
+
+        button.append(
+            iconSpan,
+            textSpan
+        );
+
+        return button;
+    }
+
+    function forceFourChatOptions() {
+        const original =
+            window.MIChatMoreMenu;
+
+        if (!original) {
+            return false;
+        }
+
+        const menu =
+            document.getElementById(
+                "miChatMoreMenu"
+            );
+
+        if (!menu) {
+            return false;
+        }
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    const visible =
+                        menu.classList.contains(
+                            "mi-visible"
+                        );
+
+                    if (!visible) {
+                        return;
+                    }
+
+                    /*
+                      A message menu has only Copy.
+                      Leave it unchanged.
+                    */
+                    const hasCopy =
+                        Boolean(
+                            menu.querySelector(
+                                '[data-action="copy"]'
+                            )
+                        );
+
+                    if (hasCopy) {
+                        return;
+                    }
+
+                    const target =
+                        document.querySelector(
+                            ".mi-long-press-active"
+                        );
+
+                    const pinned =
+                        isPinned(target);
+
+                    menu.replaceChildren(
+                        makeButton(
+                            "rename",
+                            "✎",
+                            label("rename"),
+                            false
+                        ),
+
+                        makeButton(
+                            "pin",
+                            pinned ? "⌫" : "⌖",
+                            pinned
+                                ? label("unpin")
+                                : label("pin"),
+                            false
+                        ),
+
+                        makeButton(
+                            "share",
+                            "↗",
+                            label("share"),
+                            false
+                        ),
+
+                        makeButton(
+                            "delete",
+                            "🗑",
+                            label("deleteText"),
+                            true
+                        )
+                    );
+                }
+            );
+
+        observer.observe(
+            menu,
+            {
+                childList: true,
+                subtree: false,
+                attributes: true,
+                attributeFilter: [
+                    "class"
+                ]
+            }
+        );
+
+        return true;
+    }
+
+    function start() {
+        if (forceFourChatOptions()) {
+            return;
+        }
+
+        let attempts = 0;
+
+        const timer = setInterval(
+            function () {
+                attempts += 1;
+
+                if (
+                    forceFourChatOptions()
+                    || attempts >= 40
+                ) {
+                    clearInterval(timer);
+                }
+            },
+            250
+        );
+    }
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI FOUR CHAT OPTIONS FIX - END */
+</script>
+
+<script>
+/* MI AI STRICT VIEW ONLY JS - START */
+
+(function () {
+    "use strict";
+
+    let viewOnlyActive = false;
+    let originalFetch = null;
+    let originalXhrOpen = null;
+    let originalXhrSend = null;
+
+    const blockedFunctionNames = [
+        "newChat",
+        "createNewChat",
+        "renameChat",
+        "renameConversation",
+        "editChatName",
+        "pinChat",
+        "togglePinChat",
+        "toggleChatPin",
+        "deleteChat",
+        "deleteConversation",
+        "removeChat",
+        "shareChat",
+        "shareConversation",
+        "send",
+        "sendMessage",
+        "sendOrStop",
+        "submitMessage",
+        "uploadFile",
+        "handleFileUpload",
+        "applyTheme",
+        "setFont",
+        "toggleSettings",
+        "openSettings",
+        "customerSupport",
+        "openProfilePanel",
+        "saveChat",
+        "saveConversation"
+    ];
+
+    const mutationMethods = new Set([
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+    ]);
+
+    function language() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem(
+                "mi_ui_language"
+            )
+            || "en"
+        );
+    }
+
+    function translations() {
+        const values = {
+            en: {
+                banner:
+                    "View only — this shared chat cannot be changed.",
+
+                blocked:
+                    "This is a view-only shared chat."
+            },
+
+            si: {
+                banner:
+                    "බැලීමට පමණයි — මෙම බෙදාගත් කතාබහ වෙනස් කළ නොහැක.",
+
+                blocked:
+                    "මෙය බැලීමට පමණක් ලබාදුන් කතාබහකි."
+            },
+
+            ta: {
+                banner:
+                    "பார்வைக்கு மட்டும் — இந்த பகிரப்பட்ட அரட்டையை மாற்ற முடியாது.",
+
+                blocked:
+                    "இது பார்வைக்கு மட்டும் பகிரப்பட்ட அரட்டை."
+            }
+        };
+
+        return values[language()] || values.en;
+    }
+
+    function showBlockedMessage() {
+        const message =
+            translations().blocked;
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(message);
+            return;
+        }
+
+        console.warn(
+            "[MI AI View Only]",
+            message
+        );
+    }
+
+    function parseBooleanValue(value) {
+        const normalized =
+            String(value || "")
+                .trim()
+                .toLowerCase();
+
+        return [
+            "view",
+            "readonly",
+            "read-only",
+            "read_only",
+            "viewer",
+            "true",
+            "1"
+        ].includes(normalized);
+    }
+
+    function queryIndicatesViewOnly() {
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const possibleValues = [
+            params.get("permission"),
+            params.get("mode"),
+            params.get("access"),
+            params.get("readonly"),
+            params.get("viewOnly"),
+            params.get("view_only")
+        ];
+
+        return possibleValues.some(
+            parseBooleanValue
+        );
+    }
+
+    function hashIndicatesViewOnly() {
+        const hash =
+            String(
+                window.location.hash || ""
+            ).toLowerCase();
+
+        return (
+            hash.includes("permission=view")
+            || hash.includes("mode=view")
+            || hash.includes("readonly=true")
+            || hash.includes("viewonly=true")
+            || hash.includes("view_only=true")
+        );
+    }
+
+    function objectIndicatesViewOnly(value) {
+        if (
+            !value ||
+            typeof value !== "object"
+        ) {
+            return false;
+        }
+
+        const candidates = [
+            value.permission,
+            value.mode,
+            value.access,
+            value.role,
+            value.readonly,
+            value.readOnly,
+            value.viewOnly,
+            value.view_only
+        ];
+
+        return candidates.some(
+            parseBooleanValue
+        );
+    }
+
+    function detectViewOnly() {
+        return Boolean(
+            queryIndicatesViewOnly()
+            || hashIndicatesViewOnly()
+            || objectIndicatesViewOnly(
+                window.sharedChatData
+            )
+            || objectIndicatesViewOnly(
+                window.sharedConversation
+            )
+            || objectIndicatesViewOnly(
+                window.shareData
+            )
+            || objectIndicatesViewOnly(
+                window.currentSharedChat
+            )
+            || document.body?.dataset
+                ?.permission === "view"
+            || document.body?.dataset
+                ?.mode === "view"
+            || document.documentElement
+                ?.dataset?.permission === "view"
+        );
+    }
+
+    function createBanner() {
+        let banner =
+            document.getElementById(
+                "miViewOnlyBanner"
+            );
+
+        if (!banner) {
+            banner =
+                document.createElement(
+                    "div"
+                );
+
+            banner.id =
+                "miViewOnlyBanner";
+
+            banner.setAttribute(
+                "role",
+                "status"
+            );
+
+            banner.setAttribute(
+                "aria-live",
+                "polite"
+            );
+
+            const icon =
+                document.createElement(
+                    "span"
+                );
+
+            icon.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            icon.textContent = "👁";
+
+            const text =
+                document.createElement(
+                    "span"
+                );
+
+            text.className =
+                "mi-view-only-banner-text";
+
+            banner.append(
+                icon,
+                text
+            );
+
+            const chat =
+                document.getElementById(
+                    "chat"
+                );
+
+            const main =
+                document.getElementById(
+                    "main"
+                );
+
+            if (chat?.parentElement) {
+                chat.parentElement.insertBefore(
+                    banner,
+                    chat
+                );
+            }
+            else if (main) {
+                main.prepend(banner);
+            }
+            else {
+                document.body.prepend(
+                    banner
+                );
+            }
+        }
+
+        const bannerText =
+            banner.querySelector(
+                ".mi-view-only-banner-text"
+            );
+
+        if (bannerText) {
+            bannerText.textContent =
+                translations().banner;
+        }
+    }
+
+    function isCopyControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                ".aiCopyButton, " +
+                ".copy-btn, " +
+                ".copy-button, " +
+                ".mi-ai-copy-below, " +
+                "[data-action='copy'], " +
+                ".mi-view-copy-allowed"
+            )
+        );
+    }
+
+    function isBlockedControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        if (isCopyControl(element)) {
+            return false;
+        }
+
+        const selectors = [
+            "button",
+            "input",
+            "textarea",
+            "select",
+            "[contenteditable='true']",
+            "[role='button']",
+            "[onclick]",
+            "[data-action]",
+            ".chatItem",
+            ".chat-item",
+            ".history-item",
+            ".conversation-item",
+            "[data-chat-id]",
+            "[data-conversation-id]"
+        ].join(",");
+
+        return Boolean(
+            element.closest(selectors)
+        );
+    }
+
+    function blockInteractiveEvent(event) {
+        if (!viewOnlyActive) {
+            return;
+        }
+
+        if (isCopyControl(event.target)) {
+            return;
+        }
+
+        if (isBlockedControl(event.target)) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            showBlockedMessage();
+        }
+    }
+
+    function blockContextMenu(event) {
+        if (!viewOnlyActive) {
+            return;
+        }
+
+        const interactive =
+            event.target.closest(
+                ".chatItem, " +
+                ".chat-item, " +
+                ".history-item, " +
+                ".conversation-item, " +
+                "[data-chat-id], " +
+                "[data-conversation-id], " +
+                "#chat > .me, " +
+                "#chat > .ai, " +
+                ".message-bubble"
+            );
+
+        if (!interactive) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+
+    function markCopyButtons() {
+        document
+            .querySelectorAll(
+                ".aiCopyButton, " +
+                ".copy-btn, " +
+                ".copy-button, " +
+                ".mi-ai-copy-below, " +
+                "[data-action='copy']"
+            )
+            .forEach(function (button) {
+                button.classList.add(
+                    "mi-view-copy-allowed"
+                );
+
+                button.disabled = false;
+
+                button.removeAttribute(
+                    "aria-disabled"
+                );
+            });
+    }
+
+    function disableExistingControls() {
+        const controls =
+            document.querySelectorAll(
+                "input, textarea, select, " +
+                "button, [contenteditable='true']"
+            );
+
+        controls.forEach(
+            function (control) {
+                if (isCopyControl(control)) {
+                    return;
+                }
+
+                if (
+                    control instanceof
+                        HTMLInputElement
+                    || control instanceof
+                        HTMLTextAreaElement
+                    || control instanceof
+                        HTMLSelectElement
+                    || control instanceof
+                        HTMLButtonElement
+                ) {
+                    control.disabled = true;
+                }
+
+                if (
+                    control.hasAttribute(
+                        "contenteditable"
+                    )
+                ) {
+                    control.setAttribute(
+                        "contenteditable",
+                        "false"
+                    );
+                }
+
+                control.setAttribute(
+                    "aria-disabled",
+                    "true"
+                );
+            }
+        );
+
+        markCopyButtons();
+    }
+
+    function wrapBlockedFunctions() {
+        blockedFunctionNames.forEach(
+            function (name) {
+                const original =
+                    window[name];
+
+                if (
+                    typeof original !==
+                    "function"
+                ) {
+                    return;
+                }
+
+                if (
+                    original.__miViewOnlyWrapped
+                ) {
+                    return;
+                }
+
+                const wrapper =
+                    function (...args) {
+                        if (
+                            viewOnlyActive
+                        ) {
+                            showBlockedMessage();
+                            return false;
+                        }
+
+                        return original.apply(
+                            this,
+                            args
+                        );
+                    };
+
+                wrapper.__miViewOnlyWrapped =
+                    true;
+
+                wrapper.__miOriginal =
+                    original;
+
+                window[name] = wrapper;
+            }
+        );
+    }
+
+    function isMutationRequest(
+        input,
+        init
+    ) {
+        const method =
+            String(
+                init?.method
+                || input?.method
+                || "GET"
+            ).toUpperCase();
+
+        if (
+            !mutationMethods.has(method)
+        ) {
+            return false;
+        }
+
+        let url = "";
+
+        if (
+            typeof input === "string"
+        ) {
+            url = input;
+        }
+        else if (input?.url) {
+            url = input.url;
+        }
+
+        const normalized =
+            String(url || "")
+                .toLowerCase();
+
+        /*
+            Permit authentication requests.
+            Block chat/conversation mutations.
+        */
+        if (
+            normalized.includes(
+                "identitytoolkit.googleapis.com"
+            )
+            || normalized.includes(
+                "securetoken.googleapis.com"
+            )
+            || normalized.includes(
+                "firebase"
+            )
+        ) {
+            return false;
+        }
+
+        return (
+            normalized.includes("/api/chat")
+            || normalized.includes(
+                "/api/messages"
+            )
+            || normalized.includes(
+                "/api/conversations"
+            )
+            || normalized.includes(
+                "/api/share"
+            )
+            || normalized.includes(
+                "/api/upload"
+            )
+            || normalized.includes(
+                "conversation"
+            )
+            || normalized.includes(
+                "message"
+            )
+            || normalized.includes(
+                "shared-chat"
+            )
+        );
+    }
+
+    function installFetchGuard() {
+        if (
+            originalFetch
+            || typeof window.fetch !==
+                "function"
+        ) {
+            return;
+        }
+
+        originalFetch =
+            window.fetch.bind(window);
+
+        window.fetch =
+            function (input, init) {
+                if (
+                    viewOnlyActive
+                    && isMutationRequest(
+                        input,
+                        init
+                    )
+                ) {
+                    showBlockedMessage();
+
+                    return Promise.reject(
+                        new Error(
+                            "View-only shared chat: mutation blocked."
+                        )
+                    );
+                }
+
+                return originalFetch(
+                    input,
+                    init
+                );
+            };
+    }
+
+    function installXhrGuard() {
+        if (
+            originalXhrOpen
+            || !window.XMLHttpRequest
+        ) {
+            return;
+        }
+
+        originalXhrOpen =
+            XMLHttpRequest
+                .prototype.open;
+
+        originalXhrSend =
+            XMLHttpRequest
+                .prototype.send;
+
+        XMLHttpRequest.prototype.open =
+            function (
+                method,
+                url,
+                ...rest
+            ) {
+                this.__miMethod =
+                    String(method || "GET")
+                        .toUpperCase();
+
+                this.__miUrl =
+                    String(url || "");
+
+                return originalXhrOpen.call(
+                    this,
+                    method,
+                    url,
+                    ...rest
+                );
+            };
+
+        XMLHttpRequest.prototype.send =
+            function (...args) {
+                if (
+                    viewOnlyActive
+                    && isMutationRequest(
+                        {
+                            method:
+                                this.__miMethod,
+                            url:
+                                this.__miUrl
+                        },
+                        {
+                            method:
+                                this.__miMethod
+                        }
+                    )
+                ) {
+                    showBlockedMessage();
+
+                    throw new Error(
+                        "View-only shared chat: mutation blocked."
+                    );
+                }
+
+                return originalXhrSend.apply(
+                    this,
+                    args
+                );
+            };
+    }
+
+    function hideMoreMenus() {
+        document
+            .querySelectorAll(
+                "#miChatMoreMenu, " +
+                "#menu, " +
+                ".context-menu, " +
+                ".chat-context-menu"
+            )
+            .forEach(function (menu) {
+                menu.style.display =
+                    "none";
+
+                menu.classList.remove(
+                    "mi-visible",
+                    "open",
+                    "show"
+                );
+            });
+    }
+
+    function activateViewOnly() {
+        if (viewOnlyActive) {
+            createBanner();
+            disableExistingControls();
+            hideMoreMenus();
+            return;
+        }
+
+        viewOnlyActive = true;
+
+        document.body.classList.add(
+            "mi-view-only"
+        );
+
+        document.body.dataset.permission =
+            "view";
+
+        window.MI_VIEW_ONLY = true;
+
+        createBanner();
+        markCopyButtons();
+        disableExistingControls();
+        wrapBlockedFunctions();
+        installFetchGuard();
+        installXhrGuard();
+        hideMoreMenus();
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-view-only-enabled"
+            )
+        );
+
+        console.log(
+            "[MI AI] Strict view-only mode enabled."
+        );
+    }
+
+    function refreshDetection() {
+        if (detectViewOnly()) {
+            activateViewOnly();
+        }
+    }
+
+    document.addEventListener(
+        "click",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "submit",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "input",
+        blockInteractiveEvent,
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (!viewOnlyActive) {
+                return;
+            }
+
+            const element =
+                event.target;
+
+            if (
+                element?.matches?.(
+                    "input, textarea, " +
+                    "[contenteditable='true']"
+                )
+            ) {
+                blockInteractiveEvent(
+                    event
+                );
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "contextmenu",
+        blockContextMenu,
+        true
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            if (!viewOnlyActive) {
+                return;
+            }
+
+            const chatTarget =
+                event.target.closest(
+                    ".chatItem, " +
+                    ".chat-item, " +
+                    ".history-item, " +
+                    ".conversation-item, " +
+                    "[data-chat-id], " +
+                    "[data-conversation-id]"
+                );
+
+            if (chatTarget) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+            }
+        },
+        true
+    );
+
+    window.addEventListener(
+        "popstate",
+        refreshDetection
+    );
+
+    window.addEventListener(
+        "hashchange",
+        refreshDetection
+    );
+
+    window.addEventListener(
+        "mi-shared-chat-loaded",
+        refreshDetection
+    );
+
+    window.addEventListener(
+        "mi-language-changed",
+        createBanner
+    );
+
+    const observer =
+        new MutationObserver(
+            function () {
+                refreshDetection();
+
+                if (viewOnlyActive) {
+                    createBanner();
+                    markCopyButtons();
+                    disableExistingControls();
+                    wrapBlockedFunctions();
+                    hideMoreMenus();
+                }
+            }
+        );
+
+    function start() {
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "data-permission",
+                    "data-mode",
+                    "data-access"
+                ]
+            }
+        );
+
+        refreshDetection();
+
+        /*
+            Shared-chat data may load after page load.
+        */
+        let attempts = 0;
+
+        const timer =
+            setInterval(
+                function () {
+                    attempts += 1;
+
+                    refreshDetection();
+
+                    if (
+                        viewOnlyActive
+                        || attempts >= 80
+                    ) {
+                        clearInterval(
+                            timer
+                        );
+                    }
+                },
+                250
+            );
+    }
+
+    window.MIViewOnly = {
+        isActive:
+            function () {
+                return viewOnlyActive;
+            },
+
+        activate:
+            activateViewOnly,
+
+        detect:
+            detectViewOnly,
+
+        refresh:
+            refreshDetection
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI STRICT VIEW ONLY JS - END */
+</script>
+
+<script>
+/* MI AI MOBILE COMFORT JS - START */
+
+(function () {
+    "use strict";
+
+    let initialViewportHeight =
+        window.visualViewport?.height
+        || window.innerHeight;
+
+    function setViewportVariables() {
+        const viewport =
+            window.visualViewport;
+
+        const width =
+            viewport?.width
+            || window.innerWidth;
+
+        const height =
+            viewport?.height
+            || window.innerHeight;
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-viewport-width",
+                width + "px"
+            );
+
+        document.documentElement.style
+            .setProperty(
+                "--mi-viewport-height",
+                height + "px"
+            );
+
+        const keyboardDifference =
+            initialViewportHeight - height;
+
+        const keyboardVisible =
+            keyboardDifference > 140;
+
+        document.body.classList.toggle(
+            "mi-keyboard-visible",
+            keyboardVisible
+        );
+
+        if (
+            !keyboardVisible
+            && height > initialViewportHeight
+        ) {
+            initialViewportHeight =
+                height;
+        }
+    }
+
+    function keepFocusedFieldVisible() {
+        const active =
+            document.activeElement;
+
+        if (
+            !active
+            || !active.matches(
+                "input, textarea, select, " +
+                "[contenteditable='true']"
+            )
+        ) {
+            return;
+        }
+
+        setTimeout(
+            function () {
+                active.scrollIntoView({
+                    behavior:
+                        "smooth",
+
+                    block:
+                        "center",
+
+                    inline:
+                        "nearest"
+                });
+            },
+            180
+        );
+    }
+
+    function autoGrowMessageInput() {
+        const input =
+            document.querySelector(
+                "#msg, #messageInput, " +
+                "#chatInput, " +
+                "textarea[name='message'], " +
+                ".chat-input, .message-input"
+            );
+
+        if (
+            !input
+            || !(input instanceof
+                HTMLTextAreaElement)
+        ) {
+            return;
+        }
+
+        input.style.height =
+            "auto";
+
+        const viewportHeight =
+            window.visualViewport?.height
+            || window.innerHeight;
+
+        const maximum =
+            Math.min(
+                viewportHeight * 0.38,
+                190
+            );
+
+        input.style.height =
+            Math.min(
+                input.scrollHeight,
+                maximum
+            ) + "px";
+
+        input.style.overflowY =
+            input.scrollHeight > maximum
+                ? "auto"
+                : "hidden";
+    }
+
+    function scrollChatToBottom() {
+        const chat =
+            document.getElementById(
+                "chat"
+            );
+
+        if (!chat) {
+            return;
+        }
+
+        const nearBottom =
+            chat.scrollHeight
+            - chat.scrollTop
+            - chat.clientHeight
+            < 180;
+
+        if (nearBottom) {
+            requestAnimationFrame(
+                function () {
+                    chat.scrollTop =
+                        chat.scrollHeight;
+                }
+            );
+        }
+    }
+
+    function initialize() {
+        setViewportVariables();
+        autoGrowMessageInput();
+
+        window.addEventListener(
+            "resize",
+            setViewportVariables,
+            {
+                passive: true
+            }
+        );
+
+        window.addEventListener(
+            "orientationchange",
+            function () {
+                setTimeout(
+                    setViewportVariables,
+                    180
+                );
+            },
+            {
+                passive: true
+            }
+        );
+
+        if (window.visualViewport) {
+            window.visualViewport
+                .addEventListener(
+                    "resize",
+                    function () {
+                        setViewportVariables();
+                        keepFocusedFieldVisible();
+                    },
+                    {
+                        passive: true
+                    }
+                );
+
+            window.visualViewport
+                .addEventListener(
+                    "scroll",
+                    setViewportVariables,
+                    {
+                        passive: true
+                    }
+                );
+        }
+
+        document.addEventListener(
+            "focusin",
+            function (event) {
+                if (
+                    event.target.matches(
+                        "input, textarea, select, " +
+                        "[contenteditable='true']"
+                    )
+                ) {
+                    keepFocusedFieldVisible();
+                }
+            }
+        );
+
+        document.addEventListener(
+            "input",
+            function (event) {
+                if (
+                    event.target.matches(
+                        "#msg, #messageInput, " +
+                        "#chatInput, " +
+                        "textarea[name='message'], " +
+                        ".chat-input, .message-input"
+                    )
+                ) {
+                    autoGrowMessageInput();
+                }
+            }
+        );
+
+        const chat =
+            document.getElementById(
+                "chat"
+            );
+
+        if (chat) {
+            const observer =
+                new MutationObserver(
+                    scrollChatToBottom
+                );
+
+            observer.observe(
+                chat,
+                {
+                    childList: true,
+                    subtree: true,
+                    characterData: true
+                }
+            );
+        }
+    }
+
+    window.MIMobileComfort = {
+        refresh:
+            function () {
+                setViewportVariables();
+                autoGrowMessageInput();
+            },
+
+        growInput:
+            autoGrowMessageInput
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        initialize();
+    }
+})();
+
+/* MI AI MOBILE COMFORT JS - END */
+</script>
+
+<script>
+/* MI AI SETTINGS ACCORDION COPY MOBILE JS - START */
+
+(function () {
+    "use strict";
+
+    const settingsTranslations = {
+        en: {
+            language: "Language",
+            theme: "Theme",
+            fontSize: "Font Size",
+            copy: "Copy",
+            copied: "Copied!"
+        },
+
+        si: {
+            language: "භාෂාව",
+            theme: "තේමාව",
+            fontSize: "අකුරු ප්‍රමාණය",
+            copy: "පිටපත් කරන්න",
+            copied: "පිටපත් කළා!"
+        },
+
+        ta: {
+            language: "மொழி",
+            theme: "தீம்",
+            fontSize: "எழுத்தளவு",
+            copy: "நகலெடு",
+            copied: "நகலெடுக்கப்பட்டது!"
+        }
+    };
+
+    function language() {
+        return (
+            window.MIAI18N?.getLanguage?.()
+            || localStorage.getItem(
+                "mi_ui_language"
+            )
+            || "en"
+        );
+    }
+
+    function word(key) {
+        const selected =
+            language();
+
+        return (
+            settingsTranslations[selected]?.[key]
+            || settingsTranslations.en[key]
+            || key
+        );
+    }
+
+    function findLanguageControl(panel) {
+        return (
+            panel.querySelector(
+                "#languageSelect"
+            )
+            || panel.querySelector(
+                'select[name*="language" i]'
+            )
+            || Array.from(
+                panel.querySelectorAll(
+                    "select"
+                )
+            ).find(function (select) {
+                const content = [
+                    select.id,
+                    select.name,
+                    select.getAttribute(
+                        "aria-label"
+                    ),
+                    select.previousElementSibling
+                        ?.textContent
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+                return (
+                    content.includes("language")
+                    || content.includes("භාෂා")
+                    || content.includes("மொழி")
+                );
+            })
+        );
+    }
+
+    function findThemeControl(panel) {
+        return (
+            panel.querySelector(
+                "#themeColor"
+            )
+            || panel.querySelector(
+                'input[type="color"]'
+            )
+            || panel.querySelector(
+                '[name*="theme" i]'
+            )
+        );
+    }
+
+    function findFontSizeControl(panel) {
+        return (
+            panel.querySelector(
+                "#fontSize"
+            )
+            || panel.querySelector(
+                "#fontSizeSlider"
+            )
+            || panel.querySelector(
+                "#fontSlider"
+            )
+            || panel.querySelector(
+                'input[type="range"][name*="font" i]'
+            )
+            || Array.from(
+                panel.querySelectorAll(
+                    'input[type="range"]'
+                )
+            ).find(function (input) {
+                const content = [
+                    input.id,
+                    input.name,
+                    input.getAttribute(
+                        "aria-label"
+                    ),
+                    input.previousElementSibling
+                        ?.textContent
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+                return (
+                    content.includes("font")
+                    || content.includes("size")
+                    || content.includes("අකුරු")
+                    || content.includes("எழுத்த")
+                );
+            })
+        );
+    }
+
+    function associatedLabel(
+        panel,
+        control
+    ) {
+        if (!control) {
+            return null;
+        }
+
+        if (control.id) {
+            const label =
+                panel.querySelector(
+                    'label[for="' +
+                    CSS.escape(control.id) +
+                    '"]'
+                );
+
+            if (label) {
+                return label;
+            }
+        }
+
+        const parentLabel =
+            control.closest("label");
+
+        if (parentLabel) {
+            return parentLabel;
+        }
+
+        const previous =
+            control.previousElementSibling;
+
+        if (
+            previous &&
+            previous.tagName === "LABEL"
+        ) {
+            return previous;
+        }
+
+        return null;
+    }
+
+    function createSection(
+        type,
+        icon,
+        title,
+        control,
+        panel
+    ) {
+        const section =
+            document.createElement("section");
+
+        section.className =
+            "mi-settings-section";
+
+        section.dataset.settingsType =
+            type;
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+
+        button.className =
+            "mi-settings-option-button";
+
+        button.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+
+        const left =
+            document.createElement("span");
+
+        left.className =
+            "mi-settings-option-left";
+
+        const iconElement =
+            document.createElement("span");
+
+        iconElement.className =
+            "mi-settings-option-icon";
+
+        iconElement.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        iconElement.textContent = icon;
+
+        const titleElement =
+            document.createElement("span");
+
+        titleElement.className =
+            "mi-settings-option-title";
+
+        titleElement.textContent = title;
+
+        left.append(
+            iconElement,
+            titleElement
+        );
+
+        const arrow =
+            document.createElement("span");
+
+        arrow.className =
+            "mi-settings-arrow";
+
+        arrow.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        arrow.textContent = "⌄";
+
+        button.append(
+            left,
+            arrow
+        );
+
+        const content =
+            document.createElement("div");
+
+        content.className =
+            "mi-settings-option-content";
+
+        const inner =
+            document.createElement("div");
+
+        inner.className =
+            "mi-settings-option-inner";
+
+        const controlBox =
+            document.createElement("div");
+
+        controlBox.className =
+            "mi-settings-control-box";
+
+        const originalLabel =
+            associatedLabel(
+                panel,
+                control
+            );
+
+        if (originalLabel) {
+            const clonedLabel =
+                originalLabel.cloneNode(true);
+
+            clonedLabel.removeAttribute(
+                "for"
+            );
+
+            controlBox.appendChild(
+                clonedLabel
+            );
+
+            originalLabel.classList.add(
+                "mi-settings-original-hidden"
+            );
+        }
+
+        if (control) {
+            const placeholder =
+                document.createComment(
+                    "MI AI original settings control"
+                );
+
+            control.parentNode?.insertBefore(
+                placeholder,
+                control
+            );
+
+            controlBox.appendChild(
+                control
+            );
+        }
+        else {
+            const missing =
+                document.createElement("div");
+
+            missing.textContent =
+                "Control unavailable";
+
+            missing.style.opacity =
+                "0.65";
+
+            controlBox.appendChild(
+                missing
+            );
+        }
+
+        inner.appendChild(
+            controlBox
+        );
+
+        content.appendChild(
+            inner
+        );
+
+        section.append(
+            button,
+            content
+        );
+
+        button.addEventListener(
+            "click",
+            function () {
+                const accordion =
+                    section.parentElement;
+
+                const willOpen =
+                    !section.classList
+                        .contains("mi-open");
+
+                accordion
+                    .querySelectorAll(
+                        ".mi-settings-section"
+                    )
+                    .forEach(
+                        function (item) {
+                            item.classList.remove(
+                                "mi-open"
+                            );
+
+                            item.querySelector(
+                                ".mi-settings-option-button"
+                            )?.setAttribute(
+                                "aria-expanded",
+                                "false"
+                            );
+                        }
+                    );
+
+                if (willOpen) {
+                    section.classList.add(
+                        "mi-open"
+                    );
+
+                    button.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+                }
+            }
+        );
+
+        return section;
+    }
+
+    function setupSettingsAccordion() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return false;
+        }
+
+        let accordion =
+            panel.querySelector(
+                ".mi-settings-accordion"
+            );
+
+        if (accordion) {
+            updateSettingsTitles();
+            return true;
+        }
+
+        const languageControl =
+            findLanguageControl(panel);
+
+        const themeControl =
+            findThemeControl(panel);
+
+        const fontControl =
+            findFontSizeControl(panel);
+
+        accordion =
+            document.createElement("div");
+
+        accordion.className =
+            "mi-settings-accordion";
+
+        accordion.append(
+            createSection(
+                "language",
+                "🌐",
+                word("language"),
+                languageControl,
+                panel
+            ),
+
+            createSection(
+                "theme",
+                "🎨",
+                word("theme"),
+                themeControl,
+                panel
+            ),
+
+            createSection(
+                "fontSize",
+                "Aa",
+                word("fontSize"),
+                fontControl,
+                panel
+            )
+        );
+
+        const heading =
+            panel.querySelector(
+                "h1, h2, h3"
+            );
+
+        if (heading) {
+            heading.insertAdjacentElement(
+                "afterend",
+                accordion
+            );
+        }
+        else {
+            panel.prepend(
+                accordion
+            );
+        }
+
+        /*
+          Hide old labels/wrappers left empty after
+          moving the controls.
+        */
+        Array.from(panel.children)
+            .forEach(function (child) {
+                if (
+                    child === accordion
+                    || child === heading
+                    || child.id ===
+                        "settingsCloseBtn"
+                ) {
+                    return;
+                }
+
+                if (
+                    child.matches(
+                        "label"
+                    )
+                    && !child.querySelector(
+                        "input, select"
+                    )
+                ) {
+                    child.classList.add(
+                        "mi-settings-original-hidden"
+                    );
+                }
+            });
+
+        return true;
+    }
+
+    function updateSettingsTitles() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return;
+        }
+
+        const titles = {
+            language:
+                word("language"),
+
+            theme:
+                word("theme"),
+
+            fontSize:
+                word("fontSize")
+        };
+
+        panel.querySelectorAll(
+            ".mi-settings-section"
+        ).forEach(function (section) {
+            const type =
+                section.dataset
+                    .settingsType;
+
+            const title =
+                section.querySelector(
+                    ".mi-settings-option-title"
+                );
+
+            if (
+                title &&
+                titles[type]
+            ) {
+                title.textContent =
+                    titles[type];
+            }
+        });
+    }
+
+    function cleanReplyText(aiBubble) {
+        const clone =
+            aiBubble.cloneNode(true);
+
+        clone.querySelectorAll(
+            "button, " +
+            ".aiCopyButton, " +
+            ".copy-btn, " +
+            ".copy-button, " +
+            ".mi-ai-copy-below, " +
+            ".mi-ai-functional-copy, " +
+            "[data-action='copy']"
+        ).forEach(function (element) {
+            element.remove();
+        });
+
+        return String(
+            clone.innerText
+            || clone.textContent
+            || ""
+        ).trim();
+    }
+
+    async function copyText(value) {
+        if (!value) {
+            return false;
+        }
+
+        try {
+            await navigator
+                .clipboard
+                .writeText(value);
+
+            return true;
+        }
+        catch (error) {
+            const textarea =
+                document.createElement(
+                    "textarea"
+                );
+
+            textarea.value =
+                value;
+
+            textarea.style.position =
+                "fixed";
+
+            textarea.style.left =
+                "-9999px";
+
+            textarea.style.opacity =
+                "0";
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.focus();
+            textarea.select();
+
+            const success =
+                document.execCommand(
+                    "copy"
+                );
+
+            textarea.remove();
+
+            return success;
+        }
+    }
+
+    function showCopiedMessage() {
+        const message =
+            word("copied");
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(
+                message
+            );
+
+            return;
+        }
+
+        console.log(
+            "[MI AI]",
+            message
+        );
+    }
+
+    function markCopyButtons(root) {
+        const scope =
+            root instanceof Element
+                ? root
+                : document;
+
+        scope.querySelectorAll(
+            "#chat > .ai"
+        ).forEach(function (aiBubble) {
+            let copyButton =
+                Array.from(
+                    aiBubble.querySelectorAll(
+                        "button"
+                    )
+                ).find(function (button) {
+                    const combined = [
+                        button.className,
+                        button.id,
+                        button.dataset.action,
+                        button.title,
+                        button.getAttribute(
+                            "aria-label"
+                        ),
+                        button.textContent
+                    ]
+                        .join(" ")
+                        .toLowerCase();
+
+                    return (
+                        combined.includes("copy")
+                        || combined.includes(
+                            "පිටපත්"
+                        )
+                        || combined.includes(
+                            "நகலெடு"
+                        )
+                        || combined.includes(
+                            "⧉"
+                        )
+                        || combined.includes(
+                            "📋"
+                        )
+                    );
+                });
+
+            if (!copyButton) {
+                copyButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                copyButton.type =
+                    "button";
+
+                copyButton.textContent =
+                    "⧉";
+
+                aiBubble.appendChild(
+                    copyButton
+                );
+            }
+
+            copyButton.classList.add(
+                "mi-ai-functional-copy"
+            );
+
+            copyButton.dataset.action =
+                "copy-ai-reply";
+
+            copyButton.title =
+                word("copy");
+
+            copyButton.setAttribute(
+                "aria-label",
+                word("copy")
+            );
+        });
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const copyButton =
+                event.target.closest(
+                    ".mi-ai-functional-copy, " +
+                    "[data-action='copy-ai-reply']"
+                );
+
+            if (!copyButton) {
+                return;
+            }
+
+            const aiBubble =
+                copyButton.closest(
+                    "#chat > .ai, " +
+                    ".ai-message, " +
+                    ".assistant-message"
+                );
+
+            if (!aiBubble) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            const replyText =
+                cleanReplyText(
+                    aiBubble
+                );
+
+            copyText(replyText)
+                .then(function (success) {
+                    if (success) {
+                        showCopiedMessage();
+
+                        const oldText =
+                            copyButton.textContent;
+
+                        copyButton.textContent =
+                            "✓";
+
+                        setTimeout(
+                            function () {
+                                copyButton.textContent =
+                                    oldText || "⧉";
+                            },
+                            1000
+                        );
+                    }
+                });
+        },
+        true
+    );
+
+    function refresh() {
+        setupSettingsAccordion();
+        updateSettingsTitles();
+        markCopyButtons(document);
+    }
+
+    function start() {
+        refresh();
+
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    let shouldRefresh =
+                        false;
+
+                    for (
+                        const mutation
+                        of mutations
+                    ) {
+                        if (
+                            mutation.addedNodes
+                                .length
+                        ) {
+                            shouldRefresh =
+                                true;
+
+                            break;
+                        }
+                    }
+
+                    if (shouldRefresh) {
+                        requestAnimationFrame(
+                            refresh
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        document.addEventListener(
+            "change",
+            function (event) {
+                if (
+                    event.target.id ===
+                        "languageSelect"
+                ) {
+                    setTimeout(
+                        updateSettingsTitles,
+                        20
+                    );
+                }
+            }
+        );
+
+        window.addEventListener(
+            "mi-language-changed",
+            updateSettingsTitles
+        );
+    }
+
+    window.MISettingsAccordion = {
+        refresh:
+            refresh,
+
+        open:
+            function (type) {
+                const section =
+                    document.querySelector(
+                        '.mi-settings-section' +
+                        '[data-settings-type="' +
+                        type +
+                        '"]'
+                    );
+
+                section
+                    ?.querySelector(
+                        ".mi-settings-option-button"
+                    )
+                    ?.click();
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SETTINGS ACCORDION COPY MOBILE JS - END */
+</script>
+
+
+
+<script>
+/* MI AI IOS SELECT AND ICON SYSTEM JS - START */
+
+(function () {
+    "use strict";
+
+    const enhancedSelects =
+        new WeakSet();
+
+    let activeSelect = null;
+    let activeTrigger = null;
+    let popup = null;
+
+    const icons = {
+        plus:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+
+        support:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><path d="M4 13a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2"/><path d="M20 13a2 2 0 0 1-2 2h-1V9h1a2 2 0 0 1 2 2"/><path d="M17 18c-1 1-2.5 1.5-5 1.5"/></svg>',
+
+        settings:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>',
+
+        logout:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/></svg>',
+
+        close:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+
+        send:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg>',
+
+        copy:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
+
+        share:
+            '<svg class="mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 12v7h14v-7"/></svg>',
+
+        chevron:
+            '<svg class="mi-ios-select-chevron mi-ios-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"/></svg>'
+    };
+
+    function ensurePopup() {
+        if (popup) {
+            return popup;
+        }
+
+        popup =
+            document.createElement("div");
+
+        popup.id =
+            "miIosSelectPopup";
+
+        popup.setAttribute(
+            "role",
+            "listbox"
+        );
+
+        document.body.appendChild(
+            popup
+        );
+
+        return popup;
+    }
+
+    function closePopup() {
+        if (popup) {
+            popup.classList.remove(
+                "mi-open"
+            );
+
+            popup.replaceChildren();
+        }
+
+        if (activeTrigger) {
+            activeTrigger.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+
+        activeSelect = null;
+        activeTrigger = null;
+    }
+
+    function positionPopup(trigger) {
+        const menu = ensurePopup();
+        const rect =
+            trigger.getBoundingClientRect();
+
+        const margin = 8;
+
+        const width =
+            Math.min(
+                Math.max(
+                    rect.width,
+                    200
+                ),
+                window.innerWidth
+                    - margin * 2
+            );
+
+        menu.style.width =
+            width + "px";
+
+        menu.style.left =
+            Math.max(
+                margin,
+                Math.min(
+                    rect.left,
+                    window.innerWidth
+                        - width
+                        - margin
+                )
+            ) + "px";
+
+        menu.style.top =
+            rect.bottom + 8 + "px";
+
+        requestAnimationFrame(
+            function () {
+                const menuRect =
+                    menu.getBoundingClientRect();
+
+                if (
+                    menuRect.bottom >
+                    window.innerHeight - margin
+                ) {
+                    const above =
+                        rect.top
+                        - menuRect.height
+                        - 8;
+
+                    menu.style.top =
+                        Math.max(
+                            margin,
+                            above
+                        ) + "px";
+                }
+            }
+        );
+    }
+
+    function rebuildPopup(
+        select,
+        trigger
+    ) {
+        const menu = ensurePopup();
+
+        menu.replaceChildren();
+
+        Array.from(
+            select.options
+        ).forEach(function (
+            option,
+            index
+        ) {
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "mi-ios-popup-option";
+
+            button.setAttribute(
+                "role",
+                "option"
+            );
+
+            const isSelected =
+                index ===
+                select.selectedIndex;
+
+            button.classList.toggle(
+                "mi-selected",
+                isSelected
+            );
+
+            button.setAttribute(
+                "aria-selected",
+                String(isSelected)
+            );
+
+            const label =
+                document.createElement(
+                    "span"
+                );
+
+            label.className =
+                "mi-ios-option-label";
+
+            label.textContent =
+                option.textContent;
+
+            const check =
+                document.createElement(
+                    "span"
+                );
+
+            check.className =
+                "mi-ios-option-check";
+
+            check.textContent = "✓";
+
+            check.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            button.append(
+                label,
+                check
+            );
+
+            button.addEventListener(
+                "click",
+                function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    select.selectedIndex =
+                        index;
+
+                    select.dispatchEvent(
+                        new Event(
+                            "input",
+                            {
+                                bubbles: true
+                            }
+                        )
+                    );
+
+                    select.dispatchEvent(
+                        new Event(
+                            "change",
+                            {
+                                bubbles: true
+                            }
+                        )
+                    );
+
+                    updateTrigger(
+                        select,
+                        trigger
+                    );
+
+                    closePopup();
+
+                    trigger.focus();
+                }
+            );
+
+            menu.appendChild(
+                button
+            );
+        });
+    }
+
+    function updateTrigger(
+        select,
+        trigger
+    ) {
+        const selected =
+            select.options[
+                select.selectedIndex
+            ] || select.options[0];
+
+        const text =
+            trigger.querySelector(
+                ".mi-ios-select-trigger-text"
+            );
+
+        if (text) {
+            text.textContent =
+                selected?.textContent
+                || "";
+        }
+
+        trigger.disabled =
+            select.disabled;
+    }
+
+    function openPopup(
+        select,
+        trigger
+    ) {
+        closePopup();
+
+        activeSelect = select;
+        activeTrigger = trigger;
+
+        rebuildPopup(
+            select,
+            trigger
+        );
+
+        positionPopup(trigger);
+
+        const menu = ensurePopup();
+
+        menu.classList.add(
+            "mi-open"
+        );
+
+        trigger.setAttribute(
+            "aria-expanded",
+            "true"
+        );
+
+        requestAnimationFrame(
+            function () {
+                menu.querySelector(
+                    ".mi-selected"
+                )?.focus();
+            }
+        );
+    }
+
+    function enhanceSelect(select) {
+        if (
+            !(select instanceof
+                HTMLSelectElement)
+            || enhancedSelects.has(select)
+        ) {
+            return;
+        }
+
+        enhancedSelects.add(select);
+
+        select.dataset.miIosReady =
+            "true";
+
+        const shell =
+            document.createElement(
+                "div"
+            );
+
+        shell.className =
+            "mi-ios-select-shell";
+
+        select.parentNode.insertBefore(
+            shell,
+            select
+        );
+
+        shell.appendChild(select);
+
+        const trigger =
+            document.createElement(
+                "button"
+            );
+
+        trigger.type = "button";
+
+        trigger.className =
+            "mi-ios-select-trigger";
+
+        trigger.setAttribute(
+            "aria-haspopup",
+            "listbox"
+        );
+
+        trigger.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+
+        const text =
+            document.createElement(
+                "span"
+            );
+
+        text.className =
+            "mi-ios-select-trigger-text";
+
+        const icon =
+            document.createElement(
+                "span"
+            );
+
+        icon.className =
+            "mi-ios-icon-wrap";
+
+        icon.innerHTML =
+            icons.chevron;
+
+        trigger.append(
+            text,
+            icon
+        );
+
+        shell.appendChild(trigger);
+
+        updateTrigger(
+            select,
+            trigger
+        );
+
+        trigger.addEventListener(
+            "click",
+            function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (
+                    activeSelect === select
+                ) {
+                    closePopup();
+                }
+                else {
+                    openPopup(
+                        select,
+                        trigger
+                    );
+                }
+            }
+        );
+
+        select.addEventListener(
+            "change",
+            function () {
+                updateTrigger(
+                    select,
+                    trigger
+                );
+            }
+        );
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    updateTrigger(
+                        select,
+                        trigger
+                    );
+
+                    if (
+                        activeSelect ===
+                        select
+                    ) {
+                        rebuildPopup(
+                            select,
+                            trigger
+                        );
+
+                        positionPopup(
+                            trigger
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            select,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true,
+                attributes: true
+            }
+        );
+    }
+
+    function scanSelects(root) {
+        const scope =
+            root instanceof Element
+                ? root
+                : document;
+
+        if (
+            scope instanceof
+            HTMLSelectElement
+        ) {
+            enhanceSelect(scope);
+        }
+
+        scope.querySelectorAll(
+            "select"
+        ).forEach(
+            enhanceSelect
+        );
+    }
+
+    function replaceLeadingIcon(
+        element,
+        svg
+    ) {
+        if (
+            !element
+            || element.dataset
+                .miIosIconApplied ===
+                "true"
+        ) {
+            return;
+        }
+
+        const originalText =
+            element.textContent
+                .replace(
+                    /^[^\p{L}\p{N}]+/u,
+                    ""
+                )
+                .trim();
+
+        element.replaceChildren();
+
+        const label =
+            document.createElement(
+                "span"
+            );
+
+        label.className =
+            "mi-ios-icon-label";
+
+        const iconWrap =
+            document.createElement(
+                "span"
+            );
+
+        iconWrap.className =
+            "mi-ios-icon-wrap";
+
+        iconWrap.innerHTML = svg;
+
+        const text =
+            document.createElement(
+                "span"
+            );
+
+        text.textContent =
+            originalText;
+
+        label.append(
+            iconWrap,
+            text
+        );
+
+        element.appendChild(label);
+
+        element.dataset
+            .miIosIconApplied =
+            "true";
+    }
+
+    function applyIcons() {
+        replaceLeadingIcon(
+            document.querySelector(
+                "#newChatBtn, " +
+                "#sidebar button[onclick*='newChat']"
+            ),
+            icons.plus
+        );
+
+        replaceLeadingIcon(
+            document.querySelector(
+                "#supportBtn"
+            ),
+            icons.support
+        );
+
+        replaceLeadingIcon(
+            document.querySelector(
+                "#settingsBtn"
+            ),
+            icons.settings
+        );
+
+        replaceLeadingIcon(
+            document.querySelector(
+                "#logoutBtn, " +
+                "button[onclick*='logout'], " +
+                "button[onclick*='Logout']"
+            ),
+            icons.logout
+        );
+
+        document
+            .querySelectorAll(
+                "#settingsCloseBtn, " +
+                ".close-btn, " +
+                ".modal-close"
+            )
+            .forEach(function (button) {
+                if (
+                    button.dataset
+                        .miIosIconApplied ===
+                    "true"
+                ) {
+                    return;
+                }
+
+                button.innerHTML =
+                    icons.close;
+
+                button.dataset
+                    .miIosIconApplied =
+                    "true";
+            });
+
+        document
+            .querySelectorAll(
+                "#sendBtn, " +
+                "#sendButton, " +
+                ".send-btn"
+            )
+            .forEach(function (button) {
+                if (
+                    button.dataset
+                        .miIosIconApplied ===
+                    "true"
+                ) {
+                    return;
+                }
+
+                button.innerHTML =
+                    icons.send;
+
+                button.dataset
+                    .miIosIconApplied =
+                    "true";
+            });
+
+        document
+            .querySelectorAll(
+                ".mi-ai-functional-copy, " +
+                ".mi-ai-copy-below, " +
+                ".aiCopyButton, " +
+                ".copy-btn, " +
+                ".copy-button"
+            )
+            .forEach(function (button) {
+                if (
+                    button.dataset
+                        .miIosIconApplied ===
+                    "true"
+                ) {
+                    return;
+                }
+
+                button.innerHTML =
+                    icons.copy;
+
+                button.dataset
+                    .miIosIconApplied =
+                    "true";
+            });
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            if (
+                !event.target.closest(
+                    ".mi-ios-select-trigger"
+                )
+                && !event.target.closest(
+                    "#miIosSelectPopup"
+                )
+            ) {
+                closePopup();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                closePopup();
+            }
+        }
+    );
+
+    window.addEventListener(
+        "resize",
+        function () {
+            if (
+                activeTrigger
+                && popup?.classList
+                    .contains("mi-open")
+            ) {
+                positionPopup(
+                    activeTrigger
+                );
+            }
+        }
+    );
+
+    window.addEventListener(
+        "scroll",
+        function () {
+            if (
+                activeTrigger
+                && popup?.classList
+                    .contains("mi-open")
+            ) {
+                positionPopup(
+                    activeTrigger
+                );
+            }
+        },
+        true
+    );
+
+    function refresh() {
+        scanSelects(document);
+        applyIcons();
+    }
+
+    function start() {
+        ensurePopup();
+        refresh();
+
+        let observerRefreshPending =
+            false;
+
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    mutations.forEach(
+                        function (mutation) {
+                            mutation.addedNodes
+                                .forEach(
+                                    function (node) {
+                                        if (
+                                            node.nodeType ===
+                                            Node.ELEMENT_NODE
+                                        ) {
+                                            scanSelects(
+                                                node
+                                            );
+                                        }
+                                    }
+                                );
+                        }
+                    );
+
+                    if (observerRefreshPending) {
+                        return;
+                    }
+
+                    observerRefreshPending =
+                        true;
+
+                    requestAnimationFrame(
+                        function () {
+                            observerRefreshPending =
+                                false;
+
+                            applyIcons();
+                        }
+                    );
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+    }
+
+    window.MIIosControls = {
+        refresh: refresh,
+        closeDropdown: closePopup
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI IOS SELECT AND ICON SYSTEM JS - END */
+</script>
+
+<script>
+/* MI AI SHARE MODAL CANCEL ONLY CLOSE - START */
+
+(function () {
+    "use strict";
+
+    const modalSelectors = [
+        "#shareModal",
+        "#shareDialog",
+        "#sharePopup",
+        ".share-modal",
+        ".share-dialog",
+        ".share-popup",
+        "[data-share-modal]"
+    ].join(",");
+
+    const closeFunctionNames = [
+        "closeShareModal",
+        "hideShareModal",
+        "closeShareDialog",
+        "hideShareDialog",
+        "closeSharePopup",
+        "hideSharePopup"
+    ];
+
+    let cancelCloseAllowed = false;
+    let shareModalWasOpen = false;
+    let repairPending = false;
+
+    function getShareModal() {
+        return document.querySelector(
+            modalSelectors
+        );
+    }
+
+    function elementText(element) {
+        return String(
+            element?.textContent
+            || element?.value
+            || element?.getAttribute(
+                "aria-label"
+            )
+            || element?.getAttribute(
+                "title"
+            )
+            || ""
+        )
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function isCancelButton(element) {
+        const button =
+            element?.closest?.(
+                "button, input[type='button'], " +
+                "input[type='reset'], [role='button']"
+            );
+
+        if (!button) {
+            return false;
+        }
+
+        const details = [
+            elementText(button),
+            button.id,
+            button.className,
+            button.dataset.action,
+            button.getAttribute("onclick")
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("cancel")
+            || details.includes("අවලංගු")
+            || details.includes("ரத்து")
+            || details.includes("close-share")
+            || details.includes("cancel-share")
+        );
+    }
+
+    function isGenerateButton(element) {
+        const button =
+            element?.closest?.(
+                "button, input[type='button'], " +
+                "input[type='submit'], [role='button']"
+            );
+
+        if (!button) {
+            return false;
+        }
+
+        const details = [
+            elementText(button),
+            button.id,
+            button.className,
+            button.dataset.action,
+            button.getAttribute("onclick")
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("generate link")
+            || details.includes("create link")
+            || details.includes("generate-share")
+            || details.includes("create-share")
+            || details.includes("link සාද")
+            || details.includes("இணைப்பை உருவாக்க")
+        );
+    }
+
+    function modalLooksOpen(modal) {
+        if (!modal) {
+            return false;
+        }
+
+        const style =
+            window.getComputedStyle(modal);
+
+        return (
+            !modal.hidden
+            && style.display !== "none"
+            && style.visibility !== "hidden"
+            && style.opacity !== "0"
+        );
+    }
+
+    function forceModalOpen(modal) {
+        if (
+            !modal
+            || cancelCloseAllowed
+            || !shareModalWasOpen
+        ) {
+            return;
+        }
+
+        modal.hidden = false;
+
+        modal.removeAttribute(
+            "aria-hidden"
+        );
+
+        modal.setAttribute(
+            "aria-modal",
+            "true"
+        );
+
+        modal.classList.add(
+            "open",
+            "show",
+            "active"
+        );
+
+        if (
+            modal.style.display === "none"
+        ) {
+            modal.style.display = "";
+        }
+
+        if (
+            window.getComputedStyle(modal)
+                .display === "none"
+        ) {
+            modal.style.setProperty(
+                "display",
+                "flex",
+                "important"
+            );
+        }
+
+        modal.style.setProperty(
+            "visibility",
+            "visible",
+            "important"
+        );
+
+        modal.style.setProperty(
+            "opacity",
+            "1",
+            "important"
+        );
+    }
+
+    function scheduleRepair() {
+        if (
+            repairPending
+            || cancelCloseAllowed
+            || !shareModalWasOpen
+        ) {
+            return;
+        }
+
+        repairPending = true;
+
+        requestAnimationFrame(
+            function () {
+                repairPending = false;
+
+                forceModalOpen(
+                    getShareModal()
+                );
+            }
+        );
+    }
+
+    function wrapCloseFunctions() {
+        closeFunctionNames.forEach(
+            function (name) {
+                const original =
+                    window[name];
+
+                if (
+                    typeof original !==
+                    "function"
+                    || original
+                        .__miCancelOnlyWrapped
+                ) {
+                    return;
+                }
+
+                const wrapped =
+                    function (...args) {
+                        if (
+                            !cancelCloseAllowed
+                            && shareModalWasOpen
+                        ) {
+                            scheduleRepair();
+                            return false;
+                        }
+
+                        const result =
+                            original.apply(
+                                this,
+                                args
+                            );
+
+                        cancelCloseAllowed =
+                            false;
+
+                        shareModalWasOpen =
+                            false;
+
+                        return result;
+                    };
+
+                wrapped.__miCancelOnlyWrapped =
+                    true;
+
+                wrapped.__miOriginal =
+                    original;
+
+                window[name] = wrapped;
+            }
+        );
+    }
+
+    function closeFromCancel(button) {
+        const modal =
+            button.closest(
+                modalSelectors
+            )
+            || getShareModal();
+
+        cancelCloseAllowed = true;
+        shareModalWasOpen = false;
+
+        /*
+          First allow the existing Cancel handler to run.
+          If no existing handler closes it, close safely here.
+        */
+        setTimeout(
+            function () {
+                if (
+                    modal
+                    && modalLooksOpen(modal)
+                ) {
+                    modal.classList.remove(
+                        "open",
+                        "show",
+                        "active"
+                    );
+
+                    modal.hidden = true;
+
+                    modal.setAttribute(
+                        "aria-hidden",
+                        "true"
+                    );
+
+                    modal.style.setProperty(
+                        "display",
+                        "none",
+                        "important"
+                    );
+                }
+
+                cancelCloseAllowed =
+                    false;
+            },
+            30
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const modal =
+                getShareModal();
+
+            if (!modal) {
+                return;
+            }
+
+            if (modalLooksOpen(modal)) {
+                shareModalWasOpen = true;
+            }
+
+            if (isCancelButton(event.target)) {
+                closeFromCancel(
+                    event.target.closest(
+                        "button, input, [role='button']"
+                    )
+                );
+
+                return;
+            }
+
+            /*
+              Generate Link must continue working,
+              but it must not close the modal.
+            */
+            if (isGenerateButton(event.target)) {
+                cancelCloseAllowed = false;
+                shareModalWasOpen = true;
+
+                setTimeout(
+                    scheduleRepair,
+                    0
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    100
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    400
+                );
+
+                return;
+            }
+
+            /*
+              Clicking the backdrop/outside must not close it.
+            */
+            if (
+                shareModalWasOpen
+                && !modal.contains(event.target)
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            const modal =
+                getShareModal();
+
+            if (
+                modal
+                && modalLooksOpen(modal)
+            ) {
+                shareModalWasOpen = true;
+
+                if (
+                    !modal.contains(event.target)
+                ) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                }
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.key !== "Escape"
+            ) {
+                return;
+            }
+
+            const modal =
+                getShareModal();
+
+            if (
+                modal
+                && modalLooksOpen(modal)
+            ) {
+                shareModalWasOpen = true;
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    function start() {
+        wrapCloseFunctions();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    wrapCloseFunctions();
+
+                    const modal =
+                        getShareModal();
+
+                    if (!modal) {
+                        return;
+                    }
+
+                    if (modalLooksOpen(modal)) {
+                        shareModalWasOpen =
+                            true;
+
+                        return;
+                    }
+
+                    if (
+                        shareModalWasOpen
+                        && !cancelCloseAllowed
+                    ) {
+                        scheduleRepair();
+                    }
+                }
+            );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "class",
+                    "style",
+                    "hidden",
+                    "aria-hidden"
+                ]
+            }
+        );
+
+        setInterval(
+            wrapCloseFunctions,
+            1000
+        );
+    }
+
+    window.MIShareModalLock = {
+        isLocked:
+            function () {
+                return (
+                    shareModalWasOpen
+                    && !cancelCloseAllowed
+                );
+            },
+
+        refresh:
+            function () {
+                wrapCloseFunctions();
+                scheduleRepair();
+            },
+
+        allowCancelClose:
+            function () {
+                cancelCloseAllowed = true;
+            }
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SHARE MODAL CANCEL ONLY CLOSE - END */
+</script>
+
+<script>
+/* MI AI SHARE MODAL STAY OPEN - START */
+
+(function () {
+    "use strict";
+
+    const modalSelectors = [
+        "#shareModal",
+        "#shareDialog",
+        "#sharePopup",
+        ".share-modal",
+        ".share-dialog",
+        ".share-popup",
+        "[data-share-modal]"
+    ].join(",");
+
+    let modalWasOpen = false;
+    let allowCancelClose = false;
+    let repairPending = false;
+
+    function getModal() {
+        return document.querySelector(
+            modalSelectors
+        );
+    }
+
+    function isVisible(element) {
+        if (!element) {
+            return false;
+        }
+
+        const style =
+            window.getComputedStyle(element);
+
+        return (
+            !element.hidden &&
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            style.opacity !== "0"
+        );
+    }
+
+    function textOf(element) {
+        return String(
+            element?.textContent ||
+            element?.value ||
+            element?.getAttribute("aria-label") ||
+            element?.getAttribute("title") ||
+            ""
+        )
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function isCancelControl(element) {
+        const control =
+            element?.closest?.(
+                "button, input, [role='button']"
+            );
+
+        if (!control) {
+            return false;
+        }
+
+        const details = [
+            textOf(control),
+            control.id,
+            control.className,
+            control.dataset.action,
+            control.getAttribute("onclick")
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("cancel") ||
+            details.includes("අවලංගු") ||
+            details.includes("ரத்து")
+        );
+    }
+
+    function isShareControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                modalSelectors + ", " +
+                "#miIosSelectPopup, " +
+                ".mi-ios-popup-option, " +
+                ".mi-ios-select-trigger"
+            )
+        );
+    }
+
+    function forceOpen() {
+        const modal = getModal();
+
+        if (
+            !modal ||
+            allowCancelClose ||
+            !modalWasOpen
+        ) {
+            return;
+        }
+
+        modal.hidden = false;
+
+        modal.removeAttribute(
+            "aria-hidden"
+        );
+
+        modal.setAttribute(
+            "aria-modal",
+            "true"
+        );
+
+        modal.classList.add(
+            "open",
+            "show",
+            "active"
+        );
+
+        modal.style.setProperty(
+            "display",
+            "flex",
+            "important"
+        );
+
+        modal.style.setProperty(
+            "visibility",
+            "visible",
+            "important"
+        );
+
+        modal.style.setProperty(
+            "opacity",
+            "1",
+            "important"
+        );
+    }
+
+    function scheduleRepair() {
+        if (
+            repairPending ||
+            allowCancelClose ||
+            !modalWasOpen
+        ) {
+            return;
+        }
+
+        repairPending = true;
+
+        requestAnimationFrame(
+            function () {
+                repairPending = false;
+                forceOpen();
+            }
+        );
+
+        setTimeout(forceOpen, 50);
+        setTimeout(forceOpen, 180);
+        setTimeout(forceOpen, 450);
+    }
+
+    function rememberOpenModal() {
+        const modal = getModal();
+
+        if (modal && isVisible(modal)) {
+            modalWasOpen = true;
+            allowCancelClose = false;
+        }
+    }
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            rememberOpenModal();
+
+            if (isCancelControl(event.target)) {
+                allowCancelClose = true;
+                modalWasOpen = false;
+                return;
+            }
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            rememberOpenModal();
+
+            if (isCancelControl(event.target)) {
+                allowCancelClose = true;
+                modalWasOpen = false;
+                return;
+            }
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+
+                setTimeout(
+                    scheduleRepair,
+                    0
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    100
+                );
+
+                setTimeout(
+                    scheduleRepair,
+                    300
+                );
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        function (event) {
+            rememberOpenModal();
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "input",
+        function (event) {
+            rememberOpenModal();
+
+            if (
+                modalWasOpen &&
+                isShareControl(event.target)
+            ) {
+                allowCancelClose = false;
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key !== "Escape") {
+                return;
+            }
+
+            const modal = getModal();
+
+            if (
+                modal &&
+                isVisible(modal)
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                modalWasOpen = true;
+                allowCancelClose = false;
+
+                scheduleRepair();
+            }
+        },
+        true
+    );
+
+    const observer =
+        new MutationObserver(
+            function () {
+                const modal = getModal();
+
+                if (!modal) {
+                    return;
+                }
+
+                if (isVisible(modal)) {
+                    modalWasOpen = true;
+                    return;
+                }
+
+                if (
+                    modalWasOpen &&
+                    !allowCancelClose
+                ) {
+                    scheduleRepair();
+                }
+            }
+        );
+
+    function start() {
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "class",
+                    "style",
+                    "hidden",
+                    "aria-hidden"
+                ]
+            }
+        );
+    }
+
+    window.MIShareModalStayOpen = {
+        refresh: scheduleRepair,
+
+        isLocked: function () {
+            return (
+                modalWasOpen &&
+                !allowCancelClose
+            );
+        }
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SHARE MODAL STAY OPEN - END */
+</script>
+
+<script>
+/* MI AI ANY LANGUAGE TRANSLATION - START */
+
+(function () {
+    "use strict";
+
+    const CACHE_PREFIX =
+        "mi_any_language_cache_v1_";
+
+    const SOURCE_LANGUAGE =
+        "English";
+
+    const excludedSelector = [
+        "#header",
+        "#chat",
+        "script",
+        "style",
+        "code",
+        "pre",
+        "svg",
+        "path",
+        "noscript",
+        "[data-mi-no-translate='true']",
+        ".mi-no-translate"
+    ].join(",");
+
+    const pendingRequests =
+        new Map();
+
+    let activeLanguage =
+        "en";
+
+    let refreshTimer =
+        null;
+
+    let observerPaused =
+        false;
+
+    let translationRunning =
+        false;
+
+    function selectedLanguageCode() {
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const selected =
+            selector?.value;
+
+        const stored =
+            localStorage.getItem(
+                "mi_ui_language"
+            );
+
+        const accountStored =
+            typeof getStoredLanguageCode ===
+                "function"
+                ? getStoredLanguageCode()
+                : null;
+
+        return String(
+            selected ||
+            accountStored ||
+            stored ||
+            "en"
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function selectedLanguageName(code) {
+        if (
+            Array.isArray(
+                window.SUPPORTED_LANGUAGES
+            )
+        ) {
+            const entry =
+                window.SUPPORTED_LANGUAGES.find(
+                    function (item) {
+                        return (
+                            String(
+                                item.code
+                            ).toLowerCase() ===
+                            code
+                        );
+                    }
+                );
+
+            if (entry?.label) {
+                return entry.label;
+            }
+        }
+
+        if (
+            typeof SUPPORTED_LANGUAGES !==
+                "undefined" &&
+            Array.isArray(
+                SUPPORTED_LANGUAGES
+            )
+        ) {
+            const entry =
+                SUPPORTED_LANGUAGES.find(
+                    function (item) {
+                        return (
+                            String(
+                                item.code
+                            ).toLowerCase() ===
+                            code
+                        );
+                    }
+                );
+
+            if (entry?.label) {
+                return entry.label;
+            }
+        }
+
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const option =
+            selector?.options[
+                selector.selectedIndex
+            ];
+
+        return (
+            option?.textContent?.trim() ||
+            code
+        );
+    }
+
+    function isEnglish(code) {
+        return (
+            code === "en" ||
+            code.startsWith("en-")
+        );
+    }
+
+    function normalizeText(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function cacheKey(languageCode) {
+        return (
+            CACHE_PREFIX +
+            languageCode
+        );
+    }
+
+    function readCache(languageCode) {
+        try {
+            const raw =
+                localStorage.getItem(
+                    cacheKey(languageCode)
+                );
+
+            if (!raw) {
+                return {};
+            }
+
+            const parsed =
+                JSON.parse(raw);
+
+            return (
+                parsed &&
+                typeof parsed ===
+                    "object"
+            )
+                ? parsed
+                : {};
+        }
+        catch (error) {
+            return {};
+        }
+    }
+
+    function writeCache(
+        languageCode,
+        dictionary
+    ) {
+        try {
+            localStorage.setItem(
+                cacheKey(languageCode),
+                JSON.stringify(dictionary)
+            );
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Translation] Cache write failed.",
+                error
+            );
+        }
+    }
+
+    function shouldSkipElement(element) {
+        if (!element) {
+            return true;
+        }
+
+        return Boolean(
+            element.closest(
+                excludedSelector
+            )
+        );
+    }
+
+    function meaningfulText(value) {
+        const text =
+            normalizeText(value);
+
+        if (!text) {
+            return false;
+        }
+
+        if (/^[\d\s.,:;!?%+\-=/\\|()[\]{}<>]+$/.test(text)) {
+            return false;
+        }
+
+        if (/^https?:\/\//i.test(text)) {
+            return false;
+        }
+
+        if (/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(text)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function rememberOriginalText(node) {
+        const parent =
+            node.parentElement;
+
+        if (!parent) {
+            return "";
+        }
+
+        if (
+            !node.__miOriginalText
+        ) {
+            node.__miOriginalText =
+                node.nodeValue;
+        }
+
+        return normalizeText(
+            node.__miOriginalText
+        );
+    }
+
+    function rememberOriginalAttribute(
+        element,
+        attribute
+    ) {
+        const storageName =
+            "miOriginal" +
+            attribute
+                .replace(
+                    /(^|-)([a-z])/g,
+                    function (
+                        match,
+                        prefix,
+                        letter
+                    ) {
+                        return letter
+                            .toUpperCase();
+                    }
+                );
+
+        if (
+            !element.dataset[
+                storageName
+            ]
+        ) {
+            const current =
+                element.getAttribute(
+                    attribute
+                );
+
+            if (current) {
+                element.dataset[
+                    storageName
+                ] = current;
+            }
+        }
+
+        return normalizeText(
+            element.dataset[
+                storageName
+            ] || ""
+        );
+    }
+
+    function collectTargets(root) {
+        const texts = new Set();
+        const textNodes = [];
+        const attributes = [];
+
+        const container =
+            root || document.body;
+
+        if (!container) {
+            return {
+                texts,
+                textNodes,
+                attributes
+            };
+        }
+
+        const textWalker =
+            document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT
+            );
+
+        while (
+            textWalker.nextNode()
+        ) {
+            const node =
+                textWalker.currentNode;
+
+            const parent =
+                node.parentElement;
+
+            if (
+                !parent ||
+                shouldSkipElement(parent)
+            ) {
+                continue;
+            }
+
+            const original =
+                rememberOriginalText(node);
+
+            if (
+                !meaningfulText(original)
+            ) {
+                continue;
+            }
+
+            texts.add(original);
+
+            textNodes.push({
+                node,
+                original
+            });
+        }
+
+        const elements =
+            container.querySelectorAll(
+                [
+                    "input[placeholder]",
+                    "textarea[placeholder]",
+                    "[title]",
+                    "[aria-label]",
+                    "input[type='button'][value]",
+                    "input[type='submit'][value]",
+                    "input[type='reset'][value]"
+                ].join(",")
+            );
+
+        elements.forEach(
+            function (element) {
+                if (
+                    shouldSkipElement(
+                        element
+                    )
+                ) {
+                    return;
+                }
+
+                [
+                    "placeholder",
+                    "title",
+                    "aria-label",
+                    "value"
+                ].forEach(
+                    function (attribute) {
+                        if (
+                            !element.hasAttribute(
+                                attribute
+                            )
+                        ) {
+                            return;
+                        }
+
+                        if (
+                            attribute ===
+                                "value" &&
+                            ![
+                                "button",
+                                "submit",
+                                "reset"
+                            ].includes(
+                                element.type
+                            )
+                        ) {
+                            return;
+                        }
+
+                        const original =
+                            rememberOriginalAttribute(
+                                element,
+                                attribute
+                            );
+
+                        if (
+                            !meaningfulText(
+                                original
+                            )
+                        ) {
+                            return;
+                        }
+
+                        texts.add(original);
+
+                        attributes.push({
+                            element,
+                            attribute,
+                            original
+                        });
+                    }
+                );
+            }
+        );
+
+        return {
+            texts,
+            textNodes,
+            attributes
+        };
+    }
+
+    function restoreEnglish(targets) {
+        observerPaused = true;
+
+        targets.textNodes.forEach(
+            function (item) {
+                item.node.nodeValue =
+                    item.node
+                        .__miOriginalText;
+            }
+        );
+
+        targets.attributes.forEach(
+            function (item) {
+                item.element.setAttribute(
+                    item.attribute,
+                    item.original
+                );
+            }
+        );
+
+        observerPaused = false;
+    }
+
+    function applyDictionary(
+        targets,
+        dictionary
+    ) {
+        observerPaused = true;
+
+        targets.textNodes.forEach(
+            function (item) {
+                const translated =
+                    dictionary[
+                        item.original
+                    ];
+
+                if (translated) {
+                    const originalValue =
+                        item.node
+                            .__miOriginalText ||
+                        item.original;
+
+                    const leading =
+                        originalValue.match(
+                            /^\s*/
+                        )?.[0] || "";
+
+                    const trailing =
+                        originalValue.match(
+                            /\s*$/
+                        )?.[0] || "";
+
+                    item.node.nodeValue =
+                        leading +
+                        translated +
+                        trailing;
+                }
+            }
+        );
+
+        targets.attributes.forEach(
+            function (item) {
+                const translated =
+                    dictionary[
+                        item.original
+                    ];
+
+                if (translated) {
+                    item.element.setAttribute(
+                        item.attribute,
+                        translated
+                    );
+                }
+            }
+        );
+
+        observerPaused = false;
+    }
+
+    function extractJson(text) {
+        const raw =
+            String(text || "")
+                .trim();
+
+        if (!raw) {
+            return null;
+        }
+
+        const withoutFence =
+            raw
+                .replace(
+                    /^```(?:json)?\s*/i,
+                    ""
+                )
+                .replace(
+                    /\s*```$/,
+                    ""
+                )
+                .trim();
+
+        try {
+            return JSON.parse(
+                withoutFence
+            );
+        }
+        catch (error) {
+            const start =
+                withoutFence.indexOf(
+                    "{"
+                );
+
+            const end =
+                withoutFence.lastIndexOf(
+                    "}"
+                );
+
+            if (
+                start >= 0 &&
+                end > start
+            ) {
+                try {
+                    return JSON.parse(
+                        withoutFence.slice(
+                            start,
+                            end + 1
+                        )
+                    );
+                }
+                catch (
+                    nestedError
+                ) {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    async function requestTranslations(
+        languageCode,
+        languageName,
+        sourceTexts
+    ) {
+        const requestId =
+            languageCode +
+            "::" +
+            JSON.stringify(
+                sourceTexts
+            );
+
+        if (
+            pendingRequests.has(
+                requestId
+            )
+        ) {
+            return pendingRequests.get(
+                requestId
+            );
+        }
+
+        const task =
+            (async function () {
+                const numbered =
+                    {};
+
+                sourceTexts.forEach(
+                    function (text, index) {
+                        numbered[
+                            String(index)
+                        ] = text;
+                    }
+                );
+
+                const prompt = [
+                    "Translate the following user-interface text from",
+                    SOURCE_LANGUAGE,
+                    "to",
+                    languageName,
+                    "(" + languageCode + ").",
+                    "",
+                    "Rules:",
+                    "1. Return ONLY one valid JSON object.",
+                    "2. Preserve every numeric key exactly.",
+                    "3. Translate UI meaning naturally and briefly.",
+                    "4. Do not translate product names MI AI, ChatBOT, URLs, email addresses, variable names or code.",
+                    "5. Do not add Markdown or explanations.",
+                    "",
+                    "Input JSON:",
+                    JSON.stringify(numbered)
+                ].join("\n");
+
+                const response =
+                    await fetch(
+                        "/api/chat",
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    message:
+                                        prompt,
+
+                                    history:
+                                        []
+                                })
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Translation request failed: " +
+                        response.status
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                const reply =
+                    data.reply ||
+                    data.response ||
+                    data.message ||
+                    "";
+
+                const parsed =
+                    extractJson(reply);
+
+                if (
+                    !parsed ||
+                    typeof parsed !==
+                        "object"
+                ) {
+                    throw new Error(
+                        "Translation response was not valid JSON."
+                    );
+                }
+
+                const result = {};
+
+                sourceTexts.forEach(
+                    function (source, index) {
+                        const translated =
+                            normalizeText(
+                                parsed[
+                                    String(index)
+                                ]
+                            );
+
+                        if (translated) {
+                            result[source] =
+                                translated;
+                        }
+                    }
+                );
+
+                return result;
+            })();
+
+        pendingRequests.set(
+            requestId,
+            task
+        );
+
+        try {
+            return await task;
+        }
+        finally {
+            pendingRequests.delete(
+                requestId
+            );
+        }
+    }
+
+    function splitIntoBatches(
+        values,
+        maximumItems,
+        maximumCharacters
+    ) {
+        const batches = [];
+        let current = [];
+        let characters = 0;
+
+        values.forEach(
+            function (value) {
+                const length =
+                    value.length;
+
+                if (
+                    current.length > 0 &&
+                    (
+                        current.length >=
+                            maximumItems ||
+                        characters +
+                            length >
+                            maximumCharacters
+                    )
+                ) {
+                    batches.push(
+                        current
+                    );
+
+                    current = [];
+                    characters = 0;
+                }
+
+                current.push(value);
+                characters += length;
+            }
+        );
+
+        if (current.length) {
+            batches.push(current);
+        }
+
+        return batches;
+    }
+
+    async function translateCurrentUi() {
+        if (translationRunning) {
+            return;
+        }
+
+        const languageCode =
+            selectedLanguageCode();
+
+        activeLanguage =
+            languageCode;
+
+        const targets =
+            collectTargets(
+                document.body
+            );
+
+        if (isEnglish(languageCode)) {
+            restoreEnglish(targets);
+
+            document.documentElement.lang =
+                "en";
+
+            document.documentElement.dir =
+                "ltr";
+
+            return;
+        }
+
+        translationRunning = true;
+
+        try {
+            const languageName =
+                selectedLanguageName(
+                    languageCode
+                );
+
+            const dictionary =
+                readCache(
+                    languageCode
+                );
+
+            const allTexts =
+                Array.from(
+                    targets.texts
+                );
+
+            const missing =
+                allTexts.filter(
+                    function (text) {
+                        return (
+                            !dictionary[text]
+                        );
+                    }
+                );
+
+            applyDictionary(
+                targets,
+                dictionary
+            );
+
+            const batches =
+                splitIntoBatches(
+                    missing,
+                    35,
+                    3500
+                );
+
+            for (
+                const batch
+                of batches
+            ) {
+                try {
+                    const translated =
+                        await requestTranslations(
+                            languageCode,
+                            languageName,
+                            batch
+                        );
+
+                    Object.assign(
+                        dictionary,
+                        translated
+                    );
+
+                    writeCache(
+                        languageCode,
+                        dictionary
+                    );
+
+                    if (
+                        selectedLanguageCode() !==
+                        languageCode
+                    ) {
+                        return;
+                    }
+
+                    const latestTargets =
+                        collectTargets(
+                            document.body
+                        );
+
+                    applyDictionary(
+                        latestTargets,
+                        dictionary
+                    );
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI Translation]",
+                        error
+                    );
+                }
+            }
+
+            document.documentElement.lang =
+                languageCode;
+
+            const rtlCodes =
+                new Set([
+                    "ar",
+                    "fa",
+                    "he",
+                    "ur"
+                ]);
+
+            document.documentElement.dir =
+                rtlCodes.has(
+                    languageCode
+                        .split("-")[0]
+                )
+                    ? "rtl"
+                    : "ltr";
+
+            if (
+                window.MIFirebase &&
+                typeof window.MIFirebase
+                    .updateLanguage ===
+                    "function"
+            ) {
+                window.MIFirebase
+                    .updateLanguage();
+            }
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-any-language-applied",
+                    {
+                        detail: {
+                            language:
+                                languageCode
+                        }
+                    }
+                )
+            );
+        }
+        finally {
+            translationRunning = false;
+        }
+    }
+
+    function scheduleTranslation(
+        delay
+    ) {
+        clearTimeout(
+            refreshTimer
+        );
+
+        refreshTimer =
+            setTimeout(
+                function () {
+                    translateCurrentUi()
+                        .catch(
+                            function (
+                                error
+                            ) {
+                                console.error(
+                                    "[MI AI Translation]",
+                                    error
+                                );
+                            }
+                        );
+                },
+                typeof delay ===
+                    "number"
+                    ? delay
+                    : 80
+            );
+    }
+
+    function startObserver() {
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    if (
+                        observerPaused ||
+                        translationRunning ||
+                        isEnglish(
+                            selectedLanguageCode()
+                        )
+                    ) {
+                        return;
+                    }
+
+                    const hasNewContent =
+                        mutations.some(
+                            function (
+                                mutation
+                            ) {
+                                return (
+                                    mutation
+                                        .addedNodes
+                                        .length >
+                                    0
+                                );
+                            }
+                        );
+
+                    if (hasNewContent) {
+                        scheduleTranslation(
+                            150
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList:
+                    true,
+
+                subtree:
+                    true
+            }
+        );
+    }
+
+    function start() {
+        const languageSelect =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (languageSelect) {
+            languageSelect.addEventListener(
+                "change",
+                function () {
+                    const code =
+                        languageSelect.value;
+
+                    localStorage.setItem(
+                        "mi_ui_language",
+                        code
+                    );
+
+                    activeLanguage =
+                        code;
+
+                    scheduleTranslation(
+                        120
+                    );
+                }
+            );
+        }
+
+        window.addEventListener(
+            "mi-language-changed",
+            function () {
+                scheduleTranslation(
+                    100
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-firebase-ready",
+            function () {
+                scheduleTranslation(
+                    100
+                );
+            }
+        );
+
+        startObserver();
+
+        scheduleTranslation(
+            250
+        );
+    }
+
+    window.MIAnyLanguage = {
+        refresh:
+            function () {
+                scheduleTranslation(
+                    0
+                );
+            },
+
+        translate:
+            translateCurrentUi,
+
+        clearCache:
+            function (
+                languageCode
+            ) {
+                const code =
+                    String(
+                        languageCode ||
+                        selectedLanguageCode()
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                localStorage.removeItem(
+                    cacheKey(code)
+                );
+            },
+
+        getLanguage:
+            selectedLanguageCode
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI ANY LANGUAGE TRANSLATION - END */
+</script>
+
+<script>
+/* MI AI ACCOUNT SETTINGS PERSISTENCE - START */
+
+(function () {
+    "use strict";
+
+    const SETTINGS_PREFIX = "mi_account_settings_v1_";
+    const GLOBAL_BACKUP_KEY = "mi_guest_settings_v1";
+
+    const SETTINGS_SELECTORS = [
+        "#settingsPanel input",
+        "#settingsPanel select",
+        "#settingsPanel textarea"
+    ].join(",");
+
+    function normalizeIdentity(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function getLoggedInIdentity() {
+        const email = normalizeIdentity(
+            localStorage.getItem("mi_user_email")
+        );
+
+        const userId = normalizeIdentity(
+            localStorage.getItem("mi_user_id")
+        );
+
+        return email || userId || "";
+    }
+
+    function isLoggedInForSettings() {
+        return Boolean(
+            getLoggedInIdentity() &&
+            (
+                localStorage.getItem("mi_supabase_token") ||
+                localStorage.getItem("mi_user_id")
+            )
+        );
+    }
+
+    function getSettingsStorageKey(identity) {
+        const normalized = normalizeIdentity(identity);
+
+        return normalized
+            ? SETTINGS_PREFIX + encodeURIComponent(normalized)
+            : GLOBAL_BACKUP_KEY;
+    }
+
+    function getSettingControlKey(control, index) {
+        return (
+            control.id ||
+            control.name ||
+            control.getAttribute("data-setting-key") ||
+            ("setting_" + index)
+        );
+    }
+
+    function readSettingsControls() {
+        const controls = Array.from(
+            document.querySelectorAll(SETTINGS_SELECTORS)
+        );
+
+        const result = {};
+
+        controls.forEach(function (control, index) {
+            if (
+                !control ||
+                control.type === "button" ||
+                control.type === "submit" ||
+                control.type === "reset" ||
+                control.type === "password" ||
+                control.type === "email"
+            ) {
+                return;
+            }
+
+            const key = getSettingControlKey(control, index);
+
+            if (
+                control.type === "checkbox" ||
+                control.type === "radio"
+            ) {
+                result[key] = {
+                    type: control.type,
+                    checked: Boolean(control.checked)
+                };
+            } else {
+                result[key] = {
+                    type: control.type || control.tagName.toLowerCase(),
+                    value: control.value
+                };
+            }
+        });
+
+        result.__documentTheme = {
+            main:
+                getComputedStyle(document.documentElement)
+                    .getPropertyValue("--main")
+                    .trim(),
+            bodyClasses: Array.from(document.body.classList)
+                .filter(function (name) {
+                    return (
+                        name === "light" ||
+                        name === "dark" ||
+                        name.startsWith("theme-")
+                    );
+                })
+        };
+
+        result.__savedAt = Date.now();
+
+        return result;
+    }
+
+    function saveAccountSettings() {
+        if (!isLoggedInForSettings()) {
+            return;
+        }
+
+        const identity = getLoggedInIdentity();
+
+        if (!identity) {
+            return;
+        }
+
+        try {
+            localStorage.setItem(
+                getSettingsStorageKey(identity),
+                JSON.stringify(readSettingsControls())
+            );
+        } catch (error) {
+            console.error(
+                "Unable to save account settings:",
+                error
+            );
+        }
+    }
+
+    function dispatchControlEvents(control) {
+        try {
+            control.dispatchEvent(
+                new Event("input", {
+                    bubbles: true
+                })
+            );
+
+            control.dispatchEvent(
+                new Event("change", {
+                    bubbles: true
+                })
+            );
+        } catch (error) {
+            console.warn(
+                "Unable to dispatch setting event:",
+                error
+            );
+        }
+    }
+
+    function restoreAccountSettings() {
+        if (!isLoggedInForSettings()) {
+            return false;
+        }
+
+        const identity = getLoggedInIdentity();
+
+        if (!identity) {
+            return false;
+        }
+
+        let saved;
+
+        try {
+            const raw = localStorage.getItem(
+                getSettingsStorageKey(identity)
+            );
+
+            if (!raw) {
+                return false;
+            }
+
+            saved = JSON.parse(raw);
+        } catch (error) {
+            console.error(
+                "Unable to read account settings:",
+                error
+            );
+
+            return false;
+        }
+
+        const controls = Array.from(
+            document.querySelectorAll(SETTINGS_SELECTORS)
+        );
+
+        controls.forEach(function (control, index) {
+            if (
+                !control ||
+                control.type === "button" ||
+                control.type === "submit" ||
+                control.type === "reset" ||
+                control.type === "password" ||
+                control.type === "email"
+            ) {
+                return;
+            }
+
+            const key = getSettingControlKey(control, index);
+            const item = saved[key];
+
+            if (!item) {
+                return;
+            }
+
+            if (
+                control.type === "checkbox" ||
+                control.type === "radio"
+            ) {
+                control.checked = Boolean(item.checked);
+            } else if (
+                Object.prototype.hasOwnProperty.call(
+                    item,
+                    "value"
+                )
+            ) {
+                control.value = item.value;
+            }
+
+            dispatchControlEvents(control);
+        });
+
+        if (
+            saved.__documentTheme &&
+            saved.__documentTheme.main
+        ) {
+            document.documentElement.style.setProperty(
+                "--main",
+                saved.__documentTheme.main
+            );
+
+            localStorage.setItem(
+                "theme",
+                saved.__documentTheme.main
+            );
+        }
+
+        const languageSelect =
+            document.getElementById("languageSelect");
+
+        if (
+            languageSelect &&
+            typeof window.applyLanguage === "function"
+        ) {
+            Promise.resolve(
+                window.applyLanguage(
+                    languageSelect.value,
+                    false
+                )
+            ).catch(function () {});
+        }
+
+        return true;
+    }
+
+    function resetVisibleSettingsForGuest() {
+        const controls = Array.from(
+            document.querySelectorAll(SETTINGS_SELECTORS)
+        );
+
+        controls.forEach(function (control) {
+            if (
+                !control ||
+                control.type === "button" ||
+                control.type === "submit" ||
+                control.type === "reset" ||
+                control.type === "password" ||
+                control.type === "email"
+            ) {
+                return;
+            }
+
+            if (
+                control.type === "checkbox" ||
+                control.type === "radio"
+            ) {
+                control.checked =
+                    Boolean(control.defaultChecked);
+            } else if (
+                control.tagName === "SELECT"
+            ) {
+                control.selectedIndex = 0;
+            } else if (
+                control.defaultValue !== undefined
+            ) {
+                control.value = control.defaultValue;
+            }
+
+            dispatchControlEvents(control);
+        });
+
+        document.documentElement.style.removeProperty(
+            "--main"
+        );
+
+        localStorage.removeItem("theme");
+
+        document.body.classList.remove(
+            "light",
+            "dark"
+        );
+    }
+
+    function handleUserChange() {
+        window.setTimeout(function () {
+            if (isLoggedInForSettings()) {
+                restoreAccountSettings();
+            } else {
+                resetVisibleSettingsForGuest();
+            }
+        }, 150);
+    }
+
+    document.addEventListener(
+        "input",
+        function (event) {
+            if (
+                event.target &&
+                event.target.closest("#settingsPanel")
+            ) {
+                saveAccountSettings();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        function (event) {
+            if (
+                event.target &&
+                event.target.closest("#settingsPanel")
+            ) {
+                saveAccountSettings();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const button = event.target.closest(
+                "#settingsPanel button"
+            );
+
+            if (!button) {
+                return;
+            }
+
+            window.setTimeout(
+                saveAccountSettings,
+                100
+            );
+        },
+        true
+    );
+
+    window.addEventListener(
+        "mi-chat-user-changed",
+        handleUserChange
+    );
+
+    window.addEventListener(
+        "pagehide",
+        saveAccountSettings
+    );
+
+    window.addEventListener(
+        "beforeunload",
+        saveAccountSettings
+    );
+
+    window.addEventListener(
+        "pageshow",
+        function () {
+            window.setTimeout(
+                handleUserChange,
+                100
+            );
+        }
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        function () {
+            if (document.visibilityState === "hidden") {
+                saveAccountSettings();
+            } else {
+                handleUserChange();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            window.setTimeout(
+                handleUserChange,
+                250
+            );
+        },
+        {
+            once: true
+        }
+    );
+
+    window.MIAccountSettings = {
+        save: saveAccountSettings,
+        restore: restoreAccountSettings,
+        resetGuestView: resetVisibleSettingsForGuest,
+        getKey: function () {
+            return getSettingsStorageKey(
+                getLoggedInIdentity()
+            );
+        }
+    };
+})();
+
+/* MI AI ACCOUNT SETTINGS PERSISTENCE - END */
+</script>
+
+
+<script>
+/* MI AI SETTINGS LOGIN REQUIRED - START */
+
+(function () {
+    "use strict";
+
+    const protectedTypes = new Set([
+        "language",
+        "theme",
+        "fontsize",
+        "font-size",
+        "font_size"
+    ]);
+
+    const previousValues =
+        new WeakMap();
+
+    let openingLogin =
+        false;
+
+    function authenticated() {
+        try {
+            if (
+                typeof window.isAuthenticated ===
+                    "function"
+            ) {
+                return Boolean(
+                    window.isAuthenticated()
+                );
+            }
+
+            if (
+                typeof isAuthenticated ===
+                    "function"
+            ) {
+                return Boolean(
+                    isAuthenticated()
+                );
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Settings Guard]",
+                error
+            );
+        }
+
+        return Boolean(
+            window.user ||
+            localStorage.getItem(
+                "mi_supabase_token"
+            ) ||
+            window.miFirebaseAuth
+                ?.currentUser
+        );
+    }
+
+    function selectedLanguage() {
+        return (
+            document.getElementById(
+                "languageSelect"
+            )?.value ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            "en"
+        );
+    }
+
+    function message() {
+        const language =
+            selectedLanguage();
+
+        const messages = {
+            en:
+                "Please log in to change Language, Theme or Font Size.",
+
+            si:
+                "භාෂාව, තේමාව හෝ අකුරු ප්‍රමාණය වෙනස් කිරීමට පිවිසෙන්න.",
+
+            ta:
+                "மொழி, தீம் அல்லது எழுத்தளவை மாற்ற உள்நுழையவும்."
+        };
+
+        return (
+            messages[language] ||
+            messages.en
+        );
+    }
+
+    function showLoginRequired() {
+        const text =
+            message();
+
+        if (
+            typeof window.showToast ===
+            "function"
+        ) {
+            window.showToast(text);
+        }
+        else if (
+            typeof window.showShareFeedback ===
+            "function"
+        ) {
+            window.showShareFeedback(
+                text
+            );
+        }
+        else {
+            const reminder =
+                document.getElementById(
+                    "authReminder"
+                );
+
+            if (reminder) {
+                reminder.textContent =
+                    text;
+
+                reminder.style.display =
+                    "block";
+
+                setTimeout(
+                    function () {
+                        reminder.style.display =
+                            "none";
+                    },
+                    3500
+                );
+            }
+        }
+
+        if (openingLogin) {
+            return;
+        }
+
+        openingLogin = true;
+
+        setTimeout(
+            function () {
+                try {
+                    if (
+                        typeof window.openLogin ===
+                            "function"
+                    ) {
+                        window.openLogin();
+                    }
+                    else if (
+                        typeof openLogin ===
+                            "function"
+                    ) {
+                        openLogin();
+                    }
+                }
+                finally {
+                    openingLogin =
+                        false;
+                }
+            },
+            30
+        );
+    }
+
+    function settingsType(element) {
+        if (!(element instanceof Element)) {
+            return "";
+        }
+
+        const section =
+            element.closest(
+                ".mi-settings-section"
+            );
+
+        const explicitType =
+            section?.dataset
+                ?.settingsType;
+
+        if (explicitType) {
+            return String(
+                explicitType
+            )
+                .trim()
+                .toLowerCase();
+        }
+
+        const details = [
+            element.id,
+            element.getAttribute(
+                "name"
+            ),
+            element.className,
+            element.getAttribute(
+                "aria-label"
+            ),
+            element.getAttribute(
+                "title"
+            ),
+            element.closest(
+                "label"
+            )?.textContent,
+            element.parentElement
+                ?.textContent
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        if (
+            details.includes(
+                "language"
+            ) ||
+            details.includes(
+                "භාෂා"
+            ) ||
+            details.includes(
+                "மொழி"
+            )
+        ) {
+            return "language";
+        }
+
+        if (
+            details.includes(
+                "theme"
+            ) ||
+            details.includes(
+                "color"
+            ) ||
+            details.includes(
+                "colour"
+            ) ||
+            details.includes(
+                "තේමා"
+            ) ||
+            details.includes(
+                "வண்ண"
+            ) ||
+            details.includes(
+                "தீம்"
+            )
+        ) {
+            return "theme";
+        }
+
+        if (
+            details.includes(
+                "font"
+            ) ||
+            details.includes(
+                "අකුරු"
+            ) ||
+            details.includes(
+                "எழுத்த"
+            )
+        ) {
+            return "fontsize";
+        }
+
+        return "";
+    }
+
+    function isProtectedControl(
+        element
+    ) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        if (
+            !element.closest(
+                "#settingsPanel"
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            element.closest(
+                "#settingsCloseBtn, " +
+                ".close-btn, " +
+                ".modal-close"
+            )
+        ) {
+            return false;
+        }
+
+        const type =
+            settingsType(element);
+
+        return protectedTypes.has(
+            type
+        );
+    }
+
+    function rememberValue(control) {
+        if (
+            control instanceof
+                HTMLInputElement ||
+            control instanceof
+                HTMLSelectElement ||
+            control instanceof
+                HTMLTextAreaElement
+        ) {
+            previousValues.set(
+                control,
+                {
+                    value:
+                        control.value,
+
+                    checked:
+                        control.checked
+                }
+            );
+        }
+    }
+
+    function restoreValue(control) {
+        const previous =
+            previousValues.get(
+                control
+            );
+
+        if (
+            !previous ||
+            !control
+        ) {
+            return;
+        }
+
+        if (
+            "value" in control
+        ) {
+            control.value =
+                previous.value;
+        }
+
+        if (
+            "checked" in control
+        ) {
+            control.checked =
+                previous.checked;
+        }
+    }
+
+    function blockEvent(event) {
+        const target =
+            event.target;
+
+        if (
+            authenticated() ||
+            !isProtectedControl(
+                target
+            )
+        ) {
+            if (
+                event.type ===
+                    "focusin" ||
+                event.type ===
+                    "pointerdown"
+            ) {
+                rememberValue(
+                    target
+                );
+            }
+
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        restoreValue(target);
+        showLoginRequired();
+    }
+
+    document.addEventListener(
+        "pointerdown",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "click",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "focusin",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "input",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        blockEvent,
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                authenticated() ||
+                !isProtectedControl(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            if (
+                [
+                    "Enter",
+                    " ",
+                    "ArrowUp",
+                    "ArrowDown",
+                    "ArrowLeft",
+                    "ArrowRight"
+                ].includes(
+                    event.key
+                )
+            ) {
+                blockEvent(event);
+            }
+        },
+        true
+    );
+
+    function refreshAppearance() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return;
+        }
+
+        panel
+            .querySelectorAll(
+                ".mi-settings-section"
+            )
+            .forEach(
+                function (section) {
+                    const type =
+                        String(
+                            section.dataset
+                                .settingsType ||
+                            ""
+                        )
+                            .toLowerCase();
+
+                    if (
+                        !protectedTypes.has(
+                            type
+                        )
+                    ) {
+                        return;
+                    }
+
+                    section.dataset
+                        .loginRequired =
+                        authenticated()
+                            ? "false"
+                            : "true";
+
+                    const button =
+                        section.querySelector(
+                            ".mi-settings-option-button"
+                        );
+
+                    if (button) {
+                        button.title =
+                            authenticated()
+                                ? ""
+                                : message();
+                    }
+                }
+            );
+    }
+
+    function start() {
+        refreshAppearance();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    requestAnimationFrame(
+                        refreshAppearance
+                    );
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            refreshAppearance
+        );
+
+        window.addEventListener(
+            "mi-firebase-auth-changed",
+            refreshAppearance
+        );
+    }
+
+    window.MISettingsLoginGuard = {
+        isAuthenticated:
+            authenticated,
+
+        refresh:
+            refreshAppearance
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SETTINGS LOGIN REQUIRED - END */
 </script>
 </body>
 </html>
