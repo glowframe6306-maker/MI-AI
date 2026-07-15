@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
 <style>
 
@@ -5878,6 +5879,124 @@ select[data-mi-ios-ready="true"] {
         appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
     };
 
+    // ========== FIRESTORE PERSISTENCE MANAGER ==========
+    class FirestorePersistenceManager {
+        constructor(db) {
+            this.db = db;
+            this.uid = null;
+            this.listeners = [];
+        }
+
+        setUser(uid) {
+            this.uid = uid;
+        }
+
+        unsubscribeAll() {
+            this.listeners.forEach(unsubscribe => {
+                if (typeof unsubscribe === 'function') {
+                    try {
+                        unsubscribe();
+                    } catch (e) {
+                        console.error('Error unsubscribing listener:', e);
+                    }
+                }
+            });
+            this.listeners = [];
+        }
+
+        async saveSettings(settings) {
+            if (!this.uid) return;
+            try {
+                const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
+                await docRef.set({
+                    theme: settings.theme || '',
+                    fontSize: settings.fontSize || 15,
+                    language: settings.language || 'en',
+                    updatedAt: window.firebase.firestore.Timestamp.now()
+                }, { merge: true });
+                console.log('[Persistence] Settings saved to Firestore');
+            } catch (err) {
+                console.error('[Persistence] Error saving settings:', err.message);
+            }
+        }
+
+        async saveChat(chatId, chatData) {
+            if (!this.uid) return;
+            try {
+                const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+                await chatRef.set({
+                    title: chatData.title || 'Chat',
+                    pin: chatData.pin || false,
+                    createdAt: window.firebase.firestore.Timestamp.now(),
+                    updatedAt: window.firebase.firestore.Timestamp.now(),
+                    messageCount: chatData.messageCount || 0
+                }, { merge: true });
+                console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
+            } catch (err) {
+                console.error('[Persistence] Error saving chat:', err.message);
+            }
+        }
+
+        async saveMessage(chatId, messageId, message) {
+            if (!this.uid) return;
+            try {
+                const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
+                    .collection('chats').doc(chatId)
+                    .collection('messages').doc(messageId);
+                await messageRef.set({
+                    role: message.role || 'user',
+                    text: message.text || '',
+                    createdAt: window.firebase.firestore.Timestamp.now()
+                });
+                console.log(`[Persistence] Message ${messageId} saved to Firestore`);
+            } catch (err) {
+                console.error('[Persistence] Error saving message:', err.message);
+            }
+        }
+
+        async loadUserData() {
+            if (!this.uid) return { chats: {}, settings: {} };
+            try {
+                const userRef = window.firebase.firestore().collection('users').doc(this.uid);
+
+                // Load settings
+                const settingsDoc = await userRef.collection('settings').doc('general').get();
+                const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+                // Load chats and messages
+                const chatsSnapshot = await userRef.collection('chats').get();
+                const chats = {};
+
+                for (const chatDoc of chatsSnapshot.docs) {
+                    const chatId = chatDoc.id;
+                    const chatData = chatDoc.data();
+
+                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').get();
+                    const messages = messagesSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            role: data.role === 'ai' ? 'ai' : 'me',
+                            text: data.text || ''
+                        };
+                    });
+
+                    chats[chatId] = messages;
+                    chats[chatId].title = chatData.title || chatId;
+                    chats[chatId].pin = chatData.pin || false;
+                    chats[chatId].messageCount = messages.length;
+                }
+
+                console.log('[Persistence] User data loaded from Firestore:', { chats: Object.keys(chats), settings });
+                return { chats, settings };
+            } catch (err) {
+                console.error('[Persistence] Error loading user data:', err.message);
+                return { chats: {}, settings: {} };
+            }
+        }
+    }
+
+    window.FirestorePersistenceManager = FirestorePersistenceManager;
+
     function getFirebaseLanguage() {
         const selected =
             document.getElementById("languageSelect")?.value;
@@ -5961,15 +6080,29 @@ select[data-mi-ios-ready="true"] {
         }
 
         const auth = window.firebase.auth(app);
+        const db = window.firebase.firestore(app);
 
         auth.languageCode = getFirebaseLanguage();
 
         window.miFirebaseApp = app;
         window.miFirebaseAuth = auth;
+        window.miFirebaseDb = db;
         window.miFirebaseUser = auth.currentUser || null;
+
+        // Initialize persistence manager
+        window.firestorePersistence = new window.FirestorePersistenceManager(db);
 
         auth.onAuthStateChanged(function (user) {
             window.miFirebaseUser = user || null;
+
+            // Update persistence manager with current user
+            if (user) {
+                window.firestorePersistence.setUser(user.uid);
+                console.log('[Persistence] Auth user set:', user.uid);
+            } else {
+                window.firestorePersistence.setUser(null);
+                console.log('[Persistence] Auth user cleared');
+            }
 
             window.dispatchEvent(
                 new CustomEvent(
@@ -6564,6 +6697,13 @@ async function applyLanguage(langCode, persist = true) {
     if (storageKey) {
       localStorage.setItem(storageKey, normalized);
     }
+
+    // Auto-save language to Firestore if authenticated
+    if (window.firestorePersistence && window.miFirebaseUser) {
+        window.firestorePersistence.saveSettings({ language: normalized }).catch(err =>
+            console.error('[Persistence] Language save error:', err)
+        );
+    }
   }
 
   if (!isAuthenticated()) {
@@ -7145,18 +7285,34 @@ async function logout() {
         window.MIAccountSettings.save();
     }
 
+    // Unsubscribe from Firestore listeners
+    if (window.firestorePersistence) {
+        window.firestorePersistence.unsubscribeAll();
+        window.firestorePersistence.setUser(null);
+    }
+
 try {
         const auth = await initFirebase();
         await auth.signOut();
     } catch (e) {
         console.error('Logout error:', e);
     }
-localStorage.removeItem('mi_supabase_token');
+
+    // Clear all account-related localStorage
+    localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
+
+    // Clear account chats from localStorage
+    localStorage.removeItem('mi_chats_' + accountId);
+
 user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
+
+    // Reset chat state to guest state
+    chats = {};
+    currentChat = null;
 
     await applyLanguage('en', false);
     resetChatStateForAuthChange();
@@ -7167,6 +7323,7 @@ user = null;
     closeProfilePanel();
     updateAuthControls();
     window.dispatchEvent(new Event('mi-chat-user-changed'));
+    console.log('[Persistence] Logout complete - state cleared');
 }
 
 function updateAuthControls(){
@@ -7844,7 +8001,45 @@ try {
             localStorage.setItem('mi_user_email', firebaseUser.email || '');
             accountId = firebaseUser.uid;
             localStorage.setItem('mi_account', accountId);
-            await loadUserChats();
+
+            // Load user data from Firestore on login
+            if (window.firestorePersistence) {
+                try {
+                    const { chats: firestoreChats, settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
+
+                    // Only load if there's actual data
+                    if (Object.keys(firestoreChats).length > 0) {
+                        chats = firestoreChats;
+                        console.log('[Persistence] User chats loaded from Firestore:', Object.keys(chats).length);
+                    } else {
+                        await loadUserChats();
+                    }
+
+                    // Apply loaded settings
+                    if (firestoreSettings.theme) {
+                        localStorage.setItem('theme', firestoreSettings.theme);
+                        document.documentElement.style.setProperty('--main', firestoreSettings.theme);
+                    }
+                    if (firestoreSettings.fontSize) {
+                        const chatBoxElem = document.getElementById('chat');
+                        if (chatBoxElem) {
+                            chatBoxElem.style.fontSize = firestoreSettings.fontSize + 'px';
+                        }
+                        localStorage.setItem('mi_font_size', firestoreSettings.fontSize);
+                    }
+                    if (firestoreSettings.language) {
+                        await applyLanguage(firestoreSettings.language, false);
+                    }
+
+                    console.log('[Persistence] User settings loaded from Firestore');
+                } catch (err) {
+                    console.error('[Persistence] Error loading user data on login:', err);
+                    await loadUserChats();
+                }
+            } else {
+                await loadUserChats();
+            }
+
             updateAuthControls();
             window.dispatchEvent(new Event('mi-chat-user-changed'));
         });
@@ -8101,6 +8296,13 @@ if (token && isAuthenticated()) {
   }).catch(() => {});
 }
 
+// Auto-save chat title to Firestore
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveChat(selectedChat, { title: name }).catch(err => 
+        console.error('[Persistence] Chat rename error:', err)
+    );
+}
+
 save();
 renderList();
 menu.style.display="none";
@@ -8131,6 +8333,17 @@ currentChat=null;
 chatBox.innerHTML="";
 }
 
+// Auto-delete from Firestore
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    try {
+        const db = window.firebase.firestore();
+        db.collection('users').doc(window.miFirebaseUser.uid).collection('chats').doc(chatId).delete()
+            .catch(err => console.error('[Persistence] Chat delete error:', err));
+    } catch (err) {
+        console.error('[Persistence] Error deleting chat from Firestore:', err);
+    }
+}
+
 save();
 renderList();
 menu.style.display="none";
@@ -8143,6 +8356,12 @@ if(!selectedChat)return;
 chats[selectedChat].pin =
 !chats[selectedChat].pin;
 
+// Auto-save pin status to Firestore
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveChat(selectedChat, { pin: chats[selectedChat].pin }).catch(err => 
+        console.error('[Persistence] Chat pin error:', err)
+    );
+}
 
 save();
 renderList();
@@ -8682,6 +8901,16 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
     chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
     chats[conversationId].lastPreview = existingText;
     save();
+
+    // Auto-save AI message to Firestore if authenticated
+    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+        const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
+        window.firestorePersistence.saveMessage(conversationId, messageId, {
+            role: 'ai',
+            text: existingText
+        }).catch(err => console.error('[Persistence] AI message save error:', err));
+    }
+
     scroll();
     maybeShowLoginPrompt(conversationId);
   }
@@ -8773,6 +9002,16 @@ async function send() {
   chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
   chats[conversationId].lastPreview = msg;
   save();
+
+  // Auto-save user message to Firestore if authenticated
+  if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+      const messageId = `user_msg_${Date.now()}_${Math.random()}`;
+      window.firestorePersistence.saveMessage(conversationId, messageId, {
+          role: 'me',
+          text: msg
+      }).catch(err => console.error('[Persistence] User message save error:', err));
+  }
+
   scroll();
 
   try {
@@ -9053,6 +9292,38 @@ async function save() {
         localStorage.setItem("last_chat", currentChat);
     }
 
+    // Save to Firestore if authenticated
+    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+        try {
+            // Save all chats and messages to Firestore
+            for (const chatId in chats) {
+                const chatData = chats[chatId];
+                if (Array.isArray(chatData) && chatData.length === 0) continue; // Skip empty chats
+
+                // Save chat metadata
+                await window.firestorePersistence.saveChat(chatId, {
+                    title: chatData.title || chatId,
+                    pin: chatData.pin || false,
+                    messageCount: chatData.length || 0
+                });
+
+                // Save each message
+                chatData.forEach((msg, index) => {
+                    if (msg && msg.text) {
+                        const messageId = `msg_${index}_${Date.now()}`;
+                        window.firestorePersistence.saveMessage(chatId, messageId, {
+                            role: msg.role === 'me' ? 'me' : 'ai',
+                            text: msg.text
+                        }).catch(err => console.error('[Persistence] Message save error:', err));
+                    }
+                });
+            }
+            console.log('[Persistence] All chats synced to Firestore');
+        } catch (err) {
+            console.error('[Persistence] Error syncing chats:', err.message);
+        }
+    }
+
     // Logged-in users only
     if (!isAuthenticated()) return;
 
@@ -9110,11 +9381,26 @@ function applyTheme(){
 let c=document.getElementById("themeColor").value;
 document.documentElement.style.setProperty("--main",c);
 localStorage.setItem("theme",c);
+
+// Auto-save to Firestore if authenticated
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveSettings({ theme: c }).catch(err =>
+        console.error('[Persistence] Theme save error:', err)
+    );
+}
 }
 
 /* FONT */
 function setFont(v){
 chatBox.style.fontSize=v+"px";
+localStorage.setItem("mi_font_size", v);
+
+// Auto-save to Firestore if authenticated
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveSettings({ fontSize: parseInt(v) }).catch(err =>
+        console.error('[Persistence] Font size save error:', err)
+    );
+}
 }
 
 /* CUSTOMER SUPPORT */
@@ -15226,1108 +15512,7 @@ document.addEventListener(
 /* MI AI SHARE MODAL STAY OPEN - END */
 </script>
 
-<script>
-/* MI AI ANY LANGUAGE TRANSLATION - START */
 
-(function () {
-    "use strict";
-
-    const CACHE_PREFIX =
-        "mi_any_language_cache_v1_";
-
-    const SOURCE_LANGUAGE =
-        "English";
-
-    const excludedSelector = [
-        "#header",
-        "#chat",
-        "script",
-        "style",
-        "code",
-        "pre",
-        "svg",
-        "path",
-        "noscript",
-        "[data-mi-no-translate='true']",
-        ".mi-no-translate"
-    ].join(",");
-
-    const pendingRequests =
-        new Map();
-
-    let activeLanguage =
-        "en";
-
-    let refreshTimer =
-        null;
-
-    let observerPaused =
-        false;
-
-    let translationRunning =
-        false;
-
-    function selectedLanguageCode() {
-        const selector =
-            document.getElementById(
-                "languageSelect"
-            );
-
-        const selected =
-            selector?.value;
-
-        const stored =
-            localStorage.getItem(
-                "mi_ui_language"
-            );
-
-        const accountStored =
-            typeof getStoredLanguageCode ===
-                "function"
-                ? getStoredLanguageCode()
-                : null;
-
-        return String(
-            selected ||
-            accountStored ||
-            stored ||
-            "en"
-        )
-            .trim()
-            .toLowerCase();
-    }
-
-    function selectedLanguageName(code) {
-        if (
-            Array.isArray(
-                window.SUPPORTED_LANGUAGES
-            )
-        ) {
-            const entry =
-                window.SUPPORTED_LANGUAGES.find(
-                    function (item) {
-                        return (
-                            String(
-                                item.code
-                            ).toLowerCase() ===
-                            code
-                        );
-                    }
-                );
-
-            if (entry?.label) {
-                return entry.label;
-            }
-        }
-
-        if (
-            typeof SUPPORTED_LANGUAGES !==
-                "undefined" &&
-            Array.isArray(
-                SUPPORTED_LANGUAGES
-            )
-        ) {
-            const entry =
-                SUPPORTED_LANGUAGES.find(
-                    function (item) {
-                        return (
-                            String(
-                                item.code
-                            ).toLowerCase() ===
-                            code
-                        );
-                    }
-                );
-
-            if (entry?.label) {
-                return entry.label;
-            }
-        }
-
-        const selector =
-            document.getElementById(
-                "languageSelect"
-            );
-
-        const option =
-            selector?.options[
-                selector.selectedIndex
-            ];
-
-        return (
-            option?.textContent?.trim() ||
-            code
-        );
-    }
-
-    function isEnglish(code) {
-        return (
-            code === "en" ||
-            code.startsWith("en-")
-        );
-    }
-
-    function normalizeText(value) {
-        return String(value || "")
-            .replace(/\s+/g, " ")
-            .trim();
-    }
-
-    function cacheKey(languageCode) {
-        return (
-            CACHE_PREFIX +
-            languageCode
-        );
-    }
-
-    function readCache(languageCode) {
-        try {
-            const raw =
-                localStorage.getItem(
-                    cacheKey(languageCode)
-                );
-
-            if (!raw) {
-                return {};
-            }
-
-            const parsed =
-                JSON.parse(raw);
-
-            return (
-                parsed &&
-                typeof parsed ===
-                    "object"
-            )
-                ? parsed
-                : {};
-        }
-        catch (error) {
-            return {};
-        }
-    }
-
-    function writeCache(
-        languageCode,
-        dictionary
-    ) {
-        try {
-            localStorage.setItem(
-                cacheKey(languageCode),
-                JSON.stringify(dictionary)
-            );
-        }
-        catch (error) {
-            console.warn(
-                "[MI AI Translation] Cache write failed.",
-                error
-            );
-        }
-    }
-
-    function shouldSkipElement(element) {
-        if (!element) {
-            return true;
-        }
-
-        return Boolean(
-            element.closest(
-                excludedSelector
-            )
-        );
-    }
-
-    function meaningfulText(value) {
-        const text =
-            normalizeText(value);
-
-        if (!text) {
-            return false;
-        }
-
-        if (/^[\d\s.,:;!?%+\-=/\\|()[\]{}<>]+$/.test(text)) {
-            return false;
-        }
-
-        if (/^https?:\/\//i.test(text)) {
-            return false;
-        }
-
-        if (/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(text)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    function rememberOriginalText(node) {
-        const parent =
-            node.parentElement;
-
-        if (!parent) {
-            return "";
-        }
-
-        if (
-            !node.__miOriginalText
-        ) {
-            node.__miOriginalText =
-                node.nodeValue;
-        }
-
-        return normalizeText(
-            node.__miOriginalText
-        );
-    }
-
-    function rememberOriginalAttribute(
-        element,
-        attribute
-    ) {
-        const storageName =
-            "miOriginal" +
-            attribute
-                .replace(
-                    /(^|-)([a-z])/g,
-                    function (
-                        match,
-                        prefix,
-                        letter
-                    ) {
-                        return letter
-                            .toUpperCase();
-                    }
-                );
-
-        if (
-            !element.dataset[
-                storageName
-            ]
-        ) {
-            const current =
-                element.getAttribute(
-                    attribute
-                );
-
-            if (current) {
-                element.dataset[
-                    storageName
-                ] = current;
-            }
-        }
-
-        return normalizeText(
-            element.dataset[
-                storageName
-            ] || ""
-        );
-    }
-
-    function collectTargets(root) {
-        const texts = new Set();
-        const textNodes = [];
-        const attributes = [];
-
-        const container =
-            root || document.body;
-
-        if (!container) {
-            return {
-                texts,
-                textNodes,
-                attributes
-            };
-        }
-
-        const textWalker =
-            document.createTreeWalker(
-                container,
-                NodeFilter.SHOW_TEXT
-            );
-
-        while (
-            textWalker.nextNode()
-        ) {
-            const node =
-                textWalker.currentNode;
-
-            const parent =
-                node.parentElement;
-
-            if (
-                !parent ||
-                shouldSkipElement(parent)
-            ) {
-                continue;
-            }
-
-            const original =
-                rememberOriginalText(node);
-
-            if (
-                !meaningfulText(original)
-            ) {
-                continue;
-            }
-
-            texts.add(original);
-
-            textNodes.push({
-                node,
-                original
-            });
-        }
-
-        const elements =
-            container.querySelectorAll(
-                [
-                    "input[placeholder]",
-                    "textarea[placeholder]",
-                    "[title]",
-                    "[aria-label]",
-                    "input[type='button'][value]",
-                    "input[type='submit'][value]",
-                    "input[type='reset'][value]"
-                ].join(",")
-            );
-
-        elements.forEach(
-            function (element) {
-                if (
-                    shouldSkipElement(
-                        element
-                    )
-                ) {
-                    return;
-                }
-
-                [
-                    "placeholder",
-                    "title",
-                    "aria-label",
-                    "value"
-                ].forEach(
-                    function (attribute) {
-                        if (
-                            !element.hasAttribute(
-                                attribute
-                            )
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            attribute ===
-                                "value" &&
-                            ![
-                                "button",
-                                "submit",
-                                "reset"
-                            ].includes(
-                                element.type
-                            )
-                        ) {
-                            return;
-                        }
-
-                        const original =
-                            rememberOriginalAttribute(
-                                element,
-                                attribute
-                            );
-
-                        if (
-                            !meaningfulText(
-                                original
-                            )
-                        ) {
-                            return;
-                        }
-
-                        texts.add(original);
-
-                        attributes.push({
-                            element,
-                            attribute,
-                            original
-                        });
-                    }
-                );
-            }
-        );
-
-        return {
-            texts,
-            textNodes,
-            attributes
-        };
-    }
-
-    function restoreEnglish(targets) {
-        observerPaused = true;
-
-        targets.textNodes.forEach(
-            function (item) {
-                item.node.nodeValue =
-                    item.node
-                        .__miOriginalText;
-            }
-        );
-
-        targets.attributes.forEach(
-            function (item) {
-                item.element.setAttribute(
-                    item.attribute,
-                    item.original
-                );
-            }
-        );
-
-        observerPaused = false;
-    }
-
-    function applyDictionary(
-        targets,
-        dictionary
-    ) {
-        observerPaused = true;
-
-        targets.textNodes.forEach(
-            function (item) {
-                const translated =
-                    dictionary[
-                        item.original
-                    ];
-
-                if (translated) {
-                    const originalValue =
-                        item.node
-                            .__miOriginalText ||
-                        item.original;
-
-                    const leading =
-                        originalValue.match(
-                            /^\s*/
-                        )?.[0] || "";
-
-                    const trailing =
-                        originalValue.match(
-                            /\s*$/
-                        )?.[0] || "";
-
-                    item.node.nodeValue =
-                        leading +
-                        translated +
-                        trailing;
-                }
-            }
-        );
-
-        targets.attributes.forEach(
-            function (item) {
-                const translated =
-                    dictionary[
-                        item.original
-                    ];
-
-                if (translated) {
-                    item.element.setAttribute(
-                        item.attribute,
-                        translated
-                    );
-                }
-            }
-        );
-
-        observerPaused = false;
-    }
-
-    function extractJson(text) {
-        const raw =
-            String(text || "")
-                .trim();
-
-        if (!raw) {
-            return null;
-        }
-
-        const withoutFence =
-            raw
-                .replace(
-                    /^```(?:json)?\s*/i,
-                    ""
-                )
-                .replace(
-                    /\s*```$/,
-                    ""
-                )
-                .trim();
-
-        try {
-            return JSON.parse(
-                withoutFence
-            );
-        }
-        catch (error) {
-            const start =
-                withoutFence.indexOf(
-                    "{"
-                );
-
-            const end =
-                withoutFence.lastIndexOf(
-                    "}"
-                );
-
-            if (
-                start >= 0 &&
-                end > start
-            ) {
-                try {
-                    return JSON.parse(
-                        withoutFence.slice(
-                            start,
-                            end + 1
-                        )
-                    );
-                }
-                catch (
-                    nestedError
-                ) {
-                    return null;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    async function requestTranslations(
-        languageCode,
-        languageName,
-        sourceTexts
-    ) {
-        const requestId =
-            languageCode +
-            "::" +
-            JSON.stringify(
-                sourceTexts
-            );
-
-        if (
-            pendingRequests.has(
-                requestId
-            )
-        ) {
-            return pendingRequests.get(
-                requestId
-            );
-        }
-
-        const task =
-            (async function () {
-                const numbered =
-                    {};
-
-                sourceTexts.forEach(
-                    function (text, index) {
-                        numbered[
-                            String(index)
-                        ] = text;
-                    }
-                );
-
-                const prompt = [
-                    "Translate the following user-interface text from",
-                    SOURCE_LANGUAGE,
-                    "to",
-                    languageName,
-                    "(" + languageCode + ").",
-                    "",
-                    "Rules:",
-                    "1. Return ONLY one valid JSON object.",
-                    "2. Preserve every numeric key exactly.",
-                    "3. Translate UI meaning naturally and briefly.",
-                    "4. Do not translate product names MI AI, ChatBOT, URLs, email addresses, variable names or code.",
-                    "5. Do not add Markdown or explanations.",
-                    "",
-                    "Input JSON:",
-                    JSON.stringify(numbered)
-                ].join("\n");
-
-                const response =
-                    await fetch(
-                        "/api/chat",
-                        {
-                            method:
-                                "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify({
-                                    message:
-                                        prompt,
-
-                                    history:
-                                        []
-                                })
-                        }
-                    );
-
-                if (!response.ok) {
-                    throw new Error(
-                        "Translation request failed: " +
-                        response.status
-                    );
-                }
-
-                const data =
-                    await response.json();
-
-                const reply =
-                    data.reply ||
-                    data.response ||
-                    data.message ||
-                    "";
-
-                const parsed =
-                    extractJson(reply);
-
-                if (
-                    !parsed ||
-                    typeof parsed !==
-                        "object"
-                ) {
-                    throw new Error(
-                        "Translation response was not valid JSON."
-                    );
-                }
-
-                const result = {};
-
-                sourceTexts.forEach(
-                    function (source, index) {
-                        const translated =
-                            normalizeText(
-                                parsed[
-                                    String(index)
-                                ]
-                            );
-
-                        if (translated) {
-                            result[source] =
-                                translated;
-                        }
-                    }
-                );
-
-                return result;
-            })();
-
-        pendingRequests.set(
-            requestId,
-            task
-        );
-
-        try {
-            return await task;
-        }
-        finally {
-            pendingRequests.delete(
-                requestId
-            );
-        }
-    }
-
-    function splitIntoBatches(
-        values,
-        maximumItems,
-        maximumCharacters
-    ) {
-        const batches = [];
-        let current = [];
-        let characters = 0;
-
-        values.forEach(
-            function (value) {
-                const length =
-                    value.length;
-
-                if (
-                    current.length > 0 &&
-                    (
-                        current.length >=
-                            maximumItems ||
-                        characters +
-                            length >
-                            maximumCharacters
-                    )
-                ) {
-                    batches.push(
-                        current
-                    );
-
-                    current = [];
-                    characters = 0;
-                }
-
-                current.push(value);
-                characters += length;
-            }
-        );
-
-        if (current.length) {
-            batches.push(current);
-        }
-
-        return batches;
-    }
-
-    async function translateCurrentUi() {
-        if (translationRunning) {
-            return;
-        }
-
-        const languageCode =
-            selectedLanguageCode();
-
-        activeLanguage =
-            languageCode;
-
-        const targets =
-            collectTargets(
-                document.body
-            );
-
-        if (isEnglish(languageCode)) {
-            restoreEnglish(targets);
-
-            document.documentElement.lang =
-                "en";
-
-            document.documentElement.dir =
-                "ltr";
-
-            return;
-        }
-
-        translationRunning = true;
-
-        try {
-            const languageName =
-                selectedLanguageName(
-                    languageCode
-                );
-
-            const dictionary =
-                readCache(
-                    languageCode
-                );
-
-            const allTexts =
-                Array.from(
-                    targets.texts
-                );
-
-            const missing =
-                allTexts.filter(
-                    function (text) {
-                        return (
-                            !dictionary[text]
-                        );
-                    }
-                );
-
-            applyDictionary(
-                targets,
-                dictionary
-            );
-
-            const batches =
-                splitIntoBatches(
-                    missing,
-                    35,
-                    3500
-                );
-
-            for (
-                const batch
-                of batches
-            ) {
-                try {
-                    const translated =
-                        await requestTranslations(
-                            languageCode,
-                            languageName,
-                            batch
-                        );
-
-                    Object.assign(
-                        dictionary,
-                        translated
-                    );
-
-                    writeCache(
-                        languageCode,
-                        dictionary
-                    );
-
-                    if (
-                        selectedLanguageCode() !==
-                        languageCode
-                    ) {
-                        return;
-                    }
-
-                    const latestTargets =
-                        collectTargets(
-                            document.body
-                        );
-
-                    applyDictionary(
-                        latestTargets,
-                        dictionary
-                    );
-                }
-                catch (error) {
-                    console.error(
-                        "[MI AI Translation]",
-                        error
-                    );
-                }
-            }
-
-            document.documentElement.lang =
-                languageCode;
-
-            const rtlCodes =
-                new Set([
-                    "ar",
-                    "fa",
-                    "he",
-                    "ur"
-                ]);
-
-            document.documentElement.dir =
-                rtlCodes.has(
-                    languageCode
-                        .split("-")[0]
-                )
-                    ? "rtl"
-                    : "ltr";
-
-            if (
-                window.MIFirebase &&
-                typeof window.MIFirebase
-                    .updateLanguage ===
-                    "function"
-            ) {
-                window.MIFirebase
-                    .updateLanguage();
-            }
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "mi-any-language-applied",
-                    {
-                        detail: {
-                            language:
-                                languageCode
-                        }
-                    }
-                )
-            );
-        }
-        finally {
-            translationRunning = false;
-        }
-    }
-
-    function scheduleTranslation(
-        delay
-    ) {
-        clearTimeout(
-            refreshTimer
-        );
-
-        refreshTimer =
-            setTimeout(
-                function () {
-                    translateCurrentUi()
-                        .catch(
-                            function (
-                                error
-                            ) {
-                                console.error(
-                                    "[MI AI Translation]",
-                                    error
-                                );
-                            }
-                        );
-                },
-                typeof delay ===
-                    "number"
-                    ? delay
-                    : 80
-            );
-    }
-
-    function startObserver() {
-        const observer =
-            new MutationObserver(
-                function (mutations) {
-                    if (
-                        observerPaused ||
-                        translationRunning ||
-                        isEnglish(
-                            selectedLanguageCode()
-                        )
-                    ) {
-                        return;
-                    }
-
-                    const hasNewContent =
-                        mutations.some(
-                            function (
-                                mutation
-                            ) {
-                                return (
-                                    mutation
-                                        .addedNodes
-                                        .length >
-                                    0
-                                );
-                            }
-                        );
-
-                    if (hasNewContent) {
-                        scheduleTranslation(
-                            150
-                        );
-                    }
-                }
-            );
-
-        observer.observe(
-            document.body,
-            {
-                childList:
-                    true,
-
-                subtree:
-                    true
-            }
-        );
-    }
-
-    function start() {
-        const languageSelect =
-            document.getElementById(
-                "languageSelect"
-            );
-
-        if (languageSelect) {
-            languageSelect.addEventListener(
-                "change",
-                function () {
-                    const code =
-                        languageSelect.value;
-
-                    localStorage.setItem(
-                        "mi_ui_language",
-                        code
-                    );
-
-                    activeLanguage =
-                        code;
-
-                    scheduleTranslation(
-                        120
-                    );
-                }
-            );
-        }
-
-        window.addEventListener(
-            "mi-language-changed",
-            function () {
-                scheduleTranslation(
-                    100
-                );
-            }
-        );
-
-        window.addEventListener(
-            "mi-firebase-ready",
-            function () {
-                scheduleTranslation(
-                    100
-                );
-            }
-        );
-
-        startObserver();
-
-        scheduleTranslation(
-            250
-        );
-    }
-
-    window.MIAnyLanguage = {
-        refresh:
-            function () {
-                scheduleTranslation(
-                    0
-                );
-            },
-
-        translate:
-            translateCurrentUi,
-
-        clearCache:
-            function (
-                languageCode
-            ) {
-                const code =
-                    String(
-                        languageCode ||
-                        selectedLanguageCode()
-                    )
-                        .trim()
-                        .toLowerCase();
-
-                localStorage.removeItem(
-                    cacheKey(code)
-                );
-            },
-
-        getLanguage:
-            selectedLanguageCode
-    };
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once: true
-            }
-        );
-    }
-    else {
-        start();
-    }
-})();
-
-/* MI AI ANY LANGUAGE TRANSLATION - END */
-</script>
 
 <script>
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - START */
@@ -16764,502 +15949,1349 @@ document.addEventListener(
 </script>
 
 
+
+
+
+
+
+
 <script>
-/* MI AI SETTINGS LOGIN REQUIRED - START */
+/* MI AI ACCOUNT AUTO SAVE V3 - START */
 
 (function () {
     "use strict";
 
-    const protectedTypes = new Set([
-        "language",
-        "theme",
-        "fontsize",
-        "font-size",
-        "font_size"
+    const STATE_PREFIX =
+        "mi_ai_account_state_v3_";
+
+    const SESSION_KEYS = new Set([
+        "mi_supabase_token",
+        "mi_user_id",
+        "mi_user_email",
+        "mi_account"
     ]);
 
-    const previousValues =
-        new WeakMap();
+    let saveTimer = null;
+    let restoreRunning = false;
+    let logoutRunning = false;
+    let lastAccountEmail = "";
 
-    let openingLogin =
-        false;
+    function normalizeEmail(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
 
-    function authenticated() {
+    function firebaseUser() {
+        try {
+            return (
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth === "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                ) ||
+                null
+            );
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function currentEmail() {
+        const account = firebaseUser();
+
+        return normalizeEmail(
+            account?.email ||
+            window.user?.email ||
+            (
+                typeof user !== "undefined"
+                    ? user?.email
+                    : ""
+            ) ||
+            localStorage.getItem("mi_user_email") ||
+            ""
+        );
+    }
+
+    function currentUserId() {
+        const account = firebaseUser();
+
+        return String(
+            account?.uid ||
+            window.user?.id ||
+            (
+                typeof user !== "undefined"
+                    ? user?.id
+                    : ""
+            ) ||
+            localStorage.getItem("mi_user_id") ||
+            ""
+        ).trim();
+    }
+
+    function loggedIn() {
+        return Boolean(
+            currentEmail() &&
+            (
+                firebaseUser() ||
+                currentUserId() ||
+                localStorage.getItem("mi_supabase_token")
+            )
+        );
+    }
+
+    function accountKey(email) {
+        return (
+            STATE_PREFIX +
+            encodeURIComponent(
+                normalizeEmail(email)
+            )
+        );
+    }
+
+    function safeClone(value, fallback) {
+        try {
+            return JSON.parse(
+                JSON.stringify(value)
+            );
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function safeParse(value, fallback) {
+        try {
+            const parsed = JSON.parse(value);
+
+            return parsed === null
+                ? fallback
+                : parsed;
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function chatSnapshot() {
         try {
             if (
-                typeof window.isAuthenticated ===
-                    "function"
+                typeof chats !== "undefined" &&
+                chats &&
+                typeof chats === "object"
             ) {
-                return Boolean(
-                    window.isAuthenticated()
-                );
+                return safeClone(chats, {});
             }
 
             if (
-                typeof isAuthenticated ===
-                    "function"
+                window.chats &&
+                typeof window.chats === "object"
             ) {
-                return Boolean(
-                    isAuthenticated()
-                );
+                return safeClone(window.chats, {});
             }
         }
         catch (error) {
             console.warn(
-                "[MI AI Settings Guard]",
+                "[MI AI Account Save] Chat collection failed.",
                 error
             );
         }
 
-        return Boolean(
-            window.user ||
-            localStorage.getItem(
-                "mi_supabase_token"
-            ) ||
-            window.miFirebaseAuth
-                ?.currentUser
+        return {};
+    }
+
+    function currentChatId() {
+        try {
+            if (typeof currentChat !== "undefined") {
+                return currentChat || null;
+            }
+        }
+        catch (error) {
+            // Ignore.
+        }
+
+        return (
+            window.currentChat ||
+            localStorage.getItem("last_chat") ||
+            null
         );
     }
 
-    function selectedLanguage() {
-        return (
+    function settingsControls() {
+        const result = {};
+
+        document
+            .querySelectorAll(
+                [
+                    "#settingsPanel input",
+                    "#settingsPanel select",
+                    "#settingsPanel textarea",
+                    "#settingsModal input",
+                    "#settingsModal select",
+                    "#settingsModal textarea",
+                    ".settings-panel input",
+                    ".settings-panel select",
+                    ".settings-panel textarea"
+                ].join(",")
+            )
+            .forEach(function (control, index) {
+                const key =
+                    control.id ||
+                    control.name ||
+                    (
+                        control.getAttribute(
+                            "data-setting"
+                        )
+                    ) ||
+                    "setting_" + index;
+
+                result[key] = {
+                    value:
+                        control.value,
+
+                    checked:
+                        Boolean(
+                            control.checked
+                        ),
+
+                    type:
+                        control.type ||
+                        control.tagName
+                            .toLowerCase()
+                };
+            });
+
+        return result;
+    }
+
+    function settingsStorage() {
+        const result = {};
+
+        for (
+            let index = 0;
+            index < localStorage.length;
+            index += 1
+        ) {
+            const key =
+                localStorage.key(index);
+
+            if (!key) {
+                continue;
+            }
+
+            const lower =
+                key.toLowerCase();
+
+            if (
+                SESSION_KEYS.has(key) ||
+                key.startsWith(STATE_PREFIX)
+            ) {
+                continue;
+            }
+
+            if (
+                lower.includes("theme") ||
+                lower.includes("color") ||
+                lower.includes("colour") ||
+                lower.includes("font") ||
+                lower.includes("language") ||
+                lower.includes("locale") ||
+                lower.includes("appearance") ||
+                lower.includes("setting")
+            ) {
+                result[key] =
+                    localStorage.getItem(key);
+            }
+        }
+
+        return result;
+    }
+
+    function cssVariables() {
+        const root =
+            document.documentElement;
+
+        const names = [
+            "--main",
+            "--bg",
+            "--panel",
+            "--ai",
+            "--text",
+            "--input",
+            "--primary",
+            "--accent",
+            "--theme-color",
+            "--mi-theme-color",
+            "--mi-theme-rgb",
+            "--font-size",
+            "--mi-font-size"
+        ];
+
+        const result = {};
+
+        names.forEach(function (name) {
+            const inline =
+                root.style.getPropertyValue(
+                    name
+                );
+
+            const computed =
+                getComputedStyle(root)
+                    .getPropertyValue(name);
+
+            const value =
+                String(
+                    inline ||
+                    computed ||
+                    ""
+                ).trim();
+
+            if (value) {
+                result[name] = value;
+            }
+        });
+
+        return result;
+    }
+
+    function buildState(email) {
+        return {
+            version: 3,
+            email:
+                normalizeEmail(email),
+
+            userId:
+                currentUserId(),
+
+            savedAt:
+                Date.now(),
+
+            chats:
+                chatSnapshot(),
+
+            currentChat:
+                currentChatId(),
+
+            controls:
+                settingsControls(),
+
+            storage:
+                settingsStorage(),
+
+            css:
+                cssVariables(),
+
+            htmlClasses:
+                Array.from(
+                    document.documentElement
+                        .classList
+                ),
+
+            bodyClasses:
+                Array.from(
+                    document.body?.classList ||
+                    []
+                ),
+
+            htmlLang:
+                document.documentElement.lang ||
+                "",
+
+            htmlDir:
+                document.documentElement.dir ||
+                ""
+        };
+    }
+
+    function saveState(reason) {
+        const email =
+            currentEmail();
+
+        if (
+            !email ||
+            !loggedIn() ||
+            logoutRunning
+        ) {
+            return false;
+        }
+
+        try {
+            localStorage.setItem(
+                accountKey(email),
+                JSON.stringify(
+                    buildState(email)
+                )
+            );
+
+            lastAccountEmail = email;
+
+            console.log(
+                "[MI AI Account Save] Saved:",
+                reason || "update",
+                email
+            );
+
+            return true;
+        }
+        catch (error) {
+            console.error(
+                "[MI AI Account Save] Save failed.",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    function scheduleSave(reason, delay) {
+        clearTimeout(saveTimer);
+
+        saveTimer =
+            setTimeout(
+                function () {
+                    saveState(reason);
+                },
+                typeof delay === "number"
+                    ? delay
+                    : 150
+            );
+    }
+
+    function readState(email) {
+        const normalized =
+            normalizeEmail(email);
+
+        if (!normalized) {
+            return null;
+        }
+
+        const state =
+            safeParse(
+                localStorage.getItem(
+                    accountKey(normalized)
+                ),
+                null
+            );
+
+        if (
+            !state ||
+            typeof state !== "object" ||
+            state.version !== 3
+        ) {
+            return null;
+        }
+
+        return state;
+    }
+
+    function applySettings(state) {
+        if (!state) {
+            return;
+        }
+
+        Object.entries(
+            state.storage || {}
+        ).forEach(function (entry) {
+            if (
+                typeof entry[1] === "string"
+            ) {
+                localStorage.setItem(
+                    entry[0],
+                    entry[1]
+                );
+            }
+        });
+
+        Object.entries(
+            state.css || {}
+        ).forEach(function (entry) {
+            document.documentElement
+                .style
+                .setProperty(
+                    entry[0],
+                    entry[1]
+                );
+        });
+
+        if (state.htmlLang) {
+            document.documentElement.lang =
+                state.htmlLang;
+        }
+
+        if (state.htmlDir) {
+            document.documentElement.dir =
+                state.htmlDir;
+        }
+
+        const controls =
+            state.controls || {};
+
+        document
+            .querySelectorAll(
+                [
+                    "#settingsPanel input",
+                    "#settingsPanel select",
+                    "#settingsPanel textarea",
+                    "#settingsModal input",
+                    "#settingsModal select",
+                    "#settingsModal textarea",
+                    ".settings-panel input",
+                    ".settings-panel select",
+                    ".settings-panel textarea"
+                ].join(",")
+            )
+            .forEach(function (control, index) {
+                const key =
+                    control.id ||
+                    control.name ||
+                    control.getAttribute(
+                        "data-setting"
+                    ) ||
+                    "setting_" + index;
+
+                const saved =
+                    controls[key];
+
+                if (!saved) {
+                    return;
+                }
+
+                if (
+                    control.type === "checkbox" ||
+                    control.type === "radio"
+                ) {
+                    control.checked =
+                        Boolean(
+                            saved.checked
+                        );
+                }
+
+                if (
+                    saved.value !== undefined
+                ) {
+                    control.value =
+                        saved.value;
+                }
+
+                control.dispatchEvent(
+                    new Event(
+                        "input",
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+
+                control.dispatchEvent(
+                    new Event(
+                        "change",
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+            });
+
+        const language =
             document.getElementById(
                 "languageSelect"
             )?.value ||
             localStorage.getItem(
                 "mi_ui_language"
             ) ||
-            "en"
-        );
-    }
-
-    function message() {
-        const language =
-            selectedLanguage();
-
-        const messages = {
-            en:
-                "Please log in to change Language, Theme or Font Size.",
-
-            si:
-                "භාෂාව, තේමාව හෝ අකුරු ප්‍රමාණය වෙනස් කිරීමට පිවිසෙන්න.",
-
-            ta:
-                "மொழி, தீம் அல்லது எழுத்தளவை மாற்ற உள்நுழையவும்."
-        };
-
-        return (
-            messages[language] ||
-            messages.en
-        );
-    }
-
-    function showLoginRequired() {
-        const text =
-            message();
+            localStorage.getItem(
+                "language"
+            );
 
         if (
-            typeof window.showToast ===
-            "function"
+            language &&
+            typeof window.applyLanguage ===
+                "function"
         ) {
-            window.showToast(text);
+            Promise.resolve(
+                window.applyLanguage(
+                    language,
+                    false
+                )
+            ).catch(function () {});
         }
         else if (
-            typeof window.showShareFeedback ===
-            "function"
+            language &&
+            typeof applyLanguage ===
+                "function"
         ) {
-            window.showShareFeedback(
-                text
-            );
-        }
-        else {
-            const reminder =
-                document.getElementById(
-                    "authReminder"
-                );
-
-            if (reminder) {
-                reminder.textContent =
-                    text;
-
-                reminder.style.display =
-                    "block";
-
-                setTimeout(
-                    function () {
-                        reminder.style.display =
-                            "none";
-                    },
-                    3500
-                );
-            }
-        }
-
-        if (openingLogin) {
-            return;
-        }
-
-        openingLogin = true;
-
-        setTimeout(
-            function () {
-                try {
-                    if (
-                        typeof window.openLogin ===
-                            "function"
-                    ) {
-                        window.openLogin();
-                    }
-                    else if (
-                        typeof openLogin ===
-                            "function"
-                    ) {
-                        openLogin();
-                    }
-                }
-                finally {
-                    openingLogin =
-                        false;
-                }
-            },
-            30
-        );
-    }
-
-    function settingsType(element) {
-        if (!(element instanceof Element)) {
-            return "";
-        }
-
-        const section =
-            element.closest(
-                ".mi-settings-section"
-            );
-
-        const explicitType =
-            section?.dataset
-                ?.settingsType;
-
-        if (explicitType) {
-            return String(
-                explicitType
-            )
-                .trim()
-                .toLowerCase();
-        }
-
-        const details = [
-            element.id,
-            element.getAttribute(
-                "name"
-            ),
-            element.className,
-            element.getAttribute(
-                "aria-label"
-            ),
-            element.getAttribute(
-                "title"
-            ),
-            element.closest(
-                "label"
-            )?.textContent,
-            element.parentElement
-                ?.textContent
-        ]
-            .join(" ")
-            .toLowerCase();
-
-        if (
-            details.includes(
-                "language"
-            ) ||
-            details.includes(
-                "භාෂා"
-            ) ||
-            details.includes(
-                "மொழி"
-            )
-        ) {
-            return "language";
-        }
-
-        if (
-            details.includes(
-                "theme"
-            ) ||
-            details.includes(
-                "color"
-            ) ||
-            details.includes(
-                "colour"
-            ) ||
-            details.includes(
-                "තේමා"
-            ) ||
-            details.includes(
-                "வண்ண"
-            ) ||
-            details.includes(
-                "தீம்"
-            )
-        ) {
-            return "theme";
-        }
-
-        if (
-            details.includes(
-                "font"
-            ) ||
-            details.includes(
-                "අකුරු"
-            ) ||
-            details.includes(
-                "எழுத்த"
-            )
-        ) {
-            return "fontsize";
-        }
-
-        return "";
-    }
-
-    function isProtectedControl(
-        element
-    ) {
-        if (!(element instanceof Element)) {
-            return false;
-        }
-
-        if (
-            !element.closest(
-                "#settingsPanel"
-            )
-        ) {
-            return false;
-        }
-
-        if (
-            element.closest(
-                "#settingsCloseBtn, " +
-                ".close-btn, " +
-                ".modal-close"
-            )
-        ) {
-            return false;
-        }
-
-        const type =
-            settingsType(element);
-
-        return protectedTypes.has(
-            type
-        );
-    }
-
-    function rememberValue(control) {
-        if (
-            control instanceof
-                HTMLInputElement ||
-            control instanceof
-                HTMLSelectElement ||
-            control instanceof
-                HTMLTextAreaElement
-        ) {
-            previousValues.set(
-                control,
-                {
-                    value:
-                        control.value,
-
-                    checked:
-                        control.checked
-                }
-            );
-        }
-    }
-
-    function restoreValue(control) {
-        const previous =
-            previousValues.get(
-                control
-            );
-
-        if (
-            !previous ||
-            !control
-        ) {
-            return;
-        }
-
-        if (
-            "value" in control
-        ) {
-            control.value =
-                previous.value;
-        }
-
-        if (
-            "checked" in control
-        ) {
-            control.checked =
-                previous.checked;
-        }
-    }
-
-    function blockEvent(event) {
-        const target =
-            event.target;
-
-        if (
-            authenticated() ||
-            !isProtectedControl(
-                target
-            )
-        ) {
-            if (
-                event.type ===
-                    "focusin" ||
-                event.type ===
-                    "pointerdown"
-            ) {
-                rememberValue(
-                    target
-                );
-            }
-
-            return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        restoreValue(target);
-        showLoginRequired();
-    }
-
-    document.addEventListener(
-        "pointerdown",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "click",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "focusin",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "input",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "change",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-            if (
-                authenticated() ||
-                !isProtectedControl(
-                    event.target
+            Promise.resolve(
+                applyLanguage(
+                    language,
+                    false
                 )
+            ).catch(function () {});
+        }
+
+        if (
+            window.MIAnyLanguage &&
+            typeof window
+                .MIAnyLanguage
+                .refresh === "function"
+        ) {
+            window.MIAnyLanguage.refresh();
+        }
+
+        if (
+            window.MISettingsAccordion &&
+            typeof window
+                .MISettingsAccordion
+                .refresh === "function"
+        ) {
+            window.MISettingsAccordion.refresh();
+        }
+    }
+
+    function applyChats(state) {
+        if (
+            !state ||
+            !state.chats ||
+            typeof state.chats !== "object" ||
+            Array.isArray(state.chats)
+        ) {
+            return false;
+        }
+
+        const ids =
+            Object.keys(state.chats);
+
+        if (!ids.length) {
+            return false;
+        }
+
+        const restoredChats =
+            safeClone(
+                state.chats,
+                {}
+            );
+
+        try {
+            if (typeof chats !== "undefined") {
+                chats = restoredChats;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible global.
+        }
+
+        window.chats =
+            restoredChats;
+
+        const selectedChat =
+            state.currentChat &&
+            restoredChats[state.currentChat]
+                ? state.currentChat
+                : ids[0];
+
+        try {
+            if (
+                typeof currentChat !==
+                "undefined"
+            ) {
+                currentChat =
+                    selectedChat;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible global.
+        }
+
+        window.currentChat =
+            selectedChat;
+
+        localStorage.setItem(
+            "last_chat",
+            selectedChat
+        );
+
+        try {
+            if (
+                typeof getUserChatStorageKey ===
+                    "function"
+            ) {
+                const storageKey =
+                    getUserChatStorageKey();
+
+                if (storageKey) {
+                    localStorage.setItem(
+                        storageKey,
+                        JSON.stringify(
+                            restoredChats
+                        )
+                    );
+                }
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Account Save] Chat key backup failed.",
+                error
+            );
+        }
+
+        if (
+            typeof window.save ===
+                "function"
+        ) {
+            try {
+                window.save();
+            }
+            catch (error) {}
+        }
+        else if (
+            typeof save ===
+                "function"
+        ) {
+            try {
+                save();
+            }
+            catch (error) {}
+        }
+
+        if (
+            typeof window.renderList ===
+                "function"
+        ) {
+            window.renderList();
+        }
+        else if (
+            typeof renderList ===
+                "function"
+        ) {
+            renderList();
+        }
+
+        if (
+            typeof window.openChat ===
+                "function"
+        ) {
+            window.openChat(
+                selectedChat
+            );
+        }
+        else if (
+            typeof openChat ===
+                "function"
+        ) {
+            openChat(
+                selectedChat
+            );
+        }
+
+        return true;
+    }
+
+    async function restoreState(email) {
+        const normalized =
+            normalizeEmail(email);
+
+        if (
+            !normalized ||
+            restoreRunning
+        ) {
+            return false;
+        }
+
+        restoreRunning = true;
+
+        try {
+            const localState =
+                readState(normalized);
+
+            let localChatsRestored =
+                false;
+
+            if (localState) {
+                applySettings(
+                    localState
+                );
+
+                localChatsRestored =
+                    applyChats(
+                        localState
+                    );
+            }
+
+            if (
+                typeof window.loadUserChats ===
+                    "function"
+            ) {
+                try {
+                    await window.loadUserChats();
+                }
+                catch (error) {
+                    console.warn(
+                        "[MI AI Account Save] Server chat restore failed; local backup kept.",
+                        error
+                    );
+                }
+            }
+            else if (
+                typeof loadUserChats ===
+                    "function"
+            ) {
+                try {
+                    await loadUserChats();
+                }
+                catch (error) {
+                    console.warn(
+                        "[MI AI Account Save] Server chat restore failed; local backup kept.",
+                        error
+                    );
+                }
+            }
+
+            let chatCount = 0;
+
+            try {
+                chatCount =
+                    typeof chats !== "undefined" &&
+                    chats &&
+                    typeof chats === "object"
+                        ? Object.keys(chats)
+                            .length
+                        : Object.keys(
+                            window.chats || {}
+                        ).length;
+            }
+            catch (error) {
+                chatCount = 0;
+            }
+
+            if (
+                chatCount === 0 &&
+                localChatsRestored &&
+                localState
+            ) {
+                applyChats(localState);
+            }
+
+            if (localState) {
+                applySettings(localState);
+            }
+
+            lastAccountEmail =
+                normalized;
+
+            scheduleSave(
+                "after-restore",
+                500
+            );
+
+            console.log(
+                "[MI AI Account Save] Restored:",
+                normalized
+            );
+
+            return true;
+        }
+        finally {
+            restoreRunning = false;
+        }
+    }
+
+    function clearVisibleAccountData() {
+        try {
+            if (typeof chats !== "undefined") {
+                chats = {};
+            }
+        }
+        catch (error) {}
+
+        window.chats = {};
+
+        try {
+            if (
+                typeof currentChat !==
+                "undefined"
+            ) {
+                currentChat = null;
+            }
+        }
+        catch (error) {}
+
+        window.currentChat = null;
+
+        localStorage.removeItem(
+            "last_chat"
+        );
+
+        if (
+            typeof window.renderList ===
+                "function"
+        ) {
+            window.renderList();
+        }
+        else if (
+            typeof renderList ===
+                "function"
+        ) {
+            renderList();
+        }
+
+        const chatArea =
+            document.querySelector(
+                [
+                    "#chat",
+                    "#messages",
+                    "#chatMessages",
+                    ".chat-messages"
+                ].join(",")
+            );
+
+        if (chatArea) {
+            chatArea.innerHTML = "";
+        }
+    }
+
+    function installSaveWrappers() {
+        const functions = [
+            "save",
+            "saveChat",
+            "saveConversation",
+            "addMessage",
+            "sendMessage",
+            "newChat",
+            "deleteChat",
+            "renameChat",
+            "pinChat"
+        ];
+
+        functions.forEach(function (name) {
+            const original =
+                window[name];
+
+            if (
+                typeof original !== "function" ||
+                original.__miAccountSaveWrapped
             ) {
                 return;
             }
 
-            if (
-                [
-                    "Enter",
-                    " ",
-                    "ArrowUp",
-                    "ArrowDown",
-                    "ArrowLeft",
-                    "ArrowRight"
-                ].includes(
-                    event.key
-                )
-            ) {
-                blockEvent(event);
+            const wrapped =
+                function (...args) {
+                    const result =
+                        original.apply(
+                            this,
+                            args
+                        );
+
+                    Promise.resolve(result)
+                        .finally(function () {
+                            scheduleSave(
+                                name,
+                                200
+                            );
+                        });
+
+                    return result;
+                };
+
+            wrapped.__miAccountSaveWrapped =
+                true;
+
+            window[name] = wrapped;
+
+            try {
+                eval(name + " = window[name]");
             }
-        },
-        true
-    );
+            catch (error) {
+                // Ignore read-only bindings.
+            }
+        });
+    }
 
-    function refreshAppearance() {
-        const panel =
-            document.getElementById(
-                "settingsPanel"
-            );
+    function installLogoutWrapper() {
+        const original =
+            window.logout;
 
-        if (!panel) {
+        if (
+            typeof original !== "function" ||
+            original.__miAccountLogoutWrapped
+        ) {
             return;
         }
 
-        panel
-            .querySelectorAll(
-                ".mi-settings-section"
-            )
-            .forEach(
-                function (section) {
-                    const type =
-                        String(
-                            section.dataset
-                                .settingsType ||
-                            ""
-                        )
-                            .toLowerCase();
+        const wrapped =
+            async function (...args) {
+                const email =
+                    currentEmail();
 
-                    if (
-                        !protectedTypes.has(
-                            type
-                        )
-                    ) {
-                        return;
+                logoutRunning = true;
+
+                try {
+                    if (email) {
+                        saveState(
+                            "before-logout"
+                        );
                     }
 
-                    section.dataset
-                        .loginRequired =
-                        authenticated()
-                            ? "false"
-                            : "true";
-
-                    const button =
-                        section.querySelector(
-                            ".mi-settings-option-button"
+                    const result =
+                        await original.apply(
+                            this,
+                            args
                         );
 
-                    if (button) {
-                        button.title =
-                            authenticated()
-                                ? ""
-                                : message();
-                    }
+                    clearVisibleAccountData();
+
+                    return result;
                 }
+                finally {
+                    lastAccountEmail =
+                        email ||
+                        lastAccountEmail;
+
+                    logoutRunning = false;
+                }
+            };
+
+        wrapped.__miAccountLogoutWrapped =
+            true;
+
+        window.logout = wrapped;
+
+        try {
+            logout = wrapped;
+        }
+        catch (error) {
+            // Ignore read-only binding.
+        }
+    }
+
+    async function establishSession(account) {
+        if (!account?.email) {
+            return;
+        }
+
+        let token = "";
+
+        try {
+            token =
+                await account.getIdToken();
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Account Save] Token refresh failed.",
+                error
             );
+        }
+
+        const accountUser = {
+            id: account.uid,
+            email: account.email
+        };
+
+        window.user =
+            accountUser;
+
+        try {
+            if (typeof user !== "undefined") {
+                user = accountUser;
+            }
+        }
+        catch (error) {}
+
+        if (token) {
+            localStorage.setItem(
+                "mi_supabase_token",
+                token
+            );
+        }
+
+        localStorage.setItem(
+            "mi_user_id",
+            account.uid || ""
+        );
+
+        localStorage.setItem(
+            "mi_user_email",
+            account.email || ""
+        );
+
+        localStorage.setItem(
+            "mi_account",
+            account.uid || ""
+        );
+
+        await restoreState(
+            account.email
+        );
+
+        window.dispatchEvent(
+            new Event(
+                "mi-chat-user-changed"
+            )
+        );
+    }
+
+    function attachFirebaseAuth() {
+        let auth = null;
+
+        try {
+            auth =
+                window.miFirebaseAuth ||
+                window.firebaseAuth ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth ===
+                        "function"
+                        ? window.firebase.auth()
+                        : null
+                );
+        }
+        catch (error) {
+            auth = null;
+        }
+
+        if (
+            !auth ||
+            auth.__miAccountSaveListener
+        ) {
+            return Boolean(auth);
+        }
+
+        auth.__miAccountSaveListener =
+            true;
+
+        auth.onAuthStateChanged(
+            function (account) {
+                if (account) {
+                    establishSession(account)
+                        .catch(function (error) {
+                            console.error(
+                                "[MI AI Account Save] Login restore failed.",
+                                error
+                            );
+                        });
+                }
+                else {
+                    clearVisibleAccountData();
+                }
+            }
+        );
+
+        return true;
+    }
+
+    function recoverSession() {
+        const account =
+            firebaseUser();
+
+        if (account?.email) {
+            establishSession(account)
+                .catch(function (error) {
+                    console.error(
+                        "[MI AI Account Save] Session recovery failed.",
+                        error
+                    );
+                });
+
+            return;
+        }
+
+        const email =
+            normalizeEmail(
+                localStorage.getItem(
+                    "mi_user_email"
+                )
+            );
+
+        if (
+            email &&
+            localStorage.getItem(
+                "mi_supabase_token"
+            )
+        ) {
+            restoreState(email)
+                .catch(function (error) {
+                    console.error(
+                        "[MI AI Account Save] Stored session restore failed.",
+                        error
+                    );
+                });
+        }
+    }
+
+    function attachGlobalListeners() {
+        document.addEventListener(
+            "input",
+            function (event) {
+                if (
+                    loggedIn() &&
+                    event.target.closest(
+                        "#settingsPanel, #settingsModal, .settings-panel"
+                    )
+                ) {
+                    scheduleSave(
+                        "settings-input"
+                    );
+                }
+            },
+            true
+        );
+
+        document.addEventListener(
+            "change",
+            function (event) {
+                if (
+                    loggedIn() &&
+                    event.target.closest(
+                        "#settingsPanel, #settingsModal, .settings-panel"
+                    )
+                ) {
+                    scheduleSave(
+                        "settings-change"
+                    );
+                }
+            },
+            true
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                if (!loggedIn()) {
+                    return;
+                }
+
+                const details =
+                    [
+                        event.target.id,
+                        event.target.className,
+                        event.target.textContent,
+                        event.target.getAttribute?.(
+                            "data-setting"
+                        )
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                if (
+                    details.includes("theme") ||
+                    details.includes("colour") ||
+                    details.includes("color") ||
+                    details.includes("font") ||
+                    details.includes("language")
+                ) {
+                    scheduleSave(
+                        "settings-click",
+                        250
+                    );
+                }
+            },
+            true
+        );
+
+        document.addEventListener(
+            "mi-language-changed",
+            function () {
+                scheduleSave(
+                    "language-change"
+                );
+            }
+        );
+
+        document.addEventListener(
+            "mi-theme-changed",
+            function () {
+                scheduleSave(
+                    "theme-change"
+                );
+            }
+        );
+
+        window.addEventListener(
+            "pagehide",
+            function () {
+                saveState("pagehide");
+            }
+        );
+
+        window.addEventListener(
+            "beforeunload",
+            function () {
+                saveState(
+                    "beforeunload"
+                );
+            }
+        );
+
+        document.addEventListener(
+            "visibilitychange",
+            function () {
+                if (
+                    document.visibilityState ===
+                    "hidden"
+                ) {
+                    saveState(
+                        "page-hidden"
+                    );
+                }
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            recoverSession
+        );
+
+        window.addEventListener(
+            "popstate",
+            recoverSession
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                if (loggedIn()) {
+                    restoreState(
+                        currentEmail()
+                    );
+                }
+            }
+        );
     }
 
     function start() {
-        refreshAppearance();
+        installSaveWrappers();
+        installLogoutWrapper();
+        attachGlobalListeners();
+        recoverSession();
+
+        if (!attachFirebaseAuth()) {
+            let attempts = 0;
+
+            const timer =
+                setInterval(
+                    function () {
+                        attempts += 1;
+
+                        if (
+                            attachFirebaseAuth() ||
+                            attempts >= 80
+                        ) {
+                            clearInterval(timer);
+                        }
+                    },
+                    250
+                );
+        }
 
         const observer =
             new MutationObserver(
                 function () {
-                    requestAnimationFrame(
-                        refreshAppearance
-                    );
+                    installSaveWrappers();
+                    installLogoutWrapper();
                 }
             );
 
@@ -17271,23 +17303,42 @@ document.addEventListener(
             }
         );
 
-        window.addEventListener(
-            "mi-chat-user-changed",
-            refreshAppearance
-        );
-
-        window.addEventListener(
-            "mi-firebase-auth-changed",
-            refreshAppearance
+        setInterval(
+            function () {
+                if (loggedIn()) {
+                    saveState(
+                        "automatic"
+                    );
+                }
+            },
+            5000
         );
     }
 
-    window.MISettingsLoginGuard = {
-        isAuthenticated:
-            authenticated,
+    window.MIAccountAutoSave = {
+        save:
+            function () {
+                return saveState(
+                    "manual"
+                );
+            },
 
-        refresh:
-            refreshAppearance
+        restore:
+            function () {
+                return restoreState(
+                    currentEmail()
+                );
+            },
+
+        getState:
+            function () {
+                return readState(
+                    currentEmail()
+                );
+            },
+
+        isLoggedIn:
+            loggedIn
     };
 
     if (
@@ -17307,7 +17358,2034 @@ document.addEventListener(
     }
 })();
 
-/* MI AI SETTINGS LOGIN REQUIRED - END */
+/* MI AI ACCOUNT AUTO SAVE V3 - END */
+</script>
+
+
+
+<style>
+/* MI AI SMART LOGIN FLOW V5 CSS - START */
+
+#miSmartLoginNotice {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 999999;
+    max-width: calc(100vw - 32px);
+    padding: 11px 18px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.95);
+    color: #ffffff;
+    font: 600 14px/1.4 Arial, sans-serif;
+    text-align: center;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(15px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: 0.2s ease;
+}
+
+#miSmartLoginNotice.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+#authReminder,
+.auth-reminder,
+.login-required-message,
+.settings-login-message,
+[data-login-reminder],
+[data-auth-reminder] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* MI AI SMART LOGIN FLOW V5 CSS - END */
+</style>
+
+<script>
+/* MI AI SMART LOGIN FLOW V5 - START */
+
+(function () {
+    "use strict";
+
+    let noticeTimer = null;
+    let loginOpening = false;
+    let loginRequested = false;
+
+    const loginButtonSelectors = [
+        "#loginBtn",
+        "#openLoginBtn",
+        "#headerLoginBtn",
+        ".login-btn",
+        ".open-login",
+        "[data-action='login']",
+        "[data-open='login']",
+        "button[onclick*='openLogin']",
+        "button[onclick*='showLogin']",
+        "button[onclick*='openAuth']"
+    ];
+
+    const shareSelectors = [
+        "#shareBtn",
+        "#shareButton",
+        ".share-btn",
+        ".chat-share-btn",
+        "[data-action='share']",
+        "[data-share]",
+        "button[onclick*='share']"
+    ];
+
+    const modalSelectors = [
+        "#loginModal",
+        "#authModal",
+        "#loginPanel",
+        "#authPanel",
+        ".login-modal",
+        ".auth-modal",
+        "[data-modal='login']",
+        "[data-auth-modal]"
+    ];
+
+    const closeSelectors = [
+        "#loginCloseBtn",
+        "#authCloseBtn",
+        ".login-close",
+        ".auth-close",
+        ".modal-close",
+        ".close-btn",
+        "[data-action='close-login']",
+        "[data-close='login']"
+    ];
+
+    const protectedWords = [
+        "language",
+        "theme",
+        "font size",
+        "fontsize",
+        "font-size",
+        "appearance",
+        "account",
+        "profile",
+        "history",
+        "saved chat",
+        "rename chat",
+        "pin chat",
+        "භාෂාව",
+        "තේමාව",
+        "අකුරු ප්‍රමාණය",
+        "மொழி",
+        "தீம்",
+        "எழுத்தளவு"
+    ];
+
+    function firebaseUser() {
+        try {
+            return (
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth === "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                ) ||
+                null
+            );
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function authenticated() {
+        try {
+            if (typeof window.isAuthenticated === "function") {
+                return Boolean(window.isAuthenticated());
+            }
+
+            if (typeof isAuthenticated === "function") {
+                return Boolean(isAuthenticated());
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Smart Login]",
+                error
+            );
+        }
+
+        return Boolean(
+            firebaseUser() ||
+            window.user?.email ||
+            localStorage.getItem("mi_supabase_token")
+        );
+    }
+
+    function selectedLanguage() {
+        return String(
+            document.getElementById("languageSelect")?.value ||
+            localStorage.getItem("mi_ui_language") ||
+            "en"
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function messageFor(reason) {
+        const language = selectedLanguage();
+
+        const messages = {
+            en: {
+                share:
+                    "Please log in to share this chat.",
+
+                settings:
+                    "Please log in to change this setting.",
+
+                protected:
+                    "Please log in to use this feature."
+            },
+
+            si: {
+                share:
+                    "මෙම chat එක Share කිරීමට Login වෙන්න.",
+
+                settings:
+                    "මෙම setting එක වෙනස් කිරීමට Login වෙන්න.",
+
+                protected:
+                    "මෙම feature එක භාවිත කිරීමට Login වෙන්න."
+            },
+
+            ta: {
+                share:
+                    "இந்த chat-ஐ Share செய்ய Login செய்யவும்.",
+
+                settings:
+                    "இந்த setting-ஐ மாற்ற Login செய்யவும்.",
+
+                protected:
+                    "இந்த feature-ஐ பயன்படுத்த Login செய்யவும்."
+            }
+        };
+
+        const set =
+            language.startsWith("si")
+                ? messages.si
+                : language.startsWith("ta")
+                    ? messages.ta
+                    : messages.en;
+
+        return set[reason] || set.protected;
+    }
+
+    function createNotice() {
+        let notice =
+            document.getElementById(
+                "miSmartLoginNotice"
+            );
+
+        if (notice) {
+            return notice;
+        }
+
+        notice =
+            document.createElement("div");
+
+        notice.id =
+            "miSmartLoginNotice";
+
+        notice.setAttribute(
+            "role",
+            "status"
+        );
+
+        notice.setAttribute(
+            "aria-live",
+            "polite"
+        );
+
+        document.body.appendChild(
+            notice
+        );
+
+        return notice;
+    }
+
+    function showSuggestion(reason) {
+        const text =
+            messageFor(reason);
+
+        if (typeof window.showToast === "function") {
+            window.showToast(text);
+            return;
+        }
+
+        const notice =
+            createNotice();
+
+        clearTimeout(noticeTimer);
+
+        notice.textContent = text;
+        notice.classList.add("visible");
+
+        noticeTimer =
+            setTimeout(function () {
+                notice.classList.remove(
+                    "visible"
+                );
+            }, 2300);
+    }
+
+    function findLoginModal() {
+        for (const selector of modalSelectors) {
+            const modal =
+                document.querySelector(
+                    selector
+                );
+
+            if (modal) {
+                return modal;
+            }
+        }
+
+        const emailInput =
+            document.querySelector(
+                [
+                    "#loginEmail",
+                    "input[type='email']",
+                    "input[name='email']"
+                ].join(",")
+            );
+
+        if (!emailInput) {
+            return null;
+        }
+
+        let parent =
+            emailInput.parentElement;
+
+        while (
+            parent &&
+            parent !== document.body
+        ) {
+            const text =
+                String(
+                    parent.textContent || ""
+                ).toLowerCase();
+
+            if (
+                text.includes("password") &&
+                (
+                    text.includes("sign in") ||
+                    text.includes("login")
+                )
+            ) {
+                return parent;
+            }
+
+            parent =
+                parent.parentElement;
+        }
+
+        return null;
+    }
+
+    function showLoginModal(modal) {
+        if (!modal) {
+            return false;
+        }
+
+        loginRequested = true;
+
+        modal.hidden = false;
+        modal.removeAttribute("hidden");
+
+        modal.classList.add(
+            "active",
+            "open",
+            "show",
+            "visible"
+        );
+
+        modal.style.display = "flex";
+        modal.style.visibility = "visible";
+        modal.style.opacity = "1";
+        modal.style.pointerEvents = "auto";
+
+        document.body.classList.add(
+            "modal-open"
+        );
+
+        setTimeout(function () {
+            modal.querySelector(
+                [
+                    "#loginEmail",
+                    "input[type='email']",
+                    "input[name='email']"
+                ].join(",")
+            )?.focus();
+        }, 100);
+
+        return true;
+    }
+
+    function hideLoginModal() {
+        const modal =
+            findLoginModal();
+
+        loginRequested = false;
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.remove(
+            "active",
+            "open",
+            "show",
+            "visible"
+        );
+
+        modal.hidden = true;
+        modal.style.display = "none";
+        modal.style.visibility = "hidden";
+        modal.style.opacity = "0";
+        modal.style.pointerEvents = "none";
+
+        document.body.classList.remove(
+            "modal-open"
+        );
+    }
+
+    function openLogin() {
+        if (
+            authenticated() ||
+            loginOpening
+        ) {
+            return;
+        }
+
+        loginOpening = true;
+        loginRequested = true;
+
+        try {
+            if (typeof window.openLogin === "function") {
+                window.openLogin();
+            }
+            else if (typeof openLogin === "function") {
+                openLogin();
+            }
+            else if (typeof window.showLogin === "function") {
+                window.showLogin();
+            }
+            else if (typeof showLogin === "function") {
+                showLogin();
+            }
+            else if (
+                typeof window.openAuthModal === "function"
+            ) {
+                window.openAuthModal("login");
+            }
+            else if (
+                typeof openAuthModal === "function"
+            ) {
+                openAuthModal("login");
+            }
+
+            setTimeout(function () {
+                showLoginModal(
+                    findLoginModal()
+                );
+            }, 50);
+        }
+        finally {
+            setTimeout(function () {
+                loginOpening = false;
+            }, 450);
+        }
+    }
+
+    function details(element) {
+        if (!(element instanceof Element)) {
+            return "";
+        }
+
+        return [
+            element.id,
+            element.className,
+            element.getAttribute("name"),
+            element.getAttribute("data-setting"),
+            element.getAttribute("data-settings-type"),
+            element.getAttribute("data-action"),
+            element.getAttribute("aria-label"),
+            element.getAttribute("title"),
+            element.textContent,
+            element.closest("button")?.textContent,
+            element.closest("label")?.textContent,
+            element.closest(".mi-settings-section")
+                ?.textContent
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function matchesSelector(
+        element,
+        selectors
+    ) {
+        return Boolean(
+            element instanceof Element &&
+            element.closest(
+                selectors.join(",")
+            )
+        );
+    }
+
+    function isLoginButton(element) {
+        if (
+            matchesSelector(
+                element,
+                loginButtonSelectors
+            )
+        ) {
+            return true;
+        }
+
+        const text =
+            details(element);
+
+        return (
+            text === "login" ||
+            text === "log in"
+        );
+    }
+
+    function isShareButton(element) {
+        if (
+            matchesSelector(
+                element,
+                shareSelectors
+            )
+        ) {
+            return true;
+        }
+
+        return details(element)
+            .includes("share");
+    }
+
+    function isSettingsFeature(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        if (
+            !element.closest(
+                [
+                    "#settingsPanel",
+                    "#settingsModal",
+                    ".settings-panel",
+                    ".settings-modal",
+                    ".mi-settings-section"
+                ].join(",")
+            )
+        ) {
+            return false;
+        }
+
+        const text =
+            details(element);
+
+        return protectedWords.some(
+            function (word) {
+                return text.includes(word);
+            }
+        );
+    }
+
+    function isProtectedFeature(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        if (
+            element.closest(
+                [
+                    "[data-login-required='true']",
+                    "[data-auth-required='true']",
+                    ".login-required",
+                    ".auth-required"
+                ].join(",")
+            )
+        ) {
+            return true;
+        }
+
+        const text =
+            details(element);
+
+        return protectedWords.some(
+            function (word) {
+                return text.includes(word);
+            }
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const target =
+                event.target;
+
+            if (
+                matchesSelector(
+                    target,
+                    closeSelectors
+                )
+            ) {
+                event.preventDefault();
+                hideLoginModal();
+                return;
+            }
+
+            if (isLoginButton(target)) {
+                event.preventDefault();
+                openLogin();
+                return;
+            }
+
+            if (
+                authenticated()
+            ) {
+                return;
+            }
+
+            if (isShareButton(target)) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                showSuggestion("share");
+                openLogin();
+                return;
+            }
+
+            if (isSettingsFeature(target)) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                showSuggestion("settings");
+                openLogin();
+                return;
+            }
+
+            if (isProtectedFeature(target)) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                showSuggestion("protected");
+                openLogin();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                hideLoginModal();
+            }
+        },
+        true
+    );
+
+    function removePermanentMessages() {
+        document
+            .querySelectorAll(
+                [
+                    "#authReminder",
+                    ".auth-reminder",
+                    ".login-required-message",
+                    ".settings-login-message",
+                    "[data-login-reminder]",
+                    "[data-auth-reminder]"
+                ].join(",")
+            )
+            .forEach(function (element) {
+                element.textContent = "";
+                element.hidden = true;
+                element.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+            });
+    }
+
+    function keepClosedUnlessRequested() {
+        removePermanentMessages();
+
+        if (
+            !loginRequested &&
+            !authenticated()
+        ) {
+            hideLoginModal();
+        }
+    }
+
+    function start() {
+        /*
+          Never auto-open login on page load,
+          refresh, Back or chat typing.
+        */
+        loginRequested = false;
+
+        setTimeout(
+            keepClosedUnlessRequested,
+            50
+        );
+
+        setTimeout(
+            keepClosedUnlessRequested,
+            350
+        );
+
+        setTimeout(
+            keepClosedUnlessRequested,
+            1000
+        );
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    removePermanentMessages();
+
+                    if (!loginRequested) {
+                        requestAnimationFrame(
+                            keepClosedUnlessRequested
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                loginRequested = false;
+                keepClosedUnlessRequested();
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                if (authenticated()) {
+                    hideLoginModal();
+                }
+                else {
+                    loginRequested = false;
+                    keepClosedUnlessRequested();
+                }
+            }
+        );
+    }
+
+    window.MISmartLogin = {
+        open: openLogin,
+        close: hideLoginModal,
+        suggest:
+            function (reason) {
+                showSuggestion(
+                    reason || "protected"
+                );
+
+                openLogin();
+            },
+
+        isAuthenticated:
+            authenticated
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SMART LOGIN FLOW V5 - END */
+</script>
+
+<script>
+/* MI AI FULL UI TRANSLATION V2 - START */
+
+(function () {
+    "use strict";
+
+    const CACHE_PREFIX =
+        "mi_full_ui_translation_v2_";
+
+    const NO_TRANSLATE_SELECTOR = [
+        "#header",
+        "header",
+        ".header",
+        ".app-header",
+        ".top-header",
+
+        "#chat",
+        "#messages",
+        "#chatMessages",
+        "#messageList",
+        ".chat-area",
+        ".chat-content",
+        ".chat-messages",
+        ".message-list",
+        ".chat-message",
+        ".user-message",
+        ".ai-message",
+        ".message-content",
+        "[data-chat-message]",
+
+        "script",
+        "style",
+        "code",
+        "pre",
+        "svg",
+        "path",
+        "noscript",
+
+        "[data-mi-no-translate='true']",
+        ".mi-no-translate"
+    ].join(",");
+
+    const ATTRIBUTE_NAMES = [
+        "placeholder",
+        "title",
+        "aria-label"
+    ];
+
+    const pendingRequests =
+        new Map();
+
+    let translationRunning =
+        false;
+
+    let observerPaused =
+        false;
+
+    let refreshTimer =
+        null;
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function selectedLanguageCode() {
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const selectorValue =
+            selector?.value;
+
+        let accountLanguage = "";
+
+        try {
+            if (
+                typeof getStoredLanguageCode ===
+                    "function"
+            ) {
+                accountLanguage =
+                    getStoredLanguageCode() ||
+                    "";
+            }
+        }
+        catch (error) {
+            accountLanguage = "";
+        }
+
+        return normalize(
+            selectorValue ||
+            accountLanguage ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            localStorage.getItem(
+                "language"
+            ) ||
+            "en"
+        ).toLowerCase();
+    }
+
+    function selectedLanguageName(code) {
+        const sources = [];
+
+        if (
+            Array.isArray(
+                window.SUPPORTED_LANGUAGES
+            )
+        ) {
+            sources.push(
+                window.SUPPORTED_LANGUAGES
+            );
+        }
+
+        try {
+            if (
+                typeof SUPPORTED_LANGUAGES !==
+                    "undefined" &&
+                Array.isArray(
+                    SUPPORTED_LANGUAGES
+                )
+            ) {
+                sources.push(
+                    SUPPORTED_LANGUAGES
+                );
+            }
+        }
+        catch (error) {
+            // Ignore unavailable global.
+        }
+
+        for (const source of sources) {
+            const found =
+                source.find(
+                    function (item) {
+                        return (
+                            normalize(
+                                item?.code
+                            ).toLowerCase() ===
+                            code
+                        );
+                    }
+                );
+
+            if (found) {
+                return (
+                    found.label ||
+                    found.name ||
+                    found.nativeName ||
+                    code
+                );
+            }
+        }
+
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const option =
+            selector?.options[
+                selector.selectedIndex
+            ];
+
+        return (
+            normalize(
+                option?.textContent
+            ) ||
+            code
+        );
+    }
+
+    function isEnglish(code) {
+        return (
+            code === "en" ||
+            code.startsWith("en-")
+        );
+    }
+
+    function shouldSkip(element) {
+        if (!element) {
+            return true;
+        }
+
+        return Boolean(
+            element.closest(
+                NO_TRANSLATE_SELECTOR
+            )
+        );
+    }
+
+    function isUsefulText(value) {
+        const text =
+            normalize(value);
+
+        if (!text) {
+            return false;
+        }
+
+        if (
+            /^[\d\s.,:;!?%+\-=/\\|()[\]{}<>#_*'"`~]+$/.test(
+                text
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            /^https?:\/\//i.test(
+                text
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            /^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(
+                text
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            text.length > 500
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function cacheKey(languageCode) {
+        return (
+            CACHE_PREFIX +
+            languageCode
+        );
+    }
+
+    function readDictionary(languageCode) {
+        try {
+            const raw =
+                localStorage.getItem(
+                    cacheKey(languageCode)
+                );
+
+            if (!raw) {
+                return {};
+            }
+
+            const parsed =
+                JSON.parse(raw);
+
+            return (
+                parsed &&
+                typeof parsed ===
+                    "object"
+            )
+                ? parsed
+                : {};
+        }
+        catch (error) {
+            return {};
+        }
+    }
+
+    function saveDictionary(
+        languageCode,
+        dictionary
+    ) {
+        try {
+            localStorage.setItem(
+                cacheKey(languageCode),
+                JSON.stringify(
+                    dictionary
+                )
+            );
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Translation] Cache save failed.",
+                error
+            );
+        }
+    }
+
+    function rememberTextNode(node) {
+        if (
+            node.__miOriginalText ===
+                undefined
+        ) {
+            node.__miOriginalText =
+                node.nodeValue;
+        }
+
+        return normalize(
+            node.__miOriginalText
+        );
+    }
+
+    function attributeStorageName(
+        attribute
+    ) {
+        return (
+            "miOriginal" +
+            attribute
+                .replace(
+                    /(^|-)([a-z])/g,
+                    function (
+                        match,
+                        prefix,
+                        letter
+                    ) {
+                        return letter
+                            .toUpperCase();
+                    }
+                )
+        );
+    }
+
+    function rememberAttribute(
+        element,
+        attribute
+    ) {
+        const storageName =
+            attributeStorageName(
+                attribute
+            );
+
+        if (
+            element.dataset[
+                storageName
+            ] === undefined
+        ) {
+            element.dataset[
+                storageName
+            ] =
+                element.getAttribute(
+                    attribute
+                ) || "";
+        }
+
+        return normalize(
+            element.dataset[
+                storageName
+            ]
+        );
+    }
+
+    function collectTargets(root) {
+        const container =
+            root || document.body;
+
+        const texts =
+            new Set();
+
+        const textNodes = [];
+        const attributes = [];
+
+        if (!container) {
+            return {
+                texts,
+                textNodes,
+                attributes
+            };
+        }
+
+        const walker =
+            document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT
+            );
+
+        while (walker.nextNode()) {
+            const node =
+                walker.currentNode;
+
+            const parent =
+                node.parentElement;
+
+            if (
+                !parent ||
+                shouldSkip(parent)
+            ) {
+                continue;
+            }
+
+            const original =
+                rememberTextNode(node);
+
+            if (
+                !isUsefulText(
+                    original
+                )
+            ) {
+                continue;
+            }
+
+            texts.add(original);
+
+            textNodes.push({
+                node,
+                original
+            });
+        }
+
+        const elements =
+            container.querySelectorAll(
+                [
+                    "[placeholder]",
+                    "[title]",
+                    "[aria-label]",
+                    "input[type='button'][value]",
+                    "input[type='submit'][value]",
+                    "input[type='reset'][value]"
+                ].join(",")
+            );
+
+        elements.forEach(
+            function (element) {
+                if (shouldSkip(element)) {
+                    return;
+                }
+
+                ATTRIBUTE_NAMES.forEach(
+                    function (attribute) {
+                        if (
+                            !element.hasAttribute(
+                                attribute
+                            )
+                        ) {
+                            return;
+                        }
+
+                        const original =
+                            rememberAttribute(
+                                element,
+                                attribute
+                            );
+
+                        if (
+                            !isUsefulText(
+                                original
+                            )
+                        ) {
+                            return;
+                        }
+
+                        texts.add(original);
+
+                        attributes.push({
+                            element,
+                            attribute,
+                            original
+                        });
+                    }
+                );
+
+                if (
+                    element instanceof
+                        HTMLInputElement &&
+                    [
+                        "button",
+                        "submit",
+                        "reset"
+                    ].includes(
+                        element.type
+                    )
+                ) {
+                    const original =
+                        rememberAttribute(
+                            element,
+                            "value"
+                        );
+
+                    if (
+                        isUsefulText(
+                            original
+                        )
+                    ) {
+                        texts.add(original);
+
+                        attributes.push({
+                            element,
+                            attribute:
+                                "value",
+                            original
+                        });
+                    }
+                }
+            }
+        );
+
+        return {
+            texts,
+            textNodes,
+            attributes
+        };
+    }
+
+    function restoreEnglish(targets) {
+        observerPaused = true;
+
+        try {
+            targets.textNodes.forEach(
+                function (item) {
+                    item.node.nodeValue =
+                        item.node
+                            .__miOriginalText;
+                }
+            );
+
+            targets.attributes.forEach(
+                function (item) {
+                    item.element.setAttribute(
+                        item.attribute,
+                        item.original
+                    );
+                }
+            );
+        }
+        finally {
+            observerPaused = false;
+        }
+    }
+
+    function applyDictionary(
+        targets,
+        dictionary
+    ) {
+        observerPaused = true;
+
+        try {
+            targets.textNodes.forEach(
+                function (item) {
+                    const translated =
+                        normalize(
+                            dictionary[
+                                item.original
+                            ]
+                        );
+
+                    if (!translated) {
+                        return;
+                    }
+
+                    const originalValue =
+                        String(
+                            item.node
+                                .__miOriginalText ||
+                            ""
+                        );
+
+                    const leading =
+                        originalValue.match(
+                            /^\s*/
+                        )?.[0] || "";
+
+                    const trailing =
+                        originalValue.match(
+                            /\s*$/
+                        )?.[0] || "";
+
+                    item.node.nodeValue =
+                        leading +
+                        translated +
+                        trailing;
+                }
+            );
+
+            targets.attributes.forEach(
+                function (item) {
+                    const translated =
+                        normalize(
+                            dictionary[
+                                item.original
+                            ]
+                        );
+
+                    if (translated) {
+                        item.element.setAttribute(
+                            item.attribute,
+                            translated
+                        );
+                    }
+                }
+            );
+        }
+        finally {
+            observerPaused = false;
+        }
+    }
+
+    function extractJson(value) {
+        const raw =
+            String(value || "")
+                .trim()
+                .replace(
+                    /^```(?:json)?\s*/i,
+                    ""
+                )
+                .replace(
+                    /\s*```$/i,
+                    ""
+                )
+                .trim();
+
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw);
+        }
+        catch (error) {
+            const start =
+                raw.indexOf("{");
+
+            const end =
+                raw.lastIndexOf("}");
+
+            if (
+                start < 0 ||
+                end <= start
+            ) {
+                return null;
+            }
+
+            try {
+                return JSON.parse(
+                    raw.slice(
+                        start,
+                        end + 1
+                    )
+                );
+            }
+            catch (nestedError) {
+                return null;
+            }
+        }
+    }
+
+    async function postTranslation(
+        languageCode,
+        languageName,
+        sourceTexts
+    ) {
+        const requestKey =
+            languageCode +
+            "::" +
+            JSON.stringify(
+                sourceTexts
+            );
+
+        if (
+            pendingRequests.has(
+                requestKey
+            )
+        ) {
+            return pendingRequests.get(
+                requestKey
+            );
+        }
+
+        const task =
+            (async function () {
+                const numbered = {};
+
+                sourceTexts.forEach(
+                    function (text, index) {
+                        numbered[
+                            String(index)
+                        ] = text;
+                    }
+                );
+
+                const prompt = [
+                    "Translate this website user-interface text from English to " +
+                        languageName +
+                        " (" +
+                        languageCode +
+                        ").",
+
+                    "",
+                    "Mandatory rules:",
+                    "1. Return ONLY a valid JSON object.",
+                    "2. Preserve every numeric JSON key exactly.",
+                    "3. Translate every value naturally and clearly.",
+                    "4. Keep the translation concise enough for buttons and menus.",
+                    "5. Never translate MI AI, ChatBOT, URLs, email addresses, code, IDs or variable names.",
+                    "6. Do not return Markdown, explanations or code fences.",
+                    "",
+                    "Input:",
+                    JSON.stringify(numbered)
+                ].join("\n");
+
+                const response =
+                    await fetch(
+                        "/api/chat",
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    message:
+                                        prompt,
+
+                                    prompt:
+                                        prompt,
+
+                                    history:
+                                        [],
+
+                                    translation:
+                                        true
+                                })
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Translation API failed with status " +
+                        response.status
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                const reply =
+                    data.reply ||
+                    data.response ||
+                    data.message ||
+                    data.text ||
+                    data.content ||
+                    "";
+
+                const parsed =
+                    extractJson(reply);
+
+                if (
+                    !parsed ||
+                    typeof parsed !==
+                        "object"
+                ) {
+                    throw new Error(
+                        "Translation API returned invalid JSON."
+                    );
+                }
+
+                const result = {};
+
+                sourceTexts.forEach(
+                    function (source, index) {
+                        const translated =
+                            normalize(
+                                parsed[
+                                    String(index)
+                                ]
+                            );
+
+                        if (translated) {
+                            result[source] =
+                                translated;
+                        }
+                    }
+                );
+
+                return result;
+            })();
+
+        pendingRequests.set(
+            requestKey,
+            task
+        );
+
+        try {
+            return await task;
+        }
+        finally {
+            pendingRequests.delete(
+                requestKey
+            );
+        }
+    }
+
+    function batches(
+        values,
+        maxItems,
+        maxCharacters
+    ) {
+        const output = [];
+        let current = [];
+        let characters = 0;
+
+        values.forEach(
+            function (value) {
+                if (
+                    current.length &&
+                    (
+                        current.length >=
+                            maxItems ||
+                        characters +
+                            value.length >
+                            maxCharacters
+                    )
+                ) {
+                    output.push(current);
+                    current = [];
+                    characters = 0;
+                }
+
+                current.push(value);
+                characters += value.length;
+            }
+        );
+
+        if (current.length) {
+            output.push(current);
+        }
+
+        return output;
+    }
+
+    async function translateUi() {
+        if (translationRunning) {
+            return;
+        }
+
+        const languageCode =
+            selectedLanguageCode();
+
+        const targets =
+            collectTargets(
+                document.body
+            );
+
+        if (isEnglish(languageCode)) {
+            restoreEnglish(targets);
+
+            document.documentElement.lang =
+                "en";
+
+            document.documentElement.dir =
+                "ltr";
+
+            return;
+        }
+
+        translationRunning = true;
+
+        try {
+            const languageName =
+                selectedLanguageName(
+                    languageCode
+                );
+
+            const dictionary =
+                readDictionary(
+                    languageCode
+                );
+
+            applyDictionary(
+                targets,
+                dictionary
+            );
+
+            const missing =
+                Array.from(
+                    targets.texts
+                ).filter(
+                    function (text) {
+                        return (
+                            !normalize(
+                                dictionary[text]
+                            )
+                        );
+                    }
+                );
+
+            const translationBatches =
+                batches(
+                    missing,
+                    30,
+                    3000
+                );
+
+            for (
+                const currentBatch
+                of translationBatches
+            ) {
+                if (
+                    selectedLanguageCode() !==
+                    languageCode
+                ) {
+                    return;
+                }
+
+                let translated = null;
+                let lastError = null;
+
+                for (
+                    let attempt = 1;
+                    attempt <= 3;
+                    attempt += 1
+                ) {
+                    try {
+                        translated =
+                            await postTranslation(
+                                languageCode,
+                                languageName,
+                                currentBatch
+                            );
+
+                        break;
+                    }
+                    catch (error) {
+                        lastError = error;
+
+                        await new Promise(
+                            function (resolve) {
+                                setTimeout(
+                                    resolve,
+                                    attempt * 700
+                                );
+                            }
+                        );
+                    }
+                }
+
+                if (!translated) {
+                    console.error(
+                        "[MI AI Translation]",
+                        lastError
+                    );
+
+                    continue;
+                }
+
+                Object.assign(
+                    dictionary,
+                    translated
+                );
+
+                saveDictionary(
+                    languageCode,
+                    dictionary
+                );
+
+                applyDictionary(
+                    collectTargets(
+                        document.body
+                    ),
+                    dictionary
+                );
+            }
+
+            document.documentElement.lang =
+                languageCode;
+
+            const rtlLanguages =
+                new Set([
+                    "ar",
+                    "fa",
+                    "he",
+                    "ur",
+                    "ps"
+                ]);
+
+            document.documentElement.dir =
+                rtlLanguages.has(
+                    languageCode
+                        .split("-")[0]
+                )
+                    ? "rtl"
+                    : "ltr";
+
+            localStorage.setItem(
+                "mi_ui_language",
+                languageCode
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-language-changed",
+                    {
+                        detail: {
+                            language:
+                                languageCode
+                        }
+                    }
+                )
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-full-ui-translated",
+                    {
+                        detail: {
+                            language:
+                                languageCode
+                        }
+                    }
+                )
+            );
+        }
+        finally {
+            translationRunning = false;
+        }
+    }
+
+    function scheduleTranslation(
+        delay
+    ) {
+        clearTimeout(
+            refreshTimer
+        );
+
+        refreshTimer =
+            setTimeout(
+                function () {
+                    translateUi().catch(
+                        function (error) {
+                            console.error(
+                                "[MI AI Translation]",
+                                error
+                            );
+                        }
+                    );
+                },
+                typeof delay ===
+                    "number"
+                    ? delay
+                    : 100
+            );
+    }
+
+    function attachLanguageSelect() {
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (
+            !selector ||
+            selector.dataset
+                .miFullTranslationAttached ===
+                "true"
+        ) {
+            return;
+        }
+
+        selector.dataset
+            .miFullTranslationAttached =
+            "true";
+
+        selector.addEventListener(
+            "change",
+            function () {
+                const languageCode =
+                    normalize(
+                        selector.value
+                    ).toLowerCase();
+
+                localStorage.setItem(
+                    "mi_ui_language",
+                    languageCode
+                );
+
+                scheduleTranslation(20);
+            }
+        );
+    }
+
+    function startObserver() {
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    attachLanguageSelect();
+
+                    if (
+                        observerPaused ||
+                        translationRunning ||
+                        isEnglish(
+                            selectedLanguageCode()
+                        )
+                    ) {
+                        return;
+                    }
+
+                    const changed =
+                        mutations.some(
+                            function (mutation) {
+                                return (
+                                    mutation.addedNodes
+                                        .length >
+                                        0 ||
+                                    mutation.type ===
+                                        "attributes"
+                                );
+                            }
+                        );
+
+                    if (changed) {
+                        scheduleTranslation(
+                            180
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "placeholder",
+                    "title",
+                    "aria-label"
+                ]
+            }
+        );
+    }
+
+    function start() {
+        attachLanguageSelect();
+        startObserver();
+
+        window.addEventListener(
+            "mi-firebase-ready",
+            function () {
+                scheduleTranslation(
+                    120
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                scheduleTranslation(
+                    150
+                );
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                scheduleTranslation(
+                    100
+                );
+            }
+        );
+
+        scheduleTranslation(250);
+    }
+
+    window.MIFullUiTranslation = {
+        translate:
+            translateUi,
+
+        refresh:
+            function () {
+                scheduleTranslation(0);
+            },
+
+        getLanguage:
+            selectedLanguageCode,
+
+        clearCurrentCache:
+            function () {
+                localStorage.removeItem(
+                    cacheKey(
+                        selectedLanguageCode()
+                    )
+                );
+
+                scheduleTranslation(0);
+            },
+
+        clearAllCaches:
+            function () {
+                const keys = [];
+
+                for (
+                    let index = 0;
+                    index < localStorage.length;
+                    index += 1
+                ) {
+                    const key =
+                        localStorage.key(index);
+
+                    if (
+                        key &&
+                        key.startsWith(
+                            CACHE_PREFIX
+                        )
+                    ) {
+                        keys.push(key);
+                    }
+                }
+
+                keys.forEach(
+                    function (key) {
+                        localStorage.removeItem(
+                            key
+                        );
+                    }
+                );
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI FULL UI TRANSLATION V2 - END */
 </script>
 </body>
 </html>
