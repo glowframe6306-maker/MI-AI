@@ -16768,480 +16768,7 @@ document.addEventListener(
 
 
 
-<script>
-/* MI AI SETTINGS LOGIN ALERT V3 - START */
 
-(function () {
-    "use strict";
-
-    let loginOpening = false;
-    let lastAlertTime = 0;
-
-    const protectedWords = [
-        "language",
-        "theme",
-        "font size",
-        "fontsize",
-        "font-size",
-        "font_size",
-        "appearance",
-        "භාෂාව",
-        "තේමාව",
-        "අකුරු ප්‍රමාණය",
-        "மொழி",
-        "தீம்",
-        "எழுத்தளவு"
-    ];
-
-    function currentFirebaseUser() {
-        try {
-            return (
-                window.miFirebaseAuth?.currentUser ||
-                window.firebaseAuth?.currentUser ||
-                (
-                    window.firebase &&
-                    typeof window.firebase.auth === "function"
-                        ? window.firebase.auth().currentUser
-                        : null
-                ) ||
-                null
-            );
-        }
-        catch (error) {
-            return null;
-        }
-    }
-
-    function authenticated() {
-        try {
-            if (typeof window.isAuthenticated === "function") {
-                return Boolean(window.isAuthenticated());
-            }
-
-            if (typeof isAuthenticated === "function") {
-                return Boolean(isAuthenticated());
-            }
-        }
-        catch (error) {
-            console.warn(
-                "[MI AI Settings Login Alert]",
-                error
-            );
-        }
-
-        return Boolean(
-            currentFirebaseUser() ||
-            window.user?.email ||
-            localStorage.getItem("mi_supabase_token")
-        );
-    }
-
-    function selectedLanguage() {
-        return String(
-            document.getElementById("languageSelect")?.value ||
-            localStorage.getItem("mi_ui_language") ||
-            "en"
-        )
-            .trim()
-            .toLowerCase();
-    }
-
-    function loginMessage() {
-        const language = selectedLanguage();
-
-        if (language === "si") {
-            return "භාෂාව, තේමාව හෝ අකුරු ප්‍රමාණය වෙනස් කිරීමට Login වෙන්න.";
-        }
-
-        if (language === "ta") {
-            return "மொழி, தீம் அல்லது எழுத்தளவை மாற்ற Login செய்யவும்.";
-        }
-
-        return "Please log in to change Language, Theme or Font Size.";
-    }
-
-    function elementDetails(element) {
-        if (!(element instanceof Element)) {
-            return "";
-        }
-
-        return [
-            element.id,
-            element.getAttribute("name"),
-            element.className,
-            element.getAttribute("data-settings-type"),
-            element.getAttribute("data-setting"),
-            element.getAttribute("aria-label"),
-            element.getAttribute("title"),
-            element.textContent,
-            element.closest("label")?.textContent,
-            element.closest("button")?.textContent,
-            element.closest(".mi-settings-section")
-                ?.getAttribute("data-settings-type"),
-            element.closest(".mi-settings-section")
-                ?.textContent
-        ]
-            .filter(Boolean)
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim()
-            .toLowerCase();
-    }
-
-    function isInsideSettings(element) {
-        if (!(element instanceof Element)) {
-            return false;
-        }
-
-        return Boolean(
-            element.closest(
-                [
-                    "#settingsPanel",
-                    "#settingsModal",
-                    ".settings-panel",
-                    ".settings-modal",
-                    ".settings-content",
-                    ".mi-settings-section"
-                ].join(",")
-            )
-        );
-    }
-
-    function isProtectedSetting(element) {
-        if (!(element instanceof Element)) {
-            return false;
-        }
-
-        if (!isInsideSettings(element)) {
-            return false;
-        }
-
-        if (
-            element.closest(
-                [
-                    "#settingsCloseBtn",
-                    ".settings-close",
-                    ".modal-close",
-                    ".close-btn",
-                    "[data-action='close']"
-                ].join(",")
-            )
-        ) {
-            return false;
-        }
-
-        const details = elementDetails(element);
-
-        return protectedWords.some(function (word) {
-            return details.includes(word);
-        });
-    }
-
-    function displayAlert() {
-        const now = Date.now();
-
-        if (now - lastAlertTime < 700) {
-            return;
-        }
-
-        lastAlertTime = now;
-
-        const text = loginMessage();
-
-        if (typeof window.showToast === "function") {
-            window.showToast(text);
-        }
-        else if (typeof showToast === "function") {
-            showToast(text);
-        }
-        else if (typeof window.showShareFeedback === "function") {
-            window.showShareFeedback(text);
-        }
-        else {
-            alert(text);
-        }
-    }
-
-    function findLoginModal() {
-        return document.querySelector(
-            [
-                "#loginModal",
-                "#authModal",
-                "#loginPanel",
-                ".login-modal",
-                ".auth-modal",
-                "[data-modal='login']"
-            ].join(",")
-        );
-    }
-
-    function manuallyShowLoginModal() {
-        const modal = findLoginModal();
-
-        if (!modal) {
-            return false;
-        }
-
-        modal.hidden = false;
-        modal.removeAttribute("hidden");
-
-        modal.style.display = "flex";
-        modal.style.visibility = "visible";
-        modal.style.opacity = "1";
-        modal.style.pointerEvents = "auto";
-
-        modal.classList.add(
-            "active",
-            "open",
-            "show",
-            "visible"
-        );
-
-        document.body.classList.add(
-            "modal-open"
-        );
-
-        return true;
-    }
-
-    function openLoginInterface() {
-        if (loginOpening) {
-            return;
-        }
-
-        loginOpening = true;
-
-        setTimeout(function () {
-            try {
-                let opened = false;
-
-                if (typeof window.openLogin === "function") {
-                    window.openLogin();
-                    opened = true;
-                }
-                else if (typeof openLogin === "function") {
-                    openLogin();
-                    opened = true;
-                }
-                else if (typeof window.showLogin === "function") {
-                    window.showLogin();
-                    opened = true;
-                }
-                else if (typeof showLogin === "function") {
-                    showLogin();
-                    opened = true;
-                }
-                else if (
-                    typeof window.openAuthModal === "function"
-                ) {
-                    window.openAuthModal("login");
-                    opened = true;
-                }
-                else if (
-                    typeof openAuthModal === "function"
-                ) {
-                    openAuthModal("login");
-                    opened = true;
-                }
-
-                setTimeout(function () {
-                    const modal = findLoginModal();
-
-                    const visible = Boolean(
-                        modal &&
-                        !modal.hidden &&
-                        getComputedStyle(modal).display !== "none" &&
-                        getComputedStyle(modal).visibility !== "hidden"
-                    );
-
-                    if (!opened || !visible) {
-                        manuallyShowLoginModal();
-                    }
-
-                    const emailInput =
-                        document.querySelector(
-                            [
-                                "#loginEmail",
-                                "#email",
-                                "input[type='email']",
-                                "#loginModal input"
-                            ].join(",")
-                        );
-
-                    if (emailInput) {
-                        setTimeout(function () {
-                            emailInput.focus();
-                        }, 100);
-                    }
-                }, 80);
-            }
-            catch (error) {
-                console.error(
-                    "[MI AI Settings Login Alert]",
-                    error
-                );
-
-                manuallyShowLoginModal();
-            }
-            finally {
-                setTimeout(function () {
-                    loginOpening = false;
-                }, 500);
-            }
-        }, 20);
-    }
-
-    function blockProtectedSetting(event) {
-        const target = event.target;
-
-        if (
-            authenticated() ||
-            !isProtectedSetting(target)
-        ) {
-            return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        displayAlert();
-        openLoginInterface();
-    }
-
-    [
-        "pointerdown",
-        "mousedown",
-        "touchstart",
-        "click",
-        "focusin",
-        "input",
-        "change"
-    ].forEach(function (eventName) {
-        document.addEventListener(
-            eventName,
-            blockProtectedSetting,
-            true
-        );
-    });
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-            if (
-                authenticated() ||
-                !isProtectedSetting(event.target)
-            ) {
-                return;
-            }
-
-            if (
-                [
-                    "Enter",
-                    " ",
-                    "ArrowUp",
-                    "ArrowDown",
-                    "ArrowLeft",
-                    "ArrowRight"
-                ].includes(event.key)
-            ) {
-                blockProtectedSetting(event);
-            }
-        },
-        true
-    );
-
-    function updateLockedState() {
-        const selectors = [
-            "#languageSelect",
-            "[data-settings-type='language']",
-            "[data-settings-type='theme']",
-            "[data-settings-type='fontsize']",
-            "[data-settings-type='font-size']",
-            "[data-setting='language']",
-            "[data-setting='theme']",
-            "[data-setting='font-size']",
-            ".mi-settings-section"
-        ];
-
-        document
-            .querySelectorAll(selectors.join(","))
-            .forEach(function (element) {
-                if (!isProtectedSetting(element)) {
-                    return;
-                }
-
-                element.dataset.loginRequired =
-                    authenticated()
-                        ? "false"
-                        : "true";
-
-                if (!authenticated()) {
-                    element.title = loginMessage();
-                }
-                else if (
-                    element.title === loginMessage()
-                ) {
-                    element.removeAttribute("title");
-                }
-            });
-    }
-
-    function start() {
-        updateLockedState();
-
-        const observer = new MutationObserver(function () {
-            requestAnimationFrame(
-                updateLockedState
-            );
-        });
-
-        observer.observe(
-            document.body,
-            {
-                childList: true,
-                subtree: true
-            }
-        );
-
-        window.addEventListener(
-            "mi-chat-user-changed",
-            updateLockedState
-        );
-
-        window.addEventListener(
-            "mi-firebase-auth-changed",
-            updateLockedState
-        );
-
-        window.addEventListener(
-            "pageshow",
-            updateLockedState
-        );
-    }
-
-    window.MISettingsLoginAlert = {
-        refresh: updateLockedState,
-        isAuthenticated: authenticated,
-        openLogin: openLoginInterface
-    };
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once: true
-            }
-        );
-    }
-    else {
-        start();
-    }
-})();
-
-/* MI AI SETTINGS LOGIN ALERT V3 - END */
-</script>
 
 <script>
 /* MI AI ACCOUNT AUTO SAVE V3 - START */
@@ -18647,6 +18174,977 @@ document.addEventListener(
 })();
 
 /* MI AI ACCOUNT AUTO SAVE V3 - END */
+</script>
+
+<style>
+/* MI AI LOGIN MODAL FIX V4 CSS - START */
+
+#miSettingsLoginNotice {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 999999;
+    max-width: calc(100vw - 32px);
+    padding: 11px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 18px;
+    background: rgba(16, 24, 40, 0.94);
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: center;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(16px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease,
+        transform 0.2s ease;
+}
+
+#miSettingsLoginNotice.mi-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/*
+  Remove the permanent footer/login-required message.
+  The temporary notification above is used instead.
+*/
+#authReminder,
+.auth-reminder,
+.login-required-message,
+.settings-login-message,
+[data-login-reminder],
+[data-auth-reminder] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* MI AI LOGIN MODAL FIX V4 CSS - END */
+</style>
+
+<script>
+/* MI AI LOGIN MODAL FIX V4 - START */
+
+(function () {
+    "use strict";
+
+    const protectedWords = [
+        "language",
+        "theme",
+        "font size",
+        "fontsize",
+        "font-size",
+        "font_size",
+        "appearance",
+        "colour",
+        "color",
+        "භාෂාව",
+        "තේමාව",
+        "අකුරු ප්‍රමාණය",
+        "மொழி",
+        "தீம்",
+        "எழுத்தளவு"
+    ];
+
+    const loginButtonSelectors = [
+        "#loginBtn",
+        "#openLoginBtn",
+        "#headerLoginBtn",
+        ".login-btn",
+        ".open-login",
+        "[data-action='login']",
+        "[data-open='login']",
+        "button[onclick*='openLogin']",
+        "button[onclick*='showLogin']",
+        "button[onclick*='openAuth']"
+    ];
+
+    const modalSelectors = [
+        "#loginModal",
+        "#authModal",
+        "#loginPanel",
+        "#authPanel",
+        ".login-modal",
+        ".auth-modal",
+        "[data-modal='login']",
+        "[data-auth-modal]"
+    ];
+
+    const closeSelectors = [
+        "#loginCloseBtn",
+        "#authCloseBtn",
+        ".login-close",
+        ".auth-close",
+        ".modal-close",
+        ".close-btn",
+        "[data-action='close-login']",
+        "[data-close='login']",
+        "[aria-label='Close']",
+        "[aria-label='close']"
+    ];
+
+    let noticeTimer = null;
+    let openingLogin = false;
+    let explicitLoginOpen = false;
+
+    function currentFirebaseUser() {
+        try {
+            return (
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth === "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                ) ||
+                null
+            );
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function authenticated() {
+        try {
+            if (typeof window.isAuthenticated === "function") {
+                return Boolean(
+                    window.isAuthenticated()
+                );
+            }
+
+            if (typeof isAuthenticated === "function") {
+                return Boolean(
+                    isAuthenticated()
+                );
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Login Modal Fix]",
+                error
+            );
+        }
+
+        return Boolean(
+            currentFirebaseUser() ||
+            window.user?.email ||
+            localStorage.getItem(
+                "mi_supabase_token"
+            )
+        );
+    }
+
+    function selectedLanguage() {
+        return String(
+            document.getElementById(
+                "languageSelect"
+            )?.value ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            "en"
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function loginMessage() {
+        const language =
+            selectedLanguage();
+
+        if (
+            language === "si" ||
+            language.startsWith("si-")
+        ) {
+            return "මෙම setting එක වෙනස් කිරීමට Login වෙන්න.";
+        }
+
+        if (
+            language === "ta" ||
+            language.startsWith("ta-")
+        ) {
+            return "இந்த setting-ஐ மாற்ற Login செய்யவும்.";
+        }
+
+        return "Please log in to change this setting.";
+    }
+
+    function findLoginModal() {
+        for (
+            const selector
+            of modalSelectors
+        ) {
+            const modal =
+                document.querySelector(
+                    selector
+                );
+
+            if (modal) {
+                return modal;
+            }
+        }
+
+        /*
+          Fallback: locate the box containing
+          Sign In / Register / Email / Password.
+        */
+        const emailInput =
+            document.querySelector(
+                [
+                    "input[type='email']",
+                    "#loginEmail",
+                    "input[name='email']"
+                ].join(",")
+            );
+
+        if (!emailInput) {
+            return null;
+        }
+
+        let candidate =
+            emailInput.parentElement;
+
+        while (
+            candidate &&
+            candidate !== document.body
+        ) {
+            const text =
+                String(
+                    candidate.textContent ||
+                    ""
+                ).toLowerCase();
+
+            if (
+                (
+                    text.includes("sign in") ||
+                    text.includes("login")
+                ) &&
+                (
+                    text.includes("register") ||
+                    text.includes("password")
+                )
+            ) {
+                return candidate;
+            }
+
+            candidate =
+                candidate.parentElement;
+        }
+
+        return null;
+    }
+
+    function createNotice() {
+        let notice =
+            document.getElementById(
+                "miSettingsLoginNotice"
+            );
+
+        if (notice) {
+            return notice;
+        }
+
+        notice =
+            document.createElement(
+                "div"
+            );
+
+        notice.id =
+            "miSettingsLoginNotice";
+
+        notice.setAttribute(
+            "role",
+            "status"
+        );
+
+        notice.setAttribute(
+            "aria-live",
+            "polite"
+        );
+
+        document.body.appendChild(
+            notice
+        );
+
+        return notice;
+    }
+
+    function removePermanentMessages() {
+        const exactMessage =
+            "Please log in to change Language, Theme or Font Size.";
+
+        document
+            .querySelectorAll(
+                [
+                    "#authReminder",
+                    ".auth-reminder",
+                    ".login-required-message",
+                    ".settings-login-message",
+                    "[data-login-reminder]",
+                    "[data-auth-reminder]"
+                ].join(",")
+            )
+            .forEach(function (element) {
+                element.textContent = "";
+                element.hidden = true;
+                element.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+            });
+
+        document
+            .querySelectorAll(
+                "body *"
+            )
+            .forEach(function (element) {
+                if (
+                    element.children.length === 0 &&
+                    String(
+                        element.textContent ||
+                        ""
+                    ).trim() === exactMessage
+                ) {
+                    element.textContent = "";
+                    element.hidden = true;
+                    element.style.setProperty(
+                        "display",
+                        "none",
+                        "important"
+                    );
+                }
+            });
+    }
+
+    function showTemporaryNotice() {
+        const notice =
+            createNotice();
+
+        clearTimeout(
+            noticeTimer
+        );
+
+        notice.textContent =
+            loginMessage();
+
+        notice.classList.add(
+            "mi-visible"
+        );
+
+        noticeTimer =
+            setTimeout(
+                function () {
+                    notice.classList.remove(
+                        "mi-visible"
+                    );
+                },
+                2200
+            );
+    }
+
+    function showModalElement(modal) {
+        if (!modal) {
+            return false;
+        }
+
+        explicitLoginOpen = true;
+
+        modal.hidden = false;
+        modal.removeAttribute(
+            "hidden"
+        );
+
+        modal.style.removeProperty(
+            "display"
+        );
+
+        modal.style.visibility =
+            "visible";
+
+        modal.style.opacity =
+            "1";
+
+        modal.style.pointerEvents =
+            "auto";
+
+        modal.classList.add(
+            "active",
+            "open",
+            "show",
+            "visible"
+        );
+
+        if (
+            getComputedStyle(modal)
+                .display === "none"
+        ) {
+            modal.style.display =
+                modal.tagName === "DIALOG"
+                    ? "block"
+                    : "flex";
+        }
+
+        if (
+            modal.tagName === "DIALOG" &&
+            typeof modal.showModal ===
+                "function" &&
+            !modal.open
+        ) {
+            try {
+                modal.showModal();
+            }
+            catch (error) {
+                modal.setAttribute(
+                    "open",
+                    ""
+                );
+            }
+        }
+
+        document.body.classList.add(
+            "modal-open"
+        );
+
+        setTimeout(function () {
+            const input =
+                modal.querySelector(
+                    [
+                        "#loginEmail",
+                        "input[type='email']",
+                        "input[name='email']"
+                    ].join(",")
+                );
+
+            input?.focus();
+        }, 100);
+
+        return true;
+    }
+
+    function hideModalElement(modal) {
+        if (!modal) {
+            return;
+        }
+
+        explicitLoginOpen = false;
+
+        if (
+            modal.tagName === "DIALOG" &&
+            typeof modal.close ===
+                "function" &&
+            modal.open
+        ) {
+            try {
+                modal.close();
+            }
+            catch (error) {
+                modal.removeAttribute(
+                    "open"
+                );
+            }
+        }
+
+        modal.classList.remove(
+            "active",
+            "open",
+            "show",
+            "visible"
+        );
+
+        modal.hidden = true;
+
+        modal.style.display =
+            "none";
+
+        modal.style.visibility =
+            "hidden";
+
+        modal.style.opacity =
+            "0";
+
+        modal.style.pointerEvents =
+            "none";
+
+        document.body.classList.remove(
+            "modal-open"
+        );
+    }
+
+    function openLoginInterface() {
+        if (
+            authenticated() ||
+            openingLogin
+        ) {
+            return;
+        }
+
+        openingLogin = true;
+        explicitLoginOpen = true;
+
+        try {
+            let functionCalled =
+                false;
+
+            if (
+                typeof window.openLogin ===
+                    "function"
+            ) {
+                window.openLogin();
+                functionCalled = true;
+            }
+            else if (
+                typeof openLogin ===
+                    "function"
+            ) {
+                openLogin();
+                functionCalled = true;
+            }
+            else if (
+                typeof window.showLogin ===
+                    "function"
+            ) {
+                window.showLogin();
+                functionCalled = true;
+            }
+            else if (
+                typeof showLogin ===
+                    "function"
+            ) {
+                showLogin();
+                functionCalled = true;
+            }
+            else if (
+                typeof window.openAuthModal ===
+                    "function"
+            ) {
+                window.openAuthModal(
+                    "login"
+                );
+
+                functionCalled = true;
+            }
+            else if (
+                typeof openAuthModal ===
+                    "function"
+            ) {
+                openAuthModal(
+                    "login"
+                );
+
+                functionCalled = true;
+            }
+
+            setTimeout(function () {
+                const modal =
+                    findLoginModal();
+
+                if (
+                    !functionCalled ||
+                    !modal ||
+                    modal.hidden ||
+                    getComputedStyle(modal)
+                        .display === "none"
+                ) {
+                    showModalElement(
+                        modal
+                    );
+                }
+                else {
+                    showModalElement(
+                        modal
+                    );
+                }
+            }, 60);
+        }
+        finally {
+            setTimeout(function () {
+                openingLogin = false;
+            }, 450);
+        }
+    }
+
+    function closeLoginInterface() {
+        hideModalElement(
+            findLoginModal()
+        );
+    }
+
+    function elementDetails(element) {
+        if (
+            !(element instanceof Element)
+        ) {
+            return "";
+        }
+
+        return [
+            element.id,
+            element.className,
+            element.getAttribute(
+                "name"
+            ),
+            element.getAttribute(
+                "data-setting"
+            ),
+            element.getAttribute(
+                "data-settings-type"
+            ),
+            element.getAttribute(
+                "aria-label"
+            ),
+            element.getAttribute(
+                "title"
+            ),
+            element.textContent,
+            element.closest("label")
+                ?.textContent,
+            element.closest(
+                ".mi-settings-section"
+            )?.textContent
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function insideSettings(element) {
+        if (
+            !(element instanceof Element)
+        ) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                [
+                    "#settingsPanel",
+                    "#settingsModal",
+                    ".settings-panel",
+                    ".settings-modal",
+                    ".settings-content",
+                    ".mi-settings-section"
+                ].join(",")
+            )
+        );
+    }
+
+    function protectedSetting(element) {
+        if (
+            !(element instanceof Element) ||
+            !insideSettings(element)
+        ) {
+            return false;
+        }
+
+        const details =
+            elementDetails(element);
+
+        return protectedWords.some(
+            function (word) {
+                return details.includes(
+                    word
+                );
+            }
+        );
+    }
+
+    function loginButton(element) {
+        if (
+            !(element instanceof Element)
+        ) {
+            return false;
+        }
+
+        if (
+            element.closest(
+                loginButtonSelectors.join(",")
+            )
+        ) {
+            return true;
+        }
+
+        const text =
+            String(
+                element.closest("button")
+                    ?.textContent ||
+                element.textContent ||
+                ""
+            )
+                .replace(/\s+/g, " ")
+                .trim()
+                .toLowerCase();
+
+        return (
+            text === "login" ||
+            text === "log in" ||
+            text === "sign in"
+        );
+    }
+
+    function closeButton(element) {
+        if (
+            !(element instanceof Element)
+        ) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                closeSelectors.join(",")
+            )
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const target =
+                event.target;
+
+            if (loginButton(target)) {
+                explicitLoginOpen = true;
+
+                setTimeout(
+                    openLoginInterface,
+                    0
+                );
+
+                return;
+            }
+
+            if (closeButton(target)) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                closeLoginInterface();
+                return;
+            }
+
+            if (
+                !authenticated() &&
+                protectedSetting(target)
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                showTemporaryNotice();
+                openLoginInterface();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            if (
+                authenticated() ||
+                !protectedSetting(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        },
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        function (event) {
+            if (
+                authenticated() ||
+                !protectedSetting(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            showTemporaryNotice();
+            openLoginInterface();
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (event.key === "Escape") {
+                closeLoginInterface();
+                return;
+            }
+
+            if (
+                authenticated() ||
+                !protectedSetting(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            if (
+                [
+                    "Enter",
+                    " ",
+                    "ArrowUp",
+                    "ArrowDown",
+                    "ArrowLeft",
+                    "ArrowRight"
+                ].includes(event.key)
+            ) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+
+                showTemporaryNotice();
+                openLoginInterface();
+            }
+        },
+        true
+    );
+
+    function applyDefaultClosedState() {
+        removePermanentMessages();
+
+        const modal =
+            findLoginModal();
+
+        if (
+            modal &&
+            !authenticated() &&
+            !explicitLoginOpen
+        ) {
+            hideModalElement(
+                modal
+            );
+        }
+    }
+
+    function start() {
+        removePermanentMessages();
+
+        /*
+          Close the login face on initial page load.
+          It opens only after Login or protected setting click.
+        */
+        setTimeout(
+            applyDefaultClosedState,
+            50
+        );
+
+        setTimeout(
+            applyDefaultClosedState,
+            300
+        );
+
+        setTimeout(
+            applyDefaultClosedState,
+            1000
+        );
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    removePermanentMessages();
+
+                    if (!explicitLoginOpen) {
+                        requestAnimationFrame(
+                            applyDefaultClosedState
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                explicitLoginOpen = false;
+                applyDefaultClosedState();
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                removePermanentMessages();
+
+                if (authenticated()) {
+                    closeLoginInterface();
+                }
+                else {
+                    explicitLoginOpen = false;
+                    applyDefaultClosedState();
+                }
+            }
+        );
+    }
+
+    window.MILoginModalFix = {
+        open:
+            openLoginInterface,
+
+        close:
+            closeLoginInterface,
+
+        refresh:
+            applyDefaultClosedState,
+
+        isAuthenticated:
+            authenticated
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI LOGIN MODAL FIX V4 - END */
 </script>
 </body>
 </html>
