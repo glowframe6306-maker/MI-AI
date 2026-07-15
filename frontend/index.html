@@ -7129,25 +7129,24 @@ function confirmLogout() {
 }
 
 async function logout() {
-    try {
+
+    if (
+        window.MIAccountSettings &&
+        typeof window.MIAccountSettings.save === "function"
+    ) {
+        window.MIAccountSettings.save();
+    }
+
+try {
         const auth = await initFirebase();
         await auth.signOut();
     } catch (e) {
         console.error('Logout error:', e);
     }
-
-    const previousEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-    const previousUserId = (localStorage.getItem('mi_user_id') || '').trim().toLowerCase();
-    localStorage.removeItem('mi_supabase_token');
+localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
-    if (previousEmail) {
-        localStorage.removeItem(getAccountScopedChatStorageKey(previousEmail));
-    }
-    if (previousUserId) {
-        localStorage.removeItem(getAccountScopedChatStorageKey(previousUserId));
-    }
-    user = null;
+user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
 
@@ -16321,5 +16320,440 @@ document.addEventListener(
 
 /* MI AI ANY LANGUAGE TRANSLATION - END */
 </script>
+
+<script>
+/* MI AI ACCOUNT SETTINGS PERSISTENCE - START */
+
+(function () {
+    "use strict";
+
+    const SETTINGS_PREFIX = "mi_account_settings_v1_";
+    const GLOBAL_BACKUP_KEY = "mi_guest_settings_v1";
+
+    const SETTINGS_SELECTORS = [
+        "#settingsPanel input",
+        "#settingsPanel select",
+        "#settingsPanel textarea"
+    ].join(",");
+
+    function normalizeIdentity(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function getLoggedInIdentity() {
+        const email = normalizeIdentity(
+            localStorage.getItem("mi_user_email")
+        );
+
+        const userId = normalizeIdentity(
+            localStorage.getItem("mi_user_id")
+        );
+
+        return email || userId || "";
+    }
+
+    function isLoggedInForSettings() {
+        return Boolean(
+            getLoggedInIdentity() &&
+            (
+                localStorage.getItem("mi_supabase_token") ||
+                localStorage.getItem("mi_user_id")
+            )
+        );
+    }
+
+    function getSettingsStorageKey(identity) {
+        const normalized = normalizeIdentity(identity);
+
+        return normalized
+            ? SETTINGS_PREFIX + encodeURIComponent(normalized)
+            : GLOBAL_BACKUP_KEY;
+    }
+
+    function getSettingControlKey(control, index) {
+        return (
+            control.id ||
+            control.name ||
+            control.getAttribute("data-setting-key") ||
+            ("setting_" + index)
+        );
+    }
+
+    function readSettingsControls() {
+        const controls = Array.from(
+            document.querySelectorAll(SETTINGS_SELECTORS)
+        );
+
+        const result = {};
+
+        controls.forEach(function (control, index) {
+            if (
+                !control ||
+                control.type === "button" ||
+                control.type === "submit" ||
+                control.type === "reset" ||
+                control.type === "password" ||
+                control.type === "email"
+            ) {
+                return;
+            }
+
+            const key = getSettingControlKey(control, index);
+
+            if (
+                control.type === "checkbox" ||
+                control.type === "radio"
+            ) {
+                result[key] = {
+                    type: control.type,
+                    checked: Boolean(control.checked)
+                };
+            } else {
+                result[key] = {
+                    type: control.type || control.tagName.toLowerCase(),
+                    value: control.value
+                };
+            }
+        });
+
+        result.__documentTheme = {
+            main:
+                getComputedStyle(document.documentElement)
+                    .getPropertyValue("--main")
+                    .trim(),
+            bodyClasses: Array.from(document.body.classList)
+                .filter(function (name) {
+                    return (
+                        name === "light" ||
+                        name === "dark" ||
+                        name.startsWith("theme-")
+                    );
+                })
+        };
+
+        result.__savedAt = Date.now();
+
+        return result;
+    }
+
+    function saveAccountSettings() {
+        if (!isLoggedInForSettings()) {
+            return;
+        }
+
+        const identity = getLoggedInIdentity();
+
+        if (!identity) {
+            return;
+        }
+
+        try {
+            localStorage.setItem(
+                getSettingsStorageKey(identity),
+                JSON.stringify(readSettingsControls())
+            );
+        } catch (error) {
+            console.error(
+                "Unable to save account settings:",
+                error
+            );
+        }
+    }
+
+    function dispatchControlEvents(control) {
+        try {
+            control.dispatchEvent(
+                new Event("input", {
+                    bubbles: true
+                })
+            );
+
+            control.dispatchEvent(
+                new Event("change", {
+                    bubbles: true
+                })
+            );
+        } catch (error) {
+            console.warn(
+                "Unable to dispatch setting event:",
+                error
+            );
+        }
+    }
+
+    function restoreAccountSettings() {
+        if (!isLoggedInForSettings()) {
+            return false;
+        }
+
+        const identity = getLoggedInIdentity();
+
+        if (!identity) {
+            return false;
+        }
+
+        let saved;
+
+        try {
+            const raw = localStorage.getItem(
+                getSettingsStorageKey(identity)
+            );
+
+            if (!raw) {
+                return false;
+            }
+
+            saved = JSON.parse(raw);
+        } catch (error) {
+            console.error(
+                "Unable to read account settings:",
+                error
+            );
+
+            return false;
+        }
+
+        const controls = Array.from(
+            document.querySelectorAll(SETTINGS_SELECTORS)
+        );
+
+        controls.forEach(function (control, index) {
+            if (
+                !control ||
+                control.type === "button" ||
+                control.type === "submit" ||
+                control.type === "reset" ||
+                control.type === "password" ||
+                control.type === "email"
+            ) {
+                return;
+            }
+
+            const key = getSettingControlKey(control, index);
+            const item = saved[key];
+
+            if (!item) {
+                return;
+            }
+
+            if (
+                control.type === "checkbox" ||
+                control.type === "radio"
+            ) {
+                control.checked = Boolean(item.checked);
+            } else if (
+                Object.prototype.hasOwnProperty.call(
+                    item,
+                    "value"
+                )
+            ) {
+                control.value = item.value;
+            }
+
+            dispatchControlEvents(control);
+        });
+
+        if (
+            saved.__documentTheme &&
+            saved.__documentTheme.main
+        ) {
+            document.documentElement.style.setProperty(
+                "--main",
+                saved.__documentTheme.main
+            );
+
+            localStorage.setItem(
+                "theme",
+                saved.__documentTheme.main
+            );
+        }
+
+        const languageSelect =
+            document.getElementById("languageSelect");
+
+        if (
+            languageSelect &&
+            typeof window.applyLanguage === "function"
+        ) {
+            Promise.resolve(
+                window.applyLanguage(
+                    languageSelect.value,
+                    false
+                )
+            ).catch(function () {});
+        }
+
+        return true;
+    }
+
+    function resetVisibleSettingsForGuest() {
+        const controls = Array.from(
+            document.querySelectorAll(SETTINGS_SELECTORS)
+        );
+
+        controls.forEach(function (control) {
+            if (
+                !control ||
+                control.type === "button" ||
+                control.type === "submit" ||
+                control.type === "reset" ||
+                control.type === "password" ||
+                control.type === "email"
+            ) {
+                return;
+            }
+
+            if (
+                control.type === "checkbox" ||
+                control.type === "radio"
+            ) {
+                control.checked =
+                    Boolean(control.defaultChecked);
+            } else if (
+                control.tagName === "SELECT"
+            ) {
+                control.selectedIndex = 0;
+            } else if (
+                control.defaultValue !== undefined
+            ) {
+                control.value = control.defaultValue;
+            }
+
+            dispatchControlEvents(control);
+        });
+
+        document.documentElement.style.removeProperty(
+            "--main"
+        );
+
+        localStorage.removeItem("theme");
+
+        document.body.classList.remove(
+            "light",
+            "dark"
+        );
+    }
+
+    function handleUserChange() {
+        window.setTimeout(function () {
+            if (isLoggedInForSettings()) {
+                restoreAccountSettings();
+            } else {
+                resetVisibleSettingsForGuest();
+            }
+        }, 150);
+    }
+
+    document.addEventListener(
+        "input",
+        function (event) {
+            if (
+                event.target &&
+                event.target.closest("#settingsPanel")
+            ) {
+                saveAccountSettings();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "change",
+        function (event) {
+            if (
+                event.target &&
+                event.target.closest("#settingsPanel")
+            ) {
+                saveAccountSettings();
+            }
+        },
+        true
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const button = event.target.closest(
+                "#settingsPanel button"
+            );
+
+            if (!button) {
+                return;
+            }
+
+            window.setTimeout(
+                saveAccountSettings,
+                100
+            );
+        },
+        true
+    );
+
+    window.addEventListener(
+        "mi-chat-user-changed",
+        handleUserChange
+    );
+
+    window.addEventListener(
+        "pagehide",
+        saveAccountSettings
+    );
+
+    window.addEventListener(
+        "beforeunload",
+        saveAccountSettings
+    );
+
+    window.addEventListener(
+        "pageshow",
+        function () {
+            window.setTimeout(
+                handleUserChange,
+                100
+            );
+        }
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        function () {
+            if (document.visibilityState === "hidden") {
+                saveAccountSettings();
+            } else {
+                handleUserChange();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            window.setTimeout(
+                handleUserChange,
+                250
+            );
+        },
+        {
+            once: true
+        }
+    );
+
+    window.MIAccountSettings = {
+        save: saveAccountSettings,
+        restore: restoreAccountSettings,
+        resetGuestView: resetVisibleSettingsForGuest,
+        getKey: function () {
+            return getSettingsStorageKey(
+                getLoggedInIdentity()
+            );
+        }
+    };
+})();
+
+/* MI AI ACCOUNT SETTINGS PERSISTENCE - END */
+</script>
+
 </body>
 </html>
