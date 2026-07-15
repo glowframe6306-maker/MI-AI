@@ -8558,7 +8558,23 @@ function shareChat(){
   shareOverlay.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:16px;font-weight:700;">Share chat</div>
-      <button type="button" onclick="removeShareOverlay()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      <button
+        id="shareCancelBtn"
+        type="button"
+        onclick="removeShareOverlay()"
+        style="
+          margin:0;
+          padding:7px 12px;
+          border:1px solid rgba(255,255,255,0.16);
+          border-radius:999px;
+          background:rgba(255,255,255,0.08);
+          color:#fda4af;
+          font-size:13px;
+          font-weight:700;
+          cursor:pointer;
+          line-height:1;
+        "
+      >Cancel</button>
     </div>
     <div id="shareOptionsBody">
       <button type="button" onclick="copySharedChatAsText('${chatId}')" style="width:100%;padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;margin-bottom:10px;">Copy as a text</button>
@@ -14084,6 +14100,304 @@ document.addEventListener(
     }
 })();
 /* MI AI SAFE UI UNBLOCK - END */
+</script>
+
+<script>
+/* MI AI STABLE SHARE WINDOW V2 - START */
+
+(function () {
+    "use strict";
+
+    let observer = null;
+
+    function getShareOverlay() {
+        return document.getElementById(
+            "shareOverlay"
+        );
+    }
+
+    function isCancelControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                [
+                    "#shareCancelBtn",
+                    "[data-action='cancel-share']",
+                    "[data-action='close-share']"
+                ].join(",")
+            )
+        );
+    }
+
+    function isGenerateControl(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        const button =
+            element.closest(
+                "button, input[type='button'], input[type='submit']"
+            );
+
+        if (!button) {
+            return false;
+        }
+
+        const details = [
+            button.id,
+            button.className,
+            button.getAttribute(
+                "onclick"
+            ),
+            button.getAttribute(
+                "data-action"
+            ),
+            button.textContent
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+
+        return (
+            details.includes(
+                "generatesharedchatlink"
+            ) ||
+            details.includes(
+                "generate a link"
+            ) ||
+            details.includes(
+                "generate link"
+            )
+        );
+    }
+
+    function protectOverlay(overlay) {
+        if (
+            !overlay ||
+            overlay.dataset
+                .miStableShareProtected ===
+                "true"
+        ) {
+            return;
+        }
+
+        overlay.dataset
+            .miStableShareProtected =
+            "true";
+
+        /*
+          Allow all controls inside the Share window to work,
+          but stop their events reaching page-level close handlers.
+        */
+        [
+            "click",
+            "change",
+            "input",
+            "pointerup",
+            "mouseup",
+            "touchend"
+        ].forEach(function (eventName) {
+            overlay.addEventListener(
+                eventName,
+                function (event) {
+                    if (
+                        isCancelControl(
+                            event.target
+                        ) ||
+                        isGenerateControl(
+                            event.target
+                        )
+                    ) {
+                        return;
+                    }
+
+                    event.stopPropagation();
+                },
+                false
+            );
+        });
+
+        /*
+          Prevent accidental form submission while using
+          selects, checkboxes and security inputs.
+        */
+        overlay.addEventListener(
+            "submit",
+            function (event) {
+                if (
+                    isGenerateControl(
+                        event.submitter
+                    )
+                ) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+            },
+            false
+        );
+    }
+
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            const overlay =
+                getShareOverlay();
+
+            if (
+                !overlay ||
+                overlay.contains(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            /*
+              Clicking outside must not close the Share window.
+            */
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        },
+        true
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const overlay =
+                getShareOverlay();
+
+            if (
+                !overlay ||
+                overlay.contains(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.key !== "Escape" ||
+                !getShareOverlay()
+            ) {
+                return;
+            }
+
+            /*
+              Escape must not close the Share window.
+              Use Cancel instead.
+            */
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        },
+        true
+    );
+
+    function scan() {
+        const overlay =
+            getShareOverlay();
+
+        if (overlay) {
+            protectOverlay(overlay);
+        }
+    }
+
+    function start() {
+        scan();
+
+        /*
+          Lightweight observer:
+          only watches for a newly-created Share window.
+          No interval and no style/class watchdog.
+        */
+        observer =
+            new MutationObserver(
+                function (mutations) {
+                    const added =
+                        mutations.some(
+                            function (mutation) {
+                                return (
+                                    mutation
+                                        .addedNodes
+                                        .length > 0
+                                );
+                            }
+                        );
+
+                    if (added) {
+                        scan();
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+    }
+
+    window.MIStableShareWindow = {
+        refresh: scan,
+
+        close:
+            function () {
+                if (
+                    typeof window
+                        .removeShareOverlay ===
+                        "function"
+                ) {
+                    window
+                        .removeShareOverlay();
+                }
+                else if (
+                    typeof removeShareOverlay ===
+                        "function"
+                ) {
+                    removeShareOverlay();
+                }
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI STABLE SHARE WINDOW V2 - END */
 </script>
 </body>
 </html>
