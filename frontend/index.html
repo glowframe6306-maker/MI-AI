@@ -16764,551 +16764,7 @@ document.addEventListener(
 </script>
 
 
-<script>
-/* MI AI SETTINGS LOGIN REQUIRED - START */
 
-(function () {
-    "use strict";
-
-    const protectedTypes = new Set([
-        "language",
-        "theme",
-        "fontsize",
-        "font-size",
-        "font_size"
-    ]);
-
-    const previousValues =
-        new WeakMap();
-
-    let openingLogin =
-        false;
-
-    function authenticated() {
-        try {
-            if (
-                typeof window.isAuthenticated ===
-                    "function"
-            ) {
-                return Boolean(
-                    window.isAuthenticated()
-                );
-            }
-
-            if (
-                typeof isAuthenticated ===
-                    "function"
-            ) {
-                return Boolean(
-                    isAuthenticated()
-                );
-            }
-        }
-        catch (error) {
-            console.warn(
-                "[MI AI Settings Guard]",
-                error
-            );
-        }
-
-        return Boolean(
-            window.user ||
-            localStorage.getItem(
-                "mi_supabase_token"
-            ) ||
-            window.miFirebaseAuth
-                ?.currentUser
-        );
-    }
-
-    function selectedLanguage() {
-        return (
-            document.getElementById(
-                "languageSelect"
-            )?.value ||
-            localStorage.getItem(
-                "mi_ui_language"
-            ) ||
-            "en"
-        );
-    }
-
-    function message() {
-        const language =
-            selectedLanguage();
-
-        const messages = {
-            en:
-                "Please log in to change Language, Theme or Font Size.",
-
-            si:
-                "භාෂාව, තේමාව හෝ අකුරු ප්‍රමාණය වෙනස් කිරීමට පිවිසෙන්න.",
-
-            ta:
-                "மொழி, தீம் அல்லது எழுத்தளவை மாற்ற உள்நுழையவும்."
-        };
-
-        return (
-            messages[language] ||
-            messages.en
-        );
-    }
-
-    function showLoginRequired() {
-        const text =
-            message();
-
-        if (
-            typeof window.showToast ===
-            "function"
-        ) {
-            window.showToast(text);
-        }
-        else if (
-            typeof window.showShareFeedback ===
-            "function"
-        ) {
-            window.showShareFeedback(
-                text
-            );
-        }
-        else {
-            const reminder =
-                document.getElementById(
-                    "authReminder"
-                );
-
-            if (reminder) {
-                reminder.textContent =
-                    text;
-
-                reminder.style.display =
-                    "block";
-
-                setTimeout(
-                    function () {
-                        reminder.style.display =
-                            "none";
-                    },
-                    3500
-                );
-            }
-        }
-
-        if (openingLogin) {
-            return;
-        }
-
-        openingLogin = true;
-
-        setTimeout(
-            function () {
-                try {
-                    if (
-                        typeof window.openLogin ===
-                            "function"
-                    ) {
-                        window.openLogin();
-                    }
-                    else if (
-                        typeof openLogin ===
-                            "function"
-                    ) {
-                        openLogin();
-                    }
-                }
-                finally {
-                    openingLogin =
-                        false;
-                }
-            },
-            30
-        );
-    }
-
-    function settingsType(element) {
-        if (!(element instanceof Element)) {
-            return "";
-        }
-
-        const section =
-            element.closest(
-                ".mi-settings-section"
-            );
-
-        const explicitType =
-            section?.dataset
-                ?.settingsType;
-
-        if (explicitType) {
-            return String(
-                explicitType
-            )
-                .trim()
-                .toLowerCase();
-        }
-
-        const details = [
-            element.id,
-            element.getAttribute(
-                "name"
-            ),
-            element.className,
-            element.getAttribute(
-                "aria-label"
-            ),
-            element.getAttribute(
-                "title"
-            ),
-            element.closest(
-                "label"
-            )?.textContent,
-            element.parentElement
-                ?.textContent
-        ]
-            .join(" ")
-            .toLowerCase();
-
-        if (
-            details.includes(
-                "language"
-            ) ||
-            details.includes(
-                "භාෂා"
-            ) ||
-            details.includes(
-                "மொழி"
-            )
-        ) {
-            return "language";
-        }
-
-        if (
-            details.includes(
-                "theme"
-            ) ||
-            details.includes(
-                "color"
-            ) ||
-            details.includes(
-                "colour"
-            ) ||
-            details.includes(
-                "තේමා"
-            ) ||
-            details.includes(
-                "வண்ண"
-            ) ||
-            details.includes(
-                "தீம்"
-            )
-        ) {
-            return "theme";
-        }
-
-        if (
-            details.includes(
-                "font"
-            ) ||
-            details.includes(
-                "අකුරු"
-            ) ||
-            details.includes(
-                "எழுத்த"
-            )
-        ) {
-            return "fontsize";
-        }
-
-        return "";
-    }
-
-    function isProtectedControl(
-        element
-    ) {
-        if (!(element instanceof Element)) {
-            return false;
-        }
-
-        if (
-            !element.closest(
-                "#settingsPanel"
-            )
-        ) {
-            return false;
-        }
-
-        if (
-            element.closest(
-                "#settingsCloseBtn, " +
-                ".close-btn, " +
-                ".modal-close"
-            )
-        ) {
-            return false;
-        }
-
-        const type =
-            settingsType(element);
-
-        return protectedTypes.has(
-            type
-        );
-    }
-
-    function rememberValue(control) {
-        if (
-            control instanceof
-                HTMLInputElement ||
-            control instanceof
-                HTMLSelectElement ||
-            control instanceof
-                HTMLTextAreaElement
-        ) {
-            previousValues.set(
-                control,
-                {
-                    value:
-                        control.value,
-
-                    checked:
-                        control.checked
-                }
-            );
-        }
-    }
-
-    function restoreValue(control) {
-        const previous =
-            previousValues.get(
-                control
-            );
-
-        if (
-            !previous ||
-            !control
-        ) {
-            return;
-        }
-
-        if (
-            "value" in control
-        ) {
-            control.value =
-                previous.value;
-        }
-
-        if (
-            "checked" in control
-        ) {
-            control.checked =
-                previous.checked;
-        }
-    }
-
-    function blockEvent(event) {
-        const target =
-            event.target;
-
-        if (
-            authenticated() ||
-            !isProtectedControl(
-                target
-            )
-        ) {
-            if (
-                event.type ===
-                    "focusin" ||
-                event.type ===
-                    "pointerdown"
-            ) {
-                rememberValue(
-                    target
-                );
-            }
-
-            return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        restoreValue(target);
-        showLoginRequired();
-    }
-
-    document.addEventListener(
-        "pointerdown",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "click",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "focusin",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "input",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "change",
-        blockEvent,
-        true
-    );
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-            if (
-                authenticated() ||
-                !isProtectedControl(
-                    event.target
-                )
-            ) {
-                return;
-            }
-
-            if (
-                [
-                    "Enter",
-                    " ",
-                    "ArrowUp",
-                    "ArrowDown",
-                    "ArrowLeft",
-                    "ArrowRight"
-                ].includes(
-                    event.key
-                )
-            ) {
-                blockEvent(event);
-            }
-        },
-        true
-    );
-
-    function refreshAppearance() {
-        const panel =
-            document.getElementById(
-                "settingsPanel"
-            );
-
-        if (!panel) {
-            return;
-        }
-
-        panel
-            .querySelectorAll(
-                ".mi-settings-section"
-            )
-            .forEach(
-                function (section) {
-                    const type =
-                        String(
-                            section.dataset
-                                .settingsType ||
-                            ""
-                        )
-                            .toLowerCase();
-
-                    if (
-                        !protectedTypes.has(
-                            type
-                        )
-                    ) {
-                        return;
-                    }
-
-                    section.dataset
-                        .loginRequired =
-                        authenticated()
-                            ? "false"
-                            : "true";
-
-                    const button =
-                        section.querySelector(
-                            ".mi-settings-option-button"
-                        );
-
-                    if (button) {
-                        button.title =
-                            authenticated()
-                                ? ""
-                                : message();
-                    }
-                }
-            );
-    }
-
-    function start() {
-        refreshAppearance();
-
-        const observer =
-            new MutationObserver(
-                function () {
-                    requestAnimationFrame(
-                        refreshAppearance
-                    );
-                }
-            );
-
-        observer.observe(
-            document.body,
-            {
-                childList: true,
-                subtree: true
-            }
-        );
-
-        window.addEventListener(
-            "mi-chat-user-changed",
-            refreshAppearance
-        );
-
-        window.addEventListener(
-            "mi-firebase-auth-changed",
-            refreshAppearance
-        );
-    }
-
-    window.MISettingsLoginGuard = {
-        isAuthenticated:
-            authenticated,
-
-        refresh:
-            refreshAppearance
-    };
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once: true
-            }
-        );
-    }
-    else {
-        start();
-    }
-})();
-
-/* MI AI SETTINGS LOGIN REQUIRED - END */
-</script>
 
 <script>
 /* MI AI ACCOUNT PERSISTENCE V2 - START */
@@ -18651,6 +18107,481 @@ document.addEventListener(
 })();
 
 /* MI AI ACCOUNT PERSISTENCE V2 - END */
+</script>
+
+<script>
+/* MI AI SETTINGS LOGIN ALERT V3 - START */
+
+(function () {
+    "use strict";
+
+    let loginOpening = false;
+    let lastAlertTime = 0;
+
+    const protectedWords = [
+        "language",
+        "theme",
+        "font size",
+        "fontsize",
+        "font-size",
+        "font_size",
+        "appearance",
+        "භාෂාව",
+        "තේමාව",
+        "අකුරු ප්‍රමාණය",
+        "மொழி",
+        "தீம்",
+        "எழுத்தளவு"
+    ];
+
+    function currentFirebaseUser() {
+        try {
+            return (
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth === "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                ) ||
+                null
+            );
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function authenticated() {
+        try {
+            if (typeof window.isAuthenticated === "function") {
+                return Boolean(window.isAuthenticated());
+            }
+
+            if (typeof isAuthenticated === "function") {
+                return Boolean(isAuthenticated());
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Settings Login Alert]",
+                error
+            );
+        }
+
+        return Boolean(
+            currentFirebaseUser() ||
+            window.user?.email ||
+            localStorage.getItem("mi_supabase_token")
+        );
+    }
+
+    function selectedLanguage() {
+        return String(
+            document.getElementById("languageSelect")?.value ||
+            localStorage.getItem("mi_ui_language") ||
+            "en"
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function loginMessage() {
+        const language = selectedLanguage();
+
+        if (language === "si") {
+            return "භාෂාව, තේමාව හෝ අකුරු ප්‍රමාණය වෙනස් කිරීමට Login වෙන්න.";
+        }
+
+        if (language === "ta") {
+            return "மொழி, தீம் அல்லது எழுத்தளவை மாற்ற Login செய்யவும்.";
+        }
+
+        return "Please log in to change Language, Theme or Font Size.";
+    }
+
+    function elementDetails(element) {
+        if (!(element instanceof Element)) {
+            return "";
+        }
+
+        return [
+            element.id,
+            element.getAttribute("name"),
+            element.className,
+            element.getAttribute("data-settings-type"),
+            element.getAttribute("data-setting"),
+            element.getAttribute("aria-label"),
+            element.getAttribute("title"),
+            element.textContent,
+            element.closest("label")?.textContent,
+            element.closest("button")?.textContent,
+            element.closest(".mi-settings-section")
+                ?.getAttribute("data-settings-type"),
+            element.closest(".mi-settings-section")
+                ?.textContent
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function isInsideSettings(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        return Boolean(
+            element.closest(
+                [
+                    "#settingsPanel",
+                    "#settingsModal",
+                    ".settings-panel",
+                    ".settings-modal",
+                    ".settings-content",
+                    ".mi-settings-section"
+                ].join(",")
+            )
+        );
+    }
+
+    function isProtectedSetting(element) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        if (!isInsideSettings(element)) {
+            return false;
+        }
+
+        if (
+            element.closest(
+                [
+                    "#settingsCloseBtn",
+                    ".settings-close",
+                    ".modal-close",
+                    ".close-btn",
+                    "[data-action='close']"
+                ].join(",")
+            )
+        ) {
+            return false;
+        }
+
+        const details = elementDetails(element);
+
+        return protectedWords.some(function (word) {
+            return details.includes(word);
+        });
+    }
+
+    function displayAlert() {
+        const now = Date.now();
+
+        if (now - lastAlertTime < 700) {
+            return;
+        }
+
+        lastAlertTime = now;
+
+        const text = loginMessage();
+
+        if (typeof window.showToast === "function") {
+            window.showToast(text);
+        }
+        else if (typeof showToast === "function") {
+            showToast(text);
+        }
+        else if (typeof window.showShareFeedback === "function") {
+            window.showShareFeedback(text);
+        }
+        else {
+            alert(text);
+        }
+    }
+
+    function findLoginModal() {
+        return document.querySelector(
+            [
+                "#loginModal",
+                "#authModal",
+                "#loginPanel",
+                ".login-modal",
+                ".auth-modal",
+                "[data-modal='login']"
+            ].join(",")
+        );
+    }
+
+    function manuallyShowLoginModal() {
+        const modal = findLoginModal();
+
+        if (!modal) {
+            return false;
+        }
+
+        modal.hidden = false;
+        modal.removeAttribute("hidden");
+
+        modal.style.display = "flex";
+        modal.style.visibility = "visible";
+        modal.style.opacity = "1";
+        modal.style.pointerEvents = "auto";
+
+        modal.classList.add(
+            "active",
+            "open",
+            "show",
+            "visible"
+        );
+
+        document.body.classList.add(
+            "modal-open"
+        );
+
+        return true;
+    }
+
+    function openLoginInterface() {
+        if (loginOpening) {
+            return;
+        }
+
+        loginOpening = true;
+
+        setTimeout(function () {
+            try {
+                let opened = false;
+
+                if (typeof window.openLogin === "function") {
+                    window.openLogin();
+                    opened = true;
+                }
+                else if (typeof openLogin === "function") {
+                    openLogin();
+                    opened = true;
+                }
+                else if (typeof window.showLogin === "function") {
+                    window.showLogin();
+                    opened = true;
+                }
+                else if (typeof showLogin === "function") {
+                    showLogin();
+                    opened = true;
+                }
+                else if (
+                    typeof window.openAuthModal === "function"
+                ) {
+                    window.openAuthModal("login");
+                    opened = true;
+                }
+                else if (
+                    typeof openAuthModal === "function"
+                ) {
+                    openAuthModal("login");
+                    opened = true;
+                }
+
+                setTimeout(function () {
+                    const modal = findLoginModal();
+
+                    const visible = Boolean(
+                        modal &&
+                        !modal.hidden &&
+                        getComputedStyle(modal).display !== "none" &&
+                        getComputedStyle(modal).visibility !== "hidden"
+                    );
+
+                    if (!opened || !visible) {
+                        manuallyShowLoginModal();
+                    }
+
+                    const emailInput =
+                        document.querySelector(
+                            [
+                                "#loginEmail",
+                                "#email",
+                                "input[type='email']",
+                                "#loginModal input"
+                            ].join(",")
+                        );
+
+                    if (emailInput) {
+                        setTimeout(function () {
+                            emailInput.focus();
+                        }, 100);
+                    }
+                }, 80);
+            }
+            catch (error) {
+                console.error(
+                    "[MI AI Settings Login Alert]",
+                    error
+                );
+
+                manuallyShowLoginModal();
+            }
+            finally {
+                setTimeout(function () {
+                    loginOpening = false;
+                }, 500);
+            }
+        }, 20);
+    }
+
+    function blockProtectedSetting(event) {
+        const target = event.target;
+
+        if (
+            authenticated() ||
+            !isProtectedSetting(target)
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        displayAlert();
+        openLoginInterface();
+    }
+
+    [
+        "pointerdown",
+        "mousedown",
+        "touchstart",
+        "click",
+        "focusin",
+        "input",
+        "change"
+    ].forEach(function (eventName) {
+        document.addEventListener(
+            eventName,
+            blockProtectedSetting,
+            true
+        );
+    });
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                authenticated() ||
+                !isProtectedSetting(event.target)
+            ) {
+                return;
+            }
+
+            if (
+                [
+                    "Enter",
+                    " ",
+                    "ArrowUp",
+                    "ArrowDown",
+                    "ArrowLeft",
+                    "ArrowRight"
+                ].includes(event.key)
+            ) {
+                blockProtectedSetting(event);
+            }
+        },
+        true
+    );
+
+    function updateLockedState() {
+        const selectors = [
+            "#languageSelect",
+            "[data-settings-type='language']",
+            "[data-settings-type='theme']",
+            "[data-settings-type='fontsize']",
+            "[data-settings-type='font-size']",
+            "[data-setting='language']",
+            "[data-setting='theme']",
+            "[data-setting='font-size']",
+            ".mi-settings-section"
+        ];
+
+        document
+            .querySelectorAll(selectors.join(","))
+            .forEach(function (element) {
+                if (!isProtectedSetting(element)) {
+                    return;
+                }
+
+                element.dataset.loginRequired =
+                    authenticated()
+                        ? "false"
+                        : "true";
+
+                if (!authenticated()) {
+                    element.title = loginMessage();
+                }
+                else if (
+                    element.title === loginMessage()
+                ) {
+                    element.removeAttribute("title");
+                }
+            });
+    }
+
+    function start() {
+        updateLockedState();
+
+        const observer = new MutationObserver(function () {
+            requestAnimationFrame(
+                updateLockedState
+            );
+        });
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            updateLockedState
+        );
+
+        window.addEventListener(
+            "mi-firebase-auth-changed",
+            updateLockedState
+        );
+
+        window.addEventListener(
+            "pageshow",
+            updateLockedState
+        );
+    }
+
+    window.MISettingsLoginAlert = {
+        refresh: updateLockedState,
+        isAuthenticated: authenticated,
+        openLogin: openLoginInterface
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SETTINGS LOGIN ALERT V3 - END */
 </script>
 </body>
 </html>
