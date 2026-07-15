@@ -15116,5 +15116,482 @@ document.addEventListener(
 
 /* MI AI SAFE ACCOUNT CHAT RESTORE V4 - END */
 </script>
+
+<script>
+/* MI AI LIVE SEARCH AND DEVICE TIME V1 - START */
+
+(function () {
+    "use strict";
+
+    let originalFetchChatReply = null;
+    let installed = false;
+
+    const LIVE_SEARCH_PATTERN =
+        /\b(latest|live|current|today|now|score|scores|result|results|match|game|news|weather|price|stock|election|president|prime minister|ceo|release|update|updated|breaking)\b/i;
+
+    const TIME_PATTERN =
+        /\b(what(?:'s| is)? the time|time now|current time|local time|දැන් වෙලාව|වෙලාව කීයද|நேரம் என்ன|தற்போதைய நேரம்)\b/i;
+
+    function extractQuestion(payload) {
+        if (!payload || typeof payload !== "object") {
+            return "";
+        }
+
+        if (typeof payload.message === "string") {
+            return payload.message.trim();
+        }
+
+        if (typeof payload.prompt === "string") {
+            return payload.prompt.trim();
+        }
+
+        if (typeof payload.text === "string") {
+            return payload.text.trim();
+        }
+
+        if (Array.isArray(payload.messages)) {
+            const lastUser =
+                [...payload.messages]
+                    .reverse()
+                    .find(function (item) {
+                        return (
+                            item &&
+                            (
+                                item.role === "user" ||
+                                item.role === "me"
+                            )
+                        );
+                    });
+
+            return String(
+                lastUser?.content ||
+                lastUser?.text ||
+                ""
+            ).trim();
+        }
+
+        return "";
+    }
+
+    function setThinkingLabel(text) {
+        const labels =
+            document.querySelectorAll(
+                ".thinking .label, .thinking-label"
+            );
+
+        labels.forEach(function (label) {
+            if (
+                label.dataset.miOriginalLabel ===
+                    undefined
+            ) {
+                label.dataset.miOriginalLabel =
+                    label.textContent || "MI AI";
+            }
+
+            label.textContent = text;
+        });
+    }
+
+    function restoreThinkingLabel() {
+        document
+            .querySelectorAll(
+                ".thinking .label, .thinking-label"
+            )
+            .forEach(function (label) {
+                if (
+                    label.dataset
+                        .miOriginalLabel !==
+                    undefined
+                ) {
+                    label.textContent =
+                        label.dataset
+                            .miOriginalLabel;
+                }
+            });
+    }
+
+    function replyObject(text, extra) {
+        return {
+            reply: text,
+            response: text,
+            message: text,
+            text: text,
+            content: text,
+            ...(extra || {})
+        };
+    }
+
+    function getBrowserPosition() {
+        return new Promise(function (resolve) {
+            if (!navigator.geolocation) {
+                resolve(null);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    resolve({
+                        latitude:
+                            position.coords.latitude,
+
+                        longitude:
+                            position.coords.longitude,
+
+                        accuracy:
+                            position.coords.accuracy
+                    });
+                },
+
+                function () {
+                    resolve(null);
+                },
+
+                {
+                    enableHighAccuracy: false,
+                    timeout: 7000,
+                    maximumAge: 60000
+                }
+            );
+        });
+    }
+
+    async function buildCurrentTimeReply() {
+        setThinkingLabel(
+            "Getting your local time..."
+        );
+
+        const position =
+            await getBrowserPosition();
+
+        const now =
+            new Date();
+
+        const timezone =
+            Intl.DateTimeFormat()
+                .resolvedOptions()
+                .timeZone ||
+            "Device local timezone";
+
+        const locale =
+            document.documentElement.lang ||
+            navigator.language ||
+            "en-US";
+
+        const dateText =
+            new Intl.DateTimeFormat(
+                locale,
+                {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    weekday: "long",
+                    timeZone: timezone
+                }
+            ).format(now);
+
+        const timeText =
+            new Intl.DateTimeFormat(
+                locale,
+                {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                    timeZone: timezone
+                }
+            ).format(now);
+
+        const locationText =
+            position
+                ? (
+                    " Location coordinates: " +
+                    position.latitude.toFixed(4) +
+                    ", " +
+                    position.longitude.toFixed(4) +
+                    "."
+                )
+                : (
+                    " Location permission was not available, so the device timezone was used."
+                );
+
+        return replyObject(
+            "Your current local time is " +
+            timeText +
+            " on " +
+            dateText +
+            ". Timezone: " +
+            timezone +
+            "." +
+            locationText,
+            {
+                realtime: true,
+                timezone: timezone,
+                latitude:
+                    position?.latitude ??
+                    null,
+                longitude:
+                    position?.longitude ??
+                    null,
+                generated_at:
+                    now.toISOString()
+            }
+        );
+    }
+
+    async function requestLiveSearch(
+        payload,
+        signal
+    ) {
+        setThinkingLabel(
+            "Searching the live web..."
+        );
+
+        const position =
+            await getBrowserPosition();
+
+        const timezone =
+            Intl.DateTimeFormat()
+                .resolvedOptions()
+                .timeZone ||
+            "";
+
+        const response =
+            await fetch(
+                "/api/live-assist",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            ...payload,
+
+                            query:
+                                extractQuestion(
+                                    payload
+                                ),
+
+                            client_context: {
+                                timezone:
+                                    timezone,
+
+                                local_time:
+                                    new Date()
+                                        .toISOString(),
+
+                                latitude:
+                                    position
+                                        ?.latitude ??
+                                    null,
+
+                                longitude:
+                                    position
+                                        ?.longitude ??
+                                    null
+                            }
+                        }),
+
+                    signal:
+                        signal
+                }
+            );
+
+        const data =
+            await response.json()
+                .catch(function () {
+                    return {};
+                });
+
+        if (!response.ok) {
+            throw new Error(
+                data.error ||
+                "Live web search failed."
+            );
+        }
+
+        const reply =
+            data.reply ||
+            data.response ||
+            data.message ||
+            data.text ||
+            "";
+
+        if (!reply) {
+            throw new Error(
+                "Live search returned no answer."
+            );
+        }
+
+        return replyObject(
+            reply,
+            {
+                live_search: true,
+                sources:
+                    data.sources || []
+            }
+        );
+    }
+
+    function shouldUseLiveSearch(question) {
+        if (!question) {
+            return false;
+        }
+
+        return LIVE_SEARCH_PATTERN.test(
+            question
+        );
+    }
+
+    function shouldUseDeviceTime(question) {
+        if (!question) {
+            return false;
+        }
+
+        return TIME_PATTERN.test(
+            question
+        );
+    }
+
+    function install() {
+        if (installed) {
+            return true;
+        }
+
+        const candidate =
+            window.fetchChatReply ||
+            (
+                typeof fetchChatReply ===
+                    "function"
+                    ? fetchChatReply
+                    : null
+            );
+
+        if (
+            typeof candidate !==
+                "function"
+        ) {
+            return false;
+        }
+
+        originalFetchChatReply =
+            candidate;
+
+        const wrapped =
+            async function (
+                payload,
+                signal,
+                useStreaming
+            ) {
+                const question =
+                    extractQuestion(
+                        payload
+                    );
+
+                try {
+                    if (
+                        shouldUseDeviceTime(
+                            question
+                        )
+                    ) {
+                        return await buildCurrentTimeReply();
+                    }
+
+                    if (
+                        shouldUseLiveSearch(
+                            question
+                        )
+                    ) {
+                        return await requestLiveSearch(
+                            payload,
+                            signal
+                        );
+                    }
+
+                    return await originalFetchChatReply(
+                        payload,
+                        signal,
+                        useStreaming
+                    );
+                }
+                finally {
+                    restoreThinkingLabel();
+                }
+            };
+
+        window.fetchChatReply =
+            wrapped;
+
+        try {
+            fetchChatReply = wrapped;
+        }
+        catch (error) {
+            // Global binding may already point to window.
+        }
+
+        installed = true;
+
+        console.log(
+            "[MI AI] Live search and device time enabled."
+        );
+
+        return true;
+    }
+
+    function start() {
+        if (install()) {
+            return;
+        }
+
+        let attempts = 0;
+
+        const timer =
+            setInterval(
+                function () {
+                    attempts += 1;
+
+                    if (
+                        install() ||
+                        attempts >= 80
+                    ) {
+                        clearInterval(
+                            timer
+                        );
+                    }
+                },
+                250
+            );
+    }
+
+    window.MILiveSearchTime = {
+        install: install,
+        isLiveQuestion:
+            shouldUseLiveSearch,
+        isTimeQuestion:
+            shouldUseDeviceTime
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI LIVE SEARCH AND DEVICE TIME V1 - END */
+</script>
 </body>
 </html>

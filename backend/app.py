@@ -1564,6 +1564,155 @@ def api_chat():
 def api_chat_get():
     return jsonify({"response": "Method not allowed"}), 405
 
+# MI AI LIVE SEARCH ROUTE V1 - START
+def _mi_live_extract_text(response):
+    text = getattr(response, "text", None)
+    if text:
+        return str(text).strip()
+
+    try:
+        candidates = getattr(response, "candidates", None) or []
+        parts = candidates[0].content.parts if candidates else []
+
+        return "\n".join(
+            str(getattr(part, "text", "") or "").strip()
+            for part in parts
+            if str(getattr(part, "text", "") or "").strip()
+        ).strip()
+    except Exception:
+        return ""
+
+
+@app.route("/api/live-assist", methods=["POST"])
+def mi_live_assist():
+    import os
+
+    try:
+        from flask import jsonify, request
+        from google import genai
+        from google.genai import types
+
+        payload = request.get_json(silent=True) or {}
+
+        query = str(
+            payload.get("query")
+            or payload.get("message")
+            or payload.get("prompt")
+            or ""
+        ).strip()
+
+        if not query:
+            return jsonify({
+                "error": "A search question is required."
+            }), 400
+
+        api_key = (
+            os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+        )
+
+        if not api_key:
+            return jsonify({
+                "error": (
+                    "GEMINI_API_KEY is not configured "
+                    "on the server."
+                )
+            }), 500
+
+        context = payload.get("client_context") or {}
+
+        timezone = str(
+            context.get("timezone") or ""
+        ).strip()
+
+        latitude = context.get("latitude")
+        longitude = context.get("longitude")
+
+        location_context = ""
+
+        if latitude is not None and longitude is not None:
+            location_context = (
+                f"\nUser coordinates: "
+                f"{latitude}, {longitude}."
+            )
+
+        if timezone:
+            location_context += (
+                f"\nUser device timezone: {timezone}."
+            )
+
+        prompt = f"""
+Answer the user's question using current live web information.
+
+User question:
+{query}
+
+Requirements:
+- Use Google Search for up-to-date information.
+- For a sports match or score, clearly state the teams,
+  current score/status and the date/time checked.
+- Never invent a live result.
+- If reliable current information cannot be found, say so.
+- Keep the answer direct but include important context.
+- Answer in the same language as the user's question.
+- Mention that the information was checked live.
+{location_context}
+""".strip()
+
+        client = genai.Client(
+            api_key=api_key
+        )
+
+        model = (
+            os.getenv("GEMINI_MODEL")
+            or "gemini-2.5-flash"
+        )
+
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[
+                    types.Tool(
+                        google_search=
+                            types.GoogleSearch()
+                    )
+                ],
+                temperature=0.2
+            )
+        )
+
+        answer = _mi_live_extract_text(
+            response
+        )
+
+        if not answer:
+            return jsonify({
+                "error": (
+                    "No live search answer was returned."
+                )
+            }), 502
+
+        return jsonify({
+            "reply": answer,
+            "response": answer,
+            "message": answer,
+            "text": answer,
+            "live_search": True
+        })
+
+    except Exception as error:
+        app.logger.exception(
+            "Live search failed"
+        )
+
+        return jsonify({
+            "error": str(error)
+        }), 500
+
+# MI AI LIVE SEARCH ROUTE V1 - END
+
+
 
 if __name__=="__main__":
     app.run(

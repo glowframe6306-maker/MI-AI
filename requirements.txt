@@ -5,3 +5,4 @@ python-dotenv
 sounddevice
 SpeechRecognition
 vosk
+google-genai>=1.0.0
