@@ -19388,85 +19388,58 @@ document.addEventListener(
 /* MI AI FULL UI TRANSLATION V2 - END */
 </script>
 
+
+
 <script>
-/* MI AI ALL LANGUAGE MAP V3 - START */
+/* MI AI THREE LANGUAGES ONLY V1 - START */
 
 (function () {
     "use strict";
 
-    const LANGUAGE_MAP = [
-        { code: "en", label: "English" },
-        { code: "si", label: "Sinhala" },
-        { code: "ta", label: "Tamil" },
-        { code: "ar", label: "Arabic" },
-        { code: "hi", label: "Hindi" },
-        { code: "ur", label: "Urdu" },
-
+    const allowedLanguages = [
         {
-            code: "zh-cn",
-            label: "Chinese (Simplified)",
+            code: "en",
+            label: "English",
             aliases: [
-                "zh",
-                "zh-hans",
-                "chinese simplified"
+                "english",
+                "en",
+                "en-us",
+                "en-gb"
             ]
         },
-
         {
-            code: "zh-tw",
-            label: "Chinese (Traditional)",
+            code: "si",
+            label: "Sinhala",
             aliases: [
-                "zh-hant",
-                "chinese traditional"
+                "sinhala",
+                "සිංහල",
+                "si",
+                "si-lk"
             ]
         },
-
-        { code: "ja", label: "Japanese" },
-        { code: "ko", label: "Korean" },
-        { code: "fr", label: "French" },
-        { code: "de", label: "German" },
-        { code: "es", label: "Spanish" },
-        { code: "pt", label: "Portuguese" },
-        { code: "ru", label: "Russian" },
-        { code: "it", label: "Italian" },
-        { code: "nl", label: "Dutch" },
-        { code: "tr", label: "Turkish" },
-        { code: "th", label: "Thai" },
-        { code: "ml", label: "Malayalam" },
-        { code: "mr", label: "Marathi" },
-        { code: "gu", label: "Gujarati" },
-        { code: "pl", label: "Polish" },
-        { code: "uk", label: "Ukrainian" },
-        { code: "cs", label: "Czech" },
-        { code: "el", label: "Greek" },
-        { code: "he", label: "Hebrew" },
-        { code: "fa", label: "Persian" },
-        { code: "ro", label: "Romanian" },
-        { code: "sv", label: "Swedish" },
-        { code: "no", label: "Norwegian" },
-        { code: "da", label: "Danish" },
-        { code: "fi", label: "Finnish" },
-        { code: "hu", label: "Hungarian" },
-        { code: "sk", label: "Slovak" },
-        { code: "hr", label: "Croatian" },
-        { code: "sr", label: "Serbian" },
-        { code: "bg", label: "Bulgarian" },
-        { code: "lt", label: "Lithuanian" },
-
-        { code: "bn", label: "Bengali" },
-        { code: "te", label: "Telugu" },
-        { code: "kn", label: "Kannada" },
-        { code: "pa", label: "Punjabi" },
-        { code: "ne", label: "Nepali" },
-        { code: "id", label: "Indonesian" },
-        { code: "ms", label: "Malay" },
-        { code: "vi", label: "Vietnamese" },
-        { code: "fil", label: "Filipino" },
-        { code: "sw", label: "Swahili" },
-        { code: "af", label: "Afrikaans" }
+        {
+            code: "ta",
+            label: "Tamil",
+            aliases: [
+                "tamil",
+                "தமிழ்",
+                "demala",
+                "දෙමළ",
+                "ta",
+                "ta-lk",
+                "ta-in"
+            ]
+        }
     ];
 
-    const CODE_ALIASES = new Map();
+    const allowedCodes =
+        new Set([
+            "en",
+            "si",
+            "ta"
+        ]);
+
+    let cleaning = false;
 
     function normalize(value) {
         return String(value || "")
@@ -19476,28 +19449,10 @@ document.addEventListener(
             .replace(/\s+/g, " ");
     }
 
-    LANGUAGE_MAP.forEach(function (language) {
-        CODE_ALIASES.set(
-            normalize(language.code),
-            language
-        );
-
-        CODE_ALIASES.set(
-            normalize(language.label),
-            language
-        );
-
-        (
-            language.aliases || []
-        ).forEach(function (alias) {
-            CODE_ALIASES.set(
-                normalize(alias),
-                language
-            );
-        });
-    });
-
-    function findLanguage(value, label) {
+    function resolveLanguage(
+        value,
+        label
+    ) {
         const normalizedValue =
             normalize(value);
 
@@ -19505,20 +19460,20 @@ document.addEventListener(
             normalize(label);
 
         return (
-            CODE_ALIASES.get(
-                normalizedValue
-            ) ||
-            CODE_ALIASES.get(
-                normalizedLabel
-            ) ||
-            LANGUAGE_MAP.find(
+            allowedLanguages.find(
                 function (language) {
                     return (
-                        normalizedValue.startsWith(
-                            normalize(
-                                language.code
-                            ) + "-"
-                        )
+                        language.code ===
+                            normalizedValue ||
+                        language.aliases.includes(
+                            normalizedValue
+                        ) ||
+                        language.aliases.includes(
+                            normalizedLabel
+                        ) ||
+                        normalize(
+                            language.label
+                        ) === normalizedLabel
                     );
                 }
             ) ||
@@ -19526,189 +19481,195 @@ document.addEventListener(
         );
     }
 
-    function languageSelect() {
-        return document.getElementById(
-            "languageSelect"
-        );
-    }
+    function updateGlobalLanguageList() {
+        window.SUPPORTED_LANGUAGES =
+            allowedLanguages.map(
+                function (language) {
+                    return {
+                        code:
+                            language.code,
 
-    function selectedLanguage() {
-        const selector =
-            languageSelect();
+                        label:
+                            language.label,
 
-        if (!selector) {
-            return {
-                code:
-                    localStorage.getItem(
-                        "mi_ui_language"
-                    ) || "en",
-
-                label:
-                    "English"
-            };
-        }
-
-        const option =
-            selector.options[
-                selector.selectedIndex
-            ];
-
-        const detected =
-            findLanguage(
-                selector.value,
-                option?.textContent
+                        name:
+                            language.label
+                    };
+                }
             );
 
-        return detected || {
-            code:
-                normalize(
-                    selector.value
-                ) || "en",
-
-            label:
-                String(
-                    option?.textContent ||
-                    selector.value ||
-                    "English"
-                ).trim()
-        };
-    }
-
-    function saveSelectedLanguage() {
-        const selected =
-            selectedLanguage();
-
-        localStorage.setItem(
-            "mi_ui_language",
-            selected.code
-        );
-
-        localStorage.setItem(
-            "mi_ui_language_name",
-            selected.label
-        );
-
-        return selected;
-    }
-
-    function refreshTranslation() {
-        const selected =
-            saveSelectedLanguage();
-
-        document.documentElement.lang =
-            selected.code;
-
-        const rtlLanguages =
-            new Set([
-                "ar",
-                "fa",
-                "he",
-                "ur"
-            ]);
-
-        document.documentElement.dir =
-            rtlLanguages.has(
-                selected.code
-                    .split("-")[0]
-            )
-                ? "rtl"
-                : "ltr";
-
-        if (
-            window.MIFullUiTranslation &&
-            typeof window
-                .MIFullUiTranslation
-                .refresh === "function"
-        ) {
-            window
-                .MIFullUiTranslation
-                .refresh();
+        try {
+            if (
+                typeof SUPPORTED_LANGUAGES !==
+                    "undefined" &&
+                Array.isArray(
+                    SUPPORTED_LANGUAGES
+                )
+            ) {
+                SUPPORTED_LANGUAGES.splice(
+                    0,
+                    SUPPORTED_LANGUAGES.length,
+                    ...window
+                        .SUPPORTED_LANGUAGES
+                );
+            }
         }
-
-        if (
-            window.MIAnyLanguage &&
-            typeof window
-                .MIAnyLanguage
-                .refresh === "function"
-        ) {
-            window
-                .MIAnyLanguage
-                .refresh();
+        catch (error) {
+            // Global binding may be read-only.
         }
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "mi-language-changed",
-                {
-                    detail: {
-                        language:
-                            selected.code,
-
-                        languageName:
-                            selected.label
-                    }
-                }
-            )
-        );
     }
 
-    function attachLanguageSelector() {
-        const selector =
-            languageSelect();
-
+    function rebuildNativeSelect(
+        select
+    ) {
         if (
-            !selector ||
-            selector.dataset
-                .miAllLanguageMapAttached ===
-                "true"
+            !(select instanceof
+                HTMLSelectElement)
         ) {
             return;
         }
 
-        selector.dataset
-            .miAllLanguageMapAttached =
-            "true";
+        const selectedOption =
+            select.options[
+                select.selectedIndex
+            ];
 
-        selector.addEventListener(
-            "change",
-            function () {
-                setTimeout(
-                    refreshTranslation,
-                    20
+        const selected =
+            resolveLanguage(
+                select.value,
+                selectedOption
+                    ?.textContent
+            );
+
+        const selectedCode =
+            selected?.code ||
+            (
+                allowedCodes.has(
+                    normalize(
+                        localStorage.getItem(
+                            "mi_ui_language"
+                        )
+                    )
+                )
+                    ? normalize(
+                        localStorage.getItem(
+                            "mi_ui_language"
+                        )
+                    )
+                    : "en"
+            );
+
+        select.innerHTML = "";
+
+        allowedLanguages.forEach(
+            function (language) {
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    language.code;
+
+                option.textContent =
+                    language.label;
+
+                option.selected =
+                    language.code ===
+                    selectedCode;
+
+                select.appendChild(
+                    option
                 );
-            },
-            true
+            }
         );
 
-        selector.addEventListener(
-            "input",
-            function () {
-                setTimeout(
-                    refreshTranslation,
-                    20
-                );
-            },
-            true
+        select.value =
+            selectedCode;
+
+        localStorage.setItem(
+            "mi_ui_language",
+            selectedCode
         );
     }
 
-    function isLanguageOption(element) {
-        if (!(element instanceof Element)) {
-            return false;
+    function languageContainer() {
+        const nativeSelect =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (nativeSelect) {
+            return (
+                nativeSelect.closest(
+                    [
+                        ".mi-settings-section",
+                        ".language-section",
+                        ".language-selector",
+                        ".language-options",
+                        ".settings-language",
+                        "[data-settings-type='language']",
+                        "[data-setting='language']"
+                    ].join(",")
+                ) ||
+                nativeSelect.parentElement
+            );
         }
 
-        const settings =
-            element.closest(
+        const candidates =
+            document.querySelectorAll(
                 [
-                    "#settingsPanel",
-                    "#settingsModal",
-                    ".settings-panel",
-                    ".settings-modal",
-                    ".mi-settings-section"
+                    ".mi-settings-section",
+                    ".language-section",
+                    ".language-selector",
+                    ".language-options",
+                    ".settings-language",
+                    "[data-settings-type='language']",
+                    "[data-setting='language']"
                 ].join(",")
             );
 
-        if (!settings) {
+        for (
+            const candidate
+            of candidates
+        ) {
+            const text =
+                normalize(
+                    candidate.textContent
+                );
+
+            if (
+                text.includes("english") &&
+                (
+                    text.includes(
+                        "sinhala"
+                    ) ||
+                    text.includes(
+                        "සිංහල"
+                    )
+                ) &&
+                (
+                    text.includes(
+                        "tamil"
+                    ) ||
+                    text.includes(
+                        "தமிழ்"
+                    )
+                )
+            ) {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    function looksLikeLanguageItem(
+        element
+    ) {
+        if (
+            !(element instanceof Element)
+        ) {
             return false;
         }
 
@@ -19717,139 +19678,370 @@ document.addEventListener(
                 element.textContent
             );
 
+        const value =
+            normalize(
+                element.getAttribute(
+                    "data-value"
+                ) ||
+                element.getAttribute(
+                    "data-language"
+                ) ||
+                element.getAttribute(
+                    "data-code"
+                ) ||
+                element.getAttribute(
+                    "value"
+                )
+            );
+
         return Boolean(
-            CODE_ALIASES.has(text) ||
-            LANGUAGE_MAP.some(
-                function (language) {
-                    return (
-                        text ===
-                        normalize(
-                            language.label
-                        )
-                    );
-                }
-            )
+            text ||
+            value
         );
     }
 
-    document.addEventListener(
-        "click",
-        function (event) {
-            if (
-                isLanguageOption(
-                    event.target
-                )
-            ) {
-                setTimeout(
-                    refreshTranslation,
-                    80
-                );
+    function languageFromElement(
+        element
+    ) {
+        if (
+            !(element instanceof Element)
+        ) {
+            return null;
+        }
 
-                setTimeout(
-                    refreshTranslation,
-                    350
-                );
-            }
+        return resolveLanguage(
+            element.getAttribute(
+                "data-value"
+            ) ||
+            element.getAttribute(
+                "data-language"
+            ) ||
+            element.getAttribute(
+                "data-code"
+            ) ||
+            element.getAttribute(
+                "value"
+            ) ||
+            "",
 
-            const button =
-                event.target.closest(
-                    "button"
-                );
-
-            const text =
-                normalize(
-                    button?.textContent
-                );
-
-            if (
-                button &&
-                (
-                    text === "apply" ||
-                    text.includes(
-                        "apply setting"
-                    )
-                )
-            ) {
-                setTimeout(
-                    refreshTranslation,
-                    80
-                );
-
-                setTimeout(
-                    refreshTranslation,
-                    400
-                );
-            }
-        },
-        true
-    );
-
-    function exposeLanguageList() {
-        const current =
-            Array.isArray(
-                window.SUPPORTED_LANGUAGES
-            )
-                ? window.SUPPORTED_LANGUAGES
-                : [];
-
-        const merged =
-            new Map();
-
-        current.forEach(
-            function (language) {
-                if (language?.code) {
-                    merged.set(
-                        normalize(
-                            language.code
-                        ),
-                        language
-                    );
-                }
-            }
+            element.textContent
         );
+    }
 
-        LANGUAGE_MAP.forEach(
-            function (language) {
+    function cleanCustomLanguageList() {
+        const container =
+            languageContainer();
+
+        if (!container) {
+            return;
+        }
+
+        const candidates =
+            container.querySelectorAll(
+                [
+                    "button",
+                    "li",
+                    "[role='option']",
+                    ".language-option",
+                    ".language-item",
+                    ".dropdown-item",
+                    "[data-language]",
+                    "[data-code]",
+                    "[data-value]"
+                ].join(",")
+            );
+
+        candidates.forEach(
+            function (element) {
                 if (
-                    !merged.has(
-                        normalize(
-                            language.code
-                        )
+                    !looksLikeLanguageItem(
+                        element
                     )
                 ) {
-                    merged.set(
-                        normalize(
-                            language.code
-                        ),
-                        {
-                            code:
-                                language.code,
+                    return;
+                }
 
-                            label:
-                                language.label,
-
-                            name:
-                                language.label
-                        }
+                const text =
+                    normalize(
+                        element.textContent
                     );
+
+                if (
+                    text.includes("language") &&
+                    element.children.length >
+                        0
+                ) {
+                    return;
+                }
+
+                const language =
+                    languageFromElement(
+                        element
+                    );
+
+                if (!language) {
+                    element.remove();
+                    return;
+                }
+
+                element.setAttribute(
+                    "data-language",
+                    language.code
+                );
+
+                element.setAttribute(
+                    "data-value",
+                    language.code
+                );
+
+                const labelTarget =
+                    element.querySelector(
+                        [
+                            ".label",
+                            ".text",
+                            ".name",
+                            "span"
+                        ].join(",")
+                    );
+
+                if (
+                    labelTarget &&
+                    normalize(
+                        labelTarget
+                            .textContent
+                    )
+                ) {
+                    labelTarget.textContent =
+                        language.label;
+                }
+                else if (
+                    element.children
+                        .length === 0
+                ) {
+                    element.textContent =
+                        language.label;
                 }
             }
         );
+    }
 
-        window.SUPPORTED_LANGUAGES =
-            Array.from(
-                merged.values()
+    function forceAllowedLanguage() {
+        const select =
+            document.getElementById(
+                "languageSelect"
             );
+
+        let currentCode =
+            normalize(
+                select?.value ||
+                localStorage.getItem(
+                    "mi_ui_language"
+                ) ||
+                "en"
+            );
+
+        const resolved =
+            resolveLanguage(
+                currentCode,
+                ""
+            );
+
+        currentCode =
+            resolved?.code ||
+            "en";
+
+        if (select) {
+            select.value =
+                currentCode;
+        }
+
+        localStorage.setItem(
+            "mi_ui_language",
+            currentCode
+        );
+
+        const storedLanguageKeys = [
+            "language",
+            "selectedLanguage",
+            "selected_language",
+            "uiLanguage",
+            "locale",
+            "mi_language"
+        ];
+
+        storedLanguageKeys.forEach(
+            function (key) {
+                const value =
+                    localStorage.getItem(
+                        key
+                    );
+
+                if (!value) {
+                    return;
+                }
+
+                const language =
+                    resolveLanguage(
+                        value,
+                        value
+                    );
+
+                localStorage.setItem(
+                    key,
+                    language?.code ||
+                    "en"
+                );
+            }
+        );
+    }
+
+    function cleanLanguageList() {
+        if (cleaning) {
+            return;
+        }
+
+        cleaning = true;
+
+        try {
+            updateGlobalLanguageList();
+
+            const select =
+                document.getElementById(
+                    "languageSelect"
+                );
+
+            if (select) {
+                rebuildNativeSelect(
+                    select
+                );
+            }
+
+            cleanCustomLanguageList();
+            forceAllowedLanguage();
+        }
+        finally {
+            cleaning = false;
+        }
+    }
+
+    function attachProtection() {
+        document.addEventListener(
+            "change",
+            function (event) {
+                const target =
+                    event.target;
+
+                if (
+                    target?.id !==
+                    "languageSelect"
+                ) {
+                    return;
+                }
+
+                const language =
+                    resolveLanguage(
+                        target.value,
+                        target.options[
+                            target
+                                .selectedIndex
+                        ]?.textContent
+                    );
+
+                const code =
+                    language?.code ||
+                    "en";
+
+                target.value = code;
+
+                localStorage.setItem(
+                    "mi_ui_language",
+                    code
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "mi-language-changed",
+                        {
+                            detail: {
+                                language:
+                                    code
+                            }
+                        }
+                    )
+                );
+            },
+            true
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                const container =
+                    languageContainer();
+
+                if (
+                    !container ||
+                    !container.contains(
+                        event.target
+                    )
+                ) {
+                    return;
+                }
+
+                const item =
+                    event.target.closest(
+                        [
+                            "button",
+                            "li",
+                            "[role='option']",
+                            ".language-option",
+                            ".language-item",
+                            ".dropdown-item",
+                            "[data-language]",
+                            "[data-code]",
+                            "[data-value]"
+                        ].join(",")
+                    );
+
+                if (!item) {
+                    return;
+                }
+
+                const language =
+                    languageFromElement(
+                        item
+                    );
+
+                if (!language) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    cleanLanguageList();
+                    return;
+                }
+
+                localStorage.setItem(
+                    "mi_ui_language",
+                    language.code
+                );
+            },
+            true
+        );
     }
 
     function start() {
-        exposeLanguageList();
-        attachLanguageSelector();
+        cleanLanguageList();
+        attachProtection();
 
         const observer =
             new MutationObserver(
                 function () {
-                    attachLanguageSelector();
+                    if (!cleaning) {
+                        requestAnimationFrame(
+                            cleanLanguageList
+                        );
+                    }
                 }
             );
 
@@ -19861,24 +20053,48 @@ document.addEventListener(
             }
         );
 
+        window.addEventListener(
+            "pageshow",
+            cleanLanguageList
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            cleanLanguageList
+        );
+
         setTimeout(
-            refreshTranslation,
-            250
+            cleanLanguageList,
+            100
+        );
+
+        setTimeout(
+            cleanLanguageList,
+            500
+        );
+
+        setTimeout(
+            cleanLanguageList,
+            1500
         );
     }
 
-    window.MIAllLanguageMap = {
+    window.MIThreeLanguages = {
         languages:
-            LANGUAGE_MAP,
-
-        getSelected:
-            selectedLanguage,
+            allowedLanguages,
 
         refresh:
-            refreshTranslation,
+            cleanLanguageList,
 
-        resolve:
-            findLanguage
+        isAllowed:
+            function (value) {
+                return Boolean(
+                    resolveLanguage(
+                        value,
+                        value
+                    )
+                );
+            }
     };
 
     if (
@@ -19898,7 +20114,7 @@ document.addEventListener(
     }
 })();
 
-/* MI AI ALL LANGUAGE MAP V3 - END */
+/* MI AI THREE LANGUAGES ONLY V1 - END */
 </script>
 </body>
 </html>
