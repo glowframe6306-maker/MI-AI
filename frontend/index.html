@@ -15218,5 +15218,1108 @@ document.addEventListener(
 
 /* MI AI SHARE MODAL STAY OPEN - END */
 </script>
+
+<script>
+/* MI AI ANY LANGUAGE TRANSLATION - START */
+
+(function () {
+    "use strict";
+
+    const CACHE_PREFIX =
+        "mi_any_language_cache_v1_";
+
+    const SOURCE_LANGUAGE =
+        "English";
+
+    const excludedSelector = [
+        "#header",
+        "#chat",
+        "script",
+        "style",
+        "code",
+        "pre",
+        "svg",
+        "path",
+        "noscript",
+        "[data-mi-no-translate='true']",
+        ".mi-no-translate"
+    ].join(",");
+
+    const pendingRequests =
+        new Map();
+
+    let activeLanguage =
+        "en";
+
+    let refreshTimer =
+        null;
+
+    let observerPaused =
+        false;
+
+    let translationRunning =
+        false;
+
+    function selectedLanguageCode() {
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const selected =
+            selector?.value;
+
+        const stored =
+            localStorage.getItem(
+                "mi_ui_language"
+            );
+
+        const accountStored =
+            typeof getStoredLanguageCode ===
+                "function"
+                ? getStoredLanguageCode()
+                : null;
+
+        return String(
+            selected ||
+            accountStored ||
+            stored ||
+            "en"
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function selectedLanguageName(code) {
+        if (
+            Array.isArray(
+                window.SUPPORTED_LANGUAGES
+            )
+        ) {
+            const entry =
+                window.SUPPORTED_LANGUAGES.find(
+                    function (item) {
+                        return (
+                            String(
+                                item.code
+                            ).toLowerCase() ===
+                            code
+                        );
+                    }
+                );
+
+            if (entry?.label) {
+                return entry.label;
+            }
+        }
+
+        if (
+            typeof SUPPORTED_LANGUAGES !==
+                "undefined" &&
+            Array.isArray(
+                SUPPORTED_LANGUAGES
+            )
+        ) {
+            const entry =
+                SUPPORTED_LANGUAGES.find(
+                    function (item) {
+                        return (
+                            String(
+                                item.code
+                            ).toLowerCase() ===
+                            code
+                        );
+                    }
+                );
+
+            if (entry?.label) {
+                return entry.label;
+            }
+        }
+
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const option =
+            selector?.options[
+                selector.selectedIndex
+            ];
+
+        return (
+            option?.textContent?.trim() ||
+            code
+        );
+    }
+
+    function isEnglish(code) {
+        return (
+            code === "en" ||
+            code.startsWith("en-")
+        );
+    }
+
+    function normalizeText(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function cacheKey(languageCode) {
+        return (
+            CACHE_PREFIX +
+            languageCode
+        );
+    }
+
+    function readCache(languageCode) {
+        try {
+            const raw =
+                localStorage.getItem(
+                    cacheKey(languageCode)
+                );
+
+            if (!raw) {
+                return {};
+            }
+
+            const parsed =
+                JSON.parse(raw);
+
+            return (
+                parsed &&
+                typeof parsed ===
+                    "object"
+            )
+                ? parsed
+                : {};
+        }
+        catch (error) {
+            return {};
+        }
+    }
+
+    function writeCache(
+        languageCode,
+        dictionary
+    ) {
+        try {
+            localStorage.setItem(
+                cacheKey(languageCode),
+                JSON.stringify(dictionary)
+            );
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Translation] Cache write failed.",
+                error
+            );
+        }
+    }
+
+    function shouldSkipElement(element) {
+        if (!element) {
+            return true;
+        }
+
+        return Boolean(
+            element.closest(
+                excludedSelector
+            )
+        );
+    }
+
+    function meaningfulText(value) {
+        const text =
+            normalizeText(value);
+
+        if (!text) {
+            return false;
+        }
+
+        if (/^[\d\s.,:;!?%+\-=/\\|()[\]{}<>]+$/.test(text)) {
+            return false;
+        }
+
+        if (/^https?:\/\//i.test(text)) {
+            return false;
+        }
+
+        if (/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(text)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function rememberOriginalText(node) {
+        const parent =
+            node.parentElement;
+
+        if (!parent) {
+            return "";
+        }
+
+        if (
+            !node.__miOriginalText
+        ) {
+            node.__miOriginalText =
+                node.nodeValue;
+        }
+
+        return normalizeText(
+            node.__miOriginalText
+        );
+    }
+
+    function rememberOriginalAttribute(
+        element,
+        attribute
+    ) {
+        const storageName =
+            "miOriginal" +
+            attribute
+                .replace(
+                    /(^|-)([a-z])/g,
+                    function (
+                        match,
+                        prefix,
+                        letter
+                    ) {
+                        return letter
+                            .toUpperCase();
+                    }
+                );
+
+        if (
+            !element.dataset[
+                storageName
+            ]
+        ) {
+            const current =
+                element.getAttribute(
+                    attribute
+                );
+
+            if (current) {
+                element.dataset[
+                    storageName
+                ] = current;
+            }
+        }
+
+        return normalizeText(
+            element.dataset[
+                storageName
+            ] || ""
+        );
+    }
+
+    function collectTargets(root) {
+        const texts = new Set();
+        const textNodes = [];
+        const attributes = [];
+
+        const container =
+            root || document.body;
+
+        if (!container) {
+            return {
+                texts,
+                textNodes,
+                attributes
+            };
+        }
+
+        const textWalker =
+            document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT
+            );
+
+        while (
+            textWalker.nextNode()
+        ) {
+            const node =
+                textWalker.currentNode;
+
+            const parent =
+                node.parentElement;
+
+            if (
+                !parent ||
+                shouldSkipElement(parent)
+            ) {
+                continue;
+            }
+
+            const original =
+                rememberOriginalText(node);
+
+            if (
+                !meaningfulText(original)
+            ) {
+                continue;
+            }
+
+            texts.add(original);
+
+            textNodes.push({
+                node,
+                original
+            });
+        }
+
+        const elements =
+            container.querySelectorAll(
+                [
+                    "input[placeholder]",
+                    "textarea[placeholder]",
+                    "[title]",
+                    "[aria-label]",
+                    "input[type='button'][value]",
+                    "input[type='submit'][value]",
+                    "input[type='reset'][value]"
+                ].join(",")
+            );
+
+        elements.forEach(
+            function (element) {
+                if (
+                    shouldSkipElement(
+                        element
+                    )
+                ) {
+                    return;
+                }
+
+                [
+                    "placeholder",
+                    "title",
+                    "aria-label",
+                    "value"
+                ].forEach(
+                    function (attribute) {
+                        if (
+                            !element.hasAttribute(
+                                attribute
+                            )
+                        ) {
+                            return;
+                        }
+
+                        if (
+                            attribute ===
+                                "value" &&
+                            ![
+                                "button",
+                                "submit",
+                                "reset"
+                            ].includes(
+                                element.type
+                            )
+                        ) {
+                            return;
+                        }
+
+                        const original =
+                            rememberOriginalAttribute(
+                                element,
+                                attribute
+                            );
+
+                        if (
+                            !meaningfulText(
+                                original
+                            )
+                        ) {
+                            return;
+                        }
+
+                        texts.add(original);
+
+                        attributes.push({
+                            element,
+                            attribute,
+                            original
+                        });
+                    }
+                );
+            }
+        );
+
+        return {
+            texts,
+            textNodes,
+            attributes
+        };
+    }
+
+    function restoreEnglish(targets) {
+        observerPaused = true;
+
+        targets.textNodes.forEach(
+            function (item) {
+                item.node.nodeValue =
+                    item.node
+                        .__miOriginalText;
+            }
+        );
+
+        targets.attributes.forEach(
+            function (item) {
+                item.element.setAttribute(
+                    item.attribute,
+                    item.original
+                );
+            }
+        );
+
+        observerPaused = false;
+    }
+
+    function applyDictionary(
+        targets,
+        dictionary
+    ) {
+        observerPaused = true;
+
+        targets.textNodes.forEach(
+            function (item) {
+                const translated =
+                    dictionary[
+                        item.original
+                    ];
+
+                if (translated) {
+                    const originalValue =
+                        item.node
+                            .__miOriginalText ||
+                        item.original;
+
+                    const leading =
+                        originalValue.match(
+                            /^\s*/
+                        )?.[0] || "";
+
+                    const trailing =
+                        originalValue.match(
+                            /\s*$/
+                        )?.[0] || "";
+
+                    item.node.nodeValue =
+                        leading +
+                        translated +
+                        trailing;
+                }
+            }
+        );
+
+        targets.attributes.forEach(
+            function (item) {
+                const translated =
+                    dictionary[
+                        item.original
+                    ];
+
+                if (translated) {
+                    item.element.setAttribute(
+                        item.attribute,
+                        translated
+                    );
+                }
+            }
+        );
+
+        observerPaused = false;
+    }
+
+    function extractJson(text) {
+        const raw =
+            String(text || "")
+                .trim();
+
+        if (!raw) {
+            return null;
+        }
+
+        const withoutFence =
+            raw
+                .replace(
+                    /^```(?:json)?\s*/i,
+                    ""
+                )
+                .replace(
+                    /\s*```$/,
+                    ""
+                )
+                .trim();
+
+        try {
+            return JSON.parse(
+                withoutFence
+            );
+        }
+        catch (error) {
+            const start =
+                withoutFence.indexOf(
+                    "{"
+                );
+
+            const end =
+                withoutFence.lastIndexOf(
+                    "}"
+                );
+
+            if (
+                start >= 0 &&
+                end > start
+            ) {
+                try {
+                    return JSON.parse(
+                        withoutFence.slice(
+                            start,
+                            end + 1
+                        )
+                    );
+                }
+                catch (
+                    nestedError
+                ) {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    async function requestTranslations(
+        languageCode,
+        languageName,
+        sourceTexts
+    ) {
+        const requestId =
+            languageCode +
+            "::" +
+            JSON.stringify(
+                sourceTexts
+            );
+
+        if (
+            pendingRequests.has(
+                requestId
+            )
+        ) {
+            return pendingRequests.get(
+                requestId
+            );
+        }
+
+        const task =
+            (async function () {
+                const numbered =
+                    {};
+
+                sourceTexts.forEach(
+                    function (text, index) {
+                        numbered[
+                            String(index)
+                        ] = text;
+                    }
+                );
+
+                const prompt = [
+                    "Translate the following user-interface text from",
+                    SOURCE_LANGUAGE,
+                    "to",
+                    languageName,
+                    "(" + languageCode + ").",
+                    "",
+                    "Rules:",
+                    "1. Return ONLY one valid JSON object.",
+                    "2. Preserve every numeric key exactly.",
+                    "3. Translate UI meaning naturally and briefly.",
+                    "4. Do not translate product names MI AI, ChatBOT, URLs, email addresses, variable names or code.",
+                    "5. Do not add Markdown or explanations.",
+                    "",
+                    "Input JSON:",
+                    JSON.stringify(numbered)
+                ].join("\n");
+
+                const response =
+                    await fetch(
+                        "/api/chat",
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    message:
+                                        prompt,
+
+                                    history:
+                                        []
+                                })
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Translation request failed: " +
+                        response.status
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                const reply =
+                    data.reply ||
+                    data.response ||
+                    data.message ||
+                    "";
+
+                const parsed =
+                    extractJson(reply);
+
+                if (
+                    !parsed ||
+                    typeof parsed !==
+                        "object"
+                ) {
+                    throw new Error(
+                        "Translation response was not valid JSON."
+                    );
+                }
+
+                const result = {};
+
+                sourceTexts.forEach(
+                    function (source, index) {
+                        const translated =
+                            normalizeText(
+                                parsed[
+                                    String(index)
+                                ]
+                            );
+
+                        if (translated) {
+                            result[source] =
+                                translated;
+                        }
+                    }
+                );
+
+                return result;
+            })();
+
+        pendingRequests.set(
+            requestId,
+            task
+        );
+
+        try {
+            return await task;
+        }
+        finally {
+            pendingRequests.delete(
+                requestId
+            );
+        }
+    }
+
+    function splitIntoBatches(
+        values,
+        maximumItems,
+        maximumCharacters
+    ) {
+        const batches = [];
+        let current = [];
+        let characters = 0;
+
+        values.forEach(
+            function (value) {
+                const length =
+                    value.length;
+
+                if (
+                    current.length > 0 &&
+                    (
+                        current.length >=
+                            maximumItems ||
+                        characters +
+                            length >
+                            maximumCharacters
+                    )
+                ) {
+                    batches.push(
+                        current
+                    );
+
+                    current = [];
+                    characters = 0;
+                }
+
+                current.push(value);
+                characters += length;
+            }
+        );
+
+        if (current.length) {
+            batches.push(current);
+        }
+
+        return batches;
+    }
+
+    async function translateCurrentUi() {
+        if (translationRunning) {
+            return;
+        }
+
+        const languageCode =
+            selectedLanguageCode();
+
+        activeLanguage =
+            languageCode;
+
+        const targets =
+            collectTargets(
+                document.body
+            );
+
+        if (isEnglish(languageCode)) {
+            restoreEnglish(targets);
+
+            document.documentElement.lang =
+                "en";
+
+            document.documentElement.dir =
+                "ltr";
+
+            return;
+        }
+
+        translationRunning = true;
+
+        try {
+            const languageName =
+                selectedLanguageName(
+                    languageCode
+                );
+
+            const dictionary =
+                readCache(
+                    languageCode
+                );
+
+            const allTexts =
+                Array.from(
+                    targets.texts
+                );
+
+            const missing =
+                allTexts.filter(
+                    function (text) {
+                        return (
+                            !dictionary[text]
+                        );
+                    }
+                );
+
+            applyDictionary(
+                targets,
+                dictionary
+            );
+
+            const batches =
+                splitIntoBatches(
+                    missing,
+                    35,
+                    3500
+                );
+
+            for (
+                const batch
+                of batches
+            ) {
+                try {
+                    const translated =
+                        await requestTranslations(
+                            languageCode,
+                            languageName,
+                            batch
+                        );
+
+                    Object.assign(
+                        dictionary,
+                        translated
+                    );
+
+                    writeCache(
+                        languageCode,
+                        dictionary
+                    );
+
+                    if (
+                        selectedLanguageCode() !==
+                        languageCode
+                    ) {
+                        return;
+                    }
+
+                    const latestTargets =
+                        collectTargets(
+                            document.body
+                        );
+
+                    applyDictionary(
+                        latestTargets,
+                        dictionary
+                    );
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI Translation]",
+                        error
+                    );
+                }
+            }
+
+            document.documentElement.lang =
+                languageCode;
+
+            const rtlCodes =
+                new Set([
+                    "ar",
+                    "fa",
+                    "he",
+                    "ur"
+                ]);
+
+            document.documentElement.dir =
+                rtlCodes.has(
+                    languageCode
+                        .split("-")[0]
+                )
+                    ? "rtl"
+                    : "ltr";
+
+            if (
+                window.MIFirebase &&
+                typeof window.MIFirebase
+                    .updateLanguage ===
+                    "function"
+            ) {
+                window.MIFirebase
+                    .updateLanguage();
+            }
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-any-language-applied",
+                    {
+                        detail: {
+                            language:
+                                languageCode
+                        }
+                    }
+                )
+            );
+        }
+        finally {
+            translationRunning = false;
+        }
+    }
+
+    function scheduleTranslation(
+        delay
+    ) {
+        clearTimeout(
+            refreshTimer
+        );
+
+        refreshTimer =
+            setTimeout(
+                function () {
+                    translateCurrentUi()
+                        .catch(
+                            function (
+                                error
+                            ) {
+                                console.error(
+                                    "[MI AI Translation]",
+                                    error
+                                );
+                            }
+                        );
+                },
+                typeof delay ===
+                    "number"
+                    ? delay
+                    : 80
+            );
+    }
+
+    function startObserver() {
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    if (
+                        observerPaused ||
+                        translationRunning ||
+                        isEnglish(
+                            selectedLanguageCode()
+                        )
+                    ) {
+                        return;
+                    }
+
+                    const hasNewContent =
+                        mutations.some(
+                            function (
+                                mutation
+                            ) {
+                                return (
+                                    mutation
+                                        .addedNodes
+                                        .length >
+                                    0
+                                );
+                            }
+                        );
+
+                    if (hasNewContent) {
+                        scheduleTranslation(
+                            150
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList:
+                    true,
+
+                subtree:
+                    true
+            }
+        );
+    }
+
+    function start() {
+        const languageSelect =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (languageSelect) {
+            languageSelect.addEventListener(
+                "change",
+                function () {
+                    const code =
+                        languageSelect.value;
+
+                    localStorage.setItem(
+                        "mi_ui_language",
+                        code
+                    );
+
+                    activeLanguage =
+                        code;
+
+                    scheduleTranslation(
+                        120
+                    );
+                }
+            );
+        }
+
+        window.addEventListener(
+            "mi-language-changed",
+            function () {
+                scheduleTranslation(
+                    100
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-firebase-ready",
+            function () {
+                scheduleTranslation(
+                    100
+                );
+            }
+        );
+
+        startObserver();
+
+        scheduleTranslation(
+            250
+        );
+    }
+
+    window.MIAnyLanguage = {
+        refresh:
+            function () {
+                scheduleTranslation(
+                    0
+                );
+            },
+
+        translate:
+            translateCurrentUi,
+
+        clearCache:
+            function (
+                languageCode
+            ) {
+                const code =
+                    String(
+                        languageCode ||
+                        selectedLanguageCode()
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                localStorage.removeItem(
+                    cacheKey(code)
+                );
+            },
+
+        getLanguage:
+            selectedLanguageCode
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI ANY LANGUAGE TRANSLATION - END */
+</script>
 </body>
 </html>
