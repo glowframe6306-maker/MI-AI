@@ -7123,9 +7123,17 @@ function confirmLogout() {
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
         <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
-        <button type="button" onclick="logout()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.logout', 'Logout')}</button>
+        <button type="button" onclick="handleLogoutConfirmation()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.logout', 'Logout')}</button>
       </div>
     `;
+}
+
+function handleLogoutConfirmation() {
+    const message = t('auth.logoutConfirm.message', 'You are about to log out. Continue?');
+    const shouldLogout = window.confirm(message);
+    if (shouldLogout) {
+        logout();
+    }
 }
 
 async function logout() {
@@ -17300,6 +17308,1349 @@ document.addEventListener(
 })();
 
 /* MI AI SETTINGS LOGIN REQUIRED - END */
+</script>
+
+<script>
+/* MI AI ACCOUNT PERSISTENCE V2 - START */
+
+(function () {
+    "use strict";
+
+    const STATE_VERSION = 2;
+    const STATE_PREFIX = "mi_account_persistent_state_v2_";
+
+    const SESSION_KEYS = [
+        "mi_supabase_token",
+        "mi_user_id",
+        "mi_user_email",
+        "mi_account"
+    ];
+
+    let saveTimer = null;
+    let restoreRunning = false;
+    let wrappersInstalled = false;
+    let lastAuthenticatedEmail = "";
+
+    function normalizeEmail(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function getFirebaseUser() {
+        return (
+            window.miFirebaseAuth?.currentUser ||
+            window.firebaseAuth?.currentUser ||
+            window.firebase?.auth?.()?.currentUser ||
+            null
+        );
+    }
+
+    function getCurrentEmail() {
+        const firebaseUser = getFirebaseUser();
+
+        return normalizeEmail(
+            firebaseUser?.email ||
+            window.user?.email ||
+            (
+                typeof user !== "undefined"
+                    ? user?.email
+                    : ""
+            ) ||
+            localStorage.getItem("mi_user_email") ||
+            ""
+        );
+    }
+
+    function getCurrentUserId() {
+        const firebaseUser = getFirebaseUser();
+
+        return String(
+            firebaseUser?.uid ||
+            window.user?.id ||
+            (
+                typeof user !== "undefined"
+                    ? user?.id
+                    : ""
+            ) ||
+            localStorage.getItem("mi_user_id") ||
+            ""
+        ).trim();
+    }
+
+    function hasAuthenticatedAccount() {
+        return Boolean(
+            getCurrentEmail() &&
+            (
+                getFirebaseUser() ||
+                localStorage.getItem("mi_supabase_token") ||
+                getCurrentUserId()
+            )
+        );
+    }
+
+    function stateKey(email) {
+        return (
+            STATE_PREFIX +
+            encodeURIComponent(
+                normalizeEmail(email)
+            )
+        );
+    }
+
+    function safeParse(value, fallback) {
+        try {
+            const parsed = JSON.parse(value);
+
+            return parsed === null
+                ? fallback
+                : parsed;
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function cloneValue(value, fallback) {
+        try {
+            return JSON.parse(
+                JSON.stringify(value)
+            );
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function collectSettingsControls() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return {};
+        }
+
+        const settings = {};
+
+        panel.querySelectorAll(
+            "input, select, textarea"
+        ).forEach(function (control, index) {
+            const key =
+                control.id ||
+                control.name ||
+                (
+                    "control_" +
+                    index
+                );
+
+            settings[key] = {
+                value:
+                    control.value,
+
+                checked:
+                    Boolean(
+                        control.checked
+                    ),
+
+                type:
+                    control.type ||
+                    control.tagName
+                        .toLowerCase()
+            };
+        });
+
+        return settings;
+    }
+
+    function collectRelevantStorage() {
+        const result = {};
+
+        for (
+            let index = 0;
+            index < localStorage.length;
+            index += 1
+        ) {
+            const key =
+                localStorage.key(index);
+
+            if (!key) {
+                continue;
+            }
+
+            const normalized =
+                key.toLowerCase();
+
+            if (
+                normalized.includes("language") ||
+                normalized.includes("theme") ||
+                normalized.includes("font") ||
+                normalized.includes("setting") ||
+                normalized.includes("appearance") ||
+                normalized.includes("color") ||
+                normalized.includes("colour")
+            ) {
+                result[key] =
+                    localStorage.getItem(key);
+            }
+        }
+
+        return result;
+    }
+
+    function collectCssVariables() {
+        const root =
+            document.documentElement;
+
+        const computed =
+            getComputedStyle(root);
+
+        const variables = [
+            "--main",
+            "--bg",
+            "--panel",
+            "--ai",
+            "--text",
+            "--input",
+            "--mi-theme-color",
+            "--mi-theme-rgb",
+            "--font-size",
+            "--mi-font-size"
+        ];
+
+        const result = {};
+
+        variables.forEach(function (name) {
+            const inlineValue =
+                root.style.getPropertyValue(
+                    name
+                );
+
+            const computedValue =
+                computed.getPropertyValue(
+                    name
+                );
+
+            const value =
+                String(
+                    inlineValue ||
+                    computedValue ||
+                    ""
+                ).trim();
+
+            if (value) {
+                result[name] = value;
+            }
+        });
+
+        return result;
+    }
+
+    function getCurrentChatsSnapshot() {
+        let chatData = {};
+
+        try {
+            if (
+                typeof chats !==
+                    "undefined" &&
+                chats &&
+                typeof chats ===
+                    "object"
+            ) {
+                chatData =
+                    cloneValue(
+                        chats,
+                        {}
+                    );
+            }
+            else if (
+                window.chats &&
+                typeof window.chats ===
+                    "object"
+            ) {
+                chatData =
+                    cloneValue(
+                        window.chats,
+                        {}
+                    );
+            }
+        }
+        catch (error) {
+            chatData = {};
+        }
+
+        return chatData;
+    }
+
+    function getCurrentChatId() {
+        try {
+            if (
+                typeof currentChat !==
+                "undefined"
+            ) {
+                return (
+                    currentChat ||
+                    null
+                );
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible global.
+        }
+
+        return (
+            window.currentChat ||
+            localStorage.getItem(
+                "last_chat"
+            ) ||
+            null
+        );
+    }
+
+    function buildAccountState(email) {
+        return {
+            version:
+                STATE_VERSION,
+
+            email:
+                normalizeEmail(email),
+
+            userId:
+                getCurrentUserId(),
+
+            savedAt:
+                Date.now(),
+
+            chats:
+                getCurrentChatsSnapshot(),
+
+            currentChat:
+                getCurrentChatId(),
+
+            settingsControls:
+                collectSettingsControls(),
+
+            storageSettings:
+                collectRelevantStorage(),
+
+            cssVariables:
+                collectCssVariables(),
+
+            bodyClasses:
+                Array.from(
+                    document.body
+                        ?.classList ||
+                    []
+                )
+        };
+    }
+
+    function saveAccountState(reason) {
+        const email =
+            getCurrentEmail();
+
+        if (
+            !email ||
+            !hasAuthenticatedAccount()
+        ) {
+            return false;
+        }
+
+        const state =
+            buildAccountState(email);
+
+        try {
+            localStorage.setItem(
+                stateKey(email),
+                JSON.stringify(state)
+            );
+
+            lastAuthenticatedEmail =
+                email;
+
+            console.log(
+                "[MI AI Persistence] Saved:",
+                reason || "update",
+                email
+            );
+
+            return true;
+        }
+        catch (error) {
+            console.error(
+                "[MI AI Persistence] Save failed:",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    function scheduleSave(reason) {
+        clearTimeout(saveTimer);
+
+        saveTimer =
+            setTimeout(
+                function () {
+                    saveAccountState(
+                        reason
+                    );
+                },
+                120
+            );
+    }
+
+    function readAccountState(email) {
+        const normalized =
+            normalizeEmail(email);
+
+        if (!normalized) {
+            return null;
+        }
+
+        const state =
+            safeParse(
+                localStorage.getItem(
+                    stateKey(normalized)
+                ),
+                null
+            );
+
+        if (
+            !state ||
+            typeof state !==
+                "object" ||
+            state.version !==
+                STATE_VERSION
+        ) {
+            return null;
+        }
+
+        return state;
+    }
+
+    function applyStoredSettings(state) {
+        if (!state) {
+            return;
+        }
+
+        Object.entries(
+            state.storageSettings ||
+            {}
+        ).forEach(function (
+            entry
+        ) {
+            const key = entry[0];
+            const value = entry[1];
+
+            if (
+                typeof value ===
+                "string"
+            ) {
+                localStorage.setItem(
+                    key,
+                    value
+                );
+            }
+        });
+
+        const root =
+            document.documentElement;
+
+        Object.entries(
+            state.cssVariables ||
+            {}
+        ).forEach(function (
+            entry
+        ) {
+            root.style.setProperty(
+                entry[0],
+                entry[1]
+            );
+        });
+
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (panel) {
+            const controls =
+                state.settingsControls ||
+                {};
+
+            panel.querySelectorAll(
+                "input, select, textarea"
+            ).forEach(function (
+                control,
+                index
+            ) {
+                const key =
+                    control.id ||
+                    control.name ||
+                    (
+                        "control_" +
+                        index
+                    );
+
+                const saved =
+                    controls[key];
+
+                if (!saved) {
+                    return;
+                }
+
+                if (
+                    control.type ===
+                        "checkbox" ||
+                    control.type ===
+                        "radio"
+                ) {
+                    control.checked =
+                        Boolean(
+                            saved.checked
+                        );
+                }
+
+                if (
+                    saved.value !==
+                        undefined
+                ) {
+                    control.value =
+                        saved.value;
+                }
+
+                control.dispatchEvent(
+                    new Event(
+                        "input",
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+
+                control.dispatchEvent(
+                    new Event(
+                        "change",
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+            });
+        }
+
+        const languageCode =
+            (
+                document.getElementById(
+                    "languageSelect"
+                )?.value
+            ) ||
+            (
+                typeof getStoredLanguageCode ===
+                    "function"
+                    ? getStoredLanguageCode()
+                    : ""
+            );
+
+        if (
+            languageCode &&
+            typeof applyLanguage ===
+                "function"
+        ) {
+            Promise.resolve(
+                applyLanguage(
+                    languageCode,
+                    false
+                )
+            ).catch(
+                function (error) {
+                    console.warn(
+                        "[MI AI Persistence] Language restore failed:",
+                        error
+                    );
+                }
+            );
+        }
+
+        if (
+            window.MISettingsAccordion &&
+            typeof window
+                .MISettingsAccordion
+                .refresh ===
+                "function"
+        ) {
+            window
+                .MISettingsAccordion
+                .refresh();
+        }
+
+        if (
+            window.MIAnyLanguage &&
+            typeof window
+                .MIAnyLanguage
+                .refresh ===
+                "function"
+        ) {
+            window
+                .MIAnyLanguage
+                .refresh();
+        }
+    }
+
+    function applyStoredChats(state) {
+        if (
+            !state ||
+            !state.chats ||
+            typeof state.chats !==
+                "object" ||
+            Array.isArray(state.chats)
+        ) {
+            return false;
+        }
+
+        const chatIds =
+            Object.keys(
+                state.chats
+            );
+
+        if (!chatIds.length) {
+            return false;
+        }
+
+        try {
+            if (
+                typeof chats !==
+                "undefined"
+            ) {
+                chats =
+                    cloneValue(
+                        state.chats,
+                        {}
+                    );
+            }
+
+            window.chats =
+                cloneValue(
+                    state.chats,
+                    {}
+                );
+
+            const desiredCurrent =
+                state.currentChat &&
+                state.chats[
+                    state.currentChat
+                ]
+                    ? state.currentChat
+                    : chatIds[0];
+
+            if (
+                typeof currentChat !==
+                "undefined"
+            ) {
+                currentChat =
+                    desiredCurrent;
+            }
+
+            window.currentChat =
+                desiredCurrent;
+
+            localStorage.setItem(
+                "last_chat",
+                desiredCurrent
+            );
+
+            if (
+                typeof getUserChatStorageKey ===
+                    "function"
+            ) {
+                const storageKey =
+                    getUserChatStorageKey();
+
+                if (storageKey) {
+                    localStorage.setItem(
+                        storageKey,
+                        JSON.stringify(
+                            state.chats
+                        )
+                    );
+                }
+            }
+
+            if (
+                typeof save ===
+                    "function"
+            ) {
+                save();
+            }
+
+            if (
+                typeof renderList ===
+                    "function"
+            ) {
+                renderList();
+            }
+
+            if (
+                typeof openChat ===
+                    "function"
+            ) {
+                openChat(
+                    desiredCurrent
+                );
+            }
+
+            return true;
+        }
+        catch (error) {
+            console.error(
+                "[MI AI Persistence] Chat restore failed:",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    async function restoreAccountState(
+        email,
+        options
+    ) {
+        const normalized =
+            normalizeEmail(email);
+
+        if (
+            !normalized ||
+            restoreRunning
+        ) {
+            return false;
+        }
+
+        const state =
+            readAccountState(
+                normalized
+            );
+
+        if (!state) {
+            return false;
+        }
+
+        restoreRunning = true;
+
+        try {
+            applyStoredSettings(state);
+
+            const localRestored =
+                applyStoredChats(state);
+
+            const shouldLoadServer =
+                options
+                    ?.loadServer !==
+                false;
+
+            if (
+                shouldLoadServer &&
+                typeof loadUserChats ===
+                    "function"
+            ) {
+                try {
+                    await loadUserChats();
+                }
+                catch (error) {
+                    console.warn(
+                        "[MI AI Persistence] Server restore failed; local backup retained.",
+                        error
+                    );
+                }
+
+                let serverChatCount = 0;
+
+                try {
+                    serverChatCount =
+                        typeof chats !==
+                            "undefined" &&
+                        chats &&
+                        typeof chats ===
+                            "object"
+                            ? Object.keys(
+                                chats
+                            ).length
+                            : 0;
+                }
+                catch (error) {
+                    serverChatCount = 0;
+                }
+
+                if (
+                    serverChatCount ===
+                        0 &&
+                    localRestored
+                ) {
+                    applyStoredChats(
+                        state
+                    );
+                }
+            }
+
+            applyStoredSettings(state);
+
+            scheduleSave(
+                "after-restore"
+            );
+
+            console.log(
+                "[MI AI Persistence] Restored:",
+                normalized
+            );
+
+            return true;
+        }
+        finally {
+            restoreRunning = false;
+        }
+    }
+
+    async function establishAuthenticatedSession(
+        firebaseUser
+    ) {
+        if (!firebaseUser) {
+            return;
+        }
+
+        const email =
+            normalizeEmail(
+                firebaseUser.email
+            );
+
+        if (!email) {
+            return;
+        }
+
+        let idToken = "";
+
+        try {
+            idToken =
+                await firebaseUser
+                    .getIdToken();
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Persistence] Token refresh failed:",
+                error
+            );
+        }
+
+        const authenticatedUser = {
+            id:
+                firebaseUser.uid,
+
+            email:
+                firebaseUser.email
+        };
+
+        try {
+            if (
+                typeof user !==
+                "undefined"
+            ) {
+                user =
+                    authenticatedUser;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible global.
+        }
+
+        window.user =
+            authenticatedUser;
+
+        if (idToken) {
+            localStorage.setItem(
+                "mi_supabase_token",
+                idToken
+            );
+        }
+
+        localStorage.setItem(
+            "mi_user_id",
+            firebaseUser.uid
+        );
+
+        localStorage.setItem(
+            "mi_user_email",
+            firebaseUser.email ||
+            ""
+        );
+
+        localStorage.setItem(
+            "mi_account",
+            firebaseUser.uid
+        );
+
+        lastAuthenticatedEmail =
+            email;
+
+        if (
+            typeof updateAuthControls ===
+                "function"
+        ) {
+            updateAuthControls();
+        }
+
+        await restoreAccountState(
+            email,
+            {
+                loadServer: true
+            }
+        );
+
+        window.dispatchEvent(
+            new Event(
+                "mi-chat-user-changed"
+            )
+        );
+    }
+
+    function installFunctionWrappers() {
+        if (wrappersInstalled) {
+            return;
+        }
+
+        wrappersInstalled = true;
+
+        if (
+            typeof window.save ===
+                "function" &&
+            !window.save
+                .__miPersistenceWrapped
+        ) {
+            const originalSave =
+                window.save;
+
+            const wrappedSave =
+                function (...args) {
+                    const result =
+                        originalSave.apply(
+                            this,
+                            args
+                        );
+
+                    scheduleSave(
+                        "chat-save"
+                    );
+
+                    return result;
+                };
+
+            wrappedSave
+                .__miPersistenceWrapped =
+                true;
+
+            window.save =
+                wrappedSave;
+
+            try {
+                save = wrappedSave;
+            }
+            catch (error) {
+                // Global binding may be read-only.
+            }
+        }
+
+        if (
+            typeof window.logout ===
+                "function" &&
+            !window.logout
+                .__miPersistenceWrapped
+        ) {
+            const originalLogout =
+                window.logout;
+
+            const wrappedLogout =
+                async function (...args) {
+                    const email =
+                        getCurrentEmail();
+
+                    if (email) {
+                        saveAccountState(
+                            "before-logout"
+                        );
+                    }
+
+                    const result =
+                        await originalLogout.apply(
+                            this,
+                            args
+                        );
+
+                    /*
+                      The active session is removed by the
+                      original logout function. The separate
+                      account archive is intentionally retained.
+                    */
+                    console.log(
+                        "[MI AI Persistence] Session cleared; account archive retained."
+                    );
+
+                    return result;
+                };
+
+            wrappedLogout
+                .__miPersistenceWrapped =
+                true;
+
+            window.logout =
+                wrappedLogout;
+
+            try {
+                logout =
+                    wrappedLogout;
+            }
+            catch (error) {
+                // Global binding may be read-only.
+            }
+        }
+    }
+
+    function attachSettingsListeners() {
+        const panel =
+            document.getElementById(
+                "settingsPanel"
+            );
+
+        if (!panel) {
+            return;
+        }
+
+        if (
+            panel.dataset
+                .miPersistenceAttached ===
+                "true"
+        ) {
+            return;
+        }
+
+        panel.dataset
+            .miPersistenceAttached =
+            "true";
+
+        panel.addEventListener(
+            "input",
+            function () {
+                scheduleSave(
+                    "settings-input"
+                );
+            }
+        );
+
+        panel.addEventListener(
+            "change",
+            function () {
+                scheduleSave(
+                    "settings-change"
+                );
+            }
+        );
+
+        panel.addEventListener(
+            "click",
+            function () {
+                setTimeout(
+                    function () {
+                        scheduleSave(
+                            "settings-click"
+                        );
+                    },
+                    80
+                );
+            }
+        );
+    }
+
+    function attachFirebaseListener() {
+        const install =
+            function () {
+                let auth = null;
+
+                try {
+                    auth =
+                        window.miFirebaseAuth ||
+                        (
+                            window.firebase &&
+                            typeof window.firebase
+                                .auth ===
+                                "function"
+                                ? window.firebase
+                                    .auth()
+                                : null
+                        );
+                }
+                catch (error) {
+                    auth = null;
+                }
+
+                if (
+                    !auth ||
+                    auth
+                        .__miPersistenceListener
+                ) {
+                    return false;
+                }
+
+                auth.__miPersistenceListener =
+                    true;
+
+                auth.onAuthStateChanged(
+                    function (firebaseUser) {
+                        if (firebaseUser) {
+                            establishAuthenticatedSession(
+                                firebaseUser
+                            ).catch(
+                                function (error) {
+                                    console.error(
+                                        "[MI AI Persistence] Authentication restore failed:",
+                                        error
+                                    );
+                                }
+                            );
+                        }
+                    }
+                );
+
+                return true;
+            };
+
+        if (install()) {
+            return;
+        }
+
+        let attempts = 0;
+
+        const timer =
+            setInterval(
+                function () {
+                    attempts += 1;
+
+                    if (
+                        install() ||
+                        attempts >= 60
+                    ) {
+                        clearInterval(
+                            timer
+                        );
+                    }
+                },
+                250
+            );
+    }
+
+    function recoverExistingSession() {
+        const firebaseUser =
+            getFirebaseUser();
+
+        if (firebaseUser) {
+            establishAuthenticatedSession(
+                firebaseUser
+            ).catch(
+                function (error) {
+                    console.error(
+                        "[MI AI Persistence] Initial restore failed:",
+                        error
+                    );
+                }
+            );
+
+            return;
+        }
+
+        const storedEmail =
+            normalizeEmail(
+                localStorage.getItem(
+                    "mi_user_email"
+                )
+            );
+
+        if (
+            storedEmail &&
+            localStorage.getItem(
+                "mi_supabase_token"
+            )
+        ) {
+            lastAuthenticatedEmail =
+                storedEmail;
+
+            restoreAccountState(
+                storedEmail,
+                {
+                    loadServer: true
+                }
+            ).catch(
+                function (error) {
+                    console.error(
+                        "[MI AI Persistence] Stored-session restore failed:",
+                        error
+                    );
+                }
+            );
+        }
+    }
+
+    function start() {
+        installFunctionWrappers();
+        attachSettingsListeners();
+        attachFirebaseListener();
+        recoverExistingSession();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    installFunctionWrappers();
+                    attachSettingsListeners();
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        document.addEventListener(
+            "visibilitychange",
+            function () {
+                if (
+                    document.visibilityState ===
+                    "hidden"
+                ) {
+                    saveAccountState(
+                        "page-hidden"
+                    );
+                }
+            }
+        );
+
+        window.addEventListener(
+            "pagehide",
+            function () {
+                saveAccountState(
+                    "pagehide"
+                );
+            }
+        );
+
+        window.addEventListener(
+            "beforeunload",
+            function () {
+                saveAccountState(
+                    "beforeunload"
+                );
+            }
+        );
+
+        window.addEventListener(
+            "popstate",
+            function () {
+                recoverExistingSession();
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                recoverExistingSession();
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                installFunctionWrappers();
+
+                const email =
+                    getCurrentEmail();
+
+                if (email) {
+                    restoreAccountState(
+                        email,
+                        {
+                            loadServer: true
+                        }
+                    ).catch(
+                        function (error) {
+                            console.error(
+                                "[MI AI Persistence] User-change restore failed:",
+                                error
+                            );
+                        }
+                    );
+                }
+            }
+        );
+
+        setInterval(
+            function () {
+                if (
+                    hasAuthenticatedAccount()
+                ) {
+                    saveAccountState(
+                        "automatic"
+                    );
+                }
+            },
+            10000
+        );
+    }
+
+    window.MIAccountPersistence = {
+        save:
+            function () {
+                return saveAccountState(
+                    "manual"
+                );
+            },
+
+        restore:
+            function () {
+                return restoreAccountState(
+                    getCurrentEmail(),
+                    {
+                        loadServer: true
+                    }
+                );
+            },
+
+        getState:
+            function () {
+                return readAccountState(
+                    getCurrentEmail()
+                );
+            },
+
+        hasSession:
+            hasAuthenticatedAccount
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI ACCOUNT PERSISTENCE V2 - END */
 </script>
 </body>
 </html>
