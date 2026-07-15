@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
 <style>
 
@@ -5878,6 +5879,124 @@ select[data-mi-ios-ready="true"] {
         appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
     };
 
+    // ========== FIRESTORE PERSISTENCE MANAGER ==========
+    class FirestorePersistenceManager {
+        constructor(db) {
+            this.db = db;
+            this.uid = null;
+            this.listeners = [];
+        }
+
+        setUser(uid) {
+            this.uid = uid;
+        }
+
+        unsubscribeAll() {
+            this.listeners.forEach(unsubscribe => {
+                if (typeof unsubscribe === 'function') {
+                    try {
+                        unsubscribe();
+                    } catch (e) {
+                        console.error('Error unsubscribing listener:', e);
+                    }
+                }
+            });
+            this.listeners = [];
+        }
+
+        async saveSettings(settings) {
+            if (!this.uid) return;
+            try {
+                const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
+                await docRef.set({
+                    theme: settings.theme || '',
+                    fontSize: settings.fontSize || 15,
+                    language: settings.language || 'en',
+                    updatedAt: window.firebase.firestore.Timestamp.now()
+                }, { merge: true });
+                console.log('[Persistence] Settings saved to Firestore');
+            } catch (err) {
+                console.error('[Persistence] Error saving settings:', err.message);
+            }
+        }
+
+        async saveChat(chatId, chatData) {
+            if (!this.uid) return;
+            try {
+                const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+                await chatRef.set({
+                    title: chatData.title || 'Chat',
+                    pin: chatData.pin || false,
+                    createdAt: window.firebase.firestore.Timestamp.now(),
+                    updatedAt: window.firebase.firestore.Timestamp.now(),
+                    messageCount: chatData.messageCount || 0
+                }, { merge: true });
+                console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
+            } catch (err) {
+                console.error('[Persistence] Error saving chat:', err.message);
+            }
+        }
+
+        async saveMessage(chatId, messageId, message) {
+            if (!this.uid) return;
+            try {
+                const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
+                    .collection('chats').doc(chatId)
+                    .collection('messages').doc(messageId);
+                await messageRef.set({
+                    role: message.role || 'user',
+                    text: message.text || '',
+                    createdAt: window.firebase.firestore.Timestamp.now()
+                });
+                console.log(`[Persistence] Message ${messageId} saved to Firestore`);
+            } catch (err) {
+                console.error('[Persistence] Error saving message:', err.message);
+            }
+        }
+
+        async loadUserData() {
+            if (!this.uid) return { chats: {}, settings: {} };
+            try {
+                const userRef = window.firebase.firestore().collection('users').doc(this.uid);
+
+                // Load settings
+                const settingsDoc = await userRef.collection('settings').doc('general').get();
+                const settings = settingsDoc.exists ? settingsDoc.data() : {};
+
+                // Load chats and messages
+                const chatsSnapshot = await userRef.collection('chats').get();
+                const chats = {};
+
+                for (const chatDoc of chatsSnapshot.docs) {
+                    const chatId = chatDoc.id;
+                    const chatData = chatDoc.data();
+
+                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').get();
+                    const messages = messagesSnapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            role: data.role === 'ai' ? 'ai' : 'me',
+                            text: data.text || ''
+                        };
+                    });
+
+                    chats[chatId] = messages;
+                    chats[chatId].title = chatData.title || chatId;
+                    chats[chatId].pin = chatData.pin || false;
+                    chats[chatId].messageCount = messages.length;
+                }
+
+                console.log('[Persistence] User data loaded from Firestore:', { chats: Object.keys(chats), settings });
+                return { chats, settings };
+            } catch (err) {
+                console.error('[Persistence] Error loading user data:', err.message);
+                return { chats: {}, settings: {} };
+            }
+        }
+    }
+
+    window.FirestorePersistenceManager = FirestorePersistenceManager;
+
     function getFirebaseLanguage() {
         const selected =
             document.getElementById("languageSelect")?.value;
@@ -5961,15 +6080,29 @@ select[data-mi-ios-ready="true"] {
         }
 
         const auth = window.firebase.auth(app);
+        const db = window.firebase.firestore(app);
 
         auth.languageCode = getFirebaseLanguage();
 
         window.miFirebaseApp = app;
         window.miFirebaseAuth = auth;
+        window.miFirebaseDb = db;
         window.miFirebaseUser = auth.currentUser || null;
+
+        // Initialize persistence manager
+        window.firestorePersistence = new window.FirestorePersistenceManager(db);
 
         auth.onAuthStateChanged(function (user) {
             window.miFirebaseUser = user || null;
+
+            // Update persistence manager with current user
+            if (user) {
+                window.firestorePersistence.setUser(user.uid);
+                console.log('[Persistence] Auth user set:', user.uid);
+            } else {
+                window.firestorePersistence.setUser(null);
+                console.log('[Persistence] Auth user cleared');
+            }
 
             window.dispatchEvent(
                 new CustomEvent(
@@ -6564,6 +6697,13 @@ async function applyLanguage(langCode, persist = true) {
     if (storageKey) {
       localStorage.setItem(storageKey, normalized);
     }
+
+    // Auto-save language to Firestore if authenticated
+    if (window.firestorePersistence && window.miFirebaseUser) {
+        window.firestorePersistence.saveSettings({ language: normalized }).catch(err =>
+            console.error('[Persistence] Language save error:', err)
+        );
+    }
   }
 
   if (!isAuthenticated()) {
@@ -7145,18 +7285,34 @@ async function logout() {
         window.MIAccountSettings.save();
     }
 
+    // Unsubscribe from Firestore listeners
+    if (window.firestorePersistence) {
+        window.firestorePersistence.unsubscribeAll();
+        window.firestorePersistence.setUser(null);
+    }
+
 try {
         const auth = await initFirebase();
         await auth.signOut();
     } catch (e) {
         console.error('Logout error:', e);
     }
-localStorage.removeItem('mi_supabase_token');
+
+    // Clear all account-related localStorage
+    localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
+
+    // Clear account chats from localStorage
+    localStorage.removeItem('mi_chats_' + accountId);
+
 user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
+
+    // Reset chat state to guest state
+    chats = {};
+    currentChat = null;
 
     await applyLanguage('en', false);
     resetChatStateForAuthChange();
@@ -7167,6 +7323,7 @@ user = null;
     closeProfilePanel();
     updateAuthControls();
     window.dispatchEvent(new Event('mi-chat-user-changed'));
+    console.log('[Persistence] Logout complete - state cleared');
 }
 
 function updateAuthControls(){
@@ -7844,7 +8001,45 @@ try {
             localStorage.setItem('mi_user_email', firebaseUser.email || '');
             accountId = firebaseUser.uid;
             localStorage.setItem('mi_account', accountId);
-            await loadUserChats();
+
+            // Load user data from Firestore on login
+            if (window.firestorePersistence) {
+                try {
+                    const { chats: firestoreChats, settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
+
+                    // Only load if there's actual data
+                    if (Object.keys(firestoreChats).length > 0) {
+                        chats = firestoreChats;
+                        console.log('[Persistence] User chats loaded from Firestore:', Object.keys(chats).length);
+                    } else {
+                        await loadUserChats();
+                    }
+
+                    // Apply loaded settings
+                    if (firestoreSettings.theme) {
+                        localStorage.setItem('theme', firestoreSettings.theme);
+                        document.documentElement.style.setProperty('--main', firestoreSettings.theme);
+                    }
+                    if (firestoreSettings.fontSize) {
+                        const chatBoxElem = document.getElementById('chat');
+                        if (chatBoxElem) {
+                            chatBoxElem.style.fontSize = firestoreSettings.fontSize + 'px';
+                        }
+                        localStorage.setItem('mi_font_size', firestoreSettings.fontSize);
+                    }
+                    if (firestoreSettings.language) {
+                        await applyLanguage(firestoreSettings.language, false);
+                    }
+
+                    console.log('[Persistence] User settings loaded from Firestore');
+                } catch (err) {
+                    console.error('[Persistence] Error loading user data on login:', err);
+                    await loadUserChats();
+                }
+            } else {
+                await loadUserChats();
+            }
+
             updateAuthControls();
             window.dispatchEvent(new Event('mi-chat-user-changed'));
         });
@@ -8682,6 +8877,16 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
     chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
     chats[conversationId].lastPreview = existingText;
     save();
+
+    // Auto-save AI message to Firestore if authenticated
+    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+        const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
+        window.firestorePersistence.saveMessage(conversationId, messageId, {
+            role: 'ai',
+            text: existingText
+        }).catch(err => console.error('[Persistence] AI message save error:', err));
+    }
+
     scroll();
     maybeShowLoginPrompt(conversationId);
   }
@@ -8773,6 +8978,16 @@ async function send() {
   chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
   chats[conversationId].lastPreview = msg;
   save();
+
+  // Auto-save user message to Firestore if authenticated
+  if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+      const messageId = `user_msg_${Date.now()}_${Math.random()}`;
+      window.firestorePersistence.saveMessage(conversationId, messageId, {
+          role: 'me',
+          text: msg
+      }).catch(err => console.error('[Persistence] User message save error:', err));
+  }
+
   scroll();
 
   try {
@@ -9053,6 +9268,38 @@ async function save() {
         localStorage.setItem("last_chat", currentChat);
     }
 
+    // Save to Firestore if authenticated
+    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+        try {
+            // Save all chats and messages to Firestore
+            for (const chatId in chats) {
+                const chatData = chats[chatId];
+                if (Array.isArray(chatData) && chatData.length === 0) continue; // Skip empty chats
+
+                // Save chat metadata
+                await window.firestorePersistence.saveChat(chatId, {
+                    title: chatData.title || chatId,
+                    pin: chatData.pin || false,
+                    messageCount: chatData.length || 0
+                });
+
+                // Save each message
+                chatData.forEach((msg, index) => {
+                    if (msg && msg.text) {
+                        const messageId = `msg_${index}_${Date.now()}`;
+                        window.firestorePersistence.saveMessage(chatId, messageId, {
+                            role: msg.role === 'me' ? 'me' : 'ai',
+                            text: msg.text
+                        }).catch(err => console.error('[Persistence] Message save error:', err));
+                    }
+                });
+            }
+            console.log('[Persistence] All chats synced to Firestore');
+        } catch (err) {
+            console.error('[Persistence] Error syncing chats:', err.message);
+        }
+    }
+
     // Logged-in users only
     if (!isAuthenticated()) return;
 
@@ -9110,11 +9357,26 @@ function applyTheme(){
 let c=document.getElementById("themeColor").value;
 document.documentElement.style.setProperty("--main",c);
 localStorage.setItem("theme",c);
+
+// Auto-save to Firestore if authenticated
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveSettings({ theme: c }).catch(err =>
+        console.error('[Persistence] Theme save error:', err)
+    );
+}
 }
 
 /* FONT */
 function setFont(v){
 chatBox.style.fontSize=v+"px";
+localStorage.setItem("mi_font_size", v);
+
+// Auto-save to Firestore if authenticated
+if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveSettings({ fontSize: parseInt(v) }).catch(err =>
+        console.error('[Persistence] Font size save error:', err)
+    );
+}
 }
 
 /* CUSTOMER SUPPORT */
@@ -15226,1108 +15488,7 @@ document.addEventListener(
 /* MI AI SHARE MODAL STAY OPEN - END */
 </script>
 
-<script>
-/* MI AI ANY LANGUAGE TRANSLATION - START */
 
-(function () {
-    "use strict";
-
-    const CACHE_PREFIX =
-        "mi_any_language_cache_v1_";
-
-    const SOURCE_LANGUAGE =
-        "English";
-
-    const excludedSelector = [
-        "#header",
-        "#chat",
-        "script",
-        "style",
-        "code",
-        "pre",
-        "svg",
-        "path",
-        "noscript",
-        "[data-mi-no-translate='true']",
-        ".mi-no-translate"
-    ].join(",");
-
-    const pendingRequests =
-        new Map();
-
-    let activeLanguage =
-        "en";
-
-    let refreshTimer =
-        null;
-
-    let observerPaused =
-        false;
-
-    let translationRunning =
-        false;
-
-    function selectedLanguageCode() {
-        const selector =
-            document.getElementById(
-                "languageSelect"
-            );
-
-        const selected =
-            selector?.value;
-
-        const stored =
-            localStorage.getItem(
-                "mi_ui_language"
-            );
-
-        const accountStored =
-            typeof getStoredLanguageCode ===
-                "function"
-                ? getStoredLanguageCode()
-                : null;
-
-        return String(
-            selected ||
-            accountStored ||
-            stored ||
-            "en"
-        )
-            .trim()
-            .toLowerCase();
-    }
-
-    function selectedLanguageName(code) {
-        if (
-            Array.isArray(
-                window.SUPPORTED_LANGUAGES
-            )
-        ) {
-            const entry =
-                window.SUPPORTED_LANGUAGES.find(
-                    function (item) {
-                        return (
-                            String(
-                                item.code
-                            ).toLowerCase() ===
-                            code
-                        );
-                    }
-                );
-
-            if (entry?.label) {
-                return entry.label;
-            }
-        }
-
-        if (
-            typeof SUPPORTED_LANGUAGES !==
-                "undefined" &&
-            Array.isArray(
-                SUPPORTED_LANGUAGES
-            )
-        ) {
-            const entry =
-                SUPPORTED_LANGUAGES.find(
-                    function (item) {
-                        return (
-                            String(
-                                item.code
-                            ).toLowerCase() ===
-                            code
-                        );
-                    }
-                );
-
-            if (entry?.label) {
-                return entry.label;
-            }
-        }
-
-        const selector =
-            document.getElementById(
-                "languageSelect"
-            );
-
-        const option =
-            selector?.options[
-                selector.selectedIndex
-            ];
-
-        return (
-            option?.textContent?.trim() ||
-            code
-        );
-    }
-
-    function isEnglish(code) {
-        return (
-            code === "en" ||
-            code.startsWith("en-")
-        );
-    }
-
-    function normalizeText(value) {
-        return String(value || "")
-            .replace(/\s+/g, " ")
-            .trim();
-    }
-
-    function cacheKey(languageCode) {
-        return (
-            CACHE_PREFIX +
-            languageCode
-        );
-    }
-
-    function readCache(languageCode) {
-        try {
-            const raw =
-                localStorage.getItem(
-                    cacheKey(languageCode)
-                );
-
-            if (!raw) {
-                return {};
-            }
-
-            const parsed =
-                JSON.parse(raw);
-
-            return (
-                parsed &&
-                typeof parsed ===
-                    "object"
-            )
-                ? parsed
-                : {};
-        }
-        catch (error) {
-            return {};
-        }
-    }
-
-    function writeCache(
-        languageCode,
-        dictionary
-    ) {
-        try {
-            localStorage.setItem(
-                cacheKey(languageCode),
-                JSON.stringify(dictionary)
-            );
-        }
-        catch (error) {
-            console.warn(
-                "[MI AI Translation] Cache write failed.",
-                error
-            );
-        }
-    }
-
-    function shouldSkipElement(element) {
-        if (!element) {
-            return true;
-        }
-
-        return Boolean(
-            element.closest(
-                excludedSelector
-            )
-        );
-    }
-
-    function meaningfulText(value) {
-        const text =
-            normalizeText(value);
-
-        if (!text) {
-            return false;
-        }
-
-        if (/^[\d\s.,:;!?%+\-=/\\|()[\]{}<>]+$/.test(text)) {
-            return false;
-        }
-
-        if (/^https?:\/\//i.test(text)) {
-            return false;
-        }
-
-        if (/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(text)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    function rememberOriginalText(node) {
-        const parent =
-            node.parentElement;
-
-        if (!parent) {
-            return "";
-        }
-
-        if (
-            !node.__miOriginalText
-        ) {
-            node.__miOriginalText =
-                node.nodeValue;
-        }
-
-        return normalizeText(
-            node.__miOriginalText
-        );
-    }
-
-    function rememberOriginalAttribute(
-        element,
-        attribute
-    ) {
-        const storageName =
-            "miOriginal" +
-            attribute
-                .replace(
-                    /(^|-)([a-z])/g,
-                    function (
-                        match,
-                        prefix,
-                        letter
-                    ) {
-                        return letter
-                            .toUpperCase();
-                    }
-                );
-
-        if (
-            !element.dataset[
-                storageName
-            ]
-        ) {
-            const current =
-                element.getAttribute(
-                    attribute
-                );
-
-            if (current) {
-                element.dataset[
-                    storageName
-                ] = current;
-            }
-        }
-
-        return normalizeText(
-            element.dataset[
-                storageName
-            ] || ""
-        );
-    }
-
-    function collectTargets(root) {
-        const texts = new Set();
-        const textNodes = [];
-        const attributes = [];
-
-        const container =
-            root || document.body;
-
-        if (!container) {
-            return {
-                texts,
-                textNodes,
-                attributes
-            };
-        }
-
-        const textWalker =
-            document.createTreeWalker(
-                container,
-                NodeFilter.SHOW_TEXT
-            );
-
-        while (
-            textWalker.nextNode()
-        ) {
-            const node =
-                textWalker.currentNode;
-
-            const parent =
-                node.parentElement;
-
-            if (
-                !parent ||
-                shouldSkipElement(parent)
-            ) {
-                continue;
-            }
-
-            const original =
-                rememberOriginalText(node);
-
-            if (
-                !meaningfulText(original)
-            ) {
-                continue;
-            }
-
-            texts.add(original);
-
-            textNodes.push({
-                node,
-                original
-            });
-        }
-
-        const elements =
-            container.querySelectorAll(
-                [
-                    "input[placeholder]",
-                    "textarea[placeholder]",
-                    "[title]",
-                    "[aria-label]",
-                    "input[type='button'][value]",
-                    "input[type='submit'][value]",
-                    "input[type='reset'][value]"
-                ].join(",")
-            );
-
-        elements.forEach(
-            function (element) {
-                if (
-                    shouldSkipElement(
-                        element
-                    )
-                ) {
-                    return;
-                }
-
-                [
-                    "placeholder",
-                    "title",
-                    "aria-label",
-                    "value"
-                ].forEach(
-                    function (attribute) {
-                        if (
-                            !element.hasAttribute(
-                                attribute
-                            )
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            attribute ===
-                                "value" &&
-                            ![
-                                "button",
-                                "submit",
-                                "reset"
-                            ].includes(
-                                element.type
-                            )
-                        ) {
-                            return;
-                        }
-
-                        const original =
-                            rememberOriginalAttribute(
-                                element,
-                                attribute
-                            );
-
-                        if (
-                            !meaningfulText(
-                                original
-                            )
-                        ) {
-                            return;
-                        }
-
-                        texts.add(original);
-
-                        attributes.push({
-                            element,
-                            attribute,
-                            original
-                        });
-                    }
-                );
-            }
-        );
-
-        return {
-            texts,
-            textNodes,
-            attributes
-        };
-    }
-
-    function restoreEnglish(targets) {
-        observerPaused = true;
-
-        targets.textNodes.forEach(
-            function (item) {
-                item.node.nodeValue =
-                    item.node
-                        .__miOriginalText;
-            }
-        );
-
-        targets.attributes.forEach(
-            function (item) {
-                item.element.setAttribute(
-                    item.attribute,
-                    item.original
-                );
-            }
-        );
-
-        observerPaused = false;
-    }
-
-    function applyDictionary(
-        targets,
-        dictionary
-    ) {
-        observerPaused = true;
-
-        targets.textNodes.forEach(
-            function (item) {
-                const translated =
-                    dictionary[
-                        item.original
-                    ];
-
-                if (translated) {
-                    const originalValue =
-                        item.node
-                            .__miOriginalText ||
-                        item.original;
-
-                    const leading =
-                        originalValue.match(
-                            /^\s*/
-                        )?.[0] || "";
-
-                    const trailing =
-                        originalValue.match(
-                            /\s*$/
-                        )?.[0] || "";
-
-                    item.node.nodeValue =
-                        leading +
-                        translated +
-                        trailing;
-                }
-            }
-        );
-
-        targets.attributes.forEach(
-            function (item) {
-                const translated =
-                    dictionary[
-                        item.original
-                    ];
-
-                if (translated) {
-                    item.element.setAttribute(
-                        item.attribute,
-                        translated
-                    );
-                }
-            }
-        );
-
-        observerPaused = false;
-    }
-
-    function extractJson(text) {
-        const raw =
-            String(text || "")
-                .trim();
-
-        if (!raw) {
-            return null;
-        }
-
-        const withoutFence =
-            raw
-                .replace(
-                    /^```(?:json)?\s*/i,
-                    ""
-                )
-                .replace(
-                    /\s*```$/,
-                    ""
-                )
-                .trim();
-
-        try {
-            return JSON.parse(
-                withoutFence
-            );
-        }
-        catch (error) {
-            const start =
-                withoutFence.indexOf(
-                    "{"
-                );
-
-            const end =
-                withoutFence.lastIndexOf(
-                    "}"
-                );
-
-            if (
-                start >= 0 &&
-                end > start
-            ) {
-                try {
-                    return JSON.parse(
-                        withoutFence.slice(
-                            start,
-                            end + 1
-                        )
-                    );
-                }
-                catch (
-                    nestedError
-                ) {
-                    return null;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    async function requestTranslations(
-        languageCode,
-        languageName,
-        sourceTexts
-    ) {
-        const requestId =
-            languageCode +
-            "::" +
-            JSON.stringify(
-                sourceTexts
-            );
-
-        if (
-            pendingRequests.has(
-                requestId
-            )
-        ) {
-            return pendingRequests.get(
-                requestId
-            );
-        }
-
-        const task =
-            (async function () {
-                const numbered =
-                    {};
-
-                sourceTexts.forEach(
-                    function (text, index) {
-                        numbered[
-                            String(index)
-                        ] = text;
-                    }
-                );
-
-                const prompt = [
-                    "Translate the following user-interface text from",
-                    SOURCE_LANGUAGE,
-                    "to",
-                    languageName,
-                    "(" + languageCode + ").",
-                    "",
-                    "Rules:",
-                    "1. Return ONLY one valid JSON object.",
-                    "2. Preserve every numeric key exactly.",
-                    "3. Translate UI meaning naturally and briefly.",
-                    "4. Do not translate product names MI AI, ChatBOT, URLs, email addresses, variable names or code.",
-                    "5. Do not add Markdown or explanations.",
-                    "",
-                    "Input JSON:",
-                    JSON.stringify(numbered)
-                ].join("\n");
-
-                const response =
-                    await fetch(
-                        "/api/chat",
-                        {
-                            method:
-                                "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify({
-                                    message:
-                                        prompt,
-
-                                    history:
-                                        []
-                                })
-                        }
-                    );
-
-                if (!response.ok) {
-                    throw new Error(
-                        "Translation request failed: " +
-                        response.status
-                    );
-                }
-
-                const data =
-                    await response.json();
-
-                const reply =
-                    data.reply ||
-                    data.response ||
-                    data.message ||
-                    "";
-
-                const parsed =
-                    extractJson(reply);
-
-                if (
-                    !parsed ||
-                    typeof parsed !==
-                        "object"
-                ) {
-                    throw new Error(
-                        "Translation response was not valid JSON."
-                    );
-                }
-
-                const result = {};
-
-                sourceTexts.forEach(
-                    function (source, index) {
-                        const translated =
-                            normalizeText(
-                                parsed[
-                                    String(index)
-                                ]
-                            );
-
-                        if (translated) {
-                            result[source] =
-                                translated;
-                        }
-                    }
-                );
-
-                return result;
-            })();
-
-        pendingRequests.set(
-            requestId,
-            task
-        );
-
-        try {
-            return await task;
-        }
-        finally {
-            pendingRequests.delete(
-                requestId
-            );
-        }
-    }
-
-    function splitIntoBatches(
-        values,
-        maximumItems,
-        maximumCharacters
-    ) {
-        const batches = [];
-        let current = [];
-        let characters = 0;
-
-        values.forEach(
-            function (value) {
-                const length =
-                    value.length;
-
-                if (
-                    current.length > 0 &&
-                    (
-                        current.length >=
-                            maximumItems ||
-                        characters +
-                            length >
-                            maximumCharacters
-                    )
-                ) {
-                    batches.push(
-                        current
-                    );
-
-                    current = [];
-                    characters = 0;
-                }
-
-                current.push(value);
-                characters += length;
-            }
-        );
-
-        if (current.length) {
-            batches.push(current);
-        }
-
-        return batches;
-    }
-
-    async function translateCurrentUi() {
-        if (translationRunning) {
-            return;
-        }
-
-        const languageCode =
-            selectedLanguageCode();
-
-        activeLanguage =
-            languageCode;
-
-        const targets =
-            collectTargets(
-                document.body
-            );
-
-        if (isEnglish(languageCode)) {
-            restoreEnglish(targets);
-
-            document.documentElement.lang =
-                "en";
-
-            document.documentElement.dir =
-                "ltr";
-
-            return;
-        }
-
-        translationRunning = true;
-
-        try {
-            const languageName =
-                selectedLanguageName(
-                    languageCode
-                );
-
-            const dictionary =
-                readCache(
-                    languageCode
-                );
-
-            const allTexts =
-                Array.from(
-                    targets.texts
-                );
-
-            const missing =
-                allTexts.filter(
-                    function (text) {
-                        return (
-                            !dictionary[text]
-                        );
-                    }
-                );
-
-            applyDictionary(
-                targets,
-                dictionary
-            );
-
-            const batches =
-                splitIntoBatches(
-                    missing,
-                    35,
-                    3500
-                );
-
-            for (
-                const batch
-                of batches
-            ) {
-                try {
-                    const translated =
-                        await requestTranslations(
-                            languageCode,
-                            languageName,
-                            batch
-                        );
-
-                    Object.assign(
-                        dictionary,
-                        translated
-                    );
-
-                    writeCache(
-                        languageCode,
-                        dictionary
-                    );
-
-                    if (
-                        selectedLanguageCode() !==
-                        languageCode
-                    ) {
-                        return;
-                    }
-
-                    const latestTargets =
-                        collectTargets(
-                            document.body
-                        );
-
-                    applyDictionary(
-                        latestTargets,
-                        dictionary
-                    );
-                }
-                catch (error) {
-                    console.error(
-                        "[MI AI Translation]",
-                        error
-                    );
-                }
-            }
-
-            document.documentElement.lang =
-                languageCode;
-
-            const rtlCodes =
-                new Set([
-                    "ar",
-                    "fa",
-                    "he",
-                    "ur"
-                ]);
-
-            document.documentElement.dir =
-                rtlCodes.has(
-                    languageCode
-                        .split("-")[0]
-                )
-                    ? "rtl"
-                    : "ltr";
-
-            if (
-                window.MIFirebase &&
-                typeof window.MIFirebase
-                    .updateLanguage ===
-                    "function"
-            ) {
-                window.MIFirebase
-                    .updateLanguage();
-            }
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "mi-any-language-applied",
-                    {
-                        detail: {
-                            language:
-                                languageCode
-                        }
-                    }
-                )
-            );
-        }
-        finally {
-            translationRunning = false;
-        }
-    }
-
-    function scheduleTranslation(
-        delay
-    ) {
-        clearTimeout(
-            refreshTimer
-        );
-
-        refreshTimer =
-            setTimeout(
-                function () {
-                    translateCurrentUi()
-                        .catch(
-                            function (
-                                error
-                            ) {
-                                console.error(
-                                    "[MI AI Translation]",
-                                    error
-                                );
-                            }
-                        );
-                },
-                typeof delay ===
-                    "number"
-                    ? delay
-                    : 80
-            );
-    }
-
-    function startObserver() {
-        const observer =
-            new MutationObserver(
-                function (mutations) {
-                    if (
-                        observerPaused ||
-                        translationRunning ||
-                        isEnglish(
-                            selectedLanguageCode()
-                        )
-                    ) {
-                        return;
-                    }
-
-                    const hasNewContent =
-                        mutations.some(
-                            function (
-                                mutation
-                            ) {
-                                return (
-                                    mutation
-                                        .addedNodes
-                                        .length >
-                                    0
-                                );
-                            }
-                        );
-
-                    if (hasNewContent) {
-                        scheduleTranslation(
-                            150
-                        );
-                    }
-                }
-            );
-
-        observer.observe(
-            document.body,
-            {
-                childList:
-                    true,
-
-                subtree:
-                    true
-            }
-        );
-    }
-
-    function start() {
-        const languageSelect =
-            document.getElementById(
-                "languageSelect"
-            );
-
-        if (languageSelect) {
-            languageSelect.addEventListener(
-                "change",
-                function () {
-                    const code =
-                        languageSelect.value;
-
-                    localStorage.setItem(
-                        "mi_ui_language",
-                        code
-                    );
-
-                    activeLanguage =
-                        code;
-
-                    scheduleTranslation(
-                        120
-                    );
-                }
-            );
-        }
-
-        window.addEventListener(
-            "mi-language-changed",
-            function () {
-                scheduleTranslation(
-                    100
-                );
-            }
-        );
-
-        window.addEventListener(
-            "mi-firebase-ready",
-            function () {
-                scheduleTranslation(
-                    100
-                );
-            }
-        );
-
-        startObserver();
-
-        scheduleTranslation(
-            250
-        );
-    }
-
-    window.MIAnyLanguage = {
-        refresh:
-            function () {
-                scheduleTranslation(
-                    0
-                );
-            },
-
-        translate:
-            translateCurrentUi,
-
-        clearCache:
-            function (
-                languageCode
-            ) {
-                const code =
-                    String(
-                        languageCode ||
-                        selectedLanguageCode()
-                    )
-                        .trim()
-                        .toLowerCase();
-
-                localStorage.removeItem(
-                    cacheKey(code)
-                );
-            },
-
-        getLanguage:
-            selectedLanguageCode
-    };
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once: true
-            }
-        );
-    }
-    else {
-        start();
-    }
-})();
-
-/* MI AI ANY LANGUAGE TRANSLATION - END */
-</script>
 
 <script>
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - START */
@@ -18957,6 +18118,1250 @@ document.addEventListener(
 })();
 
 /* MI AI SMART LOGIN FLOW V5 - END */
+</script>
+
+<script>
+/* MI AI FULL UI TRANSLATION V2 - START */
+
+(function () {
+    "use strict";
+
+    const CACHE_PREFIX =
+        "mi_full_ui_translation_v2_";
+
+    const NO_TRANSLATE_SELECTOR = [
+        "#header",
+        "header",
+        ".header",
+        ".app-header",
+        ".top-header",
+
+        "#chat",
+        "#messages",
+        "#chatMessages",
+        "#messageList",
+        ".chat-area",
+        ".chat-content",
+        ".chat-messages",
+        ".message-list",
+        ".chat-message",
+        ".user-message",
+        ".ai-message",
+        ".message-content",
+        "[data-chat-message]",
+
+        "script",
+        "style",
+        "code",
+        "pre",
+        "svg",
+        "path",
+        "noscript",
+
+        "[data-mi-no-translate='true']",
+        ".mi-no-translate"
+    ].join(",");
+
+    const ATTRIBUTE_NAMES = [
+        "placeholder",
+        "title",
+        "aria-label"
+    ];
+
+    const pendingRequests =
+        new Map();
+
+    let translationRunning =
+        false;
+
+    let observerPaused =
+        false;
+
+    let refreshTimer =
+        null;
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function selectedLanguageCode() {
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const selectorValue =
+            selector?.value;
+
+        let accountLanguage = "";
+
+        try {
+            if (
+                typeof getStoredLanguageCode ===
+                    "function"
+            ) {
+                accountLanguage =
+                    getStoredLanguageCode() ||
+                    "";
+            }
+        }
+        catch (error) {
+            accountLanguage = "";
+        }
+
+        return normalize(
+            selectorValue ||
+            accountLanguage ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            localStorage.getItem(
+                "language"
+            ) ||
+            "en"
+        ).toLowerCase();
+    }
+
+    function selectedLanguageName(code) {
+        const sources = [];
+
+        if (
+            Array.isArray(
+                window.SUPPORTED_LANGUAGES
+            )
+        ) {
+            sources.push(
+                window.SUPPORTED_LANGUAGES
+            );
+        }
+
+        try {
+            if (
+                typeof SUPPORTED_LANGUAGES !==
+                    "undefined" &&
+                Array.isArray(
+                    SUPPORTED_LANGUAGES
+                )
+            ) {
+                sources.push(
+                    SUPPORTED_LANGUAGES
+                );
+            }
+        }
+        catch (error) {
+            // Ignore unavailable global.
+        }
+
+        for (const source of sources) {
+            const found =
+                source.find(
+                    function (item) {
+                        return (
+                            normalize(
+                                item?.code
+                            ).toLowerCase() ===
+                            code
+                        );
+                    }
+                );
+
+            if (found) {
+                return (
+                    found.label ||
+                    found.name ||
+                    found.nativeName ||
+                    code
+                );
+            }
+        }
+
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        const option =
+            selector?.options[
+                selector.selectedIndex
+            ];
+
+        return (
+            normalize(
+                option?.textContent
+            ) ||
+            code
+        );
+    }
+
+    function isEnglish(code) {
+        return (
+            code === "en" ||
+            code.startsWith("en-")
+        );
+    }
+
+    function shouldSkip(element) {
+        if (!element) {
+            return true;
+        }
+
+        return Boolean(
+            element.closest(
+                NO_TRANSLATE_SELECTOR
+            )
+        );
+    }
+
+    function isUsefulText(value) {
+        const text =
+            normalize(value);
+
+        if (!text) {
+            return false;
+        }
+
+        if (
+            /^[\d\s.,:;!?%+\-=/\\|()[\]{}<>#_*'"`~]+$/.test(
+                text
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            /^https?:\/\//i.test(
+                text
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            /^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i.test(
+                text
+            )
+        ) {
+            return false;
+        }
+
+        if (
+            text.length > 500
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function cacheKey(languageCode) {
+        return (
+            CACHE_PREFIX +
+            languageCode
+        );
+    }
+
+    function readDictionary(languageCode) {
+        try {
+            const raw =
+                localStorage.getItem(
+                    cacheKey(languageCode)
+                );
+
+            if (!raw) {
+                return {};
+            }
+
+            const parsed =
+                JSON.parse(raw);
+
+            return (
+                parsed &&
+                typeof parsed ===
+                    "object"
+            )
+                ? parsed
+                : {};
+        }
+        catch (error) {
+            return {};
+        }
+    }
+
+    function saveDictionary(
+        languageCode,
+        dictionary
+    ) {
+        try {
+            localStorage.setItem(
+                cacheKey(languageCode),
+                JSON.stringify(
+                    dictionary
+                )
+            );
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Translation] Cache save failed.",
+                error
+            );
+        }
+    }
+
+    function rememberTextNode(node) {
+        if (
+            node.__miOriginalText ===
+                undefined
+        ) {
+            node.__miOriginalText =
+                node.nodeValue;
+        }
+
+        return normalize(
+            node.__miOriginalText
+        );
+    }
+
+    function attributeStorageName(
+        attribute
+    ) {
+        return (
+            "miOriginal" +
+            attribute
+                .replace(
+                    /(^|-)([a-z])/g,
+                    function (
+                        match,
+                        prefix,
+                        letter
+                    ) {
+                        return letter
+                            .toUpperCase();
+                    }
+                )
+        );
+    }
+
+    function rememberAttribute(
+        element,
+        attribute
+    ) {
+        const storageName =
+            attributeStorageName(
+                attribute
+            );
+
+        if (
+            element.dataset[
+                storageName
+            ] === undefined
+        ) {
+            element.dataset[
+                storageName
+            ] =
+                element.getAttribute(
+                    attribute
+                ) || "";
+        }
+
+        return normalize(
+            element.dataset[
+                storageName
+            ]
+        );
+    }
+
+    function collectTargets(root) {
+        const container =
+            root || document.body;
+
+        const texts =
+            new Set();
+
+        const textNodes = [];
+        const attributes = [];
+
+        if (!container) {
+            return {
+                texts,
+                textNodes,
+                attributes
+            };
+        }
+
+        const walker =
+            document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT
+            );
+
+        while (walker.nextNode()) {
+            const node =
+                walker.currentNode;
+
+            const parent =
+                node.parentElement;
+
+            if (
+                !parent ||
+                shouldSkip(parent)
+            ) {
+                continue;
+            }
+
+            const original =
+                rememberTextNode(node);
+
+            if (
+                !isUsefulText(
+                    original
+                )
+            ) {
+                continue;
+            }
+
+            texts.add(original);
+
+            textNodes.push({
+                node,
+                original
+            });
+        }
+
+        const elements =
+            container.querySelectorAll(
+                [
+                    "[placeholder]",
+                    "[title]",
+                    "[aria-label]",
+                    "input[type='button'][value]",
+                    "input[type='submit'][value]",
+                    "input[type='reset'][value]"
+                ].join(",")
+            );
+
+        elements.forEach(
+            function (element) {
+                if (shouldSkip(element)) {
+                    return;
+                }
+
+                ATTRIBUTE_NAMES.forEach(
+                    function (attribute) {
+                        if (
+                            !element.hasAttribute(
+                                attribute
+                            )
+                        ) {
+                            return;
+                        }
+
+                        const original =
+                            rememberAttribute(
+                                element,
+                                attribute
+                            );
+
+                        if (
+                            !isUsefulText(
+                                original
+                            )
+                        ) {
+                            return;
+                        }
+
+                        texts.add(original);
+
+                        attributes.push({
+                            element,
+                            attribute,
+                            original
+                        });
+                    }
+                );
+
+                if (
+                    element instanceof
+                        HTMLInputElement &&
+                    [
+                        "button",
+                        "submit",
+                        "reset"
+                    ].includes(
+                        element.type
+                    )
+                ) {
+                    const original =
+                        rememberAttribute(
+                            element,
+                            "value"
+                        );
+
+                    if (
+                        isUsefulText(
+                            original
+                        )
+                    ) {
+                        texts.add(original);
+
+                        attributes.push({
+                            element,
+                            attribute:
+                                "value",
+                            original
+                        });
+                    }
+                }
+            }
+        );
+
+        return {
+            texts,
+            textNodes,
+            attributes
+        };
+    }
+
+    function restoreEnglish(targets) {
+        observerPaused = true;
+
+        try {
+            targets.textNodes.forEach(
+                function (item) {
+                    item.node.nodeValue =
+                        item.node
+                            .__miOriginalText;
+                }
+            );
+
+            targets.attributes.forEach(
+                function (item) {
+                    item.element.setAttribute(
+                        item.attribute,
+                        item.original
+                    );
+                }
+            );
+        }
+        finally {
+            observerPaused = false;
+        }
+    }
+
+    function applyDictionary(
+        targets,
+        dictionary
+    ) {
+        observerPaused = true;
+
+        try {
+            targets.textNodes.forEach(
+                function (item) {
+                    const translated =
+                        normalize(
+                            dictionary[
+                                item.original
+                            ]
+                        );
+
+                    if (!translated) {
+                        return;
+                    }
+
+                    const originalValue =
+                        String(
+                            item.node
+                                .__miOriginalText ||
+                            ""
+                        );
+
+                    const leading =
+                        originalValue.match(
+                            /^\s*/
+                        )?.[0] || "";
+
+                    const trailing =
+                        originalValue.match(
+                            /\s*$/
+                        )?.[0] || "";
+
+                    item.node.nodeValue =
+                        leading +
+                        translated +
+                        trailing;
+                }
+            );
+
+            targets.attributes.forEach(
+                function (item) {
+                    const translated =
+                        normalize(
+                            dictionary[
+                                item.original
+                            ]
+                        );
+
+                    if (translated) {
+                        item.element.setAttribute(
+                            item.attribute,
+                            translated
+                        );
+                    }
+                }
+            );
+        }
+        finally {
+            observerPaused = false;
+        }
+    }
+
+    function extractJson(value) {
+        const raw =
+            String(value || "")
+                .trim()
+                .replace(
+                    /^```(?:json)?\s*/i,
+                    ""
+                )
+                .replace(
+                    /\s*```$/i,
+                    ""
+                )
+                .trim();
+
+        if (!raw) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw);
+        }
+        catch (error) {
+            const start =
+                raw.indexOf("{");
+
+            const end =
+                raw.lastIndexOf("}");
+
+            if (
+                start < 0 ||
+                end <= start
+            ) {
+                return null;
+            }
+
+            try {
+                return JSON.parse(
+                    raw.slice(
+                        start,
+                        end + 1
+                    )
+                );
+            }
+            catch (nestedError) {
+                return null;
+            }
+        }
+    }
+
+    async function postTranslation(
+        languageCode,
+        languageName,
+        sourceTexts
+    ) {
+        const requestKey =
+            languageCode +
+            "::" +
+            JSON.stringify(
+                sourceTexts
+            );
+
+        if (
+            pendingRequests.has(
+                requestKey
+            )
+        ) {
+            return pendingRequests.get(
+                requestKey
+            );
+        }
+
+        const task =
+            (async function () {
+                const numbered = {};
+
+                sourceTexts.forEach(
+                    function (text, index) {
+                        numbered[
+                            String(index)
+                        ] = text;
+                    }
+                );
+
+                const prompt = [
+                    "Translate this website user-interface text from English to " +
+                        languageName +
+                        " (" +
+                        languageCode +
+                        ").",
+
+                    "",
+                    "Mandatory rules:",
+                    "1. Return ONLY a valid JSON object.",
+                    "2. Preserve every numeric JSON key exactly.",
+                    "3. Translate every value naturally and clearly.",
+                    "4. Keep the translation concise enough for buttons and menus.",
+                    "5. Never translate MI AI, ChatBOT, URLs, email addresses, code, IDs or variable names.",
+                    "6. Do not return Markdown, explanations or code fences.",
+                    "",
+                    "Input:",
+                    JSON.stringify(numbered)
+                ].join("\n");
+
+                const response =
+                    await fetch(
+                        "/api/chat",
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    message:
+                                        prompt,
+
+                                    prompt:
+                                        prompt,
+
+                                    history:
+                                        [],
+
+                                    translation:
+                                        true
+                                })
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Translation API failed with status " +
+                        response.status
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                const reply =
+                    data.reply ||
+                    data.response ||
+                    data.message ||
+                    data.text ||
+                    data.content ||
+                    "";
+
+                const parsed =
+                    extractJson(reply);
+
+                if (
+                    !parsed ||
+                    typeof parsed !==
+                        "object"
+                ) {
+                    throw new Error(
+                        "Translation API returned invalid JSON."
+                    );
+                }
+
+                const result = {};
+
+                sourceTexts.forEach(
+                    function (source, index) {
+                        const translated =
+                            normalize(
+                                parsed[
+                                    String(index)
+                                ]
+                            );
+
+                        if (translated) {
+                            result[source] =
+                                translated;
+                        }
+                    }
+                );
+
+                return result;
+            })();
+
+        pendingRequests.set(
+            requestKey,
+            task
+        );
+
+        try {
+            return await task;
+        }
+        finally {
+            pendingRequests.delete(
+                requestKey
+            );
+        }
+    }
+
+    function batches(
+        values,
+        maxItems,
+        maxCharacters
+    ) {
+        const output = [];
+        let current = [];
+        let characters = 0;
+
+        values.forEach(
+            function (value) {
+                if (
+                    current.length &&
+                    (
+                        current.length >=
+                            maxItems ||
+                        characters +
+                            value.length >
+                            maxCharacters
+                    )
+                ) {
+                    output.push(current);
+                    current = [];
+                    characters = 0;
+                }
+
+                current.push(value);
+                characters += value.length;
+            }
+        );
+
+        if (current.length) {
+            output.push(current);
+        }
+
+        return output;
+    }
+
+    async function translateUi() {
+        if (translationRunning) {
+            return;
+        }
+
+        const languageCode =
+            selectedLanguageCode();
+
+        const targets =
+            collectTargets(
+                document.body
+            );
+
+        if (isEnglish(languageCode)) {
+            restoreEnglish(targets);
+
+            document.documentElement.lang =
+                "en";
+
+            document.documentElement.dir =
+                "ltr";
+
+            return;
+        }
+
+        translationRunning = true;
+
+        try {
+            const languageName =
+                selectedLanguageName(
+                    languageCode
+                );
+
+            const dictionary =
+                readDictionary(
+                    languageCode
+                );
+
+            applyDictionary(
+                targets,
+                dictionary
+            );
+
+            const missing =
+                Array.from(
+                    targets.texts
+                ).filter(
+                    function (text) {
+                        return (
+                            !normalize(
+                                dictionary[text]
+                            )
+                        );
+                    }
+                );
+
+            const translationBatches =
+                batches(
+                    missing,
+                    30,
+                    3000
+                );
+
+            for (
+                const currentBatch
+                of translationBatches
+            ) {
+                if (
+                    selectedLanguageCode() !==
+                    languageCode
+                ) {
+                    return;
+                }
+
+                let translated = null;
+                let lastError = null;
+
+                for (
+                    let attempt = 1;
+                    attempt <= 3;
+                    attempt += 1
+                ) {
+                    try {
+                        translated =
+                            await postTranslation(
+                                languageCode,
+                                languageName,
+                                currentBatch
+                            );
+
+                        break;
+                    }
+                    catch (error) {
+                        lastError = error;
+
+                        await new Promise(
+                            function (resolve) {
+                                setTimeout(
+                                    resolve,
+                                    attempt * 700
+                                );
+                            }
+                        );
+                    }
+                }
+
+                if (!translated) {
+                    console.error(
+                        "[MI AI Translation]",
+                        lastError
+                    );
+
+                    continue;
+                }
+
+                Object.assign(
+                    dictionary,
+                    translated
+                );
+
+                saveDictionary(
+                    languageCode,
+                    dictionary
+                );
+
+                applyDictionary(
+                    collectTargets(
+                        document.body
+                    ),
+                    dictionary
+                );
+            }
+
+            document.documentElement.lang =
+                languageCode;
+
+            const rtlLanguages =
+                new Set([
+                    "ar",
+                    "fa",
+                    "he",
+                    "ur",
+                    "ps"
+                ]);
+
+            document.documentElement.dir =
+                rtlLanguages.has(
+                    languageCode
+                        .split("-")[0]
+                )
+                    ? "rtl"
+                    : "ltr";
+
+            localStorage.setItem(
+                "mi_ui_language",
+                languageCode
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-language-changed",
+                    {
+                        detail: {
+                            language:
+                                languageCode
+                        }
+                    }
+                )
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-full-ui-translated",
+                    {
+                        detail: {
+                            language:
+                                languageCode
+                        }
+                    }
+                )
+            );
+        }
+        finally {
+            translationRunning = false;
+        }
+    }
+
+    function scheduleTranslation(
+        delay
+    ) {
+        clearTimeout(
+            refreshTimer
+        );
+
+        refreshTimer =
+            setTimeout(
+                function () {
+                    translateUi().catch(
+                        function (error) {
+                            console.error(
+                                "[MI AI Translation]",
+                                error
+                            );
+                        }
+                    );
+                },
+                typeof delay ===
+                    "number"
+                    ? delay
+                    : 100
+            );
+    }
+
+    function attachLanguageSelect() {
+        const selector =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (
+            !selector ||
+            selector.dataset
+                .miFullTranslationAttached ===
+                "true"
+        ) {
+            return;
+        }
+
+        selector.dataset
+            .miFullTranslationAttached =
+            "true";
+
+        selector.addEventListener(
+            "change",
+            function () {
+                const languageCode =
+                    normalize(
+                        selector.value
+                    ).toLowerCase();
+
+                localStorage.setItem(
+                    "mi_ui_language",
+                    languageCode
+                );
+
+                scheduleTranslation(20);
+            }
+        );
+    }
+
+    function startObserver() {
+        const observer =
+            new MutationObserver(
+                function (mutations) {
+                    attachLanguageSelect();
+
+                    if (
+                        observerPaused ||
+                        translationRunning ||
+                        isEnglish(
+                            selectedLanguageCode()
+                        )
+                    ) {
+                        return;
+                    }
+
+                    const changed =
+                        mutations.some(
+                            function (mutation) {
+                                return (
+                                    mutation.addedNodes
+                                        .length >
+                                        0 ||
+                                    mutation.type ===
+                                        "attributes"
+                                );
+                            }
+                        );
+
+                    if (changed) {
+                        scheduleTranslation(
+                            180
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    "placeholder",
+                    "title",
+                    "aria-label"
+                ]
+            }
+        );
+    }
+
+    function start() {
+        attachLanguageSelect();
+        startObserver();
+
+        window.addEventListener(
+            "mi-firebase-ready",
+            function () {
+                scheduleTranslation(
+                    120
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                scheduleTranslation(
+                    150
+                );
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                scheduleTranslation(
+                    100
+                );
+            }
+        );
+
+        scheduleTranslation(250);
+    }
+
+    window.MIFullUiTranslation = {
+        translate:
+            translateUi,
+
+        refresh:
+            function () {
+                scheduleTranslation(0);
+            },
+
+        getLanguage:
+            selectedLanguageCode,
+
+        clearCurrentCache:
+            function () {
+                localStorage.removeItem(
+                    cacheKey(
+                        selectedLanguageCode()
+                    )
+                );
+
+                scheduleTranslation(0);
+            },
+
+        clearAllCaches:
+            function () {
+                const keys = [];
+
+                for (
+                    let index = 0;
+                    index < localStorage.length;
+                    index += 1
+                ) {
+                    const key =
+                        localStorage.key(index);
+
+                    if (
+                        key &&
+                        key.startsWith(
+                            CACHE_PREFIX
+                        )
+                    ) {
+                        keys.push(key);
+                    }
+                }
+
+                keys.forEach(
+                    function (key) {
+                        localStorage.removeItem(
+                            key
+                        );
+                    }
+                );
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI FULL UI TRANSLATION V2 - END */
 </script>
 </body>
 </html>
