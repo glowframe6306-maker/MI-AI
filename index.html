@@ -5885,10 +5885,18 @@ select[data-mi-ios-ready="true"] {
             this.db = db;
             this.uid = null;
             this.listeners = [];
+            this.ready = false;
+            this.restoring = false;
+            this.userDataLoaded = false;
         }
 
         setUser(uid) {
             this.uid = uid;
+            this.ready = Boolean(uid);
+            if (!uid) {
+                this.restoring = false;
+                this.userDataLoaded = false;
+            }
         }
 
         unsubscribeAll() {
@@ -5905,12 +5913,12 @@ select[data-mi-ios-ready="true"] {
         }
 
         async saveSettings(settings) {
-            if (!this.uid) return;
+            if (!this.uid || !this.ready || this.restoring) return;
             try {
-                const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
+                const docRef = this.db.collection('users').doc(this.uid).collection('settings').doc('general');
                 await docRef.set({
-                    theme: settings.theme || '',
-                    fontSize: settings.fontSize || 15,
+                    theme: settings.theme ?? '',
+                    fontSize: settings.fontSize ?? 15,
                     language: settings.language || 'en',
                     updatedAt: window.firebase.firestore.Timestamp.now()
                 }, { merge: true });
@@ -5921,15 +5929,17 @@ select[data-mi-ios-ready="true"] {
         }
 
         async saveChat(chatId, chatData) {
-            if (!this.uid) return;
+            if (!this.uid || !this.ready || this.restoring) return;
             try {
-                const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+                const chatRef = this.db.collection('users').doc(this.uid).collection('chats').doc(chatId);
                 await chatRef.set({
                     title: chatData.title || 'Chat',
-                    pin: chatData.pin || false,
-                    createdAt: window.firebase.firestore.Timestamp.now(),
+                    pin: Boolean(chatData.pin),
+                    deleted: Boolean(chatData.deleted),
+                    lastPreview: chatData.lastPreview || '',
                     updatedAt: window.firebase.firestore.Timestamp.now(),
-                    messageCount: chatData.messageCount || 0
+                    messageCount: chatData.messageCount || 0,
+                    attachments: Array.isArray(chatData.attachments) ? chatData.attachments : []
                 }, { merge: true });
                 console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
             } catch (err) {
@@ -5938,13 +5948,14 @@ select[data-mi-ios-ready="true"] {
         }
 
         async saveMessage(chatId, messageId, message) {
-            if (!this.uid) return;
+            if (!this.uid || !this.ready || this.restoring) return;
             try {
-                const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
+                const messageRef = this.db.collection('users').doc(this.uid)
                     .collection('chats').doc(chatId)
                     .collection('messages').doc(messageId);
                 await messageRef.set({
-                    role: message.role || 'user',
+                    id: messageId,
+                    role: message.role || 'me',
                     text: message.text || '',
                     createdAt: window.firebase.firestore.Timestamp.now()
                 });
@@ -5955,42 +5966,57 @@ select[data-mi-ios-ready="true"] {
         }
 
         async loadUserData() {
-            if (!this.uid) return { chats: {}, settings: {} };
+            if (!this.uid) return { chats: {}, settings: {}, profile: {}, activeChatId: null };
             try {
-                const userRef = window.firebase.firestore().collection('users').doc(this.uid);
-
-                // Load settings
+                const userRef = this.db.collection('users').doc(this.uid);
                 const settingsDoc = await userRef.collection('settings').doc('general').get();
                 const settings = settingsDoc.exists ? settingsDoc.data() : {};
 
-                // Load chats and messages
                 const chatsSnapshot = await userRef.collection('chats').get();
                 const chats = {};
 
                 for (const chatDoc of chatsSnapshot.docs) {
                     const chatId = chatDoc.id;
-                    const chatData = chatDoc.data();
-
-                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').get();
+                    const chatData = chatDoc.data() || {};
+                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').orderBy('createdAt', 'asc').get();
                     const messages = messagesSnapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return {
+                        const data = doc.data() || {};
+                        const message = {
                             role: data.role === 'ai' ? 'ai' : 'me',
                             text: data.text || ''
                         };
+                        if (data.id) {
+                            message.id = data.id;
+                        }
+                        if (data.createdAt && typeof data.createdAt.toMillis === 'function') {
+                            message.createdAt = data.createdAt.toMillis();
+                        }
+                        return message;
                     });
 
-                    chats[chatId] = messages;
-                    chats[chatId].title = chatData.title || chatId;
-                    chats[chatId].pin = chatData.pin || false;
-                    chats[chatId].messageCount = messages.length;
+                    const chatArray = messages;
+                    chatArray.title = chatData.title || chatId;
+                    chatArray.pin = Boolean(chatData.pin);
+                    chatArray.deleted = Boolean(chatData.deleted);
+                    chatArray.updatedAt = chatData.updatedAt && typeof chatData.updatedAt.toMillis === 'function'
+                        ? chatData.updatedAt.toMillis()
+                        : (chatData.updatedAt || Date.now());
+                    chatArray.lastPreview = chatData.lastPreview || '';
+                    chatArray.messageCount = messages.length;
+                    chatArray.attachments = Array.isArray(chatData.attachments) ? chatData.attachments : [];
+                    chats[chatId] = chatArray;
                 }
 
                 console.log('[Persistence] User data loaded from Firestore:', { chats: Object.keys(chats), settings });
-                return { chats, settings };
+                return {
+                    chats,
+                    settings,
+                    profile: {},
+                    activeChatId: settings.activeChatId || null
+                };
             } catch (err) {
                 console.error('[Persistence] Error loading user data:', err.message);
-                return { chats: {}, settings: {} };
+                return { chats: {}, settings: {}, profile: {}, activeChatId: null };
             }
         }
     }
@@ -6978,6 +7004,9 @@ let pendingAttachments = [];
 let attachmentUploadInProgress = false;
 let attachmentProgress = 0;
 let attachmentStatusText = '';
+let authReady = false;
+let restoringData = false;
+let userDataLoaded = false;
 
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
@@ -7132,7 +7161,190 @@ function resetChatStateForAuthChange() {
     attachmentProgress = 0;
     attachmentStatusText = '';
     if (chatBox) chatBox.innerHTML = '';
+}
+
+function canPersistNow() {
+    return Boolean(authReady && userDataLoaded && !restoringData);
+}
+
+async function waitForAuthSession(auth) {
+    if (!auth) return null;
+    if (typeof auth.authStateReady === 'function') {
+        try {
+            await auth.authStateReady();
+            return auth.currentUser || null;
+        } catch (error) {
+            console.warn('[Persistence] authStateReady failed, falling back to auth listener.', error);
+        }
+    }
+
+    return await new Promise((resolve) => {
+        if (!auth || typeof auth.onAuthStateChanged !== 'function') {
+            resolve(auth?.currentUser || null);
+            return;
+        }
+        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+            try {
+                unsubscribe();
+            } catch (error) {
+                console.warn('[Persistence] auth listener cleanup failed.', error);
+            }
+            resolve(firebaseUser || null);
+        });
+    });
+}
+
+async function restoreSignedOutSession() {
+    authReady = true;
+    restoringData = false;
+    userDataLoaded = true;
+    persistenceEnabled = true;
+
+    user = null;
+    localStorage.removeItem('mi_supabase_token');
+    localStorage.removeItem('mi_user_id');
+    localStorage.removeItem('mi_user_email');
+    accountId = guestId;
+    localStorage.setItem('mi_account', accountId);
+
+    resetChatStateForAuthChange();
+    loadGuestChats();
+    save();
     renderList();
+    if (currentChat) {
+        openChat(currentChat);
+    } else if (chatBox) {
+        chatBox.innerHTML = '';
+    }
+    updateAuthControls();
+    window.dispatchEvent(new Event('mi-chat-user-changed'));
+}
+
+async function restoreAuthenticatedSession(firebaseUser) {
+    authReady = true;
+    restoringData = true;
+    userDataLoaded = false;
+
+    window.miFirebaseUser = firebaseUser || null;
+    if (window.firestorePersistence) {
+        window.firestorePersistence.setUser(firebaseUser ? firebaseUser.uid : null);
+        window.firestorePersistence.restoring = true;
+        window.firestorePersistence.userDataLoaded = false;
+    }
+
+    if (!firebaseUser) {
+        await restoreSignedOutSession();
+        return;
+    }
+
+    user = { id: firebaseUser.uid, email: firebaseUser.email || null };
+    const idToken = await firebaseUser.getIdToken();
+    localStorage.setItem('mi_supabase_token', idToken);
+    localStorage.setItem('mi_user_id', firebaseUser.uid);
+    localStorage.setItem('mi_user_email', firebaseUser.email || '');
+    accountId = firebaseUser.uid;
+    localStorage.setItem('mi_account', accountId);
+
+    const storageKey = getUserChatStorageKey();
+    let restoredChats = {};
+    let restoredSettings = {};
+    let activeChatId = localStorage.getItem('last_chat') || null;
+
+    try {
+        if (window.firestorePersistence) {
+            const loaded = await window.firestorePersistence.loadUserData();
+            restoredChats = loaded.chats || {};
+            restoredSettings = loaded.settings || {};
+            activeChatId = loaded.activeChatId || activeChatId;
+        }
+    } catch (error) {
+        console.error('[Persistence] Firestore restore failed:', error);
+    }
+
+    if (Object.keys(restoredChats).length > 0) {
+        chats = restoredChats;
+    } else {
+        const cached = localStorage.getItem(storageKey);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    chats = parsed;
+                } else {
+                    chats = {};
+                }
+            } catch (error) {
+                console.error('[Persistence] Cached account data is invalid:', error);
+                chats = {};
+            }
+        } else {
+            chats = {};
+        }
+    }
+
+    const visibleChatIds = Object.keys(chats || {}).filter((id) => !chats[id]?.deleted);
+    if (visibleChatIds.length === 0) {
+        const fallbackId = `chat_${Date.now()}`;
+        chats = { [fallbackId]: [] };
+        chats[fallbackId].title = 'New chat';
+        chats[fallbackId].pin = false;
+        chats[fallbackId].deleted = false;
+        chats[fallbackId].updatedAt = Date.now();
+        chats[fallbackId].lastPreview = '';
+        chats[fallbackId].messageCount = 0;
+        chats[fallbackId].attachments = [];
+        currentChat = fallbackId;
+    } else {
+        currentChat = activeChatId && chats[activeChatId] && !chats[activeChatId].deleted ? activeChatId : visibleChatIds[0];
+    }
+
+    if (chats[currentChat] && chats[currentChat].deleted) {
+        currentChat = visibleChatIds[0] || null;
+    }
+
+    if (currentChat && chats[currentChat]) {
+        localStorage.setItem('last_chat', currentChat);
+    }
+
+    localStorage.setItem(storageKey, JSON.stringify(chats));
+
+    if (restoredSettings.theme) {
+        localStorage.setItem('theme', restoredSettings.theme);
+        document.documentElement.style.setProperty('--main', restoredSettings.theme);
+    }
+
+    if (restoredSettings.fontSize) {
+        const chatBoxElem = document.getElementById('chat');
+        if (chatBoxElem) {
+            chatBoxElem.style.fontSize = restoredSettings.fontSize + 'px';
+        }
+        localStorage.setItem('mi_font_size', restoredSettings.fontSize);
+    }
+
+    if (restoredSettings.language) {
+        await applyLanguage(restoredSettings.language, false);
+    } else {
+        await applyLanguage(getStoredLanguageCode() || 'en', false);
+    }
+
+    if (window.firestorePersistence) {
+        window.firestorePersistence.restoring = false;
+        window.firestorePersistence.userDataLoaded = true;
+    }
+
+    authReady = true;
+    restoringData = false;
+    userDataLoaded = true;
+    persistenceEnabled = true;
+
+    renderList();
+    if (currentChat) {
+        openChat(currentChat);
+    } else if (chatBox) {
+        chatBox.innerHTML = '';
+    }
+    updateAuthControls();
+    window.dispatchEvent(new Event('mi-chat-user-changed'));
 }
 
 function loadGuestChats() {
@@ -7972,99 +8184,53 @@ try {
     const auth = await initFirebase();
     if (typeof auth.onAuthStateChanged === 'function') {
         auth.onAuthStateChanged(async (firebaseUser) => {
-            if (!firebaseUser) {
-                user = null;
-                localStorage.removeItem('mi_supabase_token');
-                localStorage.removeItem('mi_user_id');
-                localStorage.removeItem('mi_user_email');
-                accountId = guestId;
-                localStorage.setItem('mi_account', accountId);
-                resetChatStateForAuthChange();
-                loadGuestChats();
-                save();
-                renderList();
-                if (currentChat) {
-                    openChat(currentChat);
-                } else if (chatBox) {
-                    chatBox.innerHTML = '';
-                }
-                updateAuthControls();
-                window.dispatchEvent(new Event('mi-chat-user-changed'));
-                return;
-            }
-
-            const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
-            const nextToken = await firebaseUser.getIdToken();
-            user = nextUser;
-            localStorage.setItem('mi_supabase_token', nextToken);
-            localStorage.setItem('mi_user_id', firebaseUser.uid);
-            localStorage.setItem('mi_user_email', firebaseUser.email || '');
-            accountId = firebaseUser.uid;
-            localStorage.setItem('mi_account', accountId);
-
-            // Load user data from Firestore on login
-            if (window.firestorePersistence) {
-                try {
-                    const { chats: firestoreChats, settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
-
-                    // Only load if there's actual data
-                    if (Object.keys(firestoreChats).length > 0) {
-                        chats = firestoreChats;
-                        console.log('[Persistence] User chats loaded from Firestore:', Object.keys(chats).length);
-                    } else {
-                        await loadUserChats();
-                    }
-
-                    // Apply loaded settings
-                    if (firestoreSettings.theme) {
-                        localStorage.setItem('theme', firestoreSettings.theme);
-                        document.documentElement.style.setProperty('--main', firestoreSettings.theme);
-                    }
-                    if (firestoreSettings.fontSize) {
-                        const chatBoxElem = document.getElementById('chat');
-                        if (chatBoxElem) {
-                            chatBoxElem.style.fontSize = firestoreSettings.fontSize + 'px';
-                        }
-                        localStorage.setItem('mi_font_size', firestoreSettings.fontSize);
-                    }
-                    if (firestoreSettings.language) {
-                        await applyLanguage(firestoreSettings.language, false);
-                    }
-
-                    console.log('[Persistence] User settings loaded from Firestore');
-                } catch (err) {
-                    console.error('[Persistence] Error loading user data on login:', err);
-                    await loadUserChats();
-                }
-            } else {
-                await loadUserChats();
-            }
-
-            updateAuthControls();
-            window.dispatchEvent(new Event('mi-chat-user-changed'));
+            await restoreAuthenticatedSession(firebaseUser);
         });
     }
 } catch (e) {
     console.error('Auth listener setup failed', e);
+    await restoreSignedOutSession();
 }
 
 if (token && userId) {
-    user = { id: userId, email: storedEmail || null };
-    await loadUserChats();
+    try {
+        const auth = await initFirebase();
+        const currentUser = await waitForAuthSession(auth);
+        if (currentUser) {
+            await restoreAuthenticatedSession(currentUser);
+        } else {
+            await restoreSignedOutSession();
+        }
+    } catch (error) {
+        console.error('[Persistence] Initial auth restore failed:', error);
+        await restoreSignedOutSession();
+    }
 } else {
-    loadGuestChats();
+    const auth = await initFirebase();
+    const currentUser = await waitForAuthSession(auth);
+    if (currentUser) {
+        await restoreAuthenticatedSession(currentUser);
+    } else {
+        await restoreSignedOutSession();
+    }
 }
 
-let theme=localStorage.getItem("theme");
-
-if(theme){
-document.documentElement.style.setProperty("--main",theme);
+let theme = localStorage.getItem('theme');
+if (theme) {
+    document.documentElement.style.setProperty('--main', theme);
 }
 
 if (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0) {
-    let id="chat_"+Date.now();
-    chats[id]=[];
-    currentChat=id;
+    let id = 'chat_' + Date.now();
+    chats[id] = [];
+    chats[id].title = 'New chat';
+    chats[id].pin = false;
+    chats[id].deleted = false;
+    chats[id].updatedAt = Date.now();
+    chats[id].lastPreview = '';
+    chats[id].messageCount = 0;
+    chats[id].attachments = [];
+    currentChat = id;
 } else if (!currentChat || !chats[currentChat]) {
     currentChat = Object.keys(chats)[0];
 }
@@ -8080,8 +8246,8 @@ updateAuthControls();
 
 if (input) {
     input.focus();
-    input.addEventListener("keydown", e => {
-        if (e.key === "Enter") {
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
             if (e.shiftKey) return;
             e.preventDefault();
             send();
@@ -8184,7 +8350,7 @@ localStorage.setItem("last_chat",id);
 function renderList(){
 chatList.innerHTML="";
 
-let ids = Object.keys(chats);
+let ids = Object.keys(chats).filter((id) => !chats[id]?.deleted);
 
 if(ids.length > 9){
     chatList.classList.add('scrollable');
@@ -8209,7 +8375,8 @@ ids.forEach(id=>{
 let div=document.createElement("div");
 div.className="chatItem";
 div.dataset.id=id;
-div.innerText=(chats[id].pin ? "📌 " : "")+"💬 "+id;
+const title = chats[id]?.title || id;
+div.innerText=(chats[id].pin ? "📌 " : "")+"💬 "+title;
 
 div.onclick=()=>openChat(id);
 
@@ -8326,22 +8493,26 @@ if (token && isAuthenticated()) {
   }).catch(() => {});
 }
 
-delete chats[chatId];
+if (chats[chatId]) {
+  chats[chatId].deleted = true;
+  chats[chatId].updatedAt = Date.now();
+}
 
 if(currentChat===chatId){
 currentChat=null;
 chatBox.innerHTML="";
 }
 
-// Auto-delete from Firestore
-if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-    try {
-        const db = window.firebase.firestore();
-        db.collection('users').doc(window.miFirebaseUser.uid).collection('chats').doc(chatId).delete()
-            .catch(err => console.error('[Persistence] Chat delete error:', err));
-    } catch (err) {
-        console.error('[Persistence] Error deleting chat from Firestore:', err);
-    }
+// Mark chat deleted in Firestore instead of removing it outright
+if (canPersistNow() && window.firestorePersistence && window.miFirebaseUser) {
+    window.firestorePersistence.saveChat(chatId, {
+        deleted: true,
+        title: chats[chatId]?.title || chatId,
+        pin: Boolean(chats[chatId]?.pin),
+        lastPreview: chats[chatId]?.lastPreview || '',
+        messageCount: chats[chatId]?.length || 0,
+        attachments: Array.isArray(chats[chatId]?.attachments) ? chats[chatId].attachments : []
+    }).catch(err => console.error('[Persistence] Chat delete error:', err));
 }
 
 save();
@@ -8896,15 +9067,15 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
   contentBox.dataset.finalText = text;
   const existingText = String(text || '').trim();
   if (conversationId && chats[conversationId]) {
-    chats[conversationId].push({ role: 'ai', text: existingText });
+    const messageId = `ai_msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    chats[conversationId].push({ id: messageId, role: 'ai', text: existingText });
     chats[conversationId].updatedAt = Date.now();
     chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
     chats[conversationId].lastPreview = existingText;
     save();
 
     // Auto-save AI message to Firestore if authenticated
-    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-        const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
+    if (canPersistNow() && window.firestorePersistence && window.miFirebaseUser) {
         window.firestorePersistence.saveMessage(conversationId, messageId, {
             role: 'ai',
             text: existingText
@@ -8997,15 +9168,15 @@ async function send() {
   userBubble.innerText = msg;
   chatBox.appendChild(userBubble);
 
-  chats[conversationId].push({ role: 'me', text: msg });
+  const messageId = `user_msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  chats[conversationId].push({ id: messageId, role: 'me', text: msg });
   chats[conversationId].updatedAt = Date.now();
   chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
   chats[conversationId].lastPreview = msg;
   save();
 
   // Auto-save user message to Firestore if authenticated
-  if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-      const messageId = `user_msg_${Date.now()}_${Math.random()}`;
+  if (canPersistNow() && window.firestorePersistence && window.miFirebaseUser) {
       window.firestorePersistence.saveMessage(conversationId, messageId, {
           role: 'me',
           text: msg
@@ -9281,6 +9452,7 @@ async function createServerConversation() {
 
 /* SAVE */
 async function save() {
+    if (!canPersistNow()) return;
 
     const storageKey = getActiveStorageKey();
 
@@ -9292,25 +9464,35 @@ async function save() {
         localStorage.setItem("last_chat", currentChat);
     }
 
-    // Save to Firestore if authenticated
     if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
         try {
-            // Save all chats and messages to Firestore
             for (const chatId in chats) {
                 const chatData = chats[chatId];
-                if (Array.isArray(chatData) && chatData.length === 0) continue; // Skip empty chats
+                if (!Array.isArray(chatData)) continue;
+                if (chatData.deleted) {
+                    await window.firestorePersistence.saveChat(chatId, {
+                        title: chatData.title || chatId,
+                        pin: Boolean(chatData.pin),
+                        deleted: true,
+                        lastPreview: chatData.lastPreview || '',
+                        messageCount: chatData.length || 0,
+                        attachments: Array.isArray(chatData.attachments) ? chatData.attachments : []
+                    });
+                    continue;
+                }
 
-                // Save chat metadata
                 await window.firestorePersistence.saveChat(chatId, {
                     title: chatData.title || chatId,
-                    pin: chatData.pin || false,
-                    messageCount: chatData.length || 0
+                    pin: Boolean(chatData.pin),
+                    deleted: false,
+                    lastPreview: chatData.lastPreview || '',
+                    messageCount: chatData.length || 0,
+                    attachments: Array.isArray(chatData.attachments) ? chatData.attachments : []
                 });
 
-                // Save each message
                 chatData.forEach((msg, index) => {
                     if (msg && msg.text) {
-                        const messageId = `msg_${index}_${Date.now()}`;
+                        const messageId = msg.id || `msg_${index}_${Date.now()}`;
                         window.firestorePersistence.saveMessage(chatId, messageId, {
                             role: msg.role === 'me' ? 'me' : 'ai',
                             text: msg.text
@@ -9324,7 +9506,6 @@ async function save() {
         }
     }
 
-    // Logged-in users only
     if (!isAuthenticated()) return;
 
     const token = localStorage.getItem("mi_supabase_token");
@@ -9382,8 +9563,7 @@ let c=document.getElementById("themeColor").value;
 document.documentElement.style.setProperty("--main",c);
 localStorage.setItem("theme",c);
 
-// Auto-save to Firestore if authenticated
-if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+if (canPersistNow() && window.firestorePersistence && window.miFirebaseUser) {
     window.firestorePersistence.saveSettings({ theme: c }).catch(err =>
         console.error('[Persistence] Theme save error:', err)
     );
@@ -9395,8 +9575,7 @@ function setFont(v){
 chatBox.style.fontSize=v+"px";
 localStorage.setItem("mi_font_size", v);
 
-// Auto-save to Firestore if authenticated
-if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+if (canPersistNow() && window.firestorePersistence && window.miFirebaseUser) {
     window.firestorePersistence.saveSettings({ fontSize: parseInt(v) }).catch(err =>
         console.error('[Persistence] Font size save error:', err)
     );
