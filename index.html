@@ -5863,8 +5863,9 @@ select[data-mi-ios-ready="true"] {
 
 <!-- MI AI FIREBASE AUTH START -->
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
 <script>
 (function () {
@@ -5879,7 +5880,41 @@ select[data-mi-ios-ready="true"] {
         appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
     };
 
-    // ========== FIRESTORE PERSISTENCE MANAGER ==========
+    // ===== INITIALIZATION MANAGER =====
+    class InitializationManager {
+        constructor() {
+            this.restoringData = false;
+            this.authReady = false;
+            this.dataLoaded = false;
+            this.initialized = false;
+        }
+
+        setRestoringData(value) {
+            this.restoringData = value;
+            console.log('[Init] restoringData =', value);
+        }
+
+        setAuthReady(value) {
+            this.authReady = value;
+            console.log('[Init] authReady =', value);
+        }
+
+        setDataLoaded(value) {
+            this.dataLoaded = value;
+            console.log('[Init] dataLoaded =', value);
+        }
+
+        setInitialized(value) {
+            this.initialized = value;
+            console.log('[Init] initialized =', value);
+        }
+
+        isReady() {
+            return this.authReady && this.dataLoaded && this.initialized;
+        }
+    }
+
+    // ===== FIRESTORE PERSISTENCE MANAGER =====
     class FirestorePersistenceManager {
         constructor(db) {
             this.db = db;
@@ -5897,7 +5932,7 @@ select[data-mi-ios-ready="true"] {
                     try {
                         unsubscribe();
                     } catch (e) {
-                        console.error('Error unsubscribing listener:', e);
+                        console.error('[Persistence] Error unsubscribing:', e);
                     }
                 }
             });
@@ -5905,73 +5940,84 @@ select[data-mi-ios-ready="true"] {
         }
 
         async saveSettings(settings) {
-            if (!this.uid) return;
+            if (!this.uid || window.miInitializing?.restoringData) {
+                return;
+            }
             try {
-                const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
+                const docRef = this.db.collection('users').doc(this.uid).collection('settings').doc('general');
                 await docRef.set({
                     theme: settings.theme || '',
                     fontSize: settings.fontSize || 15,
                     language: settings.language || 'en',
                     updatedAt: window.firebase.firestore.Timestamp.now()
                 }, { merge: true });
-                console.log('[Persistence] Settings saved to Firestore');
+                console.log('[Persistence] Settings saved');
             } catch (err) {
                 console.error('[Persistence] Error saving settings:', err.message);
             }
         }
 
         async saveChat(chatId, chatData) {
-            if (!this.uid) return;
+            if (!this.uid || window.miInitializing?.restoringData) {
+                return;
+            }
             try {
-                const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+                const messagesArray = Array.isArray(chatData) ? chatData : (chatData.messages || []);
+                const title = chatData.title || chatData[0]?.title || 'Chat';
+                const pin = typeof chatData.pin === 'boolean' ? chatData.pin : false;
+
+                const chatRef = this.db.collection('users').doc(this.uid).collection('chats').doc(chatId);
                 await chatRef.set({
-                    title: chatData.title || 'Chat',
-                    pin: chatData.pin || false,
-                    createdAt: window.firebase.firestore.Timestamp.now(),
+                    title: title,
+                    pin: pin,
+                    createdAt: chatData.createdAt || window.firebase.firestore.Timestamp.now(),
                     updatedAt: window.firebase.firestore.Timestamp.now(),
-                    messageCount: chatData.messageCount || 0
+                    messageCount: messagesArray.length
                 }, { merge: true });
-                console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
+                console.log('[Persistence] Chat saved:', chatId);
             } catch (err) {
                 console.error('[Persistence] Error saving chat:', err.message);
             }
         }
 
         async saveMessage(chatId, messageId, message) {
-            if (!this.uid) return;
+            if (!this.uid || window.miInitializing?.restoringData) {
+                return;
+            }
             try {
-                const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
+                const messageRef = this.db.collection('users').doc(this.uid)
                     .collection('chats').doc(chatId)
                     .collection('messages').doc(messageId);
                 await messageRef.set({
-                    role: message.role || 'user',
+                    role: message.role === 'ai' ? 'ai' : 'me',
                     text: message.text || '',
                     createdAt: window.firebase.firestore.Timestamp.now()
                 });
-                console.log(`[Persistence] Message ${messageId} saved to Firestore`);
             } catch (err) {
                 console.error('[Persistence] Error saving message:', err.message);
             }
         }
 
         async loadUserData() {
-            if (!this.uid) return { chats: {}, settings: {} };
+            if (!this.uid) {
+                return { chats: {}, settings: {} };
+            }
             try {
-                const userRef = window.firebase.firestore().collection('users').doc(this.uid);
+                const userRef = this.db.collection('users').doc(this.uid);
 
                 // Load settings
                 const settingsDoc = await userRef.collection('settings').doc('general').get();
                 const settings = settingsDoc.exists ? settingsDoc.data() : {};
 
                 // Load chats and messages
-                const chatsSnapshot = await userRef.collection('chats').get();
+                const chatsSnapshot = await userRef.collection('chats').orderBy('updatedAt', 'desc').get();
                 const chats = {};
 
                 for (const chatDoc of chatsSnapshot.docs) {
                     const chatId = chatDoc.id;
                     const chatData = chatDoc.data();
 
-                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').get();
+                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').orderBy('createdAt').get();
                     const messages = messagesSnapshot.docs.map(doc => {
                         const data = doc.data();
                         return {
@@ -5981,83 +6027,79 @@ select[data-mi-ios-ready="true"] {
                     });
 
                     chats[chatId] = messages;
-                    chats[chatId].title = chatData.title || chatId;
-                    chats[chatId].pin = chatData.pin || false;
-                    chats[chatId].messageCount = messages.length;
+                    Object.defineProperty(chats[chatId], 'title', { value: chatData.title || chatId, enumerable: false });
+                    Object.defineProperty(chats[chatId], 'pin', { value: chatData.pin || false, enumerable: false });
+                    Object.defineProperty(chats[chatId], 'createdAt', { value: chatData.createdAt, enumerable: false });
+                    Object.defineProperty(chats[chatId], 'updatedAt', { value: chatData.updatedAt, enumerable: false });
+                    Object.defineProperty(chats[chatId], 'messageCount', { value: messages.length, enumerable: false });
                 }
 
-                console.log('[Persistence] User data loaded from Firestore:', { chats: Object.keys(chats), settings });
+                console.log('[Persistence] Loaded', Object.keys(chats).length, 'chats from Firestore');
                 return { chats, settings };
             } catch (err) {
                 console.error('[Persistence] Error loading user data:', err.message);
                 return { chats: {}, settings: {} };
             }
         }
+
+        async deleteChat(chatId) {
+            if (!this.uid || window.miInitializing?.restoringData) {
+                return;
+            }
+            try {
+                const chatRef = this.db.collection('users').doc(this.uid).collection('chats').doc(chatId);
+                const messagesSnapshot = await chatRef.collection('messages').get();
+
+                const batch = this.db.batch();
+                messagesSnapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                batch.delete(chatRef);
+
+                await batch.commit();
+                console.log('[Persistence] Chat deleted:', chatId);
+            } catch (err) {
+                console.error('[Persistence] Error deleting chat:', err.message);
+            }
+        }
     }
 
     window.FirestorePersistenceManager = FirestorePersistenceManager;
+    window.InitializationManager = InitializationManager;
 
     function getFirebaseLanguage() {
-        const selected =
-            document.getElementById("languageSelect")?.value;
+        const browserLanguage = (navigator.language || "en")
+            .toLowerCase()
+            .split("-")[0];
 
-        const stored =
-            localStorage.getItem("mi_ui_language");
-
-        const language = selected || stored || "en";
-
-        const languageMap = {
-            en: "en",
-            si: "si",
-            ta: "ta"
-        };
-
-        return languageMap[language] || "en";
+        return ["en", "de", "es", "fr", "it", "ja", "pt", "ru", "zh"]
+            .includes(browserLanguage)
+            ? browserLanguage
+            : "en";
     }
 
     function firebaseErrorMessage(error) {
-        const errorCode = String(error?.code || "");
+        const code = error.code || "";
 
-        const messages = {
-            "auth/invalid-email":
-                "Invalid email address.",
+        if (code === "auth/email-already-in-use") {
+            return "Email address already in use.";
+        } else if (code === "auth/weak-password") {
+            return "Password must be 6 characters or longer.";
+        } else if (code === "auth/user-not-found") {
+            return "User not found.";
+        } else if (code === "auth/wrong-password") {
+            return "Incorrect password.";
+        } else if (code === "auth/too-many-requests") {
+            return "Too many requests. Try again later.";
+        } else if (code === "auth/operation-not-allowed") {
+            return "Operation not allowed.";
+        } else if (code === "auth/invalid-email") {
+            return "Invalid email address.";
+        } else if (code === "auth/account-exists-with-different-credential") {
+            return "This email is already linked to another account.";
+        }
 
-            "auth/missing-password":
-                "Please enter your password.",
-
-            "auth/weak-password":
-                "Password must contain at least 6 characters.",
-
-            "auth/email-already-in-use":
-                "An account already exists with this email.",
-
-            "auth/user-not-found":
-                "No account was found for this email.",
-
-            "auth/wrong-password":
-                "Incorrect email or password.",
-
-            "auth/invalid-credential":
-                "Incorrect email or password.",
-
-            "auth/too-many-requests":
-                "Too many attempts. Please try again later.",
-
-            "auth/network-request-failed":
-                "Network error. Check your internet connection.",
-
-            "auth/operation-not-allowed":
-                "Email and password login is not enabled in Firebase.",
-
-            "auth/unauthorized-domain":
-                "This website domain is not authorized in Firebase."
-        };
-
-        return (
-            messages[errorCode] ||
-            error?.message ||
-            "Firebase authentication failed."
-        );
+        return error.message || "An authentication error occurred.";
     }
 
     function initializeMIFirebase() {
@@ -6067,16 +6109,10 @@ select[data-mi-ios-ready="true"] {
 
         let app;
 
-        if (
-            Array.isArray(window.firebase.apps) &&
-            window.firebase.apps.length > 0
-        ) {
+        if (Array.isArray(window.firebase.apps) && window.firebase.apps.length > 0) {
             app = window.firebase.app();
-        }
-        else {
-            app = window.firebase.initializeApp(
-                firebaseConfig
-            );
+        } else {
+            app = window.firebase.initializeApp(firebaseConfig);
         }
 
         const auth = window.firebase.auth(app);
@@ -6089,83 +6125,38 @@ select[data-mi-ios-ready="true"] {
         window.miFirebaseDb = db;
         window.miFirebaseUser = auth.currentUser || null;
 
-        // Initialize persistence manager
-        window.firestorePersistence = new window.FirestorePersistenceManager(db);
-
-        auth.onAuthStateChanged(function (user) {
-            window.miFirebaseUser = user || null;
-
-            // Update persistence manager with current user
-            if (user) {
-                window.firestorePersistence.setUser(user.uid);
-                console.log('[Persistence] Auth user set:', user.uid);
-            } else {
-                window.firestorePersistence.setUser(null);
-                console.log('[Persistence] Auth user cleared');
-            }
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "mi-firebase-auth-changed",
-                    {
-                        detail: {
-                            user: user || null
-                        }
-                    }
-                )
-            );
-        });
+        // Initialize managers
+        if (!window.miInitializing) {
+            window.miInitializing = new InitializationManager();
+        }
+        window.firestorePersistence = new FirestorePersistenceManager(db);
 
         window.MIFirebase = {
-            config: Object.freeze({
-                ...firebaseConfig
-            }),
+            config: Object.freeze({ ...firebaseConfig }),
 
             get auth() {
                 return window.miFirebaseAuth;
             },
 
             get user() {
-                return (
-                    window.miFirebaseAuth?.currentUser ||
-                    null
-                );
+                return window.miFirebaseAuth?.currentUser || null;
             },
 
             updateLanguage: function () {
                 if (window.miFirebaseAuth) {
-                    window.miFirebaseAuth.languageCode =
-                        getFirebaseLanguage();
+                    window.miFirebaseAuth.languageCode = getFirebaseLanguage();
                 }
             },
 
-            register: async function (
-                email,
-                password,
-                profile = {}
-            ) {
+            register: async function (email, password, profile = {}) {
                 try {
                     this.updateLanguage();
-
-                    const credential =
-                        await auth
-                            .createUserWithEmailAndPassword(
-                                String(email || "").trim(),
-                                String(password || "")
-                            );
-
+                    const credential = await auth.createUserWithEmailAndPassword(email, password);
                     const user = credential.user;
 
-                    const displayName = String(
-                        profile.displayName ||
-                        profile.fullName ||
-                        profile.name ||
-                        ""
-                    ).trim();
-
-                    if (displayName) {
+                    if (user && profile.displayName) {
                         await user.updateProfile({
-                            displayName: displayName
+                            displayName: profile.displayName
                         });
                     }
 
@@ -6176,97 +6167,69 @@ select[data-mi-ios-ready="true"] {
                     return user;
                 }
                 catch (error) {
-                    console.error(
-                        "[MI AI Firebase register]",
-                        error
-                    );
-
-                    throw new Error(
-                        firebaseErrorMessage(error)
-                    );
+                    throw new Error(firebaseErrorMessage(error));
                 }
             },
 
-            login: async function (
-                email,
-                password
-            ) {
+            login: async function (email, password) {
                 try {
                     this.updateLanguage();
-
-                    const credential =
-                        await auth
-                            .signInWithEmailAndPassword(
-                                String(email || "").trim(),
-                                String(password || "")
-                            );
-
+                    const credential = await auth.signInWithEmailAndPassword(email, password);
                     return credential.user;
                 }
                 catch (error) {
-                    console.error(
-                        "[MI AI Firebase login]",
-                        error
-                    );
-
-                    throw new Error(
-                        firebaseErrorMessage(error)
-                    );
+                    throw new Error(firebaseErrorMessage(error));
                 }
             },
 
-            sendPasswordResetEmail:
-                async function (email) {
-                    try {
-                        this.updateLanguage();
-
-                        await auth.sendPasswordResetEmail(
-                            String(email || "").trim(),
-                            {
-                                url: window.location.origin
-                            }
-                        );
-
-                        return true;
+            loginWithGoogle: async function () {
+                try {
+                    this.updateLanguage();
+                    const provider = new window.firebase.auth.GoogleAuthProvider();
+                    const result = await auth.signInWithPopup(provider);
+                    return result.user;
+                }
+                catch (error) {
+                    if (error.code === "auth/popup-closed-by-user") {
+                        throw new Error("Google sign-in cancelled.");
                     }
-                    catch (error) {
-                        console.error(
-                            "[MI AI Firebase reset]",
-                            error
-                        );
+                    throw new Error(firebaseErrorMessage(error));
+                }
+            },
 
-                        throw new Error(
-                            firebaseErrorMessage(error)
-                        );
+            getIdToken: async function () {
+                const user = auth.currentUser;
+                if (!user) {
+                    throw new Error("User not signed in.");
+                }
+                return await user.getIdToken();
+            },
+
+            sendPasswordResetEmail: async function (email) {
+                try {
+                    await auth.sendPasswordResetEmail(email);
+                    return true;
+                }
+                catch (error) {
+                    throw new Error(firebaseErrorMessage(error));
+                }
+            },
+
+            sendEmailVerification: async function () {
+                try {
+                    const user = auth.currentUser;
+                    if (!user) {
+                        throw new Error("Please sign in first.");
                     }
-                },
-
-            resendVerification:
-                async function () {
-                    try {
-                        this.updateLanguage();
-
-                        const user =
-                            auth.currentUser;
-
-                        if (!user) {
-                            throw new Error(
-                                "Please sign in first."
-                            );
-                        }
-
-                        await user.sendEmailVerification({
-                            url: window.location.origin
-                        });
-
-                        return true;
-                    }
-                    catch (error) {
-                        throw new Error(
-                            firebaseErrorMessage(error)
-                        );
-                    }
-                },
+                    await user.sendEmailVerification({
+                        url: window.location.origin
+                    });
+                    return true;
+                }
+                catch (error) {
+                    throw new Error(firebaseErrorMessage(error));
+                }
+            },
 
             logout: async function () {
                 await auth.signOut();
@@ -6274,27 +6237,15 @@ select[data-mi-ios-ready="true"] {
             }
         };
 
-        document.addEventListener(
-            "change",
-            function (event) {
-                if (
-                    event.target &&
-                    event.target.id ===
-                        "languageSelect"
-                ) {
-                    window.MIFirebase.updateLanguage();
-                }
+        document.addEventListener("change", function (event) {
+            if (event.target && event.target.id === "languageSelect") {
+                window.MIFirebase.updateLanguage();
             }
-        );
+        });
 
-        console.log(
-            "[MI AI] Firebase Authentication connected:",
-            firebaseConfig.projectId
-        );
+        console.log("[MI AI] Firebase initialized:", firebaseConfig.projectId);
 
-        window.dispatchEvent(
-            new CustomEvent("mi-firebase-ready")
-        );
+        window.dispatchEvent(new CustomEvent("mi-firebase-ready"));
     }
 
     function startFirebase() {
@@ -6302,34 +6253,18 @@ select[data-mi-ios-ready="true"] {
             initializeMIFirebase();
         }
         catch (error) {
-            console.error(
-                "[MI AI] Firebase initialization failed:",
-                error
-            );
-
+            console.error("[MI AI] Firebase initialization failed:", error);
             window.dispatchEvent(
-                new CustomEvent(
-                    "mi-firebase-error",
-                    {
-                        detail: {
-                            message: error.message
-                        }
-                    }
-                )
+                new CustomEvent("mi-firebase-error", {
+                    detail: { message: error.message }
+                })
             );
         }
     }
 
     if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            startFirebase,
-            {
-                once: true
-            }
-        );
-    }
-    else {
+        document.addEventListener("DOMContentLoaded", startFirebase, { once: true });
+    } else {
         startFirebase();
     }
 })();
@@ -7291,39 +7226,42 @@ async function logout() {
         window.firestorePersistence.setUser(null);
     }
 
-try {
+    try {
         const auth = await initFirebase();
         await auth.signOut();
     } catch (e) {
         console.error('Logout error:', e);
     }
 
-    // Clear all account-related localStorage
+    // Clear authentication tokens and user info from localStorage
+    // NOTE: Do NOT delete user data (chats/settings) from localStorage or Firestore
+    // The data should persist in the database so user can restore it on next login
     localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
 
-    // Clear account chats from localStorage
-    localStorage.removeItem('mi_chats_' + accountId);
-
-user = null;
+    // Clear current session state only
+    user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
 
-    // Reset chat state to guest state
+    // Reset UI memory (not database)
     chats = {};
     currentChat = null;
 
-    await applyLanguage('en', false);
+    // Clear UI
     resetChatStateForAuthChange();
     createSingleGuestChat();
-    save();
+
+    // Load guest chats
+    loadGuestChats();
     renderList();
     openChat(currentChat);
     closeProfilePanel();
     updateAuthControls();
+
+    console.log('[Persistence] Logout complete - UI cleared, database preserved');
     window.dispatchEvent(new Event('mi-chat-user-changed'));
-    console.log('[Persistence] Logout complete - state cleared');
 }
 
 function updateAuthControls(){
@@ -7913,12 +7851,14 @@ if (verified === '1') {
     }
 }
 
+// Get DOM elements
 chatBox = document.getElementById("chat");
 chatList = document.getElementById("chatList");
 input = document.getElementById("msg");
 menu = document.getElementById("menu");
 authReminder = document.getElementById("authReminder");
 
+// Handle shared chats
 const sharedPayload = getSharedChatPayloadFromUrl();
 if (sharedPayload) {
     const previousChats = chats && typeof chats === 'object' && !Array.isArray(chats) ? chats : {};
@@ -7964,131 +7904,196 @@ if (sharedPayload) {
     return;
 }
 
-let token = localStorage.getItem('mi_supabase_token');
-let userId = localStorage.getItem('mi_user_id');
-let storedEmail = localStorage.getItem('mi_user_email');
+// === 10-STEP STARTUP SEQUENCE ===
+console.log('[Init] Starting 10-step initialization...');
+window.miInitializing.setRestoringData(true);
 
 try {
+    // Step 1: App starts (already happening)
+    console.log('[Init] Step 1: App starts');
+
+    // Step 2: Restore Firebase Auth session
+    console.log('[Init] Step 2: Restore Firebase Auth session');
     const auth = await initFirebase();
-    if (typeof auth.onAuthStateChanged === 'function') {
-        auth.onAuthStateChanged(async (firebaseUser) => {
-            if (!firebaseUser) {
-                user = null;
-                localStorage.removeItem('mi_supabase_token');
-                localStorage.removeItem('mi_user_id');
-                localStorage.removeItem('mi_user_email');
-                accountId = guestId;
-                localStorage.setItem('mi_account', accountId);
-                resetChatStateForAuthChange();
-                loadGuestChats();
-                save();
-                renderList();
-                if (currentChat) {
-                    openChat(currentChat);
-                } else if (chatBox) {
-                    chatBox.innerHTML = '';
-                }
-                updateAuthControls();
-                window.dispatchEvent(new Event('mi-chat-user-changed'));
-                return;
+
+    // Step 3: Get authenticated UID and wait for auth state
+    console.log('[Init] Step 3: Getting auth state...');
+    let firebaseUser = null;
+    let authWaited = false;
+
+    // Wait max 5 seconds for auth state to resolve
+    await new Promise((resolve) => {
+        let unsubscribe = null;
+        const timeout = setTimeout(() => {
+            if (unsubscribe) unsubscribe();
+            window.miInitializing.setAuthReady(true);
+            resolve();
+        }, 5000);
+
+        unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!authWaited) {
+                authWaited = true;
+                clearTimeout(timeout);
+                firebaseUser = user;
+                window.miInitializing.setAuthReady(true);
+                resolve();
             }
+        });
+    });
 
-            const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
-            const nextToken = await firebaseUser.getIdToken();
-            user = nextUser;
-            localStorage.setItem('mi_supabase_token', nextToken);
-            localStorage.setItem('mi_user_id', firebaseUser.uid);
-            localStorage.setItem('mi_user_email', firebaseUser.email || '');
-            accountId = firebaseUser.uid;
-            localStorage.setItem('mi_account', accountId);
+    console.log('[Init] Step 3: Auth state resolved. User:', firebaseUser ? firebaseUser.uid : 'guest');
 
-            // Load user data from Firestore on login
-            if (window.firestorePersistence) {
-                try {
-                    const { chats: firestoreChats, settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
+    let restorableChats = {};
+    let restorableSettings = {};
 
-                    // Only load if there's actual data
-                    if (Object.keys(firestoreChats).length > 0) {
-                        chats = firestoreChats;
-                        console.log('[Persistence] User chats loaded from Firestore:', Object.keys(chats).length);
-                    } else {
-                        await loadUserChats();
-                    }
+    if (firebaseUser) {
+        // Authenticated user - restore from Firestore
+        console.log('[Init] Authenticated user:', firebaseUser.uid);
+        window.firestorePersistence.setUser(firebaseUser.uid);
 
-                    // Apply loaded settings
-                    if (firestoreSettings.theme) {
-                        localStorage.setItem('theme', firestoreSettings.theme);
-                        document.documentElement.style.setProperty('--main', firestoreSettings.theme);
-                    }
-                    if (firestoreSettings.fontSize) {
-                        const chatBoxElem = document.getElementById('chat');
-                        if (chatBoxElem) {
-                            chatBoxElem.style.fontSize = firestoreSettings.fontSize + 'px';
-                        }
-                        localStorage.setItem('mi_font_size', firestoreSettings.fontSize);
-                    }
-                    if (firestoreSettings.language) {
-                        await applyLanguage(firestoreSettings.language, false);
-                    }
+        // Step 4: Download user settings
+        console.log('[Init] Step 4: Download user settings');
 
-                    console.log('[Persistence] User settings loaded from Firestore');
-                } catch (err) {
-                    console.error('[Persistence] Error loading user data on login:', err);
-                    await loadUserChats();
+        // Step 5: Download chats
+        // Step 6: Download messages
+        console.log('[Init] Step 5-6: Download chats and messages');
+        try {
+            const { chats: firestoreChats, settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
+            restorableChats = firestoreChats;
+            restorableSettings = firestoreSettings;
+            console.log('[Init] Restored', Object.keys(restorableChats).length, 'chats from Firestore');
+        } catch (err) {
+            console.error('[Init] Error loading from Firestore:', err);
+            // Fallback to empty
+            restorableChats = {};
+            restorableSettings = {};
+        }
+
+        // Step 7: Restore active chat
+        console.log('[Init] Step 7: Restore active chat');
+        const lastChatKey = 'last_chat';
+        const lastChat = localStorage.getItem(lastChatKey);
+        if (lastChat && restorableChats[lastChat]) {
+            currentChat = lastChat;
+        } else {
+            currentChat = Object.keys(restorableChats)[0] || null;
+        }
+        console.log('[Init] Active chat set to:', currentChat);
+
+    } else {
+        // Guest user
+        console.log('[Init] Guest user');
+        window.firestorePersistence.setUser(null);
+
+        // Load guest chats from localStorage
+        const guestKey = getGuestStorageKey();
+        const saved = localStorage.getItem(guestKey);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    restorableChats = parsed;
                 }
-            } else {
-                await loadUserChats();
+            } catch (e) {
+                console.warn('[Init] Could not parse guest chats');
             }
+        }
 
-            updateAuthControls();
-            window.dispatchEvent(new Event('mi-chat-user-changed'));
+        // Ensure at least one guest chat
+        if (Object.keys(restorableChats).length === 0) {
+            const id = 'chat_' + Date.now();
+            restorableChats[id] = [];
+            currentChat = id;
+        } else {
+            const lastChatKey = 'last_chat';
+            const lastChat = localStorage.getItem(lastChatKey);
+            currentChat = (lastChat && restorableChats[lastChat]) ? lastChat : Object.keys(restorableChats)[0];
+        }
+    }
+
+    window.miInitializing.setDataLoaded(true);
+    console.log('[Init] Step 6: Data loaded from persistence');
+
+    // Step 8: Apply theme and other settings
+    console.log('[Init] Step 8: Apply theme and settings');
+
+    // Apply theme
+    const theme = restorableSettings?.theme || localStorage.getItem("theme");
+    if (theme) {
+        document.documentElement.style.setProperty("--main", theme);
+        localStorage.setItem('theme', theme);
+    }
+
+    // Apply font size
+    if (restorableSettings?.fontSize && chatBox) {
+        chatBox.style.fontSize = restorableSettings.fontSize + 'px';
+        localStorage.setItem('mi_font_size', restorableSettings.fontSize);
+    }
+
+    // Apply language
+    if (restorableSettings?.language) {
+        await applyLanguage(restorableSettings.language, false);
+    }
+
+    // Step 9: Load all restored data into memory and render UI
+    console.log('[Init] Step 9: Render UI with restored data');
+    chats = restorableChats;
+
+    if (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0) {
+        // Fallback: create single chat if needed
+        let id = "chat_" + Date.now();
+        chats[id] = [];
+        currentChat = id;
+    } else if (!currentChat || !chats[currentChat]) {
+        currentChat = Object.keys(chats)[0];
+    }
+
+    renderList();
+    if (currentChat) {
+        openChat(currentChat);
+    } else if (chatBox) {
+        chatBox.innerHTML = '';
+    }
+    updateAuthControls();
+
+    // Step 10: Enable auto-save and complete initialization
+    console.log('[Init] Step 10: Enable auto-save, initialization complete');
+    window.miInitializing.setInitialized(true);
+    window.miInitializing.setRestoringData(false);
+
+    // Setup event listeners
+    if (input) {
+        input.focus();
+        input.addEventListener("keydown", e => {
+            if (e.key === "Enter") {
+                if (e.shiftKey) return;
+                e.preventDefault();
+                send();
+            }
         });
     }
-} catch (e) {
-    console.error('Auth listener setup failed', e);
-}
 
-if (token && userId) {
-    user = { id: userId, email: storedEmail || null };
-    await loadUserChats();
-} else {
+    // Save current state
+    save();
+
+    console.log('[Init] ✓ Initialization complete. All systems ready.');
+
+} catch (err) {
+    console.error('[Init] Fatal error during initialization:', err);
+    window.miInitializing.setRestoringData(false);
+    window.miInitializing.setInitialized(true);
+
+    // Fallback to guest
+    window.firestorePersistence.setUser(null);
     loadGuestChats();
-}
-
-let theme=localStorage.getItem("theme");
-
-if(theme){
-document.documentElement.style.setProperty("--main",theme);
-}
-
-if (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0) {
-    let id="chat_"+Date.now();
-    chats[id]=[];
-    currentChat=id;
-} else if (!currentChat || !chats[currentChat]) {
-    currentChat = Object.keys(chats)[0];
-}
-
-save();
-renderList();
-if (currentChat) {
-    openChat(currentChat);
-} else if (chatBox) {
-    chatBox.innerHTML = '';
-}
-updateAuthControls();
-
-if (input) {
-    input.focus();
-    input.addEventListener("keydown", e => {
-        if (e.key === "Enter") {
-            if (e.shiftKey) return;
-            e.preventDefault();
-            send();
-        }
-    });
-} else {
-    console.warn('Chat input element not found');
+    renderList();
+    if (currentChat) {
+        openChat(currentChat);
+    }
+    updateAuthControls();
+    if (input) {
+        input.focus();
+    }
 }
 
 };
@@ -8298,7 +8303,7 @@ if (token && isAuthenticated()) {
 
 // Auto-save chat title to Firestore
 if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-    window.firestorePersistence.saveChat(selectedChat, { title: name }).catch(err => 
+    window.firestorePersistence.saveChat(selectedChat, { title: name }).catch(err =>
         console.error('[Persistence] Chat rename error:', err)
     );
 }
@@ -8358,7 +8363,7 @@ chats[selectedChat].pin =
 
 // Auto-save pin status to Firestore
 if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-    window.firestorePersistence.saveChat(selectedChat, { pin: chats[selectedChat].pin }).catch(err => 
+    window.firestorePersistence.saveChat(selectedChat, { pin: chats[selectedChat].pin }).catch(err =>
         console.error('[Persistence] Chat pin error:', err)
     );
 }
@@ -9281,6 +9286,11 @@ async function createServerConversation() {
 
 /* SAVE */
 async function save() {
+    // Guard: Don't save to Firestore during restore
+    if (window.miInitializing?.restoringData) {
+        console.log('[Save] Skipping Firestore save - data restoration in progress');
+        return;
+    }
 
     const storageKey = getActiveStorageKey();
 
@@ -9304,6 +9314,7 @@ async function save() {
                 await window.firestorePersistence.saveChat(chatId, {
                     title: chatData.title || chatId,
                     pin: chatData.pin || false,
+                    messages: chatData,
                     messageCount: chatData.length || 0
                 });
 
@@ -19386,6 +19397,1666 @@ document.addEventListener(
 })();
 
 /* MI AI FULL UI TRANSLATION V2 - END */
+</script>
+
+
+
+<script>
+/* MI AI THREE LANGUAGES ONLY V1 - START */
+
+(function () {
+    "use strict";
+
+    const allowedLanguages = [
+        {
+            code: "en",
+            label: "English",
+            aliases: [
+                "english",
+                "en",
+                "en-us",
+                "en-gb"
+            ]
+        },
+        {
+            code: "si",
+            label: "Sinhala",
+            aliases: [
+                "sinhala",
+                "සිංහල",
+                "si",
+                "si-lk"
+            ]
+        },
+        {
+            code: "ta",
+            label: "Tamil",
+            aliases: [
+                "tamil",
+                "தமிழ்",
+                "demala",
+                "දෙමළ",
+                "ta",
+                "ta-lk",
+                "ta-in"
+            ]
+        }
+    ];
+
+    const allowedCodes =
+        new Set([
+            "en",
+            "si",
+            "ta"
+        ]);
+
+    let cleaning = false;
+
+    function normalize(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/_/g, "-")
+            .replace(/\s+/g, " ");
+    }
+
+    function resolveLanguage(
+        value,
+        label
+    ) {
+        const normalizedValue =
+            normalize(value);
+
+        const normalizedLabel =
+            normalize(label);
+
+        return (
+            allowedLanguages.find(
+                function (language) {
+                    return (
+                        language.code ===
+                            normalizedValue ||
+                        language.aliases.includes(
+                            normalizedValue
+                        ) ||
+                        language.aliases.includes(
+                            normalizedLabel
+                        ) ||
+                        normalize(
+                            language.label
+                        ) === normalizedLabel
+                    );
+                }
+            ) ||
+            null
+        );
+    }
+
+    function updateGlobalLanguageList() {
+        window.SUPPORTED_LANGUAGES =
+            allowedLanguages.map(
+                function (language) {
+                    return {
+                        code:
+                            language.code,
+
+                        label:
+                            language.label,
+
+                        name:
+                            language.label
+                    };
+                }
+            );
+
+        try {
+            if (
+                typeof SUPPORTED_LANGUAGES !==
+                    "undefined" &&
+                Array.isArray(
+                    SUPPORTED_LANGUAGES
+                )
+            ) {
+                SUPPORTED_LANGUAGES.splice(
+                    0,
+                    SUPPORTED_LANGUAGES.length,
+                    ...window
+                        .SUPPORTED_LANGUAGES
+                );
+            }
+        }
+        catch (error) {
+            // Global binding may be read-only.
+        }
+    }
+
+    function rebuildNativeSelect(
+        select
+    ) {
+        if (
+            !(select instanceof
+                HTMLSelectElement)
+        ) {
+            return;
+        }
+
+        const selectedOption =
+            select.options[
+                select.selectedIndex
+            ];
+
+        const selected =
+            resolveLanguage(
+                select.value,
+                selectedOption
+                    ?.textContent
+            );
+
+        const selectedCode =
+            selected?.code ||
+            (
+                allowedCodes.has(
+                    normalize(
+                        localStorage.getItem(
+                            "mi_ui_language"
+                        )
+                    )
+                )
+                    ? normalize(
+                        localStorage.getItem(
+                            "mi_ui_language"
+                        )
+                    )
+                    : "en"
+            );
+
+        select.innerHTML = "";
+
+        allowedLanguages.forEach(
+            function (language) {
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    language.code;
+
+                option.textContent =
+                    language.label;
+
+                option.selected =
+                    language.code ===
+                    selectedCode;
+
+                select.appendChild(
+                    option
+                );
+            }
+        );
+
+        select.value =
+            selectedCode;
+
+        localStorage.setItem(
+            "mi_ui_language",
+            selectedCode
+        );
+    }
+
+    function languageContainer() {
+        const nativeSelect =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (nativeSelect) {
+            return (
+                nativeSelect.closest(
+                    [
+                        ".mi-settings-section",
+                        ".language-section",
+                        ".language-selector",
+                        ".language-options",
+                        ".settings-language",
+                        "[data-settings-type='language']",
+                        "[data-setting='language']"
+                    ].join(",")
+                ) ||
+                nativeSelect.parentElement
+            );
+        }
+
+        const candidates =
+            document.querySelectorAll(
+                [
+                    ".mi-settings-section",
+                    ".language-section",
+                    ".language-selector",
+                    ".language-options",
+                    ".settings-language",
+                    "[data-settings-type='language']",
+                    "[data-setting='language']"
+                ].join(",")
+            );
+
+        for (
+            const candidate
+            of candidates
+        ) {
+            const text =
+                normalize(
+                    candidate.textContent
+                );
+
+            if (
+                text.includes("english") &&
+                (
+                    text.includes(
+                        "sinhala"
+                    ) ||
+                    text.includes(
+                        "සිංහල"
+                    )
+                ) &&
+                (
+                    text.includes(
+                        "tamil"
+                    ) ||
+                    text.includes(
+                        "தமிழ்"
+                    )
+                )
+            ) {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    function looksLikeLanguageItem(
+        element
+    ) {
+        if (
+            !(element instanceof Element)
+        ) {
+            return false;
+        }
+
+        const text =
+            normalize(
+                element.textContent
+            );
+
+        const value =
+            normalize(
+                element.getAttribute(
+                    "data-value"
+                ) ||
+                element.getAttribute(
+                    "data-language"
+                ) ||
+                element.getAttribute(
+                    "data-code"
+                ) ||
+                element.getAttribute(
+                    "value"
+                )
+            );
+
+        return Boolean(
+            text ||
+            value
+        );
+    }
+
+    function languageFromElement(
+        element
+    ) {
+        if (
+            !(element instanceof Element)
+        ) {
+            return null;
+        }
+
+        return resolveLanguage(
+            element.getAttribute(
+                "data-value"
+            ) ||
+            element.getAttribute(
+                "data-language"
+            ) ||
+            element.getAttribute(
+                "data-code"
+            ) ||
+            element.getAttribute(
+                "value"
+            ) ||
+            "",
+
+            element.textContent
+        );
+    }
+
+    function cleanCustomLanguageList() {
+        const container =
+            languageContainer();
+
+        if (!container) {
+            return;
+        }
+
+        const candidates =
+            container.querySelectorAll(
+                [
+                    "button",
+                    "li",
+                    "[role='option']",
+                    ".language-option",
+                    ".language-item",
+                    ".dropdown-item",
+                    "[data-language]",
+                    "[data-code]",
+                    "[data-value]"
+                ].join(",")
+            );
+
+        candidates.forEach(
+            function (element) {
+                if (
+                    !looksLikeLanguageItem(
+                        element
+                    )
+                ) {
+                    return;
+                }
+
+                const text =
+                    normalize(
+                        element.textContent
+                    );
+
+                if (
+                    text.includes("language") &&
+                    element.children.length >
+                        0
+                ) {
+                    return;
+                }
+
+                const language =
+                    languageFromElement(
+                        element
+                    );
+
+                if (!language) {
+                    element.remove();
+                    return;
+                }
+
+                element.setAttribute(
+                    "data-language",
+                    language.code
+                );
+
+                element.setAttribute(
+                    "data-value",
+                    language.code
+                );
+
+                const labelTarget =
+                    element.querySelector(
+                        [
+                            ".label",
+                            ".text",
+                            ".name",
+                            "span"
+                        ].join(",")
+                    );
+
+                if (
+                    labelTarget &&
+                    normalize(
+                        labelTarget
+                            .textContent
+                    )
+                ) {
+                    labelTarget.textContent =
+                        language.label;
+                }
+                else if (
+                    element.children
+                        .length === 0
+                ) {
+                    element.textContent =
+                        language.label;
+                }
+            }
+        );
+    }
+
+    function forceAllowedLanguage() {
+        const select =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        let currentCode =
+            normalize(
+                select?.value ||
+                localStorage.getItem(
+                    "mi_ui_language"
+                ) ||
+                "en"
+            );
+
+        const resolved =
+            resolveLanguage(
+                currentCode,
+                ""
+            );
+
+        currentCode =
+            resolved?.code ||
+            "en";
+
+        if (select) {
+            select.value =
+                currentCode;
+        }
+
+        localStorage.setItem(
+            "mi_ui_language",
+            currentCode
+        );
+
+        const storedLanguageKeys = [
+            "language",
+            "selectedLanguage",
+            "selected_language",
+            "uiLanguage",
+            "locale",
+            "mi_language"
+        ];
+
+        storedLanguageKeys.forEach(
+            function (key) {
+                const value =
+                    localStorage.getItem(
+                        key
+                    );
+
+                if (!value) {
+                    return;
+                }
+
+                const language =
+                    resolveLanguage(
+                        value,
+                        value
+                    );
+
+                localStorage.setItem(
+                    key,
+                    language?.code ||
+                    "en"
+                );
+            }
+        );
+    }
+
+    function cleanLanguageList() {
+        if (cleaning) {
+            return;
+        }
+
+        cleaning = true;
+
+        try {
+            updateGlobalLanguageList();
+
+            const select =
+                document.getElementById(
+                    "languageSelect"
+                );
+
+            if (select) {
+                rebuildNativeSelect(
+                    select
+                );
+            }
+
+            cleanCustomLanguageList();
+            forceAllowedLanguage();
+        }
+        finally {
+            cleaning = false;
+        }
+    }
+
+    function attachProtection() {
+        document.addEventListener(
+            "change",
+            function (event) {
+                const target =
+                    event.target;
+
+                if (
+                    target?.id !==
+                    "languageSelect"
+                ) {
+                    return;
+                }
+
+                const language =
+                    resolveLanguage(
+                        target.value,
+                        target.options[
+                            target
+                                .selectedIndex
+                        ]?.textContent
+                    );
+
+                const code =
+                    language?.code ||
+                    "en";
+
+                target.value = code;
+
+                localStorage.setItem(
+                    "mi_ui_language",
+                    code
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "mi-language-changed",
+                        {
+                            detail: {
+                                language:
+                                    code
+                            }
+                        }
+                    )
+                );
+            },
+            true
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                const container =
+                    languageContainer();
+
+                if (
+                    !container ||
+                    !container.contains(
+                        event.target
+                    )
+                ) {
+                    return;
+                }
+
+                const item =
+                    event.target.closest(
+                        [
+                            "button",
+                            "li",
+                            "[role='option']",
+                            ".language-option",
+                            ".language-item",
+                            ".dropdown-item",
+                            "[data-language]",
+                            "[data-code]",
+                            "[data-value]"
+                        ].join(",")
+                    );
+
+                if (!item) {
+                    return;
+                }
+
+                const language =
+                    languageFromElement(
+                        item
+                    );
+
+                if (!language) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    cleanLanguageList();
+                    return;
+                }
+
+                localStorage.setItem(
+                    "mi_ui_language",
+                    language.code
+                );
+            },
+            true
+        );
+    }
+
+    function start() {
+        cleanLanguageList();
+        attachProtection();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    if (!cleaning) {
+                        requestAnimationFrame(
+                            cleanLanguageList
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            cleanLanguageList
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            cleanLanguageList
+        );
+
+        setTimeout(
+            cleanLanguageList,
+            100
+        );
+
+        setTimeout(
+            cleanLanguageList,
+            500
+        );
+
+        setTimeout(
+            cleanLanguageList,
+            1500
+        );
+    }
+
+    window.MIThreeLanguages = {
+        languages:
+            allowedLanguages,
+
+        refresh:
+            cleanLanguageList,
+
+        isAllowed:
+            function (value) {
+                return Boolean(
+                    resolveLanguage(
+                        value,
+                        value
+                    )
+                );
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI THREE LANGUAGES ONLY V1 - END */
+</script>
+
+<script>
+/* MI AI ACCOUNT THEME COLOUR V1 - START */
+
+(function () {
+    "use strict";
+
+    const STORAGE_PREFIX =
+        "mi_account_theme_colour_v1_";
+
+    const DEFAULT_THEME = {
+        name: "gray",
+        colour: "#6b7280",
+        rgb: "107, 114, 128"
+    };
+
+    const THEME_KEYS = [
+        "mi_theme_colour",
+        "mi_theme_color",
+        "mi_theme",
+        "theme",
+        "themeColour",
+        "themeColor",
+        "selectedTheme",
+        "selected_theme"
+    ];
+
+    let restoring = false;
+    let saveTimer = null;
+    let lastAccount = "";
+
+    function normalizeEmail(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function firebaseUser() {
+        try {
+            return (
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth === "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                ) ||
+                null
+            );
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function currentEmail() {
+        const account =
+            firebaseUser();
+
+        return normalizeEmail(
+            account?.email ||
+            window.user?.email ||
+            (
+                typeof user !== "undefined"
+                    ? user?.email
+                    : ""
+            ) ||
+            localStorage.getItem(
+                "mi_user_email"
+            ) ||
+            ""
+        );
+    }
+
+    function loggedIn() {
+        return Boolean(
+            currentEmail() &&
+            (
+                firebaseUser() ||
+                localStorage.getItem(
+                    "mi_supabase_token"
+                ) ||
+                localStorage.getItem(
+                    "mi_user_id"
+                )
+            )
+        );
+    }
+
+    function storageKey(email) {
+        return (
+            STORAGE_PREFIX +
+            encodeURIComponent(
+                normalizeEmail(email)
+            )
+        );
+    }
+
+    function safeParse(value) {
+        try {
+            return JSON.parse(value);
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function normaliseColour(value) {
+        const colour =
+            String(value || "")
+                .trim();
+
+        if (
+            /^#[0-9a-f]{6}$/i.test(
+                colour
+            )
+        ) {
+            return colour;
+        }
+
+        if (
+            /^#[0-9a-f]{3}$/i.test(
+                colour
+            )
+        ) {
+            return colour;
+        }
+
+        if (
+            /^rgb\(/i.test(
+                colour
+            ) ||
+            /^rgba\(/i.test(
+                colour
+            )
+        ) {
+            return colour;
+        }
+
+        return "";
+    }
+
+    function hexToRgbString(hex) {
+        const value =
+            String(hex || "")
+                .replace("#", "")
+                .trim();
+
+        if (
+            !/^[0-9a-f]{6}$/i.test(
+                value
+            )
+        ) {
+            return DEFAULT_THEME.rgb;
+        }
+
+        return [
+            parseInt(
+                value.slice(0, 2),
+                16
+            ),
+            parseInt(
+                value.slice(2, 4),
+                16
+            ),
+            parseInt(
+                value.slice(4, 6),
+                16
+            )
+        ].join(", ");
+    }
+
+    function themeControls() {
+        return Array.from(
+            document.querySelectorAll(
+                [
+                    "#settingsPanel input[type='color']",
+                    "#settingsModal input[type='color']",
+                    ".settings-panel input[type='color']",
+                    "[data-setting='theme'] input",
+                    "[data-setting='colour'] input",
+                    "[data-setting='color'] input",
+                    "[data-settings-type='theme'] input",
+                    "[data-settings-type='colour'] input",
+                    "[data-settings-type='color'] input",
+                    "#themeSelect",
+                    "#themeColor",
+                    "#themeColour",
+                    "#colorPicker",
+                    "#colourPicker"
+                ].join(",")
+            )
+        );
+    }
+
+    function readCurrentTheme() {
+        const root =
+            document.documentElement;
+
+        const computed =
+            getComputedStyle(root);
+
+        const control =
+            themeControls().find(
+                function (element) {
+                    return Boolean(
+                        element.value
+                    );
+                }
+            );
+
+        const possibleValues = [
+            control?.value,
+            root.style.getPropertyValue(
+                "--mi-theme-color"
+            ),
+            root.style.getPropertyValue(
+                "--theme-color"
+            ),
+            root.style.getPropertyValue(
+                "--main"
+            ),
+            root.style.getPropertyValue(
+                "--primary"
+            ),
+            root.style.getPropertyValue(
+                "--accent"
+            ),
+            computed.getPropertyValue(
+                "--mi-theme-color"
+            ),
+            computed.getPropertyValue(
+                "--theme-color"
+            ),
+            computed.getPropertyValue(
+                "--main"
+            ),
+            computed.getPropertyValue(
+                "--primary"
+            ),
+            computed.getPropertyValue(
+                "--accent"
+            )
+        ];
+
+        let colour = "";
+
+        for (
+            const value
+            of possibleValues
+        ) {
+            colour =
+                normaliseColour(value);
+
+            if (colour) {
+                break;
+            }
+        }
+
+        const themeName =
+            String(
+                document.documentElement
+                    .dataset.theme ||
+                document.body
+                    ?.dataset.theme ||
+                localStorage.getItem(
+                    "mi_theme"
+                ) ||
+                "custom"
+            )
+                .trim()
+                .toLowerCase();
+
+        return {
+            name:
+                themeName ||
+                "custom",
+
+            colour:
+                colour ||
+                DEFAULT_THEME.colour,
+
+            rgb:
+                colour.startsWith("#") &&
+                colour.length === 7
+                    ? hexToRgbString(
+                        colour
+                    )
+                    : DEFAULT_THEME.rgb
+        };
+    }
+
+    function applyTheme(theme) {
+        const selected =
+            theme &&
+            typeof theme === "object"
+                ? theme
+                : DEFAULT_THEME;
+
+        const colour =
+            normaliseColour(
+                selected.colour
+            ) ||
+            DEFAULT_THEME.colour;
+
+        const rgb =
+            selected.rgb ||
+            (
+                colour.startsWith("#") &&
+                colour.length === 7
+                    ? hexToRgbString(
+                        colour
+                    )
+                    : DEFAULT_THEME.rgb
+            );
+
+        const name =
+            String(
+                selected.name ||
+                "gray"
+            )
+                .trim()
+                .toLowerCase();
+
+        restoring = true;
+
+        try {
+            const root =
+                document.documentElement;
+
+            [
+                "--main",
+                "--primary",
+                "--accent",
+                "--theme-color",
+                "--mi-theme-color"
+            ].forEach(
+                function (variable) {
+                    root.style.setProperty(
+                        variable,
+                        colour
+                    );
+                }
+            );
+
+            [
+                "--theme-rgb",
+                "--mi-theme-rgb"
+            ].forEach(
+                function (variable) {
+                    root.style.setProperty(
+                        variable,
+                        rgb
+                    );
+                }
+            );
+
+            root.dataset.theme =
+                name;
+
+            if (document.body) {
+                document.body.dataset.theme =
+                    name;
+            }
+
+            themeControls().forEach(
+                function (control) {
+                    if (
+                        control instanceof
+                            HTMLInputElement &&
+                        control.type ===
+                            "color" &&
+                        colour.startsWith("#")
+                    ) {
+                        control.value =
+                            colour;
+                    }
+                    else if (
+                        control instanceof
+                            HTMLSelectElement
+                    ) {
+                        const matching =
+                            Array.from(
+                                control.options
+                            ).find(
+                                function (option) {
+                                    const value =
+                                        String(
+                                            option.value ||
+                                            option.textContent ||
+                                            ""
+                                        )
+                                            .trim()
+                                            .toLowerCase();
+
+                                    return (
+                                        value === name ||
+                                        value === colour
+                                            .toLowerCase()
+                                    );
+                                }
+                            );
+
+                        if (matching) {
+                            control.value =
+                                matching.value;
+                        }
+                    }
+                }
+            );
+
+            localStorage.setItem(
+                "mi_theme_colour",
+                colour
+            );
+
+            localStorage.setItem(
+                "mi_theme_color",
+                colour
+            );
+
+            localStorage.setItem(
+                "mi_theme",
+                name
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-theme-changed",
+                    {
+                        detail: {
+                            theme: name,
+                            colour: colour,
+                            color: colour
+                        }
+                    }
+                )
+            );
+        }
+        finally {
+            setTimeout(
+                function () {
+                    restoring = false;
+                },
+                80
+            );
+        }
+    }
+
+    function applyDefaultGray() {
+        applyTheme(
+            DEFAULT_THEME
+        );
+    }
+
+    function saveAccountTheme(reason) {
+        if (
+            restoring ||
+            !loggedIn()
+        ) {
+            return false;
+        }
+
+        const email =
+            currentEmail();
+
+        if (!email) {
+            return false;
+        }
+
+        const theme =
+            readCurrentTheme();
+
+        localStorage.setItem(
+            storageKey(email),
+            JSON.stringify({
+                version: 1,
+                email: email,
+                savedAt: Date.now(),
+                theme: theme
+            })
+        );
+
+        lastAccount = email;
+
+        console.log(
+            "[MI AI Account Theme] Saved:",
+            reason || "change",
+            email,
+            theme
+        );
+
+        return true;
+    }
+
+    function scheduleSave(reason) {
+        clearTimeout(saveTimer);
+
+        saveTimer =
+            setTimeout(
+                function () {
+                    saveAccountTheme(
+                        reason
+                    );
+                },
+                180
+            );
+    }
+
+    function readAccountTheme(email) {
+        const state =
+            safeParse(
+                localStorage.getItem(
+                    storageKey(email)
+                )
+            );
+
+        if (
+            !state ||
+            state.version !== 1 ||
+            !state.theme
+        ) {
+            return null;
+        }
+
+        return state.theme;
+    }
+
+    function restoreForAccount(email) {
+        const normalized =
+            normalizeEmail(email);
+
+        if (!normalized) {
+            applyDefaultGray();
+            return;
+        }
+
+        const savedTheme =
+            readAccountTheme(
+                normalized
+            );
+
+        if (savedTheme) {
+            applyTheme(
+                savedTheme
+            );
+
+            console.log(
+                "[MI AI Account Theme] Restored:",
+                normalized
+            );
+        }
+        else {
+            applyDefaultGray();
+
+            console.log(
+                "[MI AI Account Theme] No custom colour. Gray applied:",
+                normalized
+            );
+        }
+
+        lastAccount =
+            normalized;
+    }
+
+    function handleAccountChange() {
+        if (loggedIn()) {
+            restoreForAccount(
+                currentEmail()
+            );
+        }
+        else {
+            applyDefaultGray();
+        }
+    }
+
+    function attachThemeListeners() {
+        document.addEventListener(
+            "input",
+            function (event) {
+                if (
+                    restoring ||
+                    !loggedIn()
+                ) {
+                    return;
+                }
+
+                const target =
+                    event.target;
+
+                if (
+                    target instanceof
+                        HTMLInputElement &&
+                    target.type ===
+                        "color"
+                ) {
+                    scheduleSave(
+                        "colour-input"
+                    );
+                }
+            },
+            true
+        );
+
+        document.addEventListener(
+            "change",
+            function (event) {
+                if (
+                    restoring ||
+                    !loggedIn()
+                ) {
+                    return;
+                }
+
+                const target =
+                    event.target;
+
+                const details =
+                    [
+                        target?.id,
+                        target?.name,
+                        target?.className,
+                        target?.getAttribute?.(
+                            "data-setting"
+                        ),
+                        target?.getAttribute?.(
+                            "data-settings-type"
+                        ),
+                        target?.closest?.(
+                            ".mi-settings-section"
+                        )?.textContent,
+                        target?.closest?.(
+                            "label"
+                        )?.textContent
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                if (
+                    target?.type ===
+                        "color" ||
+                    details.includes(
+                        "theme"
+                    ) ||
+                    details.includes(
+                        "colour"
+                    ) ||
+                    details.includes(
+                        "color"
+                    )
+                ) {
+                    scheduleSave(
+                        "theme-change"
+                    );
+                }
+            },
+            true
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    restoring ||
+                    !loggedIn()
+                ) {
+                    return;
+                }
+
+                const details =
+                    [
+                        event.target?.id,
+                        event.target?.className,
+                        event.target
+                            ?.textContent,
+                        event.target
+                            ?.getAttribute?.(
+                                "data-theme"
+                            ),
+                        event.target
+                            ?.getAttribute?.(
+                                "data-colour"
+                            ),
+                        event.target
+                            ?.getAttribute?.(
+                                "data-color"
+                            )
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                if (
+                    details.includes(
+                        "theme"
+                    ) ||
+                    details.includes(
+                        "colour"
+                    ) ||
+                    details.includes(
+                        "color"
+                    ) ||
+                    details.includes(
+                        "gray"
+                    ) ||
+                    details.includes(
+                        "grey"
+                    )
+                ) {
+                    setTimeout(
+                        function () {
+                            scheduleSave(
+                                "theme-click"
+                            );
+                        },
+                        150
+                    );
+                }
+            },
+            true
+        );
+
+        window.addEventListener(
+            "mi-theme-changed",
+            function () {
+                if (
+                    loggedIn() &&
+                    !restoring
+                ) {
+                    scheduleSave(
+                        "theme-event"
+                    );
+                }
+            }
+        );
+    }
+
+    function attachFirebaseListener() {
+        let auth = null;
+
+        try {
+            auth =
+                window.miFirebaseAuth ||
+                window.firebaseAuth ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth ===
+                        "function"
+                        ? window.firebase.auth()
+                        : null
+                );
+        }
+        catch (error) {
+            auth = null;
+        }
+
+        if (
+            !auth ||
+            auth.__miAccountThemeListener
+        ) {
+            return Boolean(auth);
+        }
+
+        auth.__miAccountThemeListener =
+            true;
+
+        auth.onAuthStateChanged(
+            function (account) {
+                if (account?.email) {
+                    localStorage.setItem(
+                        "mi_user_email",
+                        account.email
+                    );
+
+                    restoreForAccount(
+                        account.email
+                    );
+                }
+                else {
+                    applyDefaultGray();
+                }
+            }
+        );
+
+        return true;
+    }
+
+    function start() {
+        /*
+          Guest and initial page state must always be gray.
+          Account restore runs afterwards if already logged in.
+        */
+        applyDefaultGray();
+        attachThemeListeners();
+
+        if (!attachFirebaseListener()) {
+            let attempts = 0;
+
+            const timer =
+                setInterval(
+                    function () {
+                        attempts += 1;
+
+                        if (
+                            attachFirebaseListener() ||
+                            attempts >= 80
+                        ) {
+                            clearInterval(
+                                timer
+                            );
+                        }
+                    },
+                    250
+                );
+        }
+
+        setTimeout(
+            handleAccountChange,
+            200
+        );
+
+        setTimeout(
+            handleAccountChange,
+            800
+        );
+
+        window.addEventListener(
+            "pageshow",
+            handleAccountChange
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            handleAccountChange
+        );
+
+        window.addEventListener(
+            "mi-firebase-auth-changed",
+            handleAccountChange
+        );
+
+        window.addEventListener(
+            "beforeunload",
+            function () {
+                saveAccountTheme(
+                    "beforeunload"
+                );
+            }
+        );
+
+        document.addEventListener(
+            "visibilitychange",
+            function () {
+                if (
+                    document.visibilityState ===
+                        "hidden"
+                ) {
+                    saveAccountTheme(
+                        "page-hidden"
+                    );
+                }
+            }
+        );
+
+        setInterval(
+            function () {
+                if (loggedIn()) {
+                    saveAccountTheme(
+                        "automatic"
+                    );
+                }
+                else if (
+                    lastAccount
+                ) {
+                    applyDefaultGray();
+                    lastAccount = "";
+                }
+            },
+            5000
+        );
+    }
+
+    window.MIAccountThemeColour = {
+        save:
+            function () {
+                return saveAccountTheme(
+                    "manual"
+                );
+            },
+
+        restore:
+            function () {
+                handleAccountChange();
+            },
+
+        resetToGray:
+            applyDefaultGray,
+
+        getSaved:
+            function (email) {
+                return readAccountTheme(
+                    email ||
+                    currentEmail()
+                );
+            },
+
+        defaultTheme:
+            DEFAULT_THEME
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI ACCOUNT THEME COLOUR V1 - END */
 </script>
 </body>
 </html>
