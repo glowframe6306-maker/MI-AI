@@ -6935,6 +6935,348 @@ body.mi-share-password-locked .composer {
 
 /* MI AI MANDATORY SHARE PASSWORD V1 - END */
 </style>
+
+<style>
+/* MI AI NEW CHAT WELCOME V1 - START */
+
+#chat,
+.chat,
+.chat-area,
+.messages,
+.messages-area {
+    position: relative;
+}
+
+#miNewChatWelcome {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+
+    opacity: 1;
+    visibility: visible;
+
+    transition:
+        opacity 0.5s ease,
+        visibility 0.5s ease,
+        transform 0.5s ease;
+}
+
+#miNewChatWelcome.mi-welcome-hiding {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.04);
+}
+
+#miNewChatWelcome::before {
+    content: "";
+    position: absolute;
+
+    width: min(620px, 85vw);
+    height: min(620px, 85vw);
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(99, 102, 241, 0.24) 0%,
+            rgba(139, 92, 246, 0.16) 30%,
+            rgba(59, 130, 246, 0.08) 55%,
+            transparent 72%
+        );
+
+    filter: blur(22px);
+
+    animation:
+        miWelcomeAura 4s ease-in-out infinite;
+}
+
+#miNewChatWelcome::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            115deg,
+            transparent 25%,
+            rgba(255, 255, 255, 0.035) 45%,
+            rgba(255, 255, 255, 0.08) 50%,
+            rgba(255, 255, 255, 0.035) 55%,
+            transparent 75%
+        );
+
+    transform: translateX(-120%);
+
+    animation:
+        miWelcomeShine 5s ease-in-out infinite;
+}
+
+#miNewChatWelcomeCard {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    width: min(700px, 92%);
+    padding: 40px 24px;
+
+    text-align: center;
+
+    animation:
+        miWelcomeFloat 3.4s ease-in-out infinite;
+}
+
+.mi-welcome-line {
+    margin: 0;
+
+    font-family:
+        Inter,
+        Arial,
+        sans-serif;
+
+    font-weight: 900;
+    letter-spacing: 0.22em;
+    line-height: 0.95;
+
+    color: transparent;
+
+    background:
+        linear-gradient(
+            100deg,
+            #ffffff 0%,
+            #dbeafe 20%,
+            #93c5fd 42%,
+            #c4b5fd 65%,
+            #ffffff 100%
+        );
+
+    background-size: 220% 100%;
+
+    -webkit-background-clip: text;
+    background-clip: text;
+
+    filter:
+        drop-shadow(
+            0 0 10px
+            rgba(147, 197, 253, 0.72)
+        )
+        drop-shadow(
+            0 0 28px
+            rgba(139, 92, 246, 0.48)
+        );
+
+    animation:
+        miWelcomeTextGlow 3s linear infinite;
+}
+
+.mi-welcome-line-welcome {
+    font-size:
+        clamp(42px, 8vw, 92px);
+}
+
+.mi-welcome-line-to {
+    margin-top: 8px;
+
+    font-size:
+        clamp(25px, 4.5vw, 50px);
+
+    letter-spacing: 0.5em;
+
+    opacity: 0.92;
+}
+
+.mi-welcome-line-mi {
+    margin-top: 10px;
+
+    font-size:
+        clamp(56px, 10vw, 118px);
+
+    letter-spacing: 0.14em;
+}
+
+#miWelcomeSubtitle {
+    margin-top: 28px;
+
+    color:
+        rgba(255, 255, 255, 0.66);
+
+    font-size:
+        clamp(12px, 1.7vw, 15px);
+
+    font-weight: 600;
+    letter-spacing: 0.1em;
+
+    text-transform: uppercase;
+
+    animation:
+        miWelcomeSubtitlePulse 2.6s ease-in-out infinite;
+}
+
+#miWelcomeDots {
+    display: flex;
+    gap: 8px;
+
+    margin-top: 22px;
+}
+
+#miWelcomeDots span {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(191, 219, 254, 0.9);
+
+    box-shadow:
+        0 0 12px
+        rgba(147, 197, 253, 0.8);
+
+    animation:
+        miWelcomeDot 1.6s ease-in-out infinite;
+}
+
+#miWelcomeDots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+#miWelcomeDots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes miWelcomeAura {
+    0%,
+    100% {
+        transform:
+            scale(0.92);
+        opacity: 0.68;
+    }
+
+    50% {
+        transform:
+            scale(1.08);
+        opacity: 1;
+    }
+}
+
+@keyframes miWelcomeShine {
+    0%,
+    25% {
+        transform:
+            translateX(-120%);
+    }
+
+    55%,
+    100% {
+        transform:
+            translateX(120%);
+    }
+}
+
+@keyframes miWelcomeFloat {
+    0%,
+    100% {
+        transform:
+            translateY(0);
+    }
+
+    50% {
+        transform:
+            translateY(-9px);
+    }
+}
+
+@keyframes miWelcomeTextGlow {
+    0% {
+        background-position:
+            0% 50%;
+    }
+
+    100% {
+        background-position:
+            220% 50%;
+    }
+}
+
+@keyframes miWelcomeSubtitlePulse {
+    0%,
+    100% {
+        opacity: 0.48;
+    }
+
+    50% {
+        opacity: 0.9;
+    }
+}
+
+@keyframes miWelcomeDot {
+    0%,
+    100% {
+        transform:
+            scale(0.72);
+        opacity: 0.42;
+    }
+
+    50% {
+        transform:
+            scale(1.22);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    #miNewChatWelcomeCard {
+        padding:
+            30px 14px;
+    }
+
+    .mi-welcome-line {
+        line-height:
+            1;
+    }
+
+    #miWelcomeSubtitle {
+        max-width:
+            280px;
+
+        line-height:
+            1.6;
+    }
+}
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    #miNewChatWelcome,
+    #miNewChatWelcome::before,
+    #miNewChatWelcome::after,
+    #miNewChatWelcomeCard,
+    .mi-welcome-line,
+    #miWelcomeSubtitle,
+    #miWelcomeDots span {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+}
+
+/* MI AI NEW CHAT WELCOME V1 - END */
+</style>
 </head>
 
 <body>
@@ -21358,6 +21700,539 @@ document.addEventListener(
 })();
 
 /* MI AI CHAT TITLE AND EMPTY CLEANUP V2 - END */
+</script>
+
+<script>
+/* MI AI NEW CHAT WELCOME JS V1 - START */
+
+(function () {
+    "use strict";
+
+    let observer = null;
+    let refreshTimer = null;
+
+    function chatContainer() {
+        return (
+            document.getElementById("chat") ||
+            document.querySelector(
+                [
+                    ".chat",
+                    ".chat-area",
+                    ".messages",
+                    ".messages-area"
+                ].join(",")
+            )
+        );
+    }
+
+    function currentChatIdValue() {
+        try {
+            if (
+                typeof currentChat !== "undefined" &&
+                currentChat
+            ) {
+                return String(currentChat);
+            }
+        }
+        catch (error) {
+            // Ignore unavailable binding.
+        }
+
+        return String(
+            window.currentChat ||
+            localStorage.getItem("last_chat") ||
+            ""
+        );
+    }
+
+    function currentChatMessages() {
+        const chatId =
+            currentChatIdValue();
+
+        if (!chatId) {
+            return [];
+        }
+
+        let chatMap = null;
+
+        try {
+            if (
+                typeof chats !== "undefined" &&
+                chats &&
+                typeof chats === "object"
+            ) {
+                chatMap = chats;
+            }
+        }
+        catch (error) {
+            chatMap = null;
+        }
+
+        chatMap =
+            chatMap ||
+            window.chats ||
+            {};
+
+        const chat =
+            chatMap[chatId];
+
+        if (Array.isArray(chat)) {
+            return chat;
+        }
+
+        if (
+            chat &&
+            Array.isArray(chat.messages)
+        ) {
+            return chat.messages;
+        }
+
+        return [];
+    }
+
+    function hasRealMessages() {
+        const messages =
+            currentChatMessages();
+
+        if (
+            messages.some(
+                function (message) {
+                    return Boolean(
+                        String(
+                            message?.text ??
+                            message?.content ??
+                            message?.message ??
+                            ""
+                        ).trim()
+                    );
+                }
+            )
+        ) {
+            return true;
+        }
+
+        const container =
+            chatContainer();
+
+        if (!container) {
+            return false;
+        }
+
+        const visibleMessageSelectors = [
+            ".user",
+            ".ai",
+            ".message",
+            ".chat-message",
+            ".message-row",
+            "[data-message-id]",
+            "[data-role='user']",
+            "[data-role='assistant']"
+        ].join(",");
+
+        return Array.from(
+            container.querySelectorAll(
+                visibleMessageSelectors
+            )
+        ).some(function (element) {
+            if (
+                element.id ===
+                "miNewChatWelcome" ||
+                element.closest(
+                    "#miNewChatWelcome"
+                )
+            ) {
+                return false;
+            }
+
+            return Boolean(
+                String(
+                    element.textContent ||
+                    ""
+                ).trim()
+            );
+        });
+    }
+
+    function isSharedViewer() {
+        return Boolean(
+            window.MI_SHARED_VIEWER_MODE ||
+            document.body.classList.contains(
+                "mi-shared-chat-viewer"
+            )
+        );
+    }
+
+    function welcomeElement() {
+        return document.getElementById(
+            "miNewChatWelcome"
+        );
+    }
+
+    function createWelcome() {
+        const container =
+            chatContainer();
+
+        if (
+            !container ||
+            welcomeElement() ||
+            isSharedViewer() ||
+            hasRealMessages()
+        ) {
+            return false;
+        }
+
+        const computed =
+            window.getComputedStyle(
+                container
+            );
+
+        if (
+            computed.position ===
+            "static"
+        ) {
+            container.style.position =
+                "relative";
+        }
+
+        const welcome =
+            document.createElement(
+                "div"
+            );
+
+        welcome.id =
+            "miNewChatWelcome";
+
+        welcome.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        welcome.innerHTML = `
+            <div id="miNewChatWelcomeCard">
+                <div
+                    class="
+                        mi-welcome-line
+                        mi-welcome-line-welcome
+                    "
+                >
+                    WELCOME
+                </div>
+
+                <div
+                    class="
+                        mi-welcome-line
+                        mi-welcome-line-to
+                    "
+                >
+                    TO
+                </div>
+
+                <div
+                    class="
+                        mi-welcome-line
+                        mi-welcome-line-mi
+                    "
+                >
+                    MI AI
+                </div>
+
+                <div id="miWelcomeSubtitle">
+                    Assistant of M.I. Muhammadh
+                </div>
+
+                <div id="miWelcomeDots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(
+            welcome
+        );
+
+        return true;
+    }
+
+    function hideWelcome(
+        immediate
+    ) {
+        const welcome =
+            welcomeElement();
+
+        if (!welcome) {
+            return;
+        }
+
+        if (immediate) {
+            welcome.remove();
+            return;
+        }
+
+        welcome.classList.add(
+            "mi-welcome-hiding"
+        );
+
+        setTimeout(
+            function () {
+                welcome.remove();
+            },
+            520
+        );
+    }
+
+    function refreshWelcome() {
+        if (
+            isSharedViewer()
+        ) {
+            hideWelcome(true);
+            return;
+        }
+
+        if (
+            hasRealMessages()
+        ) {
+            hideWelcome(false);
+            return;
+        }
+
+        createWelcome();
+    }
+
+    function scheduleRefresh(delay) {
+        clearTimeout(
+            refreshTimer
+        );
+
+        refreshTimer =
+            setTimeout(
+                refreshWelcome,
+                typeof delay === "number"
+                    ? delay
+                    : 80
+            );
+    }
+
+    function messageWasSubmitted(event) {
+        const target =
+            event.target;
+
+        const details = [
+            target?.id,
+            target?.className,
+            target?.getAttribute?.(
+                "data-action"
+            ),
+            target?.textContent
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("send") ||
+            details.includes("submit")
+        );
+    }
+
+    function newChatWasOpened(event) {
+        const target =
+            event.target;
+
+        const details = [
+            target?.id,
+            target?.className,
+            target?.getAttribute?.(
+                "data-action"
+            ),
+            target?.textContent
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            details.includes("newchat") ||
+            details.includes("new chat")
+        );
+    }
+
+    function installObserver() {
+        const container =
+            chatContainer();
+
+        if (!container) {
+            return false;
+        }
+
+        if (observer) {
+            observer.disconnect();
+        }
+
+        observer =
+            new MutationObserver(
+                function () {
+                    scheduleRefresh(40);
+                }
+            );
+
+        observer.observe(
+            container,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+
+        return true;
+    }
+
+    function start() {
+        refreshWelcome();
+        installObserver();
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    messageWasSubmitted(
+                        event
+                    )
+                ) {
+                    hideWelcome(false);
+
+                    scheduleRefresh(700);
+                    return;
+                }
+
+                if (
+                    newChatWasOpened(
+                        event
+                    )
+                ) {
+                    hideWelcome(true);
+
+                    setTimeout(
+                        function () {
+                            installObserver();
+                            refreshWelcome();
+                        },
+                        120
+                    );
+
+                    setTimeout(
+                        refreshWelcome,
+                        500
+                    );
+                }
+            },
+            false
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key !== "Enter" ||
+                    event.shiftKey
+                ) {
+                    return;
+                }
+
+                const target =
+                    event.target;
+
+                if (
+                    !target?.matches?.(
+                        [
+                            "#inputBox",
+                            "textarea",
+                            "[contenteditable='true']"
+                        ].join(",")
+                    )
+                ) {
+                    return;
+                }
+
+                const value =
+                    String(
+                        target.value ??
+                        target.textContent ??
+                        ""
+                    ).trim();
+
+                if (!value) {
+                    return;
+                }
+
+                hideWelcome(false);
+                scheduleRefresh(700);
+            },
+            false
+        );
+
+        window.addEventListener(
+            "mi-message-saved",
+            function () {
+                hideWelcome(false);
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                hideWelcome(true);
+
+                setTimeout(
+                    function () {
+                        installObserver();
+                        refreshWelcome();
+                    },
+                    150
+                );
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                installObserver();
+                scheduleRefresh(100);
+            }
+        );
+    }
+
+    window.MINewChatWelcome = {
+        show:
+            createWelcome,
+
+        hide:
+            hideWelcome,
+
+        refresh:
+            refreshWelcome
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI NEW CHAT WELCOME JS V1 - END */
 </script>
 </body>
 </html>
