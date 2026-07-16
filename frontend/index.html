@@ -21465,5 +21465,1029 @@ document.addEventListener(
 
 /* MI AI FINAL NEW CHAT WELCOME V11 - END */
 </script>
+
+<script>
+/* MI AI CHAT TITLE SYNC V12 - START */
+
+(function () {
+    "use strict";
+
+    const MAX_TITLE_LENGTH = 42;
+
+    let processing = false;
+    let observer = null;
+    let timer = null;
+
+    function getChats() {
+        try {
+            if (
+                typeof chats !== "undefined" &&
+                chats &&
+                typeof chats === "object" &&
+                !Array.isArray(chats)
+            ) {
+                return chats;
+            }
+        }
+        catch (error) {}
+
+        return (
+            window.chats &&
+            typeof window.chats === "object" &&
+            !Array.isArray(window.chats)
+                ? window.chats
+                : {}
+        );
+    }
+
+    function getCurrentChatId() {
+        try {
+            if (
+                typeof currentChat !== "undefined" &&
+                currentChat
+            ) {
+                return String(currentChat);
+            }
+        }
+        catch (error) {}
+
+        return String(
+            window.currentChat ||
+            localStorage.getItem("last_chat") ||
+            ""
+        );
+    }
+
+    function getMessages(chatId) {
+        const chat =
+            getChats()[chatId];
+
+        if (Array.isArray(chat)) {
+            return chat;
+        }
+
+        if (
+            chat &&
+            Array.isArray(chat.messages)
+        ) {
+            return chat.messages;
+        }
+
+        return [];
+    }
+
+    function firstUserMessage(chatId) {
+        const message =
+            getMessages(chatId).find(
+                function (item) {
+                    if (
+                        !item ||
+                        typeof item !== "object"
+                    ) {
+                        return false;
+                    }
+
+                    const role =
+                        String(
+                            item.role ||
+                            item.sender ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    const text =
+                        String(
+                            item.text ??
+                            item.content ??
+                            item.message ??
+                            ""
+                        ).trim();
+
+                    return (
+                        Boolean(text) &&
+                        (
+                            role === "user" ||
+                            role === "me" ||
+                            role === "human"
+                        )
+                    );
+                }
+            );
+
+        return String(
+            message?.text ??
+            message?.content ??
+            message?.message ??
+            ""
+        )
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function titleCase(value) {
+        const smallWords =
+            new Set([
+                "a",
+                "an",
+                "and",
+                "as",
+                "at",
+                "by",
+                "for",
+                "from",
+                "in",
+                "of",
+                "on",
+                "or",
+                "the",
+                "to",
+                "with"
+            ]);
+
+        return String(value || "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(
+                function (word, index) {
+                    const lower =
+                        word.toLowerCase();
+
+                    if (
+                        index > 0 &&
+                        smallWords.has(lower)
+                    ) {
+                        return lower;
+                    }
+
+                    return (
+                        lower.charAt(0).toUpperCase() +
+                        lower.slice(1)
+                    );
+                }
+            )
+            .join(" ");
+    }
+
+    function shortenTitle(title) {
+        const value =
+            String(title || "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+        if (
+            value.length <=
+            MAX_TITLE_LENGTH
+        ) {
+            return value;
+        }
+
+        return value
+            .slice(0, MAX_TITLE_LENGTH)
+            .replace(/\s+\S*$/, "")
+            .trim();
+    }
+
+    function titleFromMessage(message) {
+        const text =
+            String(message || "")
+                .replace(/https?:\/\/\S+/gi, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+
+        const lower =
+            text.toLowerCase();
+
+        if (!text) {
+            return "NEW CHAT";
+        }
+
+        if (
+            /^(hi|hii+|hello|hey|hello there|good morning|good afternoon|good evening|à¶†à¶ºà·”à¶¶à·à·€à¶±à·Š|à®µà®£à®•à¯à®•à®®à¯)\b/i
+                .test(text)
+        ) {
+            return "User Greeting";
+        }
+
+        if (
+            /\bhow are you\b/i
+                .test(lower)
+        ) {
+            return "General Conversation";
+        }
+
+        if (
+            /\bpython\b.*\bcalculator\b/i
+                .test(lower)
+        ) {
+            return "Python Calculator";
+        }
+
+        if (
+            /\bjavascript\b.*\b(error|bug|fix|issue|problem)\b/i
+                .test(lower)
+        ) {
+            return "JavaScript Debugging";
+        }
+
+        if (
+            /\bpython\b.*\b(error|bug|fix|issue|problem)\b/i
+                .test(lower)
+        ) {
+            return "Python Debugging";
+        }
+
+        if (
+            /\bhtml\b.*\b(login|page|website|form)\b/i
+                .test(lower)
+        ) {
+            return "HTML Web Page";
+        }
+
+        if (
+            /\b(cricket|football|soccer|rugby|basketball)\b.*\b(score|match|result|live)\b/i
+                .test(lower) ||
+            /\b(score|match|result|live)\b.*\b(cricket|football|soccer|rugby|basketball)\b/i
+                .test(lower)
+        ) {
+            if (
+                lower.includes("cricket")
+            ) {
+                return "Cricket Scores";
+            }
+
+            if (
+                lower.includes("football") ||
+                lower.includes("soccer")
+            ) {
+                return "Football Scores";
+            }
+
+            return "Live Sports";
+        }
+
+        if (
+            /\b(weather|forecast|temperature|rain)\b/i
+                .test(lower)
+        ) {
+            return "Weather Forecast";
+        }
+
+        if (
+            /\b(news|breaking news|latest news)\b/i
+                .test(lower)
+        ) {
+            return "Latest News";
+        }
+
+        if (
+            /\b(time now|current time|what time|à·€à·™à¶½à·à·€|à·€à·šà¶½à·à·€|à®¨à¯‡à®°à®®à¯)\b/i
+                .test(lower)
+        ) {
+            return "Current Time";
+        }
+
+        if (
+            /\btranslate\b.*\b(sinhala|à·ƒà·’à¶‚à·„à¶½)\b/i
+                .test(lower)
+        ) {
+            return "Sinhala Translation";
+        }
+
+        if (
+            /\btranslate\b.*\b(tamil|à®¤à®®à®¿à®´à¯)\b/i
+                .test(lower)
+        ) {
+            return "Tamil Translation";
+        }
+
+        if (
+            /\btranslate\b/i
+                .test(lower)
+        ) {
+            return "Language Translation";
+        }
+
+        if (
+            /\b(ai|artificial intelligence)\b/i
+                .test(lower)
+        ) {
+            return "Artificial Intelligence";
+        }
+
+        if (
+            /\b(cv|resume|curriculum vitae)\b/i
+                .test(lower)
+        ) {
+            return "Resume Writing";
+        }
+
+        if (
+            /\b(logo|icon|branding)\b/i
+                .test(lower)
+        ) {
+            return "Logo Design";
+        }
+
+        if (
+            /\b(error|bug|issue|problem|not working|fix)\b/i
+                .test(lower)
+        ) {
+            return "Technical Troubleshooting";
+        }
+
+        const stopWords =
+            new Set([
+                "a",
+                "an",
+                "and",
+                "are",
+                "can",
+                "create",
+                "do",
+                "explain",
+                "for",
+                "from",
+                "give",
+                "help",
+                "how",
+                "i",
+                "in",
+                "is",
+                "make",
+                "me",
+                "my",
+                "of",
+                "on",
+                "please",
+                "tell",
+                "the",
+                "this",
+                "to",
+                "want",
+                "what",
+                "when",
+                "where",
+                "which",
+                "who",
+                "why",
+                "with",
+                "write",
+                "you"
+            ]);
+
+        const usefulWords =
+            text
+                .replace(
+                    /[^\p{L}\p{N}\s+#.-]/gu,
+                    " "
+                )
+                .split(/\s+/)
+                .filter(Boolean)
+                .filter(
+                    function (word) {
+                        return (
+                            word.length > 1 &&
+                            !stopWords.has(
+                                word.toLowerCase()
+                            )
+                        );
+                    }
+                )
+                .slice(0, 5);
+
+        if (!usefulWords.length) {
+            return "General Conversation";
+        }
+
+        return shortenTitle(
+            titleCase(
+                usefulWords.join(" ")
+            )
+        );
+    }
+
+    function setChatTitle(
+        chatId,
+        title
+    ) {
+        const chat =
+            getChats()[chatId];
+
+        if (!chat) {
+            return false;
+        }
+
+        const finalTitle =
+            shortenTitle(title);
+
+        chat.title =
+            finalTitle;
+
+        chat.name =
+            finalTitle;
+
+        chat.chatName =
+            finalTitle;
+
+        chat.updatedAt =
+            chat.updatedAt ||
+            Date.now();
+
+        return true;
+    }
+
+    function saveLocalState() {
+        try {
+            if (
+                typeof save === "function"
+            ) {
+                save();
+            }
+            else if (
+                typeof window.save ===
+                    "function"
+            ) {
+                window.save();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Titles V12] Local save failed.",
+                error
+            );
+        }
+    }
+
+    function renderChatList() {
+        try {
+            if (
+                typeof renderList ===
+                    "function"
+            ) {
+                renderList();
+            }
+            else if (
+                typeof window.renderList ===
+                    "function"
+            ) {
+                window.renderList();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Titles V12] renderList failed.",
+                error
+            );
+        }
+
+        queueMicrotask(
+            applyVisibleTitles
+        );
+    }
+
+    function persistRemoteTitle(
+        chatId,
+        title
+    ) {
+        const token =
+            localStorage.getItem(
+                "mi_supabase_token"
+            );
+
+        const userId =
+            localStorage.getItem(
+                "mi_user_id"
+            ) || "";
+
+        const email =
+            (
+                localStorage.getItem(
+                    "mi_user_email"
+                ) || ""
+            )
+                .trim()
+                .toLowerCase();
+
+        if (
+            token &&
+            typeof isAuthenticated ===
+                "function" &&
+            isAuthenticated()
+        ) {
+            fetch(
+                "/api/conversations/" +
+                encodeURIComponent(chatId),
+                {
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " +
+                            token,
+
+                        "X-User-Id":
+                            userId,
+
+                        "X-User-Email":
+                            email
+                    },
+
+                    body:
+                        JSON.stringify({
+                            title: title
+                        })
+                }
+            ).catch(
+                function () {}
+            );
+        }
+
+        try {
+            if (
+                window.firestorePersistence &&
+                window.miFirebaseUser
+            ) {
+                window.firestorePersistence
+                    .saveChat(
+                        chatId,
+                        {
+                            title: title,
+                            messageCount:
+                                getMessages(
+                                    chatId
+                                ).length
+                        }
+                    )
+                    .catch(
+                        function () {}
+                    );
+            }
+        }
+        catch (error) {}
+    }
+
+    function updateOneChat(chatId) {
+        const firstMessage =
+            firstUserMessage(chatId);
+
+        if (!firstMessage) {
+            return false;
+        }
+
+        const title =
+            titleFromMessage(
+                firstMessage
+            );
+
+        const chat =
+            getChats()[chatId];
+
+        if (!chat) {
+            return false;
+        }
+
+        const oldTitle =
+            String(
+                chat.title ||
+                chat.name ||
+                chat.chatName ||
+                ""
+            ).trim();
+
+        if (
+            oldTitle === title &&
+            chat.name === title &&
+            chat.chatName === title
+        ) {
+            return false;
+        }
+
+        setChatTitle(
+            chatId,
+            title
+        );
+
+        persistRemoteTitle(
+            chatId,
+            title
+        );
+
+        return true;
+    }
+
+    function updateAllChats() {
+        if (processing) {
+            return;
+        }
+
+        processing = true;
+
+        try {
+            let changed = false;
+
+            Object.keys(
+                getChats()
+            ).forEach(
+                function (chatId) {
+                    if (
+                        updateOneChat(
+                            chatId
+                        )
+                    ) {
+                        changed = true;
+                    }
+                }
+            );
+
+            if (changed) {
+                saveLocalState();
+                renderChatList();
+            }
+            else {
+                applyVisibleTitles();
+            }
+        }
+        finally {
+            processing = false;
+        }
+    }
+
+    function chatIdFromItem(item) {
+        if (
+            !(item instanceof Element)
+        ) {
+            return "";
+        }
+
+        const direct =
+            item.dataset.id ||
+            item.dataset.chatId ||
+            item.getAttribute(
+                "data-conversation-id"
+            );
+
+        if (direct) {
+            return String(direct);
+        }
+
+        if (
+            item.id &&
+            item.id.startsWith(
+                "chat-"
+            )
+        ) {
+            return item.id.slice(5);
+        }
+
+        const onclick =
+            String(
+                item.getAttribute(
+                    "onclick"
+                ) || ""
+            );
+
+        const match =
+            onclick.match(
+                /openChat\s*\(\s*['"]([^'"]+)['"]\s*\)/
+            );
+
+        return match
+            ? match[1]
+            : "";
+    }
+
+    function sidebarItems() {
+        const list =
+            document.getElementById(
+                "chatList"
+            );
+
+        if (!list) {
+            return [];
+        }
+
+        return Array.from(
+            list.querySelectorAll(
+                [
+                    ".chatItem",
+                    "[data-id]",
+                    "[data-chat-id]",
+                    "[data-conversation-id]",
+                    "[id^='chat-']"
+                ].join(",")
+            )
+        );
+    }
+
+    function replaceItemText(
+        item,
+        title
+    ) {
+        const dedicatedLabel =
+            item.querySelector(
+                [
+                    ".chat-title",
+                    ".chat-name",
+                    ".title",
+                    ".name",
+                    "[data-chat-title]"
+                ].join(",")
+            );
+
+        if (dedicatedLabel) {
+            dedicatedLabel.textContent =
+                title;
+
+            return;
+        }
+
+        const textNodes =
+            Array.from(
+                item.childNodes
+            ).filter(
+                function (node) {
+                    return (
+                        node.nodeType ===
+                            Node.TEXT_NODE &&
+                        String(
+                            node.textContent ||
+                            ""
+                        ).trim()
+                    );
+                }
+            );
+
+        if (textNodes.length) {
+            const prefix =
+                String(
+                    item.textContent ||
+                    ""
+                ).includes("ðŸ“Œ")
+                    ? "ðŸ“Œ ðŸ’¬ "
+                    : "ðŸ’¬ ";
+
+            textNodes[0].textContent =
+                prefix + title;
+
+            return;
+        }
+
+        item.setAttribute(
+            "aria-label",
+            title
+        );
+    }
+
+    function applyVisibleTitles() {
+        const chatMap =
+            getChats();
+
+        sidebarItems().forEach(
+            function (item) {
+                const chatId =
+                    chatIdFromItem(item);
+
+                if (
+                    !chatId ||
+                    !chatMap[chatId]
+                ) {
+                    return;
+                }
+
+                const title =
+                    String(
+                        chatMap[chatId].title ||
+                        chatMap[chatId].name ||
+                        chatMap[chatId].chatName ||
+                        chatId
+                    ).trim();
+
+                replaceItemText(
+                    item,
+                    title
+                );
+
+                item.dataset.miChatTitle =
+                    title;
+            }
+        );
+    }
+
+    function scheduleUpdate(delay) {
+        clearTimeout(timer);
+
+        timer =
+            setTimeout(
+                updateAllChats,
+                typeof delay === "number"
+                    ? delay
+                    : 250
+            );
+    }
+
+    function installObserver() {
+        const list =
+            document.getElementById(
+                "chatList"
+            );
+
+        if (!list) {
+            setTimeout(
+                installObserver,
+                250
+            );
+
+            return;
+        }
+
+        if (observer) {
+            observer.disconnect();
+        }
+
+        observer =
+            new MutationObserver(
+                function () {
+                    applyVisibleTitles();
+                }
+            );
+
+        observer.observe(
+            list,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+    }
+
+    function start() {
+        installObserver();
+
+        scheduleUpdate(100);
+        scheduleUpdate(700);
+        scheduleUpdate(1800);
+        scheduleUpdate(3500);
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                const details =
+                    [
+                        event.target?.id,
+                        event.target?.className,
+                        event.target
+                            ?.getAttribute?.(
+                                "data-action"
+                            ),
+                        event.target?.textContent
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                if (
+                    details.includes("send") ||
+                    details.includes("submit")
+                ) {
+                    const chatId =
+                        getCurrentChatId();
+
+                    [100, 400, 1000, 1800]
+                        .forEach(
+                            function (delay) {
+                                setTimeout(
+                                    function () {
+                                        if (
+                                            updateOneChat(
+                                                chatId
+                                            )
+                                        ) {
+                                            saveLocalState();
+                                            renderChatList();
+                                        }
+                                    },
+                                    delay
+                                );
+                            }
+                        );
+                }
+            },
+            false
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key !== "Enter" ||
+                    event.shiftKey
+                ) {
+                    return;
+                }
+
+                const target =
+                    event.target;
+
+                if (
+                    !target?.matches?.(
+                        [
+                            "#msg",
+                            "textarea",
+                            "[contenteditable='true']"
+                        ].join(",")
+                    )
+                ) {
+                    return;
+                }
+
+                const chatId =
+                    getCurrentChatId();
+
+                [100, 400, 1000, 1800]
+                    .forEach(
+                        function (delay) {
+                            setTimeout(
+                                function () {
+                                    if (
+                                        updateOneChat(
+                                            chatId
+                                        )
+                                    ) {
+                                        saveLocalState();
+                                        renderChatList();
+                                    }
+                                },
+                                delay
+                            );
+                        }
+                    );
+            },
+            false
+        );
+
+        window.addEventListener(
+            "mi-message-saved",
+            function () {
+                scheduleUpdate(100);
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                scheduleUpdate(350);
+                setTimeout(
+                    updateAllChats,
+                    1200
+                );
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                scheduleUpdate(150);
+            }
+        );
+    }
+
+    window.MIChatTitleSyncV12 = {
+        updateAll:
+            updateAllChats,
+
+        updateOne:
+            updateOneChat,
+
+        titleFromMessage:
+            titleFromMessage,
+
+        refreshVisible:
+            applyVisibleTitles
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI CHAT TITLE SYNC V12 - END */
+</script>
 </body>
 </html>
