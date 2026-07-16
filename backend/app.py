@@ -69,7 +69,8 @@ RATE_LIMIT_WINDOW_MINUTES = 15
 conversations_store = {}
 messages_store = {}
 
-OTP_EMAIL_ADDREOTP_EMAIL_PASSWORD = os.getenv("OTP_EMAIL_PASSWORD", "").replace(" ", "").strip()
+OTP_EMAIL_ADDRESS = os.getenv("OTP_EMAIL_ADDRESS", "").strip()
+OTP_EMAIL_PASSWORD = os.getenv("OTP_EMAIL_PASSWORD", "").replace(" ", "").strip()
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
 @app.route('/images/<path:filename>')
@@ -1564,314 +1565,272 @@ def api_chat():
 def api_chat_get():
     return jsonify({"response": "Method not allowed"}), 405
 
-# MI AI GROQ BROWSER SEARCH V5 - START
+# MI AI UNIVERSAL LIVE SEARCH V6 - START
 
-def _mi_browser_search_text(provider_data):
-    if not isinstance(provider_data, dict):
-        return ""
+LIVE_SEARCH_KEYWORDS = (
+    "latest", "today", "current", "currently", "right now",
+    "now", "live", "breaking", "recent", "news", "score",
+    "scores", "result", "results", "match", "fixture",
+    "weather", "price", "rate", "president", "prime minister",
+    "election", "stock", "crypto", "bitcoin", "cricket",
+    "football", "soccer", "ipl", "world cup",
+    "premier league", "champions league", "ada", "dan",
+    "keeyada", "kiyada", "වෙලාව", "දැන්", "අද",
+    "ලකුණු", "තරග", "ප්‍රවෘත්ති", "ස්කෝර්",
+)
 
-    choices = provider_data.get("choices") or []
+LIVE_NEWS_KEYWORDS = (
+    "news", "breaking", "headline", "headlines",
+    "latest news", "ප්‍රවෘත්ති",
+)
 
-    if not choices:
-        return ""
+LIVE_FINANCE_KEYWORDS = (
+    "stock", "share price", "market price", "bitcoin",
+    "ethereum", "crypto", "exchange rate", "finance",
+)
 
-    message = choices[0].get("message") or {}
+LIVE_SPORTS_KEYWORDS = (
+    "score", "scores", "match", "fixture", "cricket",
+    "football", "soccer", "ipl", "world cup",
+    "premier league", "ලකුණු", "තරග", "ස්කෝර්",
+)
 
-    return str(
-        message.get("content") or ""
-    ).strip()
+
+def _mi_live_normalize(value):
+    return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+
+def _mi_live_contains(text, keywords):
+    normalized = _mi_live_normalize(text)
+    return any(keyword in normalized for keyword in keywords)
+
+
+def _mi_live_category(question):
+    if _mi_live_contains(question, LIVE_NEWS_KEYWORDS):
+        return "news"
+    if _mi_live_contains(question, LIVE_FINANCE_KEYWORDS):
+        return "finance"
+    return "general"
+
+
+def _mi_live_build_query(question, context):
+    current_date = datetime.utcnow().strftime("%Y-%m-%d")
+    timezone_name = str(context.get("timezone") or "").strip()[:100]
+    local_time = str(
+        context.get("local_time")
+        or context.get("localTime")
+        or ""
+    ).strip()[:100]
+    location = str(context.get("location") or "").strip()[:200]
+
+    parts = [
+        str(question).strip(),
+        "",
+        "Current UTC date: " + current_date + ".",
+    ]
+
+    if timezone_name:
+        parts.append("User timezone: " + timezone_name + ".")
+    if local_time:
+        parts.append("User device timestamp: " + local_time + ".")
+    if location:
+        parts.append("Approximate user location: " + location + ".")
+
+    if _mi_live_contains(question, LIVE_SPORTS_KEYWORDS):
+        parts.append(
+            "Return the newest verified score or status, "
+            "the teams, competition and exact match date."
+        )
+
+    if _mi_live_contains(question, LIVE_NEWS_KEYWORDS):
+        parts.append(
+            "Prioritize the newest trustworthy reports "
+            "and state exact dates."
+        )
+
+    return "\n".join(parts)
+
+
+def _mi_live_search(question, context):
+    api_key = str(os.getenv("TAVILY_API_KEY") or "").strip()
+
+    if not api_key:
+        raise RuntimeError(
+            "TAVILY_API_KEY is not configured on the server."
+        )
+
+    category = _mi_live_category(question)
+
+    payload = {
+        "api_key": api_key,
+        "query": _mi_live_build_query(question, context),
+        "search_depth": "advanced",
+        "category": category,
+        "max_results": 6,
+        "include_answer": "advanced",
+        "include_raw_content": False,
+        "include_images": False,
+    }
+
+    if category == "news":
+        payload["time_range"] = "week"
+
+    response = requests.post(
+        "https://api.tavily.com/search",
+        json=payload,
+        timeout=25,
+    )
+
+    if response.status_code in (401, 403):
+        raise RuntimeError(
+            "The Tavily API key is invalid or unauthorized."
+        )
+
+    if response.status_code == 429:
+        raise RuntimeError(
+            "The Tavily request limit has been reached."
+        )
+
+    response.raise_for_status()
+    provider_data = response.json()
+
+    answer = str(provider_data.get("answer") or "").strip()
+    sources = []
+
+    for item in provider_data.get("results", [])[:6]:
+        url = str(item.get("url") or "").strip()
+        if not url:
+            continue
+
+        sources.append(
+            {
+                "title": str(item.get("title") or "Source").strip(),
+                "url": url,
+                "snippet": str(item.get("content") or "").strip()[:500],
+                "published_date": str(
+                    item.get("published_date") or ""
+                ).strip(),
+            }
+        )
+
+    if not answer and sources:
+        answer = sources[0]["snippet"]
+
+    if not answer:
+        answer = "I could not find a reliable current answer."
+
+    return answer, sources, category
 
 
 @app.route("/api/live-assist", methods=["POST", "OPTIONS"])
-def mi_groq_browser_search():
-    """
-    Use Groq GPT-OSS browser search for current information.
-
-    The frontend sends only the current question and compact
-    device context. Normal /api/chat is not changed.
-    """
-    import json
-    import os
-    import urllib.error
-    import urllib.request
-
+def mi_universal_live_search():
     if request.method == "OPTIONS":
-        return jsonify({
-            "ok": True
-        }), 200
+        return jsonify({"ok": True}), 200
 
-    incoming = request.get_json(
-        silent=True
-    ) or {}
+    incoming = request.get_json(silent=True) or {}
 
     query = str(
         incoming.get("query")
+        or incoming.get("question")
         or incoming.get("message")
         or incoming.get("prompt")
+        or incoming.get("text")
         or ""
     ).strip()
 
     if not query:
         return jsonify({
-            "error":
-                "A live-search question is required."
+            "ok": False,
+            "error": "A live-search question is required.",
         }), 400
 
-    # Keep the request compact.
-    query = query[:3000]
-
-    api_key = str(
-        os.getenv("GROQ_API_KEY")
-        or ""
-    ).strip()
-
-    if not api_key:
-        return jsonify({
-            "error":
-                "GROQ_API_KEY is not configured on the server."
-        }), 500
-
-    context = incoming.get(
-        "client_context"
+    context = (
+        incoming.get("client_context")
+        or incoming.get("clientContext")
+        or {}
     )
 
     if not isinstance(context, dict):
         context = {}
 
-    timezone_name = str(
-        context.get("timezone")
-        or ""
-    ).strip()[:100]
-
-    local_time = str(
-        context.get("local_time")
-        or ""
-    ).strip()[:100]
-
-    latitude = context.get(
-        "latitude"
-    )
-
-    longitude = context.get(
-        "longitude"
-    )
-
-    context_parts = []
-
-    if timezone_name:
-        context_parts.append(
-            "Timezone: " + timezone_name
-        )
-
-    if local_time:
-        context_parts.append(
-            "Device timestamp: " + local_time
-        )
-
-    if (
-        isinstance(latitude, (int, float))
-        and isinstance(longitude, (int, float))
-    ):
-        context_parts.append(
-            "Approximate coordinates: "
-            + str(round(latitude, 4))
-            + ", "
-            + str(round(longitude, 4))
-        )
-
-    compact_context = "; ".join(
-        context_parts
-    )[:400]
-
-    prompt = (
-        "Search the web and answer the following current "
-        "question accurately.\n"
-        "Answer in the same language as the user.\n"
-        "Never invent live scores, news, weather, prices, "
-        "results, schedules or current facts.\n"
-        "For a sports question, include the teams, current "
-        "score or status, and when the information was checked.\n"
-        "Give a clear and direct final answer.\n\n"
-        "Question: "
-        + query
-    )
-
-    if compact_context:
-        prompt += (
-            "\n\nDevice context: "
-            + compact_context
-        )
-
-    request_data = {
-        "model": os.getenv(
-            "GROQ_LIVE_MODEL",
-            "openai/gpt-oss-20b"
-        ),
-
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-
-        "temperature": 1,
-        "top_p": 1,
-        "stream": False,
-        "reasoning_effort": "low",
-        "max_completion_tokens": 1600,
-
-        # Force Groq's supported browser-search tool.
-        "tool_choice": "required",
-
-        "tools": [
-            {
-                "type": "browser_search"
-            }
-        ],
-    }
-
-    encoded = json.dumps(
-        request_data,
-        ensure_ascii=False,
-        separators=(",", ":")
-    ).encode("utf-8")
-
-    app.logger.info(
-        "Groq browser-search request bytes=%s query_chars=%s",
-        len(encoded),
-        len(query),
-    )
-
-    groq_request = urllib.request.Request(
-        "https://api.groq.com/openai/v1/chat/completions",
-        data=encoded,
-        method="POST",
-        headers={
-            "Authorization":
-                "Bearer " + api_key,
-
-            "Content-Type":
-                "application/json",
-
-            "Accept":
-                "application/json",
-
-            "User-Agent":
-                "MI-AI-Browser-Search/5.0",
-        },
-    )
+    if not _mi_live_contains(query, LIVE_SEARCH_KEYWORDS):
+        return jsonify({
+            "ok": True,
+            "handled": False,
+            "type": "normal-ai",
+        }), 200
 
     try:
-        with urllib.request.urlopen(
-            groq_request,
-            timeout=55
-        ) as response:
-            raw = response.read().decode(
-                "utf-8",
-                errors="replace"
-            )
-
-        provider_data = json.loads(raw)
-
-        answer = _mi_browser_search_text(
-            provider_data
+        answer, sources, category = _mi_live_search(
+            query[:3000],
+            context,
         )
 
-        if not answer:
-            return jsonify({
-                "error":
-                    "Groq browser search returned an empty answer."
-            }), 502
-
         return jsonify({
+            "ok": True,
+            "handled": True,
+            "type": "live-search",
             "reply": answer,
             "response": answer,
             "message": answer,
             "text": answer,
+            "answer": answer,
+            "sources": sources,
+            "category": category,
             "live_search": True,
-            "model": request_data["model"],
+            "searched_at": datetime.utcnow().isoformat() + "Z",
         }), 200
 
-    except urllib.error.HTTPError as error:
-        status = int(
-            getattr(error, "code", 500)
-            or 500
-        )
-
-        try:
-            provider_body = (
-                error.read()
-                .decode(
-                    "utf-8",
-                    errors="replace"
-                )
-            )
-        except Exception:
-            provider_body = ""
-
-        app.logger.error(
-            "Groq browser-search error "
-            "status=%s request_bytes=%s body=%s",
-            status,
-            len(encoded),
-            provider_body[:2000],
-        )
-
-        if status in (401, 403):
-            public_error = (
-                "The GROQ_API_KEY is invalid "
-                "or the model is not permitted."
-            )
-        elif status == 429:
-            public_error = (
-                "The Groq API rate limit "
-                "or quota was reached."
-            )
-        elif status == 413:
-            public_error = (
-                "Groq browser search rejected "
-                "the provider-side search result size."
-            )
-        elif status == 400:
-            public_error = (
-                "Groq rejected the browser-search request."
-            )
-        else:
-            public_error = (
-                "Groq browser search is temporarily unavailable."
-            )
-
+    except RuntimeError as error:
         return jsonify({
-            "error": public_error,
-            "provider_status": status,
-            "request_bytes": len(encoded),
-            "provider_details":
-                provider_body[:1000],
-        }), status
+            "ok": False,
+            "handled": True,
+            "error": str(error),
+        }), 503
 
-    except urllib.error.URLError as error:
+    except requests.RequestException as error:
         app.logger.error(
-            "Groq connection error: %s",
+            "Tavily live-search connection error: %s",
             error,
         )
-
         return jsonify({
-            "error":
-                "The server could not connect to Groq."
+            "ok": False,
+            "handled": True,
+            "error": (
+                "The live information service is temporarily unavailable."
+            ),
         }), 502
 
     except Exception as error:
-        app.logger.exception(
-            "Unexpected Groq browser-search error."
-        )
-
+        app.logger.exception("Unexpected live-search error.")
         return jsonify({
-            "error": str(error)
+            "ok": False,
+            "handled": True,
+            "error": "Live search failed.",
+            "details": str(error),
         }), 500
 
 
-# MI AI GROQ BROWSER SEARCH V5 - END
+@app.route("/api/live-assist/health", methods=["GET"])
+def mi_universal_live_search_health():
+    return jsonify({
+        "ok": True,
+        "service": "MI AI Universal Live Search",
+        "tavily_configured": bool(
+            str(os.getenv("TAVILY_API_KEY") or "").strip()
+        ),
+        "supported": [
+            "cricket",
+            "football",
+            "news",
+            "weather",
+            "finance",
+            "current information",
+        ],
+    })
+
+
+# MI AI UNIVERSAL LIVE SEARCH V6 - END
 
 if __name__=="__main__":
     app.run(
