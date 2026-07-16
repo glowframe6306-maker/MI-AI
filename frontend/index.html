@@ -15373,32 +15373,22 @@ document.addEventListener(
                             "application/json"
                     },
 
-                    body:
-                        JSON.stringify({
-                            ...payload,
-
-                            query:
-                                extractQuestion(
-                                    payload
-                                ),
+                    body: JSON.stringify({
+                            query: String(
+                                extractQuestion(payload) || ""
+                            ).trim().slice(0, 4000),
 
                             client_context: {
-                                timezone:
-                                    timezone,
+                                timezone: timezone,
 
                                 local_time:
-                                    new Date()
-                                        .toISOString(),
+                                    new Date().toISOString(),
 
                                 latitude:
-                                    position
-                                        ?.latitude ??
-                                    null,
+                                    position?.latitude ?? null,
 
                                 longitude:
-                                    position
-                                        ?.longitude ??
-                                    null
+                                    position?.longitude ?? null
                             }
                         }),
 
