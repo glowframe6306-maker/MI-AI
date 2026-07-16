@@ -10,6 +10,10 @@ import traceback
 from datetime import datetime, timedelta
 import secrets
 
+import time
+import hmac
+import hashlib
+import base64
 import random
 import smtplib
 
@@ -1831,6 +1835,336 @@ def mi_universal_live_search_health():
 
 
 # MI AI UNIVERSAL LIVE SEARCH V6 - END
+
+# MI AI OWNER NOTIFICATIONS FINAL - START
+
+MI_SHARE_LINKS_KEY = "mi_share_links_final"
+MI_SHARE_NOTIFICATIONS_KEY = "mi_share_notifications_final"
+MI_SHARE_LINK_LIMIT = 40
+MI_SHARE_NOTIFICATION_LIMIT = 250
+
+def mi_share_iso_now():
+    return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+def mi_share_b64encode(value):
+    return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+def mi_share_b64decode(value):
+    return base64.urlsafe_b64decode((value + ("=" * (-len(value) % 4))).encode("ascii"))
+
+def mi_share_key():
+    value = (os.getenv("MI_SHARE_SIGNING_KEY") or "").strip()
+    return (value or str(app.secret_key)).encode("utf-8")
+
+def mi_make_share_token(owner_id, share_id):
+    payload = {"version": 1, "owner_id": str(owner_id), "share_id": str(share_id)}
+    encoded = mi_share_b64encode(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    signature = mi_share_b64encode(hmac.new(mi_share_key(), encoded.encode("ascii"), hashlib.sha256).digest())
+    return encoded + "." + signature
+
+def mi_read_share_token(token):
+    try:
+        encoded, supplied = str(token or "").rsplit(".", 1)
+        expected = mi_share_b64encode(hmac.new(mi_share_key(), encoded.encode("ascii"), hashlib.sha256).digest())
+        if not hmac.compare_digest(supplied, expected):
+            return None
+        payload = json.loads(mi_share_b64decode(encoded).decode("utf-8"))
+        if payload.get("version") != 1 or not payload.get("owner_id") or not payload.get("share_id"):
+            return None
+        return payload
+    except Exception:
+        return None
+
+def mi_share_authenticated_user():
+    if supabase is None:
+        return None, (jsonify({"success": False, "message": "Account service unavailable."}), 503)
+
+    authorization = str(request.headers.get("Authorization") or "").strip()
+    if not authorization.lower().startswith("bearer "):
+        return None, (jsonify({"success": False, "message": "Login is required."}), 401)
+
+    token = authorization.split(" ", 1)[1].strip()
+
+    try:
+        response = supabase.auth.get_user(token)
+        user = getattr(response, "user", None)
+        if user is None and isinstance(response, dict):
+            user = response.get("user")
+
+        user_id = getattr(user, "id", None)
+        email = getattr(user, "email", None)
+
+        if isinstance(user, dict):
+            user_id = user.get("id") or user_id
+            email = user.get("email") or email
+
+        if not user_id:
+            raise RuntimeError("Authenticated user ID missing.")
+
+        return {"id": str(user_id), "email": str(email or "").strip().lower()}, None
+    except Exception as exc:
+        app.logger.warning("Share authentication failed: %s", exc)
+        return None, (jsonify({"success": False, "message": "Please sign in again."}), 401)
+
+def mi_share_admin_user(user_id):
+    response = supabase.auth.admin.get_user_by_id(str(user_id))
+    user = getattr(response, "user", None)
+    if user is None and isinstance(response, dict):
+        user = response.get("user")
+    if user is None:
+        raise RuntimeError("Owner account not found.")
+    return user
+
+def mi_share_metadata(user):
+    metadata = getattr(user, "user_metadata", None)
+    if metadata is None and isinstance(user, dict):
+        metadata = user.get("user_metadata")
+    return dict(metadata or {})
+
+def mi_share_save_metadata(user_id, metadata):
+    supabase.auth.admin.update_user_by_id(str(user_id), {"user_metadata": metadata})
+
+def mi_share_messages(value):
+    output = []
+    total = 0
+    if not isinstance(value, list):
+        return output
+
+    for item in value[:80]:
+        if not isinstance(item, dict):
+            continue
+
+        text = str(item.get("text") or item.get("content") or item.get("message") or "").strip()
+        if not text:
+            continue
+
+        remaining = 60000 - total
+        if remaining <= 0:
+            break
+
+        text = text[:remaining]
+        total += len(text)
+        role = str(item.get("role") or "ai").strip().lower()
+        output.append({"role": "me" if role in {"me", "user", "human"} else "ai", "text": text})
+
+    return output
+
+def mi_share_open_limit(security):
+    mode = str(security.get("openLimitMode") or "no-expiry")
+    if mode == "no-expiry":
+        return 0
+    value = security.get("openLimitCustom") if mode == "custom" else mode
+    try:
+        return max(0, int(value or 0))
+    except Exception:
+        return 0
+
+def mi_share_expiry_seconds(security):
+    try:
+        value = max(0, int(security.get("timeLimitValue") or 0))
+    except Exception:
+        value = 0
+
+    unit = str(security.get("timeLimitUnit") or "no-expiry")
+    if unit == "second":
+        return value
+    if unit == "minute":
+        return value * 60
+    if unit == "hour":
+        return value * 3600
+    return 0
+
+@app.route("/api/share-links", methods=["POST"])
+@app.route("/share-links", methods=["POST"])
+def mi_create_share_link_final():
+    owner, error_response = mi_share_authenticated_user()
+    if error_response:
+        return error_response
+
+    data = request.get_json(silent=True) or {}
+    security_input = data.get("security") if isinstance(data.get("security"), dict) else {}
+    password = str(security_input.get("password") or "")
+
+    security = {
+        "notification": "on" if security_input.get("notification") == "on" else "off",
+        "openLimitMode": str(security_input.get("openLimitMode") or "no-expiry"),
+        "openLimitCustom": security_input.get("openLimitCustom") or 0,
+        "timeLimitUnit": str(security_input.get("timeLimitUnit") or "no-expiry"),
+        "timeLimitValue": security_input.get("timeLimitValue") or 0,
+        "passwordHash": generate_password_hash(password) if password else "",
+    }
+
+    share_id = secrets.token_urlsafe(18)
+    record = {
+        "id": share_id,
+        "chatId": str(data.get("chatId") or ""),
+        "chatTitle": str(data.get("chatTitle") or "Shared Chat").strip()[:120],
+        "messages": mi_share_messages(data.get("messages")),
+        "permission": "view" if data.get("permission") == "view" else "edit",
+        "security": security,
+        "createdAt": int(time.time()),
+        "openCount": 0,
+    }
+
+    try:
+        admin_user = mi_share_admin_user(owner["id"])
+        metadata = mi_share_metadata(admin_user)
+        links = [
+            item
+            for item in list(metadata.get(MI_SHARE_LINKS_KEY) or [])
+            if isinstance(item, dict) and item.get("id") != share_id
+        ]
+        links.append(record)
+        metadata[MI_SHARE_LINKS_KEY] = links[-MI_SHARE_LINK_LIMIT:]
+        mi_share_save_metadata(owner["id"], metadata)
+    except Exception as exc:
+        app.logger.exception("Share creation failed: %s", exc)
+        return jsonify({"success": False, "message": "Could not save the shared link."}), 500
+
+    token = mi_make_share_token(owner["id"], share_id)
+    return jsonify({
+        "success": True,
+        "url": request.url_root.rstrip("/") + "/?mi_share=" + token,
+        "notification": security["notification"],
+    })
+
+@app.route("/api/share-links/open", methods=["POST"])
+@app.route("/share-links/open", methods=["POST"])
+def mi_open_share_link_final():
+    data = request.get_json(silent=True) or {}
+    token_data = mi_read_share_token(data.get("token"))
+
+    if not token_data:
+        return jsonify({"success": False, "message": "This shared link is invalid."}), 400
+
+    owner_id = token_data["owner_id"]
+    share_id = token_data["share_id"]
+
+    try:
+        admin_user = mi_share_admin_user(owner_id)
+        metadata = mi_share_metadata(admin_user)
+        links = list(metadata.get(MI_SHARE_LINKS_KEY) or [])
+
+        link = next(
+            (item for item in links if isinstance(item, dict) and item.get("id") == share_id),
+            None,
+        )
+
+        if not link:
+            return jsonify({"success": False, "message": "This shared link no longer exists."}), 404
+
+        security = dict(link.get("security") or {})
+        expiry_seconds = mi_share_expiry_seconds(security)
+        created_at = int(link.get("createdAt") or 0)
+
+        if expiry_seconds and int(time.time()) >= created_at + expiry_seconds:
+            return jsonify({"success": False, "message": "This shared link has expired."}), 410
+
+        open_limit = mi_share_open_limit(security)
+        current_open_count = int(link.get("openCount") or 0)
+
+        if open_limit and current_open_count >= open_limit:
+            return jsonify({"success": False, "message": "This shared link reached its open limit."}), 410
+
+        password_hash = str(security.get("passwordHash") or "")
+        supplied_password = str(data.get("password") or "")
+
+        if password_hash and not check_password_hash(password_hash, supplied_password):
+            return jsonify({
+                "success": False,
+                "passwordRequired": True,
+                "message": "Enter the shared-link password.",
+            }), 401
+
+        opened_at = mi_share_iso_now()
+        link["openCount"] = current_open_count + 1
+        link["lastOpenedAt"] = opened_at
+
+        for index, item in enumerate(links):
+            if isinstance(item, dict) and item.get("id") == share_id:
+                links[index] = link
+                break
+
+        metadata[MI_SHARE_LINKS_KEY] = links[-MI_SHARE_LINK_LIMIT:]
+
+        if security.get("notification") == "on":
+            notifications = list(metadata.get(MI_SHARE_NOTIFICATIONS_KEY) or [])
+            notifications.append({
+                "id": secrets.token_urlsafe(14),
+                "shareId": share_id,
+                "chatId": str(link.get("chatId") or ""),
+                "chatTitle": str(link.get("chatTitle") or "Shared Chat")[:120],
+                "openedAt": opened_at,
+                "read": False,
+            })
+            metadata[MI_SHARE_NOTIFICATIONS_KEY] = notifications[-MI_SHARE_NOTIFICATION_LIMIT:]
+
+        mi_share_save_metadata(owner_id, metadata)
+
+        return jsonify({
+            "success": True,
+            "share": {
+                "id": share_id,
+                "chatId": str(link.get("chatId") or ""),
+                "chatTitle": str(link.get("chatTitle") or "Shared Chat"),
+                "messages": mi_share_messages(link.get("messages")),
+                "permission": link.get("permission") or "view",
+            },
+        })
+
+    except Exception as exc:
+        app.logger.exception("Share opening failed: %s", exc)
+        return jsonify({"success": False, "message": "Could not open the shared chat."}), 500
+
+@app.route("/api/share-notifications", methods=["GET", "PATCH"])
+@app.route("/share-notifications", methods=["GET", "PATCH"])
+def mi_share_notifications_final():
+    owner, error_response = mi_share_authenticated_user()
+    if error_response:
+        return error_response
+
+    try:
+        admin_user = mi_share_admin_user(owner["id"])
+        metadata = mi_share_metadata(admin_user)
+        notifications = [
+            item
+            for item in list(metadata.get(MI_SHARE_NOTIFICATIONS_KEY) or [])
+            if isinstance(item, dict)
+        ]
+
+        if request.method == "PATCH":
+            body = request.get_json(silent=True) or {}
+            mark_all = bool(body.get("markAll"))
+            selected_ids = {str(value) for value in (body.get("ids") or []) if value}
+            changed = False
+
+            for item in notifications:
+                item_id = str(item.get("id") or "")
+                if mark_all or item_id in selected_ids:
+                    if not item.get("read"):
+                        item["read"] = True
+                        changed = True
+
+            if changed:
+                metadata[MI_SHARE_NOTIFICATIONS_KEY] = notifications[-MI_SHARE_NOTIFICATION_LIMIT:]
+                mi_share_save_metadata(owner["id"], metadata)
+
+        notifications.sort(
+            key=lambda item: str(item.get("openedAt") or ""),
+            reverse=True,
+        )
+
+        return jsonify({
+            "success": True,
+            "notifications": notifications[:200],
+            "unreadCount": sum(1 for item in notifications if not item.get("read")),
+        })
+
+    except Exception as exc:
+        app.logger.exception("Notification loading failed: %s", exc)
+        return jsonify({"success": False, "message": "Could not load notifications."}), 500
+
+# MI AI OWNER NOTIFICATIONS FINAL - END
 
 if __name__=="__main__":
     app.run(
