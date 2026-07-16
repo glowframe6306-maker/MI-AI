@@ -19723,5 +19723,1113 @@ document.addEventListener(
 
 /* MI AI SMART CHAT TITLE V1 - END */
 </script>
+
+<script>
+/* MI AI CHAT SAVE RULES V1 - START */
+
+(function () {
+    "use strict";
+
+    const TOMBSTONE_PREFIX =
+        "mi_deleted_chat_ids_v1_";
+
+    const EMPTY_REMOVED_PREFIX =
+        "mi_empty_chat_cleanup_v1_";
+
+    let cleaning = false;
+    let baselineReady = false;
+    let previousChatIds = new Set();
+    let saveTimer = null;
+
+    function normalize(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function firebaseUser() {
+        try {
+            return (
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth ===
+                        "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                ) ||
+                null
+            );
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function accountIdentity() {
+        const account =
+            firebaseUser();
+
+        return normalize(
+            account?.email ||
+            localStorage.getItem(
+                "mi_user_email"
+            ) ||
+            account?.uid ||
+            localStorage.getItem(
+                "mi_user_id"
+            ) ||
+            "guest"
+        );
+    }
+
+    function tombstoneKey() {
+        return (
+            TOMBSTONE_PREFIX +
+            encodeURIComponent(
+                accountIdentity()
+            )
+        );
+    }
+
+    function emptyCleanupKey() {
+        return (
+            EMPTY_REMOVED_PREFIX +
+            encodeURIComponent(
+                accountIdentity()
+            )
+        );
+    }
+
+    function safeParse(value, fallback) {
+        try {
+            const parsed =
+                JSON.parse(value);
+
+            return parsed === null
+                ? fallback
+                : parsed;
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function clone(value, fallback) {
+        try {
+            return JSON.parse(
+                JSON.stringify(value)
+            );
+        }
+        catch (error) {
+            return fallback;
+        }
+    }
+
+    function getTombstones() {
+        const stored =
+            safeParse(
+                localStorage.getItem(
+                    tombstoneKey()
+                ),
+                []
+            );
+
+        return new Set(
+            Array.isArray(stored)
+                ? stored.map(String)
+                : []
+        );
+    }
+
+    function saveTombstones(set) {
+        localStorage.setItem(
+            tombstoneKey(),
+            JSON.stringify(
+                Array.from(set)
+            )
+        );
+    }
+
+    function markDeleted(chatId) {
+        const id =
+            String(chatId || "")
+                .trim();
+
+        if (!id) {
+            return false;
+        }
+
+        const tombstones =
+            getTombstones();
+
+        tombstones.add(id);
+        saveTombstones(tombstones);
+
+        console.log(
+            "[MI AI Chats] Permanently marked deleted:",
+            id
+        );
+
+        return true;
+    }
+
+    function chatMapReference() {
+        try {
+            if (
+                typeof chats !== "undefined" &&
+                chats &&
+                typeof chats === "object" &&
+                !Array.isArray(chats)
+            ) {
+                return chats;
+            }
+        }
+        catch (error) {
+            // Continue to window fallback.
+        }
+
+        if (
+            window.chats &&
+            typeof window.chats === "object" &&
+            !Array.isArray(window.chats)
+        ) {
+            return window.chats;
+        }
+
+        return null;
+    }
+
+    function messagesOf(chat) {
+        if (Array.isArray(chat)) {
+            return chat;
+        }
+
+        if (
+            chat &&
+            typeof chat === "object" &&
+            Array.isArray(chat.messages)
+        ) {
+            return chat.messages;
+        }
+
+        return [];
+    }
+
+    function isRealMessage(message) {
+        if (
+            !message ||
+            typeof message !== "object"
+        ) {
+            return false;
+        }
+
+        const text =
+            String(
+                message.text ??
+                message.content ??
+                message.message ??
+                ""
+            ).trim();
+
+        const hasAttachment =
+            Boolean(
+                message.file ||
+                message.image ||
+                message.attachment ||
+                (
+                    Array.isArray(
+                        message.attachments
+                    ) &&
+                    message.attachments.length > 0
+                )
+            );
+
+        return Boolean(
+            text ||
+            hasAttachment
+        );
+    }
+
+    function hasAtLeastOneMessage(chat) {
+        return messagesOf(chat)
+            .some(isRealMessage);
+    }
+
+    function storageKeys() {
+        const keys =
+            new Set();
+
+        try {
+            if (
+                typeof getUserChatStorageKey ===
+                    "function"
+            ) {
+                const key =
+                    getUserChatStorageKey();
+
+                if (key) {
+                    keys.add(key);
+                }
+            }
+        }
+        catch (error) {
+            // Continue with known keys.
+        }
+
+        const identity =
+            accountIdentity();
+
+        if (identity && identity !== "guest") {
+            keys.add(
+                "mi_chats_" + identity
+            );
+
+            keys.add(
+                "mi_chats_" +
+                encodeURIComponent(identity)
+            );
+        }
+
+        /*
+          Preserve compatibility with existing project keys.
+        */
+        [
+            "mi_chats",
+            "chats",
+            "savedChats"
+        ].forEach(function (key) {
+            if (
+                localStorage.getItem(key) !==
+                null
+            ) {
+                keys.add(key);
+            }
+        });
+
+        return Array.from(keys);
+    }
+
+    function removeInvalidFromObject(
+        chatMap,
+        recordDeleted
+    ) {
+        if (
+            !chatMap ||
+            typeof chatMap !== "object" ||
+            Array.isArray(chatMap)
+        ) {
+            return {
+                changed: false,
+                removedEmpty: [],
+                removedDeleted: []
+            };
+        }
+
+        const tombstones =
+            getTombstones();
+
+        const removedEmpty = [];
+        const removedDeleted = [];
+
+        Object.keys(chatMap)
+            .forEach(function (chatId) {
+                const id =
+                    String(chatId);
+
+                if (tombstones.has(id)) {
+                    delete chatMap[chatId];
+
+                    removedDeleted.push(id);
+                    return;
+                }
+
+                if (
+                    !hasAtLeastOneMessage(
+                        chatMap[chatId]
+                    )
+                ) {
+                    delete chatMap[chatId];
+
+                    removedEmpty.push(id);
+
+                    /*
+                      Empty chats are removed, but they are not
+                      treated as manually deleted conversations.
+                    */
+                    return;
+                }
+            });
+
+        if (
+            recordDeleted &&
+            baselineReady
+        ) {
+            const currentIds =
+                new Set(
+                    Object.keys(chatMap)
+                        .map(String)
+                );
+
+            previousChatIds.forEach(
+                function (oldId) {
+                    if (
+                        !currentIds.has(oldId) &&
+                        !removedEmpty.includes(
+                            oldId
+                        )
+                    ) {
+                        markDeleted(oldId);
+                    }
+                }
+            );
+        }
+
+        return {
+            changed:
+                removedEmpty.length > 0 ||
+                removedDeleted.length > 0,
+
+            removedEmpty:
+                removedEmpty,
+
+            removedDeleted:
+                removedDeleted
+        };
+    }
+
+    function applyMapToRuntime(
+        cleanMap
+    ) {
+        try {
+            if (
+                typeof chats !==
+                "undefined"
+            ) {
+                chats = cleanMap;
+            }
+        }
+        catch (error) {
+            // Global binding may be read-only.
+        }
+
+        window.chats =
+            cleanMap;
+    }
+
+    function cleanStoredMaps() {
+        const tombstones =
+            getTombstones();
+
+        storageKeys().forEach(
+            function (key) {
+                const raw =
+                    localStorage.getItem(
+                        key
+                    );
+
+                if (!raw) {
+                    return;
+                }
+
+                const parsed =
+                    safeParse(raw, null);
+
+                if (
+                    !parsed ||
+                    typeof parsed !== "object" ||
+                    Array.isArray(parsed)
+                ) {
+                    return;
+                }
+
+                let changed = false;
+
+                Object.keys(parsed)
+                    .forEach(
+                        function (chatId) {
+                            const id =
+                                String(chatId);
+
+                            if (
+                                tombstones.has(id) ||
+                                !hasAtLeastOneMessage(
+                                    parsed[chatId]
+                                )
+                            ) {
+                                delete parsed[chatId];
+                                changed = true;
+                            }
+                        }
+                    );
+
+                if (changed) {
+                    localStorage.setItem(
+                        key,
+                        JSON.stringify(parsed)
+                    );
+                }
+            }
+        );
+    }
+
+    function updateCurrentChatAfterCleanup(
+        chatMap
+    ) {
+        const ids =
+            Object.keys(chatMap);
+
+        let selected = "";
+
+        try {
+            selected =
+                String(
+                    (
+                        typeof currentChat !==
+                            "undefined"
+                            ? currentChat
+                            : window.currentChat
+                    ) || ""
+                );
+        }
+        catch (error) {
+            selected =
+                String(
+                    window.currentChat ||
+                    ""
+                );
+        }
+
+        if (
+            selected &&
+            chatMap[selected]
+        ) {
+            return;
+        }
+
+        const nextId =
+            ids[0] || "";
+
+        try {
+            if (
+                typeof currentChat !==
+                    "undefined"
+            ) {
+                currentChat =
+                    nextId || null;
+            }
+        }
+        catch (error) {
+            // Continue with window binding.
+        }
+
+        window.currentChat =
+            nextId || null;
+
+        if (nextId) {
+            localStorage.setItem(
+                "last_chat",
+                nextId
+            );
+        }
+        else {
+            localStorage.removeItem(
+                "last_chat"
+            );
+        }
+    }
+
+    function renderAfterCleanup() {
+        try {
+            if (
+                typeof renderList ===
+                    "function"
+            ) {
+                renderList();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Chats] List refresh failed:",
+                error
+            );
+        }
+
+        const chatMap =
+            chatMapReference();
+
+        if (!chatMap) {
+            return;
+        }
+
+        let selected = "";
+
+        try {
+            selected =
+                String(
+                    (
+                        typeof currentChat !==
+                            "undefined"
+                            ? currentChat
+                            : window.currentChat
+                    ) || ""
+                );
+        }
+        catch (error) {
+            selected =
+                String(
+                    window.currentChat ||
+                    ""
+                );
+        }
+
+        if (
+            selected &&
+            chatMap[selected]
+        ) {
+            try {
+                if (
+                    typeof openChat ===
+                        "function"
+                ) {
+                    openChat(selected);
+                }
+            }
+            catch (error) {
+                console.warn(
+                    "[MI AI Chats] Chat refresh failed:",
+                    error
+                );
+            }
+        }
+    }
+
+    function sanitizeChats(
+        reason,
+        recordDeleted
+    ) {
+        if (cleaning) {
+            return false;
+        }
+
+        cleaning = true;
+
+        try {
+            const chatMap =
+                chatMapReference();
+
+            if (!chatMap) {
+                cleanStoredMaps();
+                return false;
+            }
+
+            const working =
+                clone(chatMap, {});
+
+            const result =
+                removeInvalidFromObject(
+                    working,
+                    Boolean(recordDeleted)
+                );
+
+            applyMapToRuntime(working);
+            updateCurrentChatAfterCleanup(
+                working
+            );
+
+            /*
+              Save only chats containing one or more real messages.
+            */
+            storageKeys().forEach(
+                function (key) {
+                    localStorage.setItem(
+                        key,
+                        JSON.stringify(
+                            working
+                        )
+                    );
+                }
+            );
+
+            cleanStoredMaps();
+
+            previousChatIds =
+                new Set(
+                    Object.keys(working)
+                        .map(String)
+                );
+
+            baselineReady = true;
+
+            if (result.removedEmpty.length) {
+                localStorage.setItem(
+                    emptyCleanupKey(),
+                    JSON.stringify({
+                        removedAt:
+                            Date.now(),
+
+                        ids:
+                            result
+                                .removedEmpty
+                    })
+                );
+
+                console.log(
+                    "[MI AI Chats] Empty chats removed:",
+                    result.removedEmpty
+                );
+            }
+
+            if (result.removedDeleted.length) {
+                console.log(
+                    "[MI AI Chats] Deleted chats blocked from restore:",
+                    result.removedDeleted
+                );
+            }
+
+            if (result.changed) {
+                renderAfterCleanup();
+            }
+
+            console.log(
+                "[MI AI Chats] Save rules applied:",
+                reason || "update"
+            );
+
+            return result.changed;
+        }
+        finally {
+            cleaning = false;
+        }
+    }
+
+    function scheduleSanitize(
+        reason,
+        recordDeleted,
+        delay
+    ) {
+        clearTimeout(saveTimer);
+
+        saveTimer =
+            setTimeout(
+                function () {
+                    sanitizeChats(
+                        reason,
+                        recordDeleted
+                    );
+                },
+                typeof delay ===
+                    "number"
+                    ? delay
+                    : 180
+            );
+    }
+
+    function chatIdFromElement(element) {
+        if (!(element instanceof Element)) {
+            return "";
+        }
+
+        const chatElement =
+            element.closest(
+                [
+                    "[data-chat-id]",
+                    "[data-id]",
+                    "[data-conversation-id]",
+                    "[id^='chat-']"
+                ].join(",")
+            );
+
+        return String(
+            chatElement
+                ?.getAttribute(
+                    "data-chat-id"
+                ) ||
+            chatElement
+                ?.getAttribute(
+                    "data-conversation-id"
+                ) ||
+            chatElement
+                ?.getAttribute(
+                    "data-id"
+                ) ||
+            chatElement
+                ?.id
+                ?.replace(/^chat-/, "") ||
+            ""
+        ).trim();
+    }
+
+    function looksLikeDeleteControl(
+        element
+    ) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        const control =
+            element.closest(
+                [
+                    "button",
+                    "[role='button']",
+                    "[data-action]",
+                    ".delete",
+                    ".remove"
+                ].join(",")
+            );
+
+        if (!control) {
+            return false;
+        }
+
+        const details =
+            [
+                control.id,
+                control.className,
+                control.getAttribute(
+                    "data-action"
+                ),
+                control.getAttribute(
+                    "aria-label"
+                ),
+                control.getAttribute(
+                    "title"
+                ),
+                control.textContent
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+        return (
+            details.includes("delete") ||
+            details.includes("remove chat") ||
+            details.includes("delete chat")
+        );
+    }
+
+    function installFunctionWrapper(
+        functionName,
+        type
+    ) {
+        const original =
+            window[functionName];
+
+        if (
+            typeof original !==
+                "function" ||
+            original
+                .__miChatSaveRulesV1
+        ) {
+            return false;
+        }
+
+        const wrapped =
+            function (...args) {
+                if (type === "delete") {
+                    const id =
+                        String(
+                            args[0] || ""
+                        ).trim();
+
+                    if (id) {
+                        markDeleted(id);
+                    }
+                }
+
+                const result =
+                    original.apply(
+                        this,
+                        args
+                    );
+
+                Promise.resolve(result)
+                    .finally(
+                        function () {
+                            scheduleSanitize(
+                                functionName,
+                                type === "delete",
+                                100
+                            );
+                        }
+                    );
+
+                return result;
+            };
+
+        wrapped.__miChatSaveRulesV1 =
+            true;
+
+        window[functionName] =
+            wrapped;
+
+        try {
+            globalThis[functionName] =
+                wrapped;
+        }
+        catch (error) {
+            // window assignment remains active.
+        }
+
+        return true;
+    }
+
+    function installWrappers() {
+        [
+            "deleteChat",
+            "removeChat",
+            "deleteConversation",
+            "removeConversation"
+        ].forEach(
+            function (name) {
+                installFunctionWrapper(
+                    name,
+                    "delete"
+                );
+            }
+        );
+
+        [
+            "save",
+            "saveChats",
+            "persistChats",
+            "saveUserChats",
+            "saveConversations"
+        ].forEach(
+            function (name) {
+                installFunctionWrapper(
+                    name,
+                    "save"
+                );
+            }
+        );
+    }
+
+    function installListeners() {
+        document.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    looksLikeDeleteControl(
+                        event.target
+                    )
+                ) {
+                    const id =
+                        chatIdFromElement(
+                            event.target
+                        );
+
+                    if (id) {
+                        /*
+                          Mark it before the original delete handler runs.
+                        */
+                        markDeleted(id);
+                    }
+
+                    scheduleSanitize(
+                        "delete-click",
+                        true,
+                        250
+                    );
+
+                    return;
+                }
+
+                const details =
+                    [
+                        event.target?.id,
+                        event.target?.className,
+                        event.target
+                            ?.getAttribute?.(
+                                "data-action"
+                            ),
+                        event.target
+                            ?.textContent
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                if (
+                    details.includes("new chat") ||
+                    details.includes("send")
+                ) {
+                    scheduleSanitize(
+                        "chat-action",
+                        false,
+                        800
+                    );
+                }
+            },
+            true
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                scheduleSanitize(
+                    "pageshow",
+                    false,
+                    80
+                );
+
+                setTimeout(
+                    function () {
+                        sanitizeChats(
+                            "pageshow-late",
+                            false
+                        );
+                    },
+                    900
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                baselineReady = false;
+
+                scheduleSanitize(
+                    "account-change",
+                    false,
+                    150
+                );
+
+                setTimeout(
+                    function () {
+                        sanitizeChats(
+                            "account-change-late",
+                            false
+                        );
+                    },
+                    1000
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-message-saved",
+            function () {
+                scheduleSanitize(
+                    "message-saved",
+                    false,
+                    150
+                );
+            }
+        );
+
+        window.addEventListener(
+            "beforeunload",
+            function () {
+                sanitizeChats(
+                    "beforeunload",
+                    false
+                );
+            }
+        );
+
+        document.addEventListener(
+            "visibilitychange",
+            function () {
+                if (
+                    document.visibilityState ===
+                        "hidden"
+                ) {
+                    sanitizeChats(
+                        "page-hidden",
+                        false
+                    );
+                }
+            }
+        );
+    }
+
+    function start() {
+        installWrappers();
+        installListeners();
+
+        /*
+          First pass removes empty and previously deleted chats.
+        */
+        sanitizeChats(
+            "startup",
+            false
+        );
+
+        /*
+          Repeat briefly because account/server restore may finish
+          after DOMContentLoaded.
+        */
+        [250, 800, 1600, 3000]
+            .forEach(
+                function (delay) {
+                    setTimeout(
+                        function () {
+                            installWrappers();
+
+                            sanitizeChats(
+                                "startup-" +
+                                delay,
+                                false
+                            );
+                        },
+                        delay
+                    );
+                }
+            );
+    }
+
+    window.MIChatSaveRules = {
+        sanitize:
+            function () {
+                return sanitizeChats(
+                    "manual",
+                    false
+                );
+            },
+
+        markDeleted:
+            markDeleted,
+
+        isDeleted:
+            function (chatId) {
+                return getTombstones()
+                    .has(
+                        String(chatId)
+                    );
+            },
+
+        hasMessage:
+            hasAtLeastOneMessage,
+
+        getDeletedIds:
+            function () {
+                return Array.from(
+                    getTombstones()
+                );
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI CHAT SAVE RULES V1 - END */
+</script>
 </body>
 </html>
