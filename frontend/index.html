@@ -20831,5 +20831,648 @@ document.addEventListener(
 
 /* MI AI CHAT SAVE RULES V1 - END */
 </script>
+
+<script>
+/* MI AI RETITLE ALL CHATS V2 - START */
+
+(function () {
+    "use strict";
+
+    const RETITLE_VERSION =
+        "mi_all_chats_retitled_v2_";
+
+    let running = false;
+
+    function normalize(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function accountIdentity() {
+        try {
+            const firebaseAccount =
+                window.miFirebaseAuth?.currentUser ||
+                window.firebaseAuth?.currentUser ||
+                (
+                    window.firebase &&
+                    typeof window.firebase.auth === "function"
+                        ? window.firebase.auth().currentUser
+                        : null
+                );
+
+            return normalize(
+                firebaseAccount?.email ||
+                localStorage.getItem("mi_user_email") ||
+                firebaseAccount?.uid ||
+                localStorage.getItem("mi_user_id") ||
+                "guest"
+            );
+        }
+        catch (error) {
+            return normalize(
+                localStorage.getItem("mi_user_email") ||
+                localStorage.getItem("mi_user_id") ||
+                "guest"
+            );
+        }
+    }
+
+    function versionKey() {
+        return (
+            RETITLE_VERSION +
+            encodeURIComponent(
+                accountIdentity()
+            )
+        );
+    }
+
+    function chatMapReference() {
+        try {
+            if (
+                typeof chats !== "undefined" &&
+                chats &&
+                typeof chats === "object" &&
+                !Array.isArray(chats)
+            ) {
+                return chats;
+            }
+        }
+        catch (error) {
+            // Continue to window fallback.
+        }
+
+        if (
+            window.chats &&
+            typeof window.chats === "object" &&
+            !Array.isArray(window.chats)
+        ) {
+            return window.chats;
+        }
+
+        return null;
+    }
+
+    function messagesOf(chat) {
+        if (Array.isArray(chat)) {
+            return chat;
+        }
+
+        if (
+            chat &&
+            typeof chat === "object" &&
+            Array.isArray(chat.messages)
+        ) {
+            return chat.messages;
+        }
+
+        return [];
+    }
+
+    function firstUserMessage(chat) {
+        const message =
+            messagesOf(chat)
+                .find(function (item) {
+                    const role =
+                        String(
+                            item?.role ||
+                            item?.sender ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    return (
+                        role === "user" ||
+                        role === "me" ||
+                        role === "human"
+                    );
+                });
+
+        return String(
+            message?.text ??
+            message?.content ??
+            message?.message ??
+            ""
+        )
+            .replace(/https?:\/\/\S+/gi, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function titleCase(value) {
+        return String(value || "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(function (word) {
+                const lower =
+                    word.toLowerCase();
+
+                return (
+                    lower.charAt(0).toUpperCase() +
+                    lower.slice(1)
+                );
+            })
+            .join(" ");
+    }
+
+    function smartTitle(message) {
+        const text =
+            String(message || "")
+                .trim();
+
+        const lower =
+            text.toLowerCase();
+
+        if (!text) {
+            return "";
+        }
+
+        if (
+            /^(hi|hii+|hello|hey|good morning|good afternoon|good evening)\b/i.test(
+                text
+            )
+        ) {
+            return "User Greeting";
+        }
+
+        if (
+            /\bhow are you\b/i.test(text)
+        ) {
+            return "General Conversation";
+        }
+
+        if (
+            /\bpython\b.*\b(calculator|code|program|script|app)\b/i.test(
+                lower
+            )
+        ) {
+            return "Python Project";
+        }
+
+        if (
+            /\bpython\b/i.test(lower)
+        ) {
+            return "Python Help";
+        }
+
+        if (
+            /\bjavascript\b.*\b(error|bug|fix|issue|problem)\b/i.test(
+                lower
+            )
+        ) {
+            return "JavaScript Debugging";
+        }
+
+        if (
+            /\bhtml\b.*\b(login|page|website|form)\b/i.test(
+                lower
+            )
+        ) {
+            return "HTML Web Page";
+        }
+
+        if (
+            /\b(cricket|football|soccer|rugby|basketball)\b.*\b(score|match|result|live)\b/i.test(
+                lower
+            ) ||
+            /\b(score|match|result|live)\b.*\b(cricket|football|soccer|rugby|basketball)\b/i.test(
+                lower
+            )
+        ) {
+            if (lower.includes("cricket")) {
+                return "Cricket Scores";
+            }
+
+            if (
+                lower.includes("football") ||
+                lower.includes("soccer")
+            ) {
+                return "Football Scores";
+            }
+
+            return "Live Sports Scores";
+        }
+
+        if (
+            /\b(weather|temperature|forecast|rain)\b/i.test(
+                lower
+            )
+        ) {
+            return "Weather Forecast";
+        }
+
+        if (
+            /\b(latest|today|breaking)\b.*\bnews\b/i.test(
+                lower
+            ) ||
+            /\bnews\b/i.test(lower)
+        ) {
+            return "Latest News";
+        }
+
+        if (
+            /\btime\b/i.test(lower)
+        ) {
+            return "Current Time";
+        }
+
+        if (
+            /\btranslate\b.*\b(sinhala|සිංහල)\b/i.test(
+                lower
+            )
+        ) {
+            return "Sinhala Translation";
+        }
+
+        if (
+            /\btranslate\b.*\b(tamil|தமிழ்)\b/i.test(
+                lower
+            )
+        ) {
+            return "Tamil Translation";
+        }
+
+        if (
+            /\btranslate\b/i.test(lower)
+        ) {
+            return "Language Translation";
+        }
+
+        if (
+            /\b(ai|artificial intelligence)\b/i.test(
+                lower
+            )
+        ) {
+            return "Artificial Intelligence";
+        }
+
+        if (
+            /\b(cv|resume|curriculum vitae)\b/i.test(
+                lower
+            )
+        ) {
+            return "Resume Writing";
+        }
+
+        if (
+            /\b(logo|icon|branding)\b/i.test(
+                lower
+            )
+        ) {
+            return "Logo Design";
+        }
+
+        if (
+            /\b(error|bug|fix|repair|not working|issue|problem)\b/i.test(
+                lower
+            )
+        ) {
+            return "Technical Troubleshooting";
+        }
+
+        const stopWords =
+            new Set([
+                "a",
+                "about",
+                "an",
+                "and",
+                "are",
+                "can",
+                "could",
+                "create",
+                "do",
+                "explain",
+                "for",
+                "give",
+                "help",
+                "how",
+                "i",
+                "is",
+                "make",
+                "me",
+                "my",
+                "of",
+                "please",
+                "tell",
+                "the",
+                "this",
+                "to",
+                "want",
+                "what",
+                "when",
+                "where",
+                "which",
+                "who",
+                "why",
+                "with",
+                "write",
+                "you"
+            ]);
+
+        const usefulWords =
+            text
+                .split(/\s+/)
+                .map(function (word) {
+                    return word.trim();
+                })
+                .filter(function (word) {
+                    const normalized =
+                        word.toLowerCase();
+
+                    return (
+                        normalized.length > 1 &&
+                        !stopWords.has(normalized)
+                    );
+                })
+                .slice(0, 4);
+
+        if (usefulWords.length === 0) {
+            return "General Conversation";
+        }
+
+        let title =
+            titleCase(
+                usefulWords.join(" ")
+            );
+
+        if (title.length > 38) {
+            title =
+                title.slice(0, 38)
+                    .replace(/\s+\S*$/, "")
+                    .trim();
+        }
+
+        return (
+            title ||
+            "General Conversation"
+        );
+    }
+
+    function updateChatTitle(
+        chatMap,
+        chatId,
+        title
+    ) {
+        const chat =
+            chatMap[chatId];
+
+        if (
+            chat &&
+            !Array.isArray(chat) &&
+            typeof chat === "object"
+        ) {
+            chat.title = title;
+            chat.name = title;
+            chat.chatName = title;
+            chat.updatedAt = Date.now();
+
+            return;
+        }
+
+        /*
+          Some versions store each chat as a messages array.
+          Store titles in the existing title map when available.
+        */
+        try {
+            if (
+                typeof chatTitles !== "undefined" &&
+                chatTitles &&
+                typeof chatTitles === "object"
+            ) {
+                chatTitles[chatId] =
+                    title;
+            }
+        }
+        catch (error) {
+            // Continue with window title map.
+        }
+
+        if (
+            !window.chatTitles ||
+            typeof window.chatTitles !== "object"
+        ) {
+            window.chatTitles = {};
+        }
+
+        window.chatTitles[chatId] =
+            title;
+    }
+
+    function persistChanges() {
+        const functions = [
+            window.save,
+            window.saveChats,
+            window.persistChats,
+            window.saveUserChats,
+            window.saveConversations
+        ];
+
+        for (const fn of functions) {
+            if (
+                typeof fn === "function"
+            ) {
+                try {
+                    fn();
+                }
+                catch (error) {
+                    console.warn(
+                        "[MI AI Titles] Save failed:",
+                        error
+                    );
+                }
+            }
+        }
+
+        try {
+            if (
+                typeof save === "function"
+            ) {
+                save();
+            }
+        }
+        catch (error) {
+            // Window save hook may already have run.
+        }
+    }
+
+    function retitleAllChats(force) {
+        if (running) {
+            return 0;
+        }
+
+        running = true;
+
+        try {
+            const chatMap =
+                chatMapReference();
+
+            if (!chatMap) {
+                return 0;
+            }
+
+            let changed = 0;
+
+            Object.keys(chatMap)
+                .forEach(function (chatId) {
+                    const firstMessage =
+                        firstUserMessage(
+                            chatMap[chatId]
+                        );
+
+                    /*
+                      Empty chats are ignored.
+                    */
+                    if (!firstMessage) {
+                        return;
+                    }
+
+                    const title =
+                        smartTitle(
+                            firstMessage
+                        );
+
+                    if (!title) {
+                        return;
+                    }
+
+                    updateChatTitle(
+                        chatMap,
+                        chatId,
+                        title
+                    );
+
+                    changed += 1;
+                });
+
+            if (changed > 0) {
+                try {
+                    if (
+                        typeof chats !==
+                            "undefined"
+                    ) {
+                        chats = chatMap;
+                    }
+                }
+                catch (error) {
+                    // Continue with window binding.
+                }
+
+                window.chats =
+                    chatMap;
+
+                persistChanges();
+
+                try {
+                    if (
+                        typeof renderList ===
+                            "function"
+                    ) {
+                        renderList();
+                    }
+                }
+                catch (error) {
+                    console.warn(
+                        "[MI AI Titles] List render failed:",
+                        error
+                    );
+                }
+            }
+
+            localStorage.setItem(
+                versionKey(),
+                JSON.stringify({
+                    completedAt:
+                        Date.now(),
+
+                    count:
+                        changed
+                })
+            );
+
+            console.log(
+                "[MI AI Titles] Retitled chats:",
+                changed
+            );
+
+            return changed;
+        }
+        finally {
+            running = false;
+        }
+    }
+
+    function start() {
+        /*
+          Run immediately and again after async account/server restore.
+        */
+        [0, 300, 900, 1800, 3500]
+            .forEach(function (delay) {
+                setTimeout(
+                    function () {
+                        retitleAllChats(true);
+                    },
+                    delay
+                );
+            });
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                [100, 700, 1600]
+                    .forEach(function (delay) {
+                        setTimeout(
+                            function () {
+                                retitleAllChats(true);
+                            },
+                            delay
+                        );
+                    });
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                setTimeout(
+                    function () {
+                        retitleAllChats(true);
+                    },
+                    400
+                );
+            }
+        );
+    }
+
+    window.MIRetitleAllChats = {
+        run:
+            function () {
+                return retitleAllChats(
+                    true
+                );
+            },
+
+        createTitle:
+            smartTitle
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI RETITLE ALL CHATS V2 - END */
+</script>
 </body>
 </html>
