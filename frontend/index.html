@@ -9003,58 +9003,147 @@ if (input) {
 /* NEW CHAT */
 async function newChat(){
     removeLoginPrompt();
+
+    /*
+      Always create a completely separate chat record.
+      Never replace the whole chats object.
+    */
+    const localId = `chat_${Date.now()}`;
+
     if (!isAuthenticated()) {
-        const guestChatId = `chat_${Date.now()}`;
-        chats[guestChatId] = [];
-chats[guestChatId].title = "NEW CHAT";
-chats[guestChatId].name = "NEW CHAT";
-chats[guestChatId].chatName = "NEW CHAT";
-        currentChat = guestChatId;
-        localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
-        localStorage.setItem('last_chat', guestChatId);
+        chats[localId] = [];
+        chats[localId].title = "NEW CHAT";
+        chats[localId].name = "NEW CHAT";
+        chats[localId].chatName = "NEW CHAT";
+
+        currentChat = localId;
+
+        localStorage.setItem(
+            getGuestStorageKey(),
+            JSON.stringify(chats)
+        );
+
+        localStorage.setItem(
+            "last_chat",
+            localId
+        );
+
         save();
         renderList();
-        openChat(guestChatId);
+        openChat(localId);
+
+        if (
+            window.MIFinalNewChatV11 &&
+            typeof window.MIFinalNewChatV11.beginDraft === "function"
+        ) {
+            window.MIFinalNewChatV11.beginDraft(localId);
+        }
+
         return;
     }
 
-    const token = localStorage.getItem('mi_supabase_token');
-    const userId = localStorage.getItem('mi_user_id') || '';
-    const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+    const token =
+        localStorage.getItem(
+            "mi_supabase_token"
+        );
+
+    const userId =
+        localStorage.getItem(
+            "mi_user_id"
+        ) || "";
+
+    const storedEmail =
+        (
+            localStorage.getItem(
+                "mi_user_email"
+            ) || ""
+        )
+            .trim()
+            .toLowerCase();
+
+    let createdId = "";
+
     try {
-        const res = await fetch('/api/conversations', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token,
-                'X-Session-Id': accountId || userId || '',
-                'X-User-Id': userId || '',
-                'X-User-Email': storedEmail || ''
-            },
-            body: JSON.stringify({ title: 'New chat', session_id: accountId || userId || guestId })
-        });
-        const json = await res.json();
-        if (res.ok && json.conversation && json.conversation.id) {
-            const id = json.conversation.id;
-            chats[id] = [];
-            currentChat = id;
-            save();
-            renderList();
-            openChat(id);
-            return;
+        const response =
+            await fetch(
+                "/api/conversations",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " + token,
+
+                        "X-Session-Id":
+                            accountId ||
+                            userId ||
+                            "",
+
+                        "X-User-Id":
+                            userId,
+
+                        "X-User-Email":
+                            storedEmail
+                    },
+
+                    body:
+                        JSON.stringify({
+                            title: "NEW CHAT",
+
+                            session_id:
+                                accountId ||
+                                userId ||
+                                guestId
+                        })
+                }
+            );
+
+        const result =
+            await response.json();
+
+        if (
+            response.ok &&
+            result.conversation &&
+            result.conversation.id
+        ) {
+            createdId =
+                String(
+                    result.conversation.id
+                );
         }
-    } catch (e) {
-        // fallback to local chat creation
+    }
+    catch (error) {
+        console.warn(
+            "[MI AI] Server New Chat creation failed. Using local fallback.",
+            error
+        );
     }
 
-    const id = `chat_${Date.now()}`;
+    const id =
+        createdId ||
+        localId;
+
     chats[id] = [];
+    chats[id].title = "NEW CHAT";
+    chats[id].name = "NEW CHAT";
+    chats[id].chatName = "NEW CHAT";
+
     currentChat = id;
+
     save();
     renderList();
     openChat(id);
-}
 
+    if (
+        window.MIFinalNewChatV11 &&
+        typeof window.MIFinalNewChatV11.beginDraft === "function"
+    ) {
+        window.MIFinalNewChatV11.beginDraft(id);
+    }
+}
 /* OPEN */
 function openChat(id){
 removeLoginPrompt();
