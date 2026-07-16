@@ -6567,116 +6567,7 @@ body.mi-shared-single-chat #miSharedSingleChatBadge {
 
 <!-- MI AI FIREBASE AUTH END -->
 
-<style>
-/* MI AI IPHONE HEADER BLUR V1 - START */
 
-/*
-  iPhone-style glass header.
-
-  Chat content can move underneath the header while
-  remaining softly blurred behind the glass surface.
-*/
-#header,
-header,
-.header,
-.top-header,
-.app-header,
-.main-header,
-#topbar,
-.topbar {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 1000 !important;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(34, 61, 101, 0.68),
-            rgba(74, 54, 132, 0.58)
-        ) !important;
-
-    -webkit-backdrop-filter:
-        blur(22px)
-        saturate(180%)
-        brightness(1.08) !important;
-
-    backdrop-filter:
-        blur(22px)
-        saturate(180%)
-        brightness(1.08) !important;
-
-    border-bottom:
-        1px solid rgba(255, 255, 255, 0.18) !important;
-
-    box-shadow:
-        0 8px 28px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
-
-    isolation: isolate !important;
-    transform: translateZ(0);
-}
-
-/* Soft glass highlight */
-#header::before,
-header::before,
-.header::before,
-.top-header::before,
-.app-header::before,
-.main-header::before,
-#topbar::before,
-.topbar::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.13),
-            rgba(255, 255, 255, 0.025) 55%,
-            transparent
-        );
-}
-
-/* Keep buttons and logo sharp above the blur */
-#header > *,
-header > *,
-.header > *,
-.top-header > *,
-.app-header > *,
-.main-header > *,
-#topbar > *,
-.topbar > * {
-    position: relative;
-    z-index: 2;
-}
-
-/*
-  Chromium fallback.
-  A translucent header remains visible even if
-  backdrop-filter is unavailable.
-*/
-@supports not (
-    (backdrop-filter: blur(1px)) or
-    (-webkit-backdrop-filter: blur(1px))
-) {
-    #header,
-    header,
-    .header,
-    .top-header,
-    .app-header,
-    .main-header,
-    #topbar,
-    .topbar {
-        background:
-            rgba(37, 53, 91, 0.94) !important;
-    }
-}
-
-/* MI AI IPHONE HEADER BLUR V1 - END */
-</style>
 
 <style>
 /* MI AI SHARED CHAT ISOLATION V1 - START */
@@ -6734,6 +6625,148 @@ body.mi-shared-chat-viewer.mi-view-only .composer {
 }
 
 /* MI AI SHARED CHAT ISOLATION V1 - END */
+</style>
+
+<style>
+/* MI AI REAL HEADER GLASS BLUR V2 - START */
+
+/*
+  Real iPhone-style header glass:
+  messages scroll behind the header and become blurred.
+*/
+
+#header,
+.header,
+.app-header,
+.main-header,
+.topbar,
+#topbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 9999 !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(28, 48, 82, 0.56),
+            rgba(71, 48, 126, 0.50)
+        ) !important;
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(190%)
+        brightness(1.08) !important;
+
+    backdrop-filter:
+        blur(24px)
+        saturate(190%)
+        brightness(1.08) !important;
+
+    border-bottom:
+        1px solid rgba(255,255,255,0.20) !important;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.20),
+        inset 0 1px 0 rgba(255,255,255,0.18) !important;
+
+    isolation: isolate !important;
+}
+
+/*
+  Important:
+  the header must not have an opaque background,
+  otherwise the messages behind it cannot be seen or blurred.
+*/
+#header::before,
+.header::before,
+.app-header::before,
+.main-header::before,
+.topbar::before,
+#topbar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.12),
+            rgba(255,255,255,0.035) 55%,
+            rgba(255,255,255,0.01)
+        );
+}
+
+/* Keep logo, title and buttons sharp */
+#header > *,
+.header > *,
+.app-header > *,
+.main-header > *,
+.topbar > *,
+#topbar > * {
+    position: relative;
+    z-index: 2;
+}
+
+/*
+  Make the chat area scroll underneath the header.
+  Do not add top padding equal to the header height.
+*/
+#chat,
+.chat,
+.chat-area,
+.messages,
+.messages-area,
+#messages {
+    position: relative !important;
+    z-index: 1 !important;
+    overflow-y: auto !important;
+}
+
+/*
+  Ensure the main area does not clip the backdrop blur.
+*/
+#main,
+.main,
+.chat-container,
+.main-content {
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/*
+  Chromium rendering improvement for backdrop-filter.
+*/
+#header,
+.header,
+.app-header,
+.main-header,
+.topbar,
+#topbar {
+    transform: translateZ(0);
+    will-change: backdrop-filter;
+}
+
+/*
+  Fallback if backdrop-filter is unsupported.
+*/
+@supports not (
+    (backdrop-filter: blur(2px)) or
+    (-webkit-backdrop-filter: blur(2px))
+) {
+    #header,
+    .header,
+    .app-header,
+    .main-header,
+    .topbar,
+    #topbar {
+        background:
+            rgba(38, 53, 89, 0.90) !important;
+    }
+}
+
+/* MI AI REAL HEADER GLASS BLUR V2 - END */
 </style>
 </head>
 
