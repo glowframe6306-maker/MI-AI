@@ -7965,6 +7965,141 @@ button,
 }
 
 /* MI AI IOS SAFE BUNDLE CSS - END */
+
+/* MI AI SMOOTH NEW CHAT CSS - START */
+
+#chat,
+#chatList {
+    contain:
+        layout
+        style
+        paint;
+}
+
+#chat {
+    scroll-behavior:
+        smooth;
+}
+
+#newChatBtn,
+.new-chat-btn {
+    will-change:
+        transform,
+        opacity;
+
+    transition:
+        transform 160ms
+            cubic-bezier(.2,.9,.2,1),
+        opacity 160ms ease,
+        filter 160ms ease
+        !important;
+}
+
+#newChatBtn.mi-new-chat-loading,
+.new-chat-btn.mi-new-chat-loading {
+    opacity:
+        0.72 !important;
+
+    pointer-events:
+        none !important;
+
+    cursor:
+        progress !important;
+
+    transform:
+        scale(0.97)
+        !important;
+}
+
+#main.mi-chat-switching #chat {
+    opacity:
+        0.72;
+
+    transform:
+        translateY(5px);
+
+    transition:
+        opacity 110ms ease,
+        transform 110ms ease;
+}
+
+#main.mi-chat-ready #chat {
+    opacity:
+        1;
+
+    transform:
+        translateY(0);
+
+    transition:
+        opacity 230ms ease,
+        transform 230ms
+            cubic-bezier(.2,.9,.2,1);
+}
+
+#chatList > *,
+.chatItem,
+.chat-item,
+.history-item,
+.conversation-item {
+    content-visibility:
+        auto;
+
+    contain-intrinsic-size:
+        54px;
+
+    will-change:
+        transform,
+        opacity;
+}
+
+.mi-new-chat-enter {
+    animation:
+        miNewChatEnter
+        260ms
+        cubic-bezier(.2,.9,.2,1);
+}
+
+@keyframes miNewChatEnter {
+    from {
+        opacity:
+            0;
+
+        transform:
+            translateY(-7px)
+            scale(0.98);
+    }
+
+    to {
+        opacity:
+            1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    #chat,
+    #newChatBtn,
+    .new-chat-btn,
+    #main #chat,
+    .mi-new-chat-enter {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+
+        scroll-behavior:
+            auto !important;
+    }
+}
+
+/* MI AI SMOOTH NEW CHAT CSS - END */
 </style>
 </head>
 
@@ -23633,6 +23768,368 @@ document.addEventListener(
 })();
 
 /* MI AI IOS SAFE BUNDLE JS - END */
+</script>
+
+<script>
+/* MI AI SMOOTH NEW CHAT JS - START */
+
+(function () {
+    "use strict";
+
+    let installed = false;
+    let creatingChat = false;
+    let releaseTimer = null;
+
+    function button() {
+        return document.querySelector(
+            "#newChatBtn, .new-chat-btn"
+        );
+    }
+
+    function mainElement() {
+        return (
+            document.getElementById(
+                "main"
+            ) ||
+            document.querySelector(
+                "main, .main, .app-main"
+            )
+        );
+    }
+
+    function showStatus(message) {
+        if (
+            window.MIIOS &&
+            typeof window.MIIOS
+                .island ===
+                "function"
+        ) {
+            window.MIIOS.island(
+                message,
+                {
+                    type:
+                        "thinking",
+
+                    persistent:
+                        true
+                }
+            );
+        }
+    }
+
+    function hideStatus() {
+        if (
+            window.MIIOS &&
+            typeof window.MIIOS
+                .hideIsland ===
+                "function"
+        ) {
+            window.MIIOS
+                .hideIsland();
+        }
+    }
+
+    function setLoading(active) {
+        const newChatButton =
+            button();
+
+        const main =
+            mainElement();
+
+        if (newChatButton) {
+            newChatButton.classList.toggle(
+                "mi-new-chat-loading",
+                active
+            );
+
+            newChatButton.setAttribute(
+                "aria-busy",
+                String(active)
+            );
+
+            if (
+                "disabled" in
+                newChatButton
+            ) {
+                newChatButton.disabled =
+                    active;
+            }
+        }
+
+        if (main) {
+            main.classList.toggle(
+                "mi-chat-switching",
+                active
+            );
+
+            if (active) {
+                main.classList.remove(
+                    "mi-chat-ready"
+                );
+            }
+        }
+    }
+
+    function animateNewChatItem() {
+        const list =
+            document.getElementById(
+                "chatList"
+            );
+
+        const item =
+            list?.firstElementChild;
+
+        if (!item) {
+            return;
+        }
+
+        item.classList.remove(
+            "mi-new-chat-enter"
+        );
+
+        void item.offsetWidth;
+
+        item.classList.add(
+            "mi-new-chat-enter"
+        );
+
+        setTimeout(
+            function () {
+                item.classList.remove(
+                    "mi-new-chat-enter"
+                );
+            },
+            300
+        );
+    }
+
+    function finishSmoothly() {
+        clearTimeout(
+            releaseTimer
+        );
+
+        releaseTimer =
+            setTimeout(
+                function () {
+                    creatingChat =
+                        false;
+
+                    setLoading(false);
+                    hideStatus();
+
+                    const main =
+                        mainElement();
+
+                    if (main) {
+                        main.classList.add(
+                            "mi-chat-ready"
+                        );
+
+                        setTimeout(
+                            function () {
+                                main.classList.remove(
+                                    "mi-chat-ready"
+                                );
+                            },
+                            270
+                        );
+                    }
+
+                    animateNewChatItem();
+
+                    const input =
+                        document.querySelector(
+                            "#msg, " +
+                            "#messageInput, " +
+                            "#chatInput, " +
+                            "textarea[name='message'], " +
+                            ".chat-input, " +
+                            ".message-input"
+                        );
+
+                    requestAnimationFrame(
+                        function () {
+                            input?.focus?.({
+                                preventScroll:
+                                    true
+                            });
+                        }
+                    );
+                },
+                80
+            );
+    }
+
+    function install() {
+        if (installed) {
+            return true;
+        }
+
+        const original =
+            window.newChat;
+
+        if (
+            typeof original !==
+            "function"
+        ) {
+            return false;
+        }
+
+        if (
+            original
+                .__miSmoothNewChat
+        ) {
+            installed = true;
+            return true;
+        }
+
+        const wrapped =
+            async function (...args) {
+                if (creatingChat) {
+                    return false;
+                }
+
+                creatingChat = true;
+
+                setLoading(true);
+
+                showStatus(
+                    "Opening new chat…"
+                );
+
+                /*
+                  Allow the pressed-button animation
+                  to paint before doing chat work.
+                */
+                await new Promise(
+                    function (resolve) {
+                        requestAnimationFrame(
+                            function () {
+                                requestAnimationFrame(
+                                    resolve
+                                );
+                            }
+                        );
+                    }
+                );
+
+                try {
+                    return await original.apply(
+                        this,
+                        args
+                    );
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI] New Chat failed:",
+                        error
+                    );
+
+                    if (
+                        window.MIIOS &&
+                        typeof window.MIIOS
+                            .toast ===
+                            "function"
+                    ) {
+                        window.MIIOS.toast(
+                            "Could not open a new chat.",
+                            {
+                                type:
+                                    "offline",
+
+                                duration:
+                                    2600
+                            }
+                        );
+                    }
+
+                    throw error;
+                }
+                finally {
+                    finishSmoothly();
+                }
+            };
+
+        wrapped.__miSmoothNewChat =
+            true;
+
+        wrapped.__miOriginal =
+            original;
+
+        window.newChat =
+            wrapped;
+
+        try {
+            newChat =
+                wrapped;
+        }
+        catch (error) {
+            // window.newChat remains available.
+        }
+
+        installed = true;
+
+        console.log(
+            "[MI AI] Smooth New Chat guard installed."
+        );
+
+        return true;
+    }
+
+    function start() {
+        if (install()) {
+            return;
+        }
+
+        let attempts = 0;
+
+        const timer =
+            setInterval(
+                function () {
+                    attempts += 1;
+
+                    if (
+                        install() ||
+                        attempts >= 60
+                    ) {
+                        clearInterval(
+                            timer
+                        );
+                    }
+                },
+                100
+            );
+    }
+
+    window.MISmoothNewChat = {
+        install:
+            install,
+
+        isBusy:
+            function () {
+                return creatingChat;
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once:
+                    true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SMOOTH NEW CHAT JS - END */
 </script>
 </body>
 </html>
