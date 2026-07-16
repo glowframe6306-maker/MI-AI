@@ -15800,5 +15800,381 @@ document.addEventListener(
 
 /* MI AI SHARE DROPDOWN FIX V7 - END */
 </script>
+
+<script>
+/* MI AI RESPONSE FORMAT ADAPTER V1 - START */
+
+(function () {
+    "use strict";
+
+    let installed = false;
+    let installAttempts = 0;
+
+    function questionFromPayload(payload) {
+        if (!payload || typeof payload !== "object") {
+            return "";
+        }
+
+        if (typeof payload.message === "string") {
+            return payload.message.trim();
+        }
+
+        if (typeof payload.prompt === "string") {
+            return payload.prompt.trim();
+        }
+
+        if (typeof payload.text === "string") {
+            return payload.text.trim();
+        }
+
+        if (Array.isArray(payload.messages)) {
+            const lastUserMessage =
+                [...payload.messages]
+                    .reverse()
+                    .find(function (item) {
+                        return (
+                            item &&
+                            (
+                                item.role === "user" ||
+                                item.role === "me"
+                            )
+                        );
+                    });
+
+            return String(
+                lastUserMessage?.content ||
+                lastUserMessage?.text ||
+                ""
+            ).trim();
+        }
+
+        return "";
+    }
+
+    function objectToResponse(result) {
+        if (result instanceof Response) {
+            return result;
+        }
+
+        if (
+            typeof result === "string" &&
+            result.trim()
+        ) {
+            result = {
+                reply: result.trim(),
+                response: result.trim()
+            };
+        }
+
+        if (
+            result &&
+            typeof result === "object"
+        ) {
+            const answer =
+                String(
+                    result.reply ||
+                    result.response ||
+                    result.answer ||
+                    result.message ||
+                    result.text ||
+                    result.content ||
+                    ""
+                ).trim();
+
+            if (answer) {
+                return new Response(
+                    JSON.stringify({
+                        ...result,
+                        reply: answer,
+                        response: answer,
+                        message: answer,
+                        text: answer
+                    }),
+                    {
+                        status: 200,
+                        headers: {
+                            "Content-Type":
+                                "application/json; charset=utf-8"
+                        }
+                    }
+                );
+            }
+        }
+
+        return null;
+    }
+
+    async function normalChatFallback(
+        payload,
+        signal
+    ) {
+        const question =
+            questionFromPayload(payload);
+
+        const fallbackPayload = {
+            ...(payload || {})
+        };
+
+        if (
+            !fallbackPayload.message &&
+            question
+        ) {
+            fallbackPayload.message =
+                question;
+        }
+
+        if (
+            !fallbackPayload.prompt &&
+            question
+        ) {
+            fallbackPayload.prompt =
+                question;
+        }
+
+        const candidates = [];
+
+        const configuredBase =
+            String(
+                window.__MI_BACKEND_URL__ ||
+                ""
+            )
+                .trim()
+                .replace(/\/$/, "");
+
+        if (configuredBase) {
+            candidates.push(
+                configuredBase + "/api/chat"
+            );
+        }
+
+        candidates.push("/api/chat");
+
+        const uniqueCandidates =
+            [...new Set(candidates)];
+
+        let lastError = null;
+
+        for (
+            const endpoint
+            of uniqueCandidates
+        ) {
+            try {
+                const response =
+                    await fetch(
+                        endpoint,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    fallbackPayload
+                                ),
+
+                            signal: signal
+                        }
+                    );
+
+                if (response.ok) {
+                    return response;
+                }
+
+                const body =
+                    await response
+                        .text()
+                        .catch(function () {
+                            return "";
+                        });
+
+                lastError =
+                    new Error(
+                        body ||
+                        (
+                            "Server returned " +
+                            response.status
+                        )
+                    );
+            }
+            catch (error) {
+                lastError = error;
+            }
+        }
+
+        throw (
+            lastError ||
+            new Error(
+                "Unable to contact the AI server."
+            )
+        );
+    }
+
+    function installAdapter() {
+        if (installed) {
+            return true;
+        }
+
+        let currentFetchChatReply = null;
+
+        try {
+            currentFetchChatReply =
+                window.fetchChatReply ||
+                (
+                    typeof fetchChatReply ===
+                        "function"
+                        ? fetchChatReply
+                        : null
+                );
+        }
+        catch (error) {
+            currentFetchChatReply =
+                window.fetchChatReply ||
+                null;
+        }
+
+        if (
+            typeof currentFetchChatReply !==
+                "function"
+        ) {
+            return false;
+        }
+
+        if (
+            currentFetchChatReply
+                .__miResponseAdapterV1 ===
+                true
+        ) {
+            installed = true;
+            return true;
+        }
+
+        const previousFetchChatReply =
+            currentFetchChatReply;
+
+        const adaptedFetchChatReply =
+            async function (
+                payload,
+                signal,
+                useStreaming
+            ) {
+                try {
+                    const result =
+                        await previousFetchChatReply(
+                            payload,
+                            signal,
+                            useStreaming
+                        );
+
+                    const converted =
+                        objectToResponse(result);
+
+                    if (converted) {
+                        return converted;
+                    }
+
+                    console.warn(
+                        "[MI AI] Reply function returned no usable Response. Falling back to /api/chat.",
+                        result
+                    );
+
+                    return await normalChatFallback(
+                        payload,
+                        signal
+                    );
+                }
+                catch (error) {
+                    console.warn(
+                        "[MI AI] Live/time reply failed. Falling back to /api/chat.",
+                        error
+                    );
+
+                    return await normalChatFallback(
+                        payload,
+                        signal
+                    );
+                }
+            };
+
+        adaptedFetchChatReply
+            .__miResponseAdapterV1 =
+            true;
+
+        window.fetchChatReply =
+            adaptedFetchChatReply;
+
+        try {
+            fetchChatReply =
+                adaptedFetchChatReply;
+        }
+        catch (error) {
+            /*
+              A global lexical binding may not be writable.
+              window.fetchChatReply remains available.
+            */
+        }
+
+        installed = true;
+
+        console.log(
+            "[MI AI] Response format adapter installed."
+        );
+
+        return true;
+    }
+
+    function start() {
+        if (installAdapter()) {
+            return;
+        }
+
+        const timer =
+            setInterval(
+                function () {
+                    installAttempts += 1;
+
+                    if (
+                        installAdapter() ||
+                        installAttempts >= 100
+                    ) {
+                        clearInterval(timer);
+                    }
+                },
+                100
+            );
+    }
+
+    window.MIResponseFormatAdapter = {
+        install:
+            installAdapter,
+
+        convert:
+            objectToResponse,
+
+        fallback:
+            normalChatFallback
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI RESPONSE FORMAT ADAPTER V1 - END */
+</script>
 </body>
 </html>
