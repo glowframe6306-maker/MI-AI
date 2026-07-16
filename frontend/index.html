@@ -7276,6 +7276,695 @@ body.mi-share-password-locked .composer {
 }
 
 /* MI AI NEW CHAT WELCOME V1 - END */
+
+/* MI AI IOS SAFE BUNDLE CSS - START */
+
+/* =========================================================
+   DYNAMIC ISLAND
+   ========================================================= */
+
+#miDynamicIsland {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top, 0px));
+    left: 50%;
+    z-index: 2147483000;
+
+    width: 120px;
+    min-height: 38px;
+    max-width: calc(100vw - 24px);
+
+    padding: 8px 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.12);
+
+    border-radius: 999px;
+
+    background:
+        rgba(7, 10, 16, 0.96);
+
+    color: #ffffff;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.12),
+        0 14px 42px
+            rgba(0, 0, 0, 0.38);
+
+    -webkit-backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(30px)
+        saturate(190%);
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transform:
+        translateX(-50%)
+        translateY(-18px)
+        scale(0.86);
+
+    transition:
+        width 260ms
+            cubic-bezier(.2,.9,.2,1),
+        min-height 260ms
+            cubic-bezier(.2,.9,.2,1),
+        opacity 180ms ease,
+        transform 280ms
+            cubic-bezier(.2,.9,.2,1);
+}
+
+#miDynamicIsland.mi-island-visible {
+    width: min(310px, calc(100vw - 24px));
+
+    min-height: 48px;
+
+    opacity: 1;
+
+    transform:
+        translateX(-50%)
+        translateY(0)
+        scale(1);
+}
+
+#miDynamicIsland.mi-island-compact {
+    width: 126px;
+}
+
+#miDynamicIslandIcon {
+    width: 28px;
+    height: 28px;
+
+    flex: 0 0 28px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        rgba(
+            var(--mi-theme-rgb, 30, 136, 229),
+            0.24
+        );
+
+    color: #ffffff;
+}
+
+#miDynamicIslandText {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#miDynamicIsland.mi-island-thinking
+#miDynamicIslandIcon::after {
+    content: "";
+
+    width: 11px;
+    height: 11px;
+
+    border:
+        2px solid
+        rgba(255,255,255,0.34);
+
+    border-top-color:
+        #ffffff;
+
+    border-radius: 50%;
+
+    animation:
+        miIslandSpin
+        700ms
+        linear
+        infinite;
+}
+
+@keyframes miIslandSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   IOS TOASTS
+   ========================================================= */
+
+#miIosToastStack {
+    position: fixed;
+    left: 50%;
+    bottom:
+        max(
+            22px,
+            calc(
+                env(safe-area-inset-bottom, 0px)
+                + 14px
+            )
+        );
+
+    z-index: 2147482990;
+
+    width:
+        min(
+            390px,
+            calc(100vw - 24px)
+        );
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 9px;
+
+    pointer-events: none;
+
+    transform: translateX(-50%);
+}
+
+.mi-ios-toast {
+    width: fit-content;
+    max-width: 100%;
+
+    padding: 11px 15px;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.28);
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.91),
+            rgba(226,234,244,0.82)
+        );
+
+    color: #111827;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.96),
+        0 16px 46px
+            rgba(0,0,0,0.28);
+
+    -webkit-backdrop-filter:
+        blur(28px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(28px)
+        saturate(190%);
+
+    opacity: 0;
+
+    transform:
+        translateY(18px)
+        scale(0.94);
+
+    animation:
+        miToastIn
+        260ms
+        cubic-bezier(.2,.9,.2,1)
+        forwards;
+}
+
+.mi-ios-toast.mi-toast-leaving {
+    animation:
+        miToastOut
+        220ms
+        ease
+        forwards;
+}
+
+.mi-ios-toast-icon {
+    width: 25px;
+    height: 25px;
+
+    flex: 0 0 25px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        rgba(
+            var(--mi-theme-rgb,30,136,229),
+            0.17
+        );
+}
+
+@keyframes miToastIn {
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@keyframes miToastOut {
+    to {
+        opacity: 0;
+
+        transform:
+            translateY(12px)
+            scale(0.94);
+    }
+}
+
+
+/* =========================================================
+   BUTTON HAPTIC / SPRING ANIMATION
+   ========================================================= */
+
+button,
+[role="button"],
+.btn,
+.button,
+.chat-item,
+.chatItem,
+.history-item,
+.conversation-item {
+    -webkit-tap-highlight-color:
+        transparent;
+
+    touch-action:
+        manipulation;
+}
+
+.mi-haptic-press {
+    transform:
+        scale(0.955)
+        !important;
+
+    filter:
+        brightness(0.97);
+
+    transition:
+        transform 70ms ease,
+        filter 70ms ease
+        !important;
+}
+
+.mi-haptic-release {
+    animation:
+        miHapticSpring
+        340ms
+        cubic-bezier(.16,1.4,.34,1);
+}
+
+@keyframes miHapticSpring {
+    0% {
+        transform:
+            scale(0.955);
+    }
+
+    58% {
+        transform:
+            scale(1.025);
+    }
+
+    100% {
+        transform:
+            scale(1);
+    }
+}
+
+
+/* =========================================================
+   IOS BOTTOM SHEET
+   ========================================================= */
+
+#miIosSheetBackdrop {
+    position: fixed;
+    inset: 0;
+
+    z-index: 2147482950;
+
+    display: none;
+
+    background:
+        rgba(3,7,18,0.48);
+
+    -webkit-backdrop-filter:
+        blur(8px);
+
+    backdrop-filter:
+        blur(8px);
+
+    opacity: 0;
+
+    transition:
+        opacity 220ms ease;
+}
+
+#miIosSheetBackdrop.mi-sheet-visible {
+    display: block;
+
+    opacity: 1;
+}
+
+#miIosBottomSheet {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+
+    z-index: 2147482960;
+
+    width:
+        min(
+            520px,
+            calc(100vw - 12px)
+        );
+
+    max-height:
+        min(
+            76dvh,
+            620px
+        );
+
+    padding:
+        10px
+        12px
+        max(
+            16px,
+            calc(
+                env(safe-area-inset-bottom,0px)
+                + 10px
+            )
+        );
+
+    overflow-y: auto;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.24);
+
+    border-bottom: 0;
+
+    border-radius:
+        28px
+        28px
+        0
+        0;
+
+    background:
+        linear-gradient(
+            155deg,
+            rgba(245,248,252,0.94),
+            rgba(220,229,241,0.88)
+        );
+
+    color: #111827;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.98),
+        0 -18px 70px
+            rgba(0,0,0,0.34);
+
+    -webkit-backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transform:
+        translateX(-50%)
+        translateY(110%);
+
+    transition:
+        transform 340ms
+            cubic-bezier(.18,.9,.22,1),
+        opacity 190ms ease;
+}
+
+#miIosBottomSheet.mi-sheet-visible {
+    opacity: 1;
+
+    pointer-events: auto;
+
+    transform:
+        translateX(-50%)
+        translateY(0);
+}
+
+#miIosSheetHandle {
+    width: 40px;
+    height: 5px;
+
+    margin:
+        2px auto
+        12px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(17,24,39,0.25);
+}
+
+#miIosSheetTitle {
+    padding:
+        2px 8px
+        11px;
+
+    color: #111827;
+
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+}
+
+#miIosSheetActions {
+    display: grid;
+    gap: 8px;
+}
+
+.mi-ios-sheet-action {
+    width: 100% !important;
+    min-height: 56px !important;
+
+    margin: 0 !important;
+    padding: 12px 14px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 12px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.76)
+        !important;
+
+    border-radius:
+        17px !important;
+
+    background:
+        rgba(255,255,255,0.64)
+        !important;
+
+    color:
+        #111827 !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255,255,255,0.94),
+        0 7px 20px
+            rgba(0,0,0,0.10)
+        !important;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif
+        !important;
+
+    font-size: 16px !important;
+    font-weight: 700 !important;
+
+    text-align: left;
+}
+
+.mi-ios-sheet-action::before,
+.mi-ios-sheet-action::after {
+    display:
+        none !important;
+}
+
+.mi-ios-sheet-action-icon {
+    width: 36px;
+    height: 36px;
+
+    flex: 0 0 36px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(
+            var(--mi-theme-rgb,30,136,229),
+            0.15
+        );
+}
+
+.mi-ios-sheet-action.mi-sheet-danger {
+    color:
+        #9f1239 !important;
+
+    background:
+        rgba(255,228,230,0.82)
+        !important;
+}
+
+.mi-ios-sheet-action.mi-sheet-danger
+.mi-ios-sheet-action-icon {
+    background:
+        rgba(244,63,94,0.15);
+}
+
+#miIosSheetCancel {
+    width: 100% !important;
+    min-height: 54px !important;
+
+    margin:
+        10px 0
+        0 !important;
+
+    border-radius:
+        17px !important;
+
+    background:
+        rgba(255,255,255,0.80)
+        !important;
+
+    color:
+        #111827 !important;
+
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+    #miDynamicIsland {
+        top:
+            max(
+                7px,
+                env(safe-area-inset-top,0px)
+            );
+    }
+
+    #miDynamicIsland.mi-island-visible {
+        width:
+            min(
+                300px,
+                calc(100vw - 18px)
+            );
+    }
+
+    #miIosBottomSheet {
+        width:
+            calc(100vw - 8px);
+
+        border-radius:
+            30px
+            30px
+            0
+            0;
+    }
+
+    .mi-ios-sheet-action {
+        min-height:
+            61px !important;
+
+        font-size:
+            18px !important;
+    }
+
+    .mi-ios-toast {
+        font-size:
+            15px;
+    }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    #miDynamicIsland,
+    #miIosBottomSheet,
+    #miIosSheetBackdrop,
+    .mi-ios-toast,
+    .mi-haptic-release {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+}
+
+/* MI AI IOS SAFE BUNDLE CSS - END */
 </style>
 </head>
 
@@ -21553,6 +22242,1316 @@ document.addEventListener(
 })();
 
 /* MI AI FINAL NEW CHAT WELCOME V11 - END */
+</script>
+
+<script>
+/* MI AI IOS SAFE BUNDLE JS - START */
+
+(function () {
+    "use strict";
+
+    let islandTimer = null;
+    let islandQueueTimer = null;
+    let islandQueue = [];
+
+    let sheetOpen = false;
+    let longPressTimer = null;
+    let longPressTarget = null;
+
+    let thinkingWasActive = false;
+    let observerRefreshPending = false;
+
+    function languageCode() {
+        return String(
+            document.getElementById(
+                "languageSelect"
+            )?.value ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            "en"
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function words() {
+        const all = {
+            en: {
+                thinking: "Thinking…",
+                copied: "Message copied",
+                saved: "Chat saved",
+                uploaded: "File uploaded",
+                online: "Back online",
+                offline: "You are offline",
+                rename: "Rename",
+                pin: "Pin",
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete",
+                settings: "Settings",
+                cancel: "Cancel",
+                chatOptions: "Chat options"
+            },
+
+            si: {
+                thinking: "සිතමින්…",
+                copied: "පණිවිඩය පිටපත් කළා",
+                saved: "කතාබහ සුරැකිණි",
+                uploaded: "ගොනුව upload කළා",
+                online: "නැවත online",
+                offline: "ඔබ offline",
+                rename: "නම වෙනස් කරන්න",
+                pin: "ඉහළට අමුණන්න",
+                unpin: "අමුණීම ඉවත් කරන්න",
+                share: "බෙදාගන්න",
+                deleteText: "මකන්න",
+                settings: "සැකසුම්",
+                cancel: "අවලංගු කරන්න",
+                chatOptions: "කතාබහේ විකල්ප"
+            },
+
+            ta: {
+                thinking: "சிந்திக்கிறது…",
+                copied: "செய்தி நகலெடுக்கப்பட்டது",
+                saved: "அரட்டை சேமிக்கப்பட்டது",
+                uploaded: "கோப்பு பதிவேற்றப்பட்டது",
+                online: "மீண்டும் ஆன்லைன்",
+                offline: "நீங்கள் ஆஃப்லைனில் உள்ளீர்கள்",
+                rename: "பெயரை மாற்று",
+                pin: "பின் செய்",
+                unpin: "பின்னை நீக்கு",
+                share: "பகிர்",
+                deleteText: "நீக்கு",
+                settings: "அமைப்புகள்",
+                cancel: "ரத்து",
+                chatOptions: "அரட்டை விருப்பங்கள்"
+            }
+        };
+
+        return (
+            all[languageCode()] ||
+            all.en
+        );
+    }
+
+    function ensureUi() {
+        let island =
+            document.getElementById(
+                "miDynamicIsland"
+            );
+
+        if (!island) {
+            island =
+                document.createElement(
+                    "div"
+                );
+
+            island.id =
+                "miDynamicIsland";
+
+            island.setAttribute(
+                "role",
+                "status"
+            );
+
+            island.setAttribute(
+                "aria-live",
+                "polite"
+            );
+
+            island.innerHTML = `
+                <span id="miDynamicIslandIcon"></span>
+                <span id="miDynamicIslandText"></span>
+            `;
+
+            document.body.appendChild(
+                island
+            );
+        }
+
+        let toastStack =
+            document.getElementById(
+                "miIosToastStack"
+            );
+
+        if (!toastStack) {
+            toastStack =
+                document.createElement(
+                    "div"
+                );
+
+            toastStack.id =
+                "miIosToastStack";
+
+            toastStack.setAttribute(
+                "aria-live",
+                "polite"
+            );
+
+            document.body.appendChild(
+                toastStack
+            );
+        }
+
+        let backdrop =
+            document.getElementById(
+                "miIosSheetBackdrop"
+            );
+
+        if (!backdrop) {
+            backdrop =
+                document.createElement(
+                    "div"
+                );
+
+            backdrop.id =
+                "miIosSheetBackdrop";
+
+            document.body.appendChild(
+                backdrop
+            );
+        }
+
+        let sheet =
+            document.getElementById(
+                "miIosBottomSheet"
+            );
+
+        if (!sheet) {
+            sheet =
+                document.createElement(
+                    "div"
+                );
+
+            sheet.id =
+                "miIosBottomSheet";
+
+            sheet.setAttribute(
+                "role",
+                "dialog"
+            );
+
+            sheet.setAttribute(
+                "aria-modal",
+                "true"
+            );
+
+            sheet.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            sheet.innerHTML = `
+                <div id="miIosSheetHandle"></div>
+                <div id="miIosSheetTitle"></div>
+                <div id="miIosSheetActions"></div>
+                <button id="miIosSheetCancel" type="button"></button>
+            `;
+
+            document.body.appendChild(
+                sheet
+            );
+        }
+
+        return {
+            island,
+            toastStack,
+            backdrop,
+            sheet
+        };
+    }
+
+    function islandIcon(type) {
+        const values = {
+            thinking: "",
+            success: "✓",
+            copy: "⧉",
+            save: "✓",
+            upload: "↑",
+            online: "●",
+            offline: "!",
+            info: "i"
+        };
+
+        return (
+            values[type] ||
+            values.info
+        );
+    }
+
+    function showIsland(
+        message,
+        options
+    ) {
+        const ui = ensureUi();
+
+        const settings = {
+            type:
+                options?.type ||
+                "info",
+
+            duration:
+                Number(
+                    options?.duration ??
+                    2200
+                ),
+
+            persistent:
+                Boolean(
+                    options?.persistent
+                ),
+
+            compact:
+                Boolean(
+                    options?.compact
+                )
+        };
+
+        clearTimeout(islandTimer);
+
+        const icon =
+            ui.island.querySelector(
+                "#miDynamicIslandIcon"
+            );
+
+        const text =
+            ui.island.querySelector(
+                "#miDynamicIslandText"
+            );
+
+        if (icon) {
+            icon.textContent =
+                islandIcon(
+                    settings.type
+                );
+        }
+
+        if (text) {
+            text.textContent =
+                String(
+                    message || ""
+                );
+        }
+
+        ui.island.classList.toggle(
+            "mi-island-thinking",
+            settings.type ===
+                "thinking"
+        );
+
+        ui.island.classList.toggle(
+            "mi-island-compact",
+            settings.compact
+        );
+
+        ui.island.classList.add(
+            "mi-island-visible"
+        );
+
+        if (
+            !settings.persistent &&
+            settings.duration > 0
+        ) {
+            islandTimer =
+                setTimeout(
+                    hideIsland,
+                    settings.duration
+                );
+        }
+    }
+
+    function hideIsland() {
+        const island =
+            document.getElementById(
+                "miDynamicIsland"
+            );
+
+        if (!island) {
+            return;
+        }
+
+        island.classList.remove(
+            "mi-island-visible",
+            "mi-island-thinking",
+            "mi-island-compact"
+        );
+    }
+
+    function queueIsland(
+        message,
+        options
+    ) {
+        islandQueue.push({
+            message,
+            options
+        });
+
+        if (islandQueueTimer) {
+            return;
+        }
+
+        function runNext() {
+            const next =
+                islandQueue.shift();
+
+            if (!next) {
+                islandQueueTimer = null;
+                return;
+            }
+
+            showIsland(
+                next.message,
+                next.options
+            );
+
+            const duration =
+                Number(
+                    next.options
+                        ?.duration ??
+                    2200
+                );
+
+            islandQueueTimer =
+                setTimeout(
+                    runNext,
+                    Math.max(
+                        duration + 180,
+                        500
+                    )
+                );
+        }
+
+        runNext();
+    }
+
+    function showToast(
+        message,
+        options
+    ) {
+        const ui = ensureUi();
+
+        const toast =
+            document.createElement(
+                "div"
+            );
+
+        toast.className =
+            "mi-ios-toast";
+
+        const icon =
+            document.createElement(
+                "span"
+            );
+
+        icon.className =
+            "mi-ios-toast-icon";
+
+        icon.textContent =
+            islandIcon(
+                options?.type ||
+                "success"
+            );
+
+        const text =
+            document.createElement(
+                "span"
+            );
+
+        text.textContent =
+            String(
+                message || ""
+            );
+
+        toast.append(
+            icon,
+            text
+        );
+
+        ui.toastStack.appendChild(
+            toast
+        );
+
+        const duration =
+            Number(
+                options?.duration ??
+                2600
+            );
+
+        setTimeout(
+            function () {
+                toast.classList.add(
+                    "mi-toast-leaving"
+                );
+
+                setTimeout(
+                    function () {
+                        toast.remove();
+                    },
+                    240
+                );
+            },
+            duration
+        );
+
+        return toast;
+    }
+
+    function closeSheet() {
+        const ui = ensureUi();
+
+        sheetOpen = false;
+
+        ui.backdrop.classList.remove(
+            "mi-sheet-visible"
+        );
+
+        ui.sheet.classList.remove(
+            "mi-sheet-visible"
+        );
+
+        ui.sheet.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        setTimeout(
+            function () {
+                if (!sheetOpen) {
+                    ui.backdrop.style.display =
+                        "none";
+                }
+            },
+            240
+        );
+    }
+
+    function showSheet(
+        title,
+        actions
+    ) {
+        const ui = ensureUi();
+
+        const titleElement =
+            ui.sheet.querySelector(
+                "#miIosSheetTitle"
+            );
+
+        const actionContainer =
+            ui.sheet.querySelector(
+                "#miIosSheetActions"
+            );
+
+        const cancelButton =
+            ui.sheet.querySelector(
+                "#miIosSheetCancel"
+            );
+
+        titleElement.textContent =
+            title ||
+            words().chatOptions;
+
+        actionContainer.replaceChildren();
+
+        (actions || []).forEach(
+            function (action) {
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+                button.type =
+                    "button";
+
+                button.className =
+                    "mi-ios-sheet-action";
+
+                if (action.danger) {
+                    button.classList.add(
+                        "mi-sheet-danger"
+                    );
+                }
+
+                const icon =
+                    document.createElement(
+                        "span"
+                    );
+
+                icon.className =
+                    "mi-ios-sheet-action-icon";
+
+                icon.textContent =
+                    action.icon || "•";
+
+                const label =
+                    document.createElement(
+                        "span"
+                    );
+
+                label.textContent =
+                    action.label || "";
+
+                button.append(
+                    icon,
+                    label
+                );
+
+                button.addEventListener(
+                    "click",
+                    function () {
+                        closeSheet();
+
+                        setTimeout(
+                            function () {
+                                try {
+                                    action.run?.();
+                                }
+                                catch (error) {
+                                    console.error(
+                                        "[MI AI iOS Sheet]",
+                                        error
+                                    );
+                                }
+                            },
+                            120
+                        );
+                    }
+                );
+
+                actionContainer.appendChild(
+                    button
+                );
+            }
+        );
+
+        cancelButton.textContent =
+            words().cancel;
+
+        ui.backdrop.style.display =
+            "block";
+
+        requestAnimationFrame(
+            function () {
+                sheetOpen = true;
+
+                ui.backdrop.classList.add(
+                    "mi-sheet-visible"
+                );
+
+                ui.sheet.classList.add(
+                    "mi-sheet-visible"
+                );
+
+                ui.sheet.setAttribute(
+                    "aria-hidden",
+                    "false"
+                );
+            }
+        );
+    }
+
+    function isPinned(target) {
+        return Boolean(
+            target?.classList
+                .contains("pinned") ||
+            target?.dataset
+                ?.pinned === "true" ||
+            target?.getAttribute(
+                "aria-pinned"
+            ) === "true" ||
+            target?.querySelector(
+                ".pin-icon, " +
+                ".pinned-icon, " +
+                "[data-pinned='true']"
+            )
+        );
+    }
+
+    function identifyChatTarget(
+        target
+    ) {
+        if (!(target instanceof Element)) {
+            return null;
+        }
+
+        return target.closest(
+            [
+                ".chatItem",
+                ".chat-item",
+                ".history-item",
+                ".conversation-item",
+                "[data-chat-id]",
+                "[data-conversation-id]",
+                "#chatList > div"
+            ].join(",")
+        );
+    }
+
+    function setSelectedChatFromTarget(
+        target
+    ) {
+        const id =
+            target?.dataset
+                ?.chatId ||
+            target?.dataset
+                ?.conversationId ||
+            target?.getAttribute(
+                "data-id"
+            ) ||
+            target?.id ||
+            "";
+
+        if (!id) {
+            return;
+        }
+
+        try {
+            if (
+                typeof selectedChat !==
+                    "undefined"
+            ) {
+                selectedChat = id;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible global.
+        }
+
+        window.selectedChat = id;
+    }
+
+    function callExistingFunction(
+        name
+    ) {
+        const direct =
+            window[name];
+
+        if (
+            typeof direct ===
+                "function"
+        ) {
+            return direct();
+        }
+
+        try {
+            if (
+                typeof eval(name) ===
+                    "function"
+            ) {
+                return eval(name + "()");
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI iOS Bundle] Function unavailable:",
+                name
+            );
+        }
+
+        return false;
+    }
+
+    function showChatActions(
+        target
+    ) {
+        setSelectedChatFromTarget(
+            target
+        );
+
+        const pinned =
+            isPinned(target);
+
+        const labels =
+            words();
+
+        showSheet(
+            labels.chatOptions,
+            [
+                {
+                    icon: "✎",
+                    label:
+                        labels.rename,
+                    run:
+                        function () {
+                            callExistingFunction(
+                                "renameChat"
+                            );
+                        }
+                },
+                {
+                    icon:
+                        pinned
+                            ? "−"
+                            : "⌖",
+                    label:
+                        pinned
+                            ? labels.unpin
+                            : labels.pin,
+                    run:
+                        function () {
+                            callExistingFunction(
+                                "pinChat"
+                            );
+                        }
+                },
+                {
+                    icon: "↗",
+                    label:
+                        labels.share,
+                    run:
+                        function () {
+                            callExistingFunction(
+                                "shareChat"
+                            );
+                        }
+                },
+                {
+                    icon: "⌫",
+                    label:
+                        labels.deleteText,
+                    danger: true,
+                    run:
+                        function () {
+                            callExistingFunction(
+                                "deleteChat"
+                            );
+                        }
+                }
+            ]
+        );
+    }
+
+    function addHapticFeedback() {
+        document.addEventListener(
+            "pointerdown",
+            function (event) {
+                const target =
+                    event.target.closest(
+                        [
+                            "button",
+                            "[role='button']",
+                            ".btn",
+                            ".button",
+                            ".chat-item",
+                            ".chatItem",
+                            ".history-item",
+                            ".conversation-item"
+                        ].join(",")
+                    );
+
+                if (!target) {
+                    return;
+                }
+
+                target.classList.remove(
+                    "mi-haptic-release"
+                );
+
+                target.classList.add(
+                    "mi-haptic-press"
+                );
+            },
+            true
+        );
+
+        function release(event) {
+            const target =
+                event.target.closest?.(
+                    [
+                        "button",
+                        "[role='button']",
+                        ".btn",
+                        ".button",
+                        ".chat-item",
+                        ".chatItem",
+                        ".history-item",
+                        ".conversation-item"
+                    ].join(",")
+                );
+
+            if (!target) {
+                return;
+            }
+
+            target.classList.remove(
+                "mi-haptic-press"
+            );
+
+            target.classList.add(
+                "mi-haptic-release"
+            );
+
+            setTimeout(
+                function () {
+                    target.classList.remove(
+                        "mi-haptic-release"
+                    );
+                },
+                360
+            );
+        }
+
+        document.addEventListener(
+            "pointerup",
+            release,
+            true
+        );
+
+        document.addEventListener(
+            "pointercancel",
+            release,
+            true
+        );
+    }
+
+    function addContextMenu() {
+        document.addEventListener(
+            "contextmenu",
+            function (event) {
+                const target =
+                    identifyChatTarget(
+                        event.target
+                    );
+
+                if (!target) {
+                    return;
+                }
+
+                if (
+                    document.body.classList
+                        .contains(
+                            "mi-view-only"
+                        )
+                ) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                showChatActions(
+                    target
+                );
+            },
+            true
+        );
+    }
+
+    function addLongPress() {
+        document.addEventListener(
+            "pointerdown",
+            function (event) {
+                const target =
+                    identifyChatTarget(
+                        event.target
+                    );
+
+                if (
+                    !target ||
+                    event.pointerType ===
+                        "mouse"
+                ) {
+                    return;
+                }
+
+                longPressTarget =
+                    target;
+
+                clearTimeout(
+                    longPressTimer
+                );
+
+                longPressTimer =
+                    setTimeout(
+                        function () {
+                            if (
+                                longPressTarget
+                            ) {
+                                showChatActions(
+                                    longPressTarget
+                                );
+
+                                if (
+                                    navigator.vibrate
+                                ) {
+                                    navigator.vibrate(
+                                        18
+                                    );
+                                }
+                            }
+
+                            longPressTarget =
+                                null;
+                        },
+                        520
+                    );
+            },
+            true
+        );
+
+        [
+            "pointerup",
+            "pointercancel",
+            "pointermove"
+        ].forEach(
+            function (eventName) {
+                document.addEventListener(
+                    eventName,
+                    function () {
+                        clearTimeout(
+                            longPressTimer
+                        );
+
+                        longPressTarget =
+                            null;
+                    },
+                    true
+                );
+            }
+        );
+    }
+
+    function monitorCopyActions() {
+        document.addEventListener(
+            "click",
+            function (event) {
+                const copyControl =
+                    event.target.closest(
+                        [
+                            ".mi-ai-functional-copy",
+                            ".mi-ai-copy-below",
+                            ".aiCopyButton",
+                            ".copy-btn",
+                            ".copy-button",
+                            "[data-action='copy']",
+                            "[data-action='copy-ai-reply']"
+                        ].join(",")
+                    );
+
+                if (!copyControl) {
+                    return;
+                }
+
+                setTimeout(
+                    function () {
+                        queueIsland(
+                            words().copied,
+                            {
+                                type: "copy",
+                                duration: 1700
+                            }
+                        );
+
+                        showToast(
+                            words().copied,
+                            {
+                                type: "copy",
+                                duration: 1900
+                            }
+                        );
+                    },
+                    60
+                );
+            },
+            true
+        );
+    }
+
+    function monitorOnlineStatus() {
+        window.addEventListener(
+            "online",
+            function () {
+                queueIsland(
+                    words().online,
+                    {
+                        type: "online",
+                        duration: 2100,
+                        compact: true
+                    }
+                );
+            }
+        );
+
+        window.addEventListener(
+            "offline",
+            function () {
+                showIsland(
+                    words().offline,
+                    {
+                        type: "offline",
+                        persistent: true
+                    }
+                );
+
+                showToast(
+                    words().offline,
+                    {
+                        type: "offline",
+                        duration: 3200
+                    }
+                );
+            }
+        );
+
+        if (!navigator.onLine) {
+            showIsland(
+                words().offline,
+                {
+                    type: "offline",
+                    persistent: true
+                }
+            );
+        }
+    }
+
+    function replyIsActive() {
+        try {
+            if (
+                typeof replyInProgress !==
+                    "undefined"
+            ) {
+                return Boolean(
+                    replyInProgress
+                );
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible variable.
+        }
+
+        return Boolean(
+            window.replyInProgress
+        );
+    }
+
+    function monitorThinking() {
+        setInterval(
+            function () {
+                const active =
+                    replyIsActive();
+
+                if (
+                    active &&
+                    !thinkingWasActive
+                ) {
+                    thinkingWasActive =
+                        true;
+
+                    showIsland(
+                        words().thinking,
+                        {
+                            type:
+                                "thinking",
+
+                            persistent:
+                                true
+                        }
+                    );
+                }
+                else if (
+                    !active &&
+                    thinkingWasActive
+                ) {
+                    thinkingWasActive =
+                        false;
+
+                    hideIsland();
+                }
+            },
+            220
+        );
+    }
+
+    function installEventNotifications() {
+        window.addEventListener(
+            "mi-chat-saved",
+            function () {
+                queueIsland(
+                    words().saved,
+                    {
+                        type: "save",
+                        duration: 1800
+                    }
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-file-uploaded",
+            function () {
+                queueIsland(
+                    words().uploaded,
+                    {
+                        type: "upload",
+                        duration: 2100
+                    }
+                );
+
+                showToast(
+                    words().uploaded,
+                    {
+                        type: "upload",
+                        duration: 2200
+                    }
+                );
+            }
+        );
+    }
+
+    function monitorNewFiles() {
+        const preview =
+            document.getElementById(
+                "attachmentPreview"
+            );
+
+        if (!preview) {
+            return;
+        }
+
+        let lastText =
+            preview.textContent;
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    if (observerRefreshPending) {
+                        return;
+                    }
+
+                    observerRefreshPending =
+                        true;
+
+                    requestAnimationFrame(
+                        function () {
+                            observerRefreshPending =
+                                false;
+
+                            const current =
+                                preview.textContent
+                                    .trim();
+
+                            if (
+                                current &&
+                                current !==
+                                    lastText
+                            ) {
+                                lastText =
+                                    current;
+
+                                queueIsland(
+                                    words().uploaded,
+                                    {
+                                        type:
+                                            "upload",
+
+                                        duration:
+                                            2000
+                                    }
+                                );
+                            }
+                        }
+                    );
+                }
+            );
+
+        observer.observe(
+            preview,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+    }
+
+    function start() {
+        const ui = ensureUi();
+
+        ui.backdrop.addEventListener(
+            "click",
+            closeSheet
+        );
+
+        ui.sheet
+            .querySelector(
+                "#miIosSheetCancel"
+            )
+            .addEventListener(
+                "click",
+                closeSheet
+            );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key ===
+                        "Escape" &&
+                    sheetOpen
+                ) {
+                    closeSheet();
+                }
+            }
+        );
+
+        addHapticFeedback();
+        addContextMenu();
+        addLongPress();
+        monitorCopyActions();
+        monitorOnlineStatus();
+        monitorThinking();
+        installEventNotifications();
+        monitorNewFiles();
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-ios-safe-bundle-ready"
+            )
+        );
+
+        console.log(
+            "[MI AI] iOS safe bundle ready."
+        );
+    }
+
+    window.MIIOS = {
+        island:
+            showIsland,
+
+        hideIsland:
+            hideIsland,
+
+        toast:
+            showToast,
+
+        sheet:
+            showSheet,
+
+        closeSheet:
+            closeSheet,
+
+        chatActions:
+            showChatActions
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI IOS SAFE BUNDLE JS - END */
 </script>
 </body>
 </html>
