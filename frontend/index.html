@@ -9694,47 +9694,136 @@ async function newChat(){
     removeLoginPrompt();
 
     /*
-      Always create a completely separate chat record.
-      Never replace the whole chats object.
+      A shared-link viewer page is isolated.
+      Opening New Chat leaves shared mode first.
     */
-    const localId = `chat_${Date.now()}`;
+    const shareParams =
+        new URLSearchParams(
+            window.location.search
+        );
 
+    if (
+        shareParams.has("s") ||
+        shareParams.has("share") ||
+        document.body.classList.contains(
+            "mi-shared-single-chat"
+        )
+    ) {
+        const cleanUrl =
+            window.location.origin +
+            window.location.pathname;
+
+        window.location.assign(
+            cleanUrl
+        );
+
+        return;
+    }
+
+    /*
+      Always add a separate chat.
+      Never replace the complete chats object.
+    */
+    if (
+        !chats ||
+        typeof chats !== "object" ||
+        Array.isArray(chats)
+    ) {
+        chats = {};
+    }
+
+    const localId =
+        `chat_${Date.now()}_${Math.random()
+            .toString(36)
+            .slice(2, 8)}`;
+
+    function initializeChat(chatId) {
+        chats[chatId] = [];
+
+        /*
+          Arrays are objects, so these metadata properties
+          remain compatible with the existing rendering code.
+        */
+        chats[chatId].title =
+            "NEW CHAT";
+
+        chats[chatId].name =
+            "NEW CHAT";
+
+        chats[chatId].chatName =
+            "NEW CHAT";
+
+        currentChat =
+            chatId;
+
+        window.currentChat =
+            chatId;
+
+        localStorage.setItem(
+            "last_chat",
+            chatId
+        );
+
+        save();
+        renderList();
+        openChat(chatId);
+
+        if (
+            input &&
+            typeof input.focus ===
+                "function"
+        ) {
+            input.focus();
+        }
+
+        if (
+            window.MIAccountPersistence &&
+            typeof window
+                .MIAccountPersistence
+                .save ===
+                "function"
+        ) {
+            window
+                .MIAccountPersistence
+                .save();
+        }
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-new-chat-created",
+                {
+                    detail: {
+                        chatId:
+                            chatId
+                    }
+                }
+            )
+        );
+    }
+
+    /*
+      Guest users also receive a separate chat.
+      Existing guest chats remain unchanged.
+    */
     if (!isAuthenticated()) {
-        chats[localId] = [];
-        chats[localId].title = "NEW CHAT";
-        chats[localId].name = "NEW CHAT";
-        chats[localId].chatName = "NEW CHAT";
-
-        currentChat = localId;
+        initializeChat(localId);
 
         localStorage.setItem(
             getGuestStorageKey(),
             JSON.stringify(chats)
         );
 
-        localStorage.setItem(
-            "last_chat",
-            localId
-        );
-
-        save();
-        renderList();
-        openChat(localId);
-
-        if (
-            window.MIFinalNewChatV11 &&
-            typeof window.MIFinalNewChatV11.beginDraft === "function"
-        ) {
-            window.MIFinalNewChatV11.beginDraft(localId);
-        }
-
         return;
     }
 
+    /*
+      Create the server conversation first.
+      A local chat remains available if the server request fails.
+    */
     const token =
         localStorage.getItem(
             "mi_supabase_token"
-        );
+        ) || "";
 
     const userId =
         localStorage.getItem(
@@ -9750,21 +9839,23 @@ async function newChat(){
             .trim()
             .toLowerCase();
 
-    let createdId = "";
+    let serverId = "";
 
     try {
         const response =
             await fetch(
                 "/api/conversations",
                 {
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
                         "Content-Type":
                             "application/json",
 
                         "Authorization":
-                            "Bearer " + token,
+                            "Bearer " +
+                            token,
 
                         "X-Session-Id":
                             accountId ||
@@ -9780,7 +9871,8 @@ async function newChat(){
 
                     body:
                         JSON.stringify({
-                            title: "NEW CHAT",
+                            title:
+                                "NEW CHAT",
 
                             session_id:
                                 accountId ||
@@ -9791,14 +9883,19 @@ async function newChat(){
             );
 
         const result =
-            await response.json();
+            await response
+                .json()
+                .catch(
+                    function () {
+                        return {};
+                    }
+                );
 
         if (
             response.ok &&
-            result.conversation &&
-            result.conversation.id
+            result?.conversation?.id
         ) {
-            createdId =
+            serverId =
                 String(
                     result.conversation.id
                 );
@@ -9806,33 +9903,17 @@ async function newChat(){
     }
     catch (error) {
         console.warn(
-            "[MI AI] Server New Chat creation failed. Using local fallback.",
+            "[MI AI] Server New Chat creation failed; using local chat.",
             error
         );
     }
 
-    const id =
-        createdId ||
-        localId;
-
-    chats[id] = [];
-    chats[id].title = "NEW CHAT";
-    chats[id].name = "NEW CHAT";
-    chats[id].chatName = "NEW CHAT";
-
-    currentChat = id;
-
-    save();
-    renderList();
-    openChat(id);
-
-    if (
-        window.MIFinalNewChatV11 &&
-        typeof window.MIFinalNewChatV11.beginDraft === "function"
-    ) {
-        window.MIFinalNewChatV11.beginDraft(id);
-    }
+    initializeChat(
+        serverId ||
+        localId
+    );
 }
+
 /* OPEN */
 function openChat(id){
 removeLoginPrompt();
