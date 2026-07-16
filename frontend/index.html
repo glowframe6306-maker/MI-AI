@@ -8567,6 +8567,119 @@ button,
 }
 
 /* MI AI LOGIN SUCCESS POPUP CSS - END */
+
+/* MI AI COMPLETE NEW CHAT CSS - START */
+
+#newChatBtn,
+.new-chat-btn,
+button[onclick*="newChat"] {
+    transition:
+        transform 150ms
+            cubic-bezier(.2, .9, .2, 1),
+        opacity 150ms ease,
+        filter 150ms ease
+        !important;
+
+    will-change:
+        transform,
+        opacity;
+}
+
+#newChatBtn.mi-new-chat-busy,
+.new-chat-btn.mi-new-chat-busy,
+button[onclick*="newChat"].mi-new-chat-busy {
+    opacity:
+        0.68 !important;
+
+    pointer-events:
+        none !important;
+
+    cursor:
+        progress !important;
+
+    transform:
+        scale(0.96)
+        !important;
+}
+
+#main.mi-new-chat-switching #chat,
+main.mi-new-chat-switching #chat,
+.mi-new-chat-switching #messages,
+.mi-new-chat-switching .messages {
+    opacity:
+        0.55;
+
+    transform:
+        translateY(7px);
+
+    transition:
+        opacity 110ms ease,
+        transform 110ms ease;
+}
+
+#main.mi-new-chat-ready #chat,
+main.mi-new-chat-ready #chat,
+.mi-new-chat-ready #messages,
+.mi-new-chat-ready .messages {
+    opacity:
+        1;
+
+    transform:
+        translateY(0);
+
+    transition:
+        opacity 250ms ease,
+        transform 250ms
+            cubic-bezier(.16, 1, .3, 1);
+}
+
+.mi-new-chat-list-enter {
+    animation:
+        miNewChatListEnter
+        280ms
+        cubic-bezier(.16, 1, .3, 1);
+}
+
+@keyframes miNewChatListEnter {
+    from {
+        opacity:
+            0;
+
+        transform:
+            translateY(-8px)
+            scale(0.97);
+    }
+
+    to {
+        opacity:
+            1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    #newChatBtn,
+    .new-chat-btn,
+    button[onclick*="newChat"],
+    #chat,
+    #messages,
+    .messages,
+    .mi-new-chat-list-enter {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+}
+
+/* MI AI COMPLETE NEW CHAT CSS - END */
 </style>
 </head>
 
@@ -24977,6 +25090,1411 @@ document.addEventListener(
 })();
 
 /* MI AI LOGIN SUCCESS POPUP JS - END */
+</script>
+
+<script>
+/* MI AI COMPLETE NEW CHAT JS - START */
+
+(function () {
+    "use strict";
+
+    const EMPTY_TITLE =
+        "NEW CHAT";
+
+    const AUTO_OPEN_KEY =
+        "mi_auto_new_chat_navigation";
+
+    const MAX_TITLE_LENGTH =
+        42;
+
+    let installed =
+        false;
+
+    let creatingChat =
+        false;
+
+    let autoOpenStarted =
+        false;
+
+    let renameTimer =
+        null;
+
+    let originalNewChat =
+        null;
+
+    function getChats() {
+        try {
+            if (
+                typeof chats !==
+                    "undefined" &&
+                chats &&
+                typeof chats ===
+                    "object" &&
+                !Array.isArray(chats)
+            ) {
+                return chats;
+            }
+        }
+        catch (error) {
+            // Continue with window fallback.
+        }
+
+        if (
+            window.chats &&
+            typeof window.chats ===
+                "object" &&
+            !Array.isArray(
+                window.chats
+            )
+        ) {
+            return window.chats;
+        }
+
+        return {};
+    }
+
+    function setChats(value) {
+        try {
+            chats =
+                value;
+        }
+        catch (error) {
+            window.chats =
+                value;
+        }
+
+        window.chats =
+            value;
+    }
+
+    function getCurrentChat() {
+        try {
+            if (
+                typeof currentChat !==
+                    "undefined" &&
+                currentChat
+            ) {
+                return String(
+                    currentChat
+                );
+            }
+        }
+        catch (error) {
+            // Continue with window fallback.
+        }
+
+        return String(
+            window.currentChat ||
+            ""
+        );
+    }
+
+    function setCurrentChat(chatId) {
+        const normalized =
+            String(chatId);
+
+        try {
+            currentChat =
+                normalized;
+        }
+        catch (error) {
+            window.currentChat =
+                normalized;
+        }
+
+        window.currentChat =
+            normalized;
+
+        try {
+            localStorage.setItem(
+                "last_chat",
+                normalized
+            );
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI] Could not store last chat.",
+                error
+            );
+        }
+    }
+
+    function isLoggedIn() {
+        try {
+            if (
+                typeof window
+                    .isAuthenticated ===
+                    "function"
+            ) {
+                return Boolean(
+                    window
+                        .isAuthenticated()
+                );
+            }
+        }
+        catch (error) {
+            // Continue with storage checks.
+        }
+
+        const values = [
+            localStorage.getItem(
+                "mi_supabase_token"
+            ),
+            localStorage.getItem(
+                "mi_auth_token"
+            ),
+            localStorage.getItem(
+                "authToken"
+            ),
+            localStorage.getItem(
+                "access_token"
+            ),
+            localStorage.getItem(
+                "mi_user_id"
+            ),
+            localStorage.getItem(
+                "mi_user_email"
+            )
+        ];
+
+        return values.some(
+            function (value) {
+                return Boolean(
+                    String(
+                        value || ""
+                    ).trim()
+                );
+            }
+        );
+    }
+
+    function chatArray(chat) {
+        if (Array.isArray(chat)) {
+            return chat;
+        }
+
+        if (
+            chat &&
+            Array.isArray(
+                chat.messages
+            )
+        ) {
+            return chat.messages;
+        }
+
+        return [];
+    }
+
+    function messageText(message) {
+        if (
+            typeof message ===
+                "string"
+        ) {
+            return message.trim();
+        }
+
+        if (
+            !message ||
+            typeof message !==
+                "object"
+        ) {
+            return "";
+        }
+
+        const values = [
+            message.content,
+            message.text,
+            message.message,
+            message.body,
+            message.prompt,
+            message.value
+        ];
+
+        for (
+            const value of values
+        ) {
+            if (
+                typeof value ===
+                    "string" &&
+                value.trim()
+            ) {
+                return value.trim();
+            }
+        }
+
+        return "";
+    }
+
+    function messageRole(message) {
+        if (
+            !message ||
+            typeof message !==
+                "object"
+        ) {
+            return "";
+        }
+
+        return String(
+            message.role ||
+            message.sender ||
+            message.type ||
+            message.author ||
+            message.from ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function isUserMessage(message) {
+        const role =
+            messageRole(message);
+
+        if (!role) {
+            return Boolean(
+                messageText(message)
+            );
+        }
+
+        return (
+            role ===
+                "user" ||
+            role ===
+                "human" ||
+            role ===
+                "me" ||
+            role ===
+                "client" ||
+            role ===
+                "visitor" ||
+            role.includes(
+                "user"
+            )
+        );
+    }
+
+    function firstUserMessage(chat) {
+        const messages =
+            chatArray(chat);
+
+        for (
+            const message of messages
+        ) {
+            if (
+                isUserMessage(
+                    message
+                )
+            ) {
+                const text =
+                    messageText(
+                        message
+                    );
+
+                if (text) {
+                    return text;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    function isEmptyChat(chat) {
+        return (
+            chatArray(chat)
+                .filter(
+                    function (message) {
+                        return Boolean(
+                            messageText(
+                                message
+                            )
+                        );
+                    }
+                )
+                .length ===
+            0
+        );
+    }
+
+    function cleanTitle(value) {
+        let title =
+            String(value || "")
+                .replace(
+                    /<[^>]*>/g,
+                    " "
+                )
+                .replace(
+                    /[`*_#>|[\]{}]/g,
+                    " "
+                )
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim();
+
+        if (
+            title.length >
+            MAX_TITLE_LENGTH
+        ) {
+            title =
+                title
+                    .slice(
+                        0,
+                        MAX_TITLE_LENGTH
+                    )
+                    .trim() +
+                "…";
+        }
+
+        return (
+            title ||
+            EMPTY_TITLE
+        );
+    }
+
+    function titleOf(chat) {
+        if (!chat) {
+            return "";
+        }
+
+        return String(
+            chat.title ||
+            chat.name ||
+            chat.chatName ||
+            ""
+        ).trim();
+    }
+
+    function setChatTitle(
+        chat,
+        title
+    ) {
+        if (!chat) {
+            return;
+        }
+
+        chat.title =
+            title;
+
+        chat.name =
+            title;
+
+        chat.chatName =
+            title;
+    }
+
+    function renameChatsFromFirstMessage() {
+        const allChats =
+            getChats();
+
+        let changed =
+            false;
+
+        for (
+            const [
+                chatId,
+                chat
+            ] of Object.entries(
+                allChats
+            )
+        ) {
+            const firstMessage =
+                firstUserMessage(
+                    chat
+                );
+
+            const desiredTitle =
+                firstMessage
+                    ? cleanTitle(
+                        firstMessage
+                    )
+                    : EMPTY_TITLE;
+
+            const currentTitle =
+                titleOf(chat);
+
+            if (
+                currentTitle !==
+                desiredTitle
+            ) {
+                setChatTitle(
+                    chat,
+                    desiredTitle
+                );
+
+                changed =
+                    true;
+            }
+        }
+
+        if (changed) {
+            saveEverything();
+            renderEverything();
+        }
+
+        updateWelcomeVisibility();
+    }
+
+    function saveEverything() {
+        try {
+            if (
+                typeof save ===
+                    "function"
+            ) {
+                save();
+            }
+            else if (
+                typeof window.save ===
+                    "function"
+            ) {
+                window.save();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI] Native chat save failed.",
+                error
+            );
+        }
+
+        try {
+            if (
+                window
+                    .MIAccountPersistence &&
+                typeof window
+                    .MIAccountPersistence
+                    .save ===
+                    "function"
+            ) {
+                window
+                    .MIAccountPersistence
+                    .save();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI] Account persistence save failed.",
+                error
+            );
+        }
+
+        try {
+            const current =
+                getCurrentChat();
+
+            const allChats =
+                getChats();
+
+            if (!isLoggedIn()) {
+                let key =
+                    "mi_guest_chats";
+
+                if (
+                    typeof window
+                        .getGuestStorageKey ===
+                        "function"
+                ) {
+                    key =
+                        window
+                            .getGuestStorageKey();
+                }
+                else {
+                    try {
+                        if (
+                            typeof getGuestStorageKey ===
+                                "function"
+                        ) {
+                            key =
+                                getGuestStorageKey();
+                        }
+                    }
+                    catch (error) {
+                        // Use fallback key.
+                    }
+                }
+
+                localStorage.setItem(
+                    key,
+                    JSON.stringify(
+                        allChats
+                    )
+                );
+            }
+
+            if (current) {
+                localStorage.setItem(
+                    "last_chat",
+                    current
+                );
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI] Local chat save failed.",
+                error
+            );
+        }
+    }
+
+    function renderEverything() {
+        try {
+            if (
+                typeof renderList ===
+                    "function"
+            ) {
+                renderList();
+            }
+            else if (
+                typeof window
+                    .renderList ===
+                    "function"
+            ) {
+                window.renderList();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI] Chat list render failed.",
+                error
+            );
+        }
+    }
+
+    function openExistingChat(
+        chatId
+    ) {
+        setCurrentChat(
+            chatId
+        );
+
+        try {
+            if (
+                typeof openChat ===
+                    "function"
+            ) {
+                openChat(chatId);
+            }
+            else if (
+                typeof window
+                    .openChat ===
+                    "function"
+            ) {
+                window.openChat(
+                    chatId
+                );
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI] Chat open failed.",
+                error
+            );
+        }
+    }
+
+    function generateChatId() {
+        return (
+            "chat_" +
+            Date.now() +
+            "_" +
+            Math.random()
+                .toString(36)
+                .slice(2, 9)
+        );
+    }
+
+    function createLocalEmptyChat() {
+        const allChats =
+            getChats();
+
+        const chatId =
+            generateChatId();
+
+        allChats[chatId] =
+            [];
+
+        setChatTitle(
+            allChats[chatId],
+            EMPTY_TITLE
+        );
+
+        setChats(
+            allChats
+        );
+
+        setCurrentChat(
+            chatId
+        );
+
+        saveEverything();
+        renderEverything();
+        openExistingChat(
+            chatId
+        );
+
+        return chatId;
+    }
+
+    function removeEmptyChats(
+        keepChatId
+    ) {
+        const allChats =
+            getChats();
+
+        let changed =
+            false;
+
+        for (
+            const [
+                chatId,
+                chat
+            ] of Object.entries(
+                allChats
+            )
+        ) {
+            if (
+                chatId !==
+                    String(
+                        keepChatId ||
+                        ""
+                    ) &&
+                isEmptyChat(chat)
+            ) {
+                delete allChats[
+                    chatId
+                ];
+
+                changed =
+                    true;
+            }
+        }
+
+        if (changed) {
+            setChats(
+                allChats
+            );
+
+            saveEverything();
+            renderEverything();
+        }
+    }
+
+    function enforceGuestSingleChat() {
+        if (isLoggedIn()) {
+            return "";
+        }
+
+        const allChats =
+            getChats();
+
+        const chatIds =
+            Object.keys(
+                allChats
+            );
+
+        let keepId =
+            getCurrentChat();
+
+        if (
+            !keepId ||
+            !allChats[keepId]
+        ) {
+            keepId =
+                chatIds[0] ||
+                "";
+        }
+
+        /*
+          Guest mode must contain only one chat.
+          Existing guest chats are replaced by one clean chat.
+        */
+        if (
+            !keepId ||
+            chatIds.length !==
+                1 ||
+            !isEmptyChat(
+                allChats[keepId]
+            )
+        ) {
+            const newId =
+                generateChatId();
+
+            const guestChats = {
+                [newId]:
+                    []
+            };
+
+            setChatTitle(
+                guestChats[newId],
+                EMPTY_TITLE
+            );
+
+            setChats(
+                guestChats
+            );
+
+            keepId =
+                newId;
+        }
+
+        setCurrentChat(
+            keepId
+        );
+
+        saveEverything();
+        renderEverything();
+        openExistingChat(
+            keepId
+        );
+
+        return keepId;
+    }
+
+    function newChatButton() {
+        return document.querySelector(
+            [
+                "#newChatBtn",
+                ".new-chat-btn",
+                'button[onclick*="newChat"]',
+                '[data-action="new-chat"]'
+            ].join(",")
+        );
+    }
+
+    function mainElement() {
+        return (
+            document.getElementById(
+                "main"
+            ) ||
+            document.querySelector(
+                "main, .main, .app-main"
+            ) ||
+            document.body
+        );
+    }
+
+    function setBusy(active) {
+        const button =
+            newChatButton();
+
+        const main =
+            mainElement();
+
+        if (button) {
+            button.classList.toggle(
+                "mi-new-chat-busy",
+                active
+            );
+
+            button.setAttribute(
+                "aria-busy",
+                String(active)
+            );
+
+            if (
+                "disabled" in button
+            ) {
+                button.disabled =
+                    active;
+            }
+        }
+
+        if (main) {
+            main.classList.toggle(
+                "mi-new-chat-switching",
+                active
+            );
+
+            if (active) {
+                main.classList.remove(
+                    "mi-new-chat-ready"
+                );
+            }
+        }
+    }
+
+    function finishAnimation() {
+        setTimeout(
+            function () {
+                creatingChat =
+                    false;
+
+                setBusy(false);
+
+                const main =
+                    mainElement();
+
+                if (main) {
+                    main.classList.add(
+                        "mi-new-chat-ready"
+                    );
+
+                    setTimeout(
+                        function () {
+                            main.classList.remove(
+                                "mi-new-chat-ready"
+                            );
+                        },
+                        290
+                    );
+                }
+
+                const list =
+                    document.getElementById(
+                        "chatList"
+                    );
+
+                const first =
+                    list
+                        ?.firstElementChild;
+
+                if (first) {
+                    first.classList.remove(
+                        "mi-new-chat-list-enter"
+                    );
+
+                    void first.offsetWidth;
+
+                    first.classList.add(
+                        "mi-new-chat-list-enter"
+                    );
+                }
+
+                requestAnimationFrame(
+                    focusInput
+                );
+            },
+            90
+        );
+    }
+
+    function focusInput() {
+        const input =
+            document.querySelector(
+                [
+                    "#msg",
+                    "#messageInput",
+                    "#chatInput",
+                    "#prompt",
+                    "textarea[name='message']",
+                    ".chat-input",
+                    ".message-input",
+                    'textarea[placeholder*="message" i]'
+                ].join(",")
+            );
+
+        try {
+            input?.focus?.({
+                preventScroll:
+                    true
+            });
+        }
+        catch (error) {
+            input?.focus?.();
+        }
+    }
+
+    function updateWelcomeVisibility() {
+        const currentId =
+            getCurrentChat();
+
+        const allChats =
+            getChats();
+
+        const current =
+            allChats[currentId];
+
+        const empty =
+            !current ||
+            isEmptyChat(
+                current
+            );
+
+        const selectors = [
+            "#welcome",
+            "#welcomeScreen",
+            "#welcome-screen",
+            ".welcome",
+            ".welcome-screen",
+            ".empty-state",
+            "[data-welcome]",
+            "[data-empty-state]"
+        ];
+
+        const elements =
+            document.querySelectorAll(
+                selectors.join(",")
+            );
+
+        elements.forEach(
+            function (element) {
+                const text =
+                    String(
+                        element.textContent ||
+                        ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                const looksLikeWelcome =
+                    text.includes(
+                        "welcome to mi ai"
+                    ) ||
+                    element.matches(
+                        [
+                            "#welcome",
+                            "#welcomeScreen",
+                            "#welcome-screen",
+                            "[data-welcome]",
+                            "[data-empty-state]"
+                        ].join(",")
+                    );
+
+                if (
+                    looksLikeWelcome
+                ) {
+                    element.hidden =
+                        !empty;
+
+                    element.style.display =
+                        empty
+                            ? ""
+                            : "none";
+
+                    element.setAttribute(
+                        "aria-hidden",
+                        String(!empty)
+                    );
+                }
+            }
+        );
+    }
+
+    async function createNewChat(
+        options
+    ) {
+        const settings =
+            options || {};
+
+        if (creatingChat) {
+            return false;
+        }
+
+        creatingChat =
+            true;
+
+        setBusy(true);
+
+        await new Promise(
+            function (resolve) {
+                requestAnimationFrame(
+                    function () {
+                        requestAnimationFrame(
+                            resolve
+                        );
+                    }
+                );
+            }
+        );
+
+        try {
+            /*
+              Logged-out mode always has one clean chat only.
+            */
+            if (!isLoggedIn()) {
+                enforceGuestSingleChat();
+
+                updateWelcomeVisibility();
+
+                return true;
+            }
+
+            /*
+              Remove old empty chats before making a fresh one.
+              Chats containing messages are preserved.
+            */
+            removeEmptyChats("");
+
+            let createdId =
+                "";
+
+            if (
+                typeof originalNewChat ===
+                    "function"
+            ) {
+                try {
+                    await originalNewChat.call(
+                        window
+                    );
+
+                    createdId =
+                        getCurrentChat();
+                }
+                catch (error) {
+                    console.warn(
+                        "[MI AI] Native New Chat failed; using local fallback.",
+                        error
+                    );
+                }
+            }
+
+            if (!createdId) {
+                createdId =
+                    createLocalEmptyChat();
+            }
+
+            const allChats =
+                getChats();
+
+            if (!allChats[createdId]) {
+                allChats[createdId] =
+                    [];
+
+                setChatTitle(
+                    allChats[createdId],
+                    EMPTY_TITLE
+                );
+
+                setChats(
+                    allChats
+                );
+            }
+
+            /*
+              Keep only the newly-created empty chat.
+              Old chats with messages remain untouched.
+            */
+            removeEmptyChats(
+                createdId
+            );
+
+            setCurrentChat(
+                createdId
+            );
+
+            saveEverything();
+            renderEverything();
+            openExistingChat(
+                createdId
+            );
+
+            updateWelcomeVisibility();
+
+            try {
+                sessionStorage.setItem(
+                    AUTO_OPEN_KEY,
+                    createdId
+                );
+            }
+            catch (error) {
+                // Session storage is optional.
+            }
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-new-chat-created",
+                    {
+                        detail: {
+                            chatId:
+                                createdId,
+
+                            automatic:
+                                Boolean(
+                                    settings
+                                        .automatic
+                                )
+                        }
+                    }
+                )
+            );
+
+            return true;
+        }
+        finally {
+            finishAnimation();
+        }
+    }
+
+    function installNewChatWrapper() {
+        if (installed) {
+            return true;
+        }
+
+        const candidate =
+            typeof window.newChat ===
+                "function"
+                ? window.newChat
+                : (
+                    typeof newChat ===
+                        "function"
+                        ? newChat
+                        : null
+                );
+
+        if (
+            candidate &&
+            candidate
+                .__miCompleteNewChat
+        ) {
+            installed =
+                true;
+
+            return true;
+        }
+
+        originalNewChat =
+            candidate;
+
+        const wrapped =
+            async function () {
+                return createNewChat({
+                    automatic:
+                        false
+                });
+            };
+
+        wrapped.__miCompleteNewChat =
+            true;
+
+        wrapped.__miOriginal =
+            originalNewChat;
+
+        window.newChat =
+            wrapped;
+
+        try {
+            newChat =
+                wrapped;
+        }
+        catch (error) {
+            // window.newChat remains available.
+        }
+
+        installed =
+            true;
+
+        return true;
+    }
+
+    function scheduleRename() {
+        clearTimeout(
+            renameTimer
+        );
+
+        renameTimer =
+            setTimeout(
+                renameChatsFromFirstMessage,
+                240
+            );
+    }
+
+    function installMessageWatchers() {
+        document.addEventListener(
+            "submit",
+            scheduleRename,
+            true
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                const button =
+                    event.target
+                        ?.closest?.(
+                            [
+                                "#sendBtn",
+                                "#sendButton",
+                                ".send-btn",
+                                ".send-button",
+                                'button[onclick*="send"]',
+                                '[data-action="send"]'
+                            ].join(",")
+                        );
+
+                if (button) {
+                    setTimeout(
+                        scheduleRename,
+                        100
+                    );
+
+                    setTimeout(
+                        scheduleRename,
+                        700
+                    );
+                }
+            },
+            true
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key ===
+                        "Enter" &&
+                    !event.shiftKey
+                ) {
+                    const target =
+                        event.target;
+
+                    if (
+                        target?.matches?.(
+                            [
+                                "#msg",
+                                "#messageInput",
+                                "#chatInput",
+                                "#prompt",
+                                "textarea",
+                                ".chat-input",
+                                ".message-input"
+                            ].join(",")
+                        )
+                    ) {
+                        setTimeout(
+                            scheduleRename,
+                            100
+                        );
+
+                        setTimeout(
+                            scheduleRename,
+                            700
+                        );
+                    }
+                }
+            },
+            true
+        );
+
+        window.addEventListener(
+            "mi-message-saved",
+            scheduleRename
+        );
+
+        window.addEventListener(
+            "mi-chat-opened",
+            function () {
+                scheduleRename();
+                updateWelcomeVisibility();
+            }
+        );
+
+        /*
+          Compatibility check for message changes
+          made by existing project functions.
+        */
+        setInterval(
+            renameChatsFromFirstMessage,
+            1800
+        );
+    }
+
+    async function openFreshChatOnLoad() {
+        if (autoOpenStarted) {
+            return;
+        }
+
+        autoOpenStarted =
+            true;
+
+        /*
+          Give Firebase/account restoration time
+          to finish before deciding guest/logged-in mode.
+        */
+        await new Promise(
+            function (resolve) {
+                setTimeout(
+                    resolve,
+                    1200
+                );
+            }
+        );
+
+        if (!isLoggedIn()) {
+            enforceGuestSingleChat();
+            updateWelcomeVisibility();
+            focusInput();
+
+            return;
+        }
+
+        await createNewChat({
+            automatic:
+                true
+        });
+    }
+
+    function start() {
+        installNewChatWrapper();
+        installMessageWatchers();
+
+        let attempts =
+            0;
+
+        const installer =
+            setInterval(
+                function () {
+                    attempts +=
+                        1;
+
+                    if (
+                        installNewChatWrapper() ||
+                        attempts >=
+                            60
+                    ) {
+                        clearInterval(
+                            installer
+                        );
+                    }
+                },
+                100
+            );
+
+        openFreshChatOnLoad();
+    }
+
+    window.MICompleteNewChat = {
+        create:
+            createNewChat,
+
+        renameAll:
+            renameChatsFromFirstMessage,
+
+        enforceGuest:
+            enforceGuestSingleChat,
+
+        updateWelcome:
+            updateWelcomeVisibility,
+
+        isBusy:
+            function () {
+                return creatingChat;
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once:
+                    true
+            }
+        );
+    }
+    else {
+        start();
+    }
+
+    console.log(
+        "[MI AI] Complete New Chat controller installed."
+    );
+})();
+
+/* MI AI COMPLETE NEW CHAT JS - END */
 </script>
 </body>
 </html>
