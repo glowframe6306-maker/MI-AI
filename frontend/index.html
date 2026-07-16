@@ -8774,7 +8774,18 @@ ids.forEach(id=>{
 let div=document.createElement("div");
 div.className="chatItem";
 div.dataset.id=id;
-div.innerText=(chats[id].pin ? "📌 " : "")+"💬 "+id;
+const visibleChatTitle =
+    String(
+        chats[id]?.title ||
+        chats[id]?.name ||
+        chats[id]?.chatName ||
+        id
+    ).trim();
+
+div.innerText =
+    (chats[id].pin ? "📌 " : "") +
+    "💬 " +
+    visibleChatTitle;
 
 div.onclick=()=>openChat(id);
 
@@ -20497,108 +20508,44 @@ document.addEventListener(
 /* MI AI RETITLE ALL CHATS V2 - END */
 </script>
 
+
+
 <script>
-/* MI AI SMART CHAT TITLE V1 - START */
+/* MI AI CHAT TITLE AND EMPTY CLEANUP V2 - START */
 
 (function () {
     "use strict";
 
-    const MANUAL_TITLE_PREFIX =
-        "mi_manual_chat_title_v1_";
+    const MANUAL_PREFIX =
+        "mi_manual_chat_title_v2_";
 
-    const AUTO_TITLE_PREFIX =
-        "mi_auto_chat_title_v1_";
+    let running = false;
+    let scheduledTimer = null;
 
-    let titleTimer = null;
-
-    function cleanText(value) {
-        return String(value || "")
-            .replace(/https?:\/\/\S+/gi, " ")
-            .replace(/[^\p{L}\p{N}\s+#.-]/gu, " ")
-            .replace(/\s+/g, " ")
-            .trim();
-    }
-
-    function currentChatIdValue() {
-        try {
-            if (
-                typeof currentChat !== "undefined" &&
-                currentChat
-            ) {
-                return String(currentChat);
-            }
-        }
-        catch (error) {
-            // Ignore inaccessible binding.
-        }
-
-        return String(
-            window.currentChat ||
-            localStorage.getItem("last_chat") ||
-            ""
-        );
-    }
-
-    function manualTitleKey(chatId) {
-        return (
-            MANUAL_TITLE_PREFIX +
-            encodeURIComponent(chatId)
-        );
-    }
-
-    function autoTitleKey(chatId) {
-        return (
-            AUTO_TITLE_PREFIX +
-            encodeURIComponent(chatId)
-        );
-    }
-
-    function wasManuallyRenamed(chatId) {
-        return (
-            localStorage.getItem(
-                manualTitleKey(chatId)
-            ) === "true"
-        );
-    }
-
-    function wasAutoTitled(chatId) {
-        return (
-            localStorage.getItem(
-                autoTitleKey(chatId)
-            ) === "true"
-        );
-    }
-
-    function markAutoTitled(chatId) {
-        localStorage.setItem(
-            autoTitleKey(chatId),
-            "true"
-        );
-    }
-
-    function getChatMessages(chatId) {
-        let chatMap = null;
-
+    function chatMap() {
         try {
             if (
                 typeof chats !== "undefined" &&
                 chats &&
-                typeof chats === "object"
+                typeof chats === "object" &&
+                !Array.isArray(chats)
             ) {
-                chatMap = chats;
+                return chats;
             }
         }
         catch (error) {
-            // Ignore inaccessible binding.
+            // Fall through.
         }
 
-        if (!chatMap) {
-            chatMap = window.chats;
-        }
+        return (
+            window.chats &&
+            typeof window.chats === "object"
+                ? window.chats
+                : {}
+        );
+    }
 
-        const chat =
-            chatMap?.[chatId];
-
+    function messageArray(chat) {
         if (Array.isArray(chat)) {
             return chat;
         }
@@ -20613,91 +20560,89 @@ document.addEventListener(
         return [];
     }
 
-    function firstUserMessage(chatId) {
-        const messages =
-            getChatMessages(chatId);
+    function usableMessages(chat) {
+        return messageArray(chat).filter(
+            function (message) {
+                if (
+                    !message ||
+                    typeof message !== "object"
+                ) {
+                    return false;
+                }
 
-        const firstUser =
-            messages.find(function (message) {
-                const role =
+                const text =
                     String(
-                        message?.role ||
-                        message?.sender ||
+                        message.text ??
+                        message.content ??
+                        message.message ??
                         ""
-                    )
-                        .trim()
-                        .toLowerCase();
+                    ).trim();
 
-                return (
-                    role === "user" ||
-                    role === "me" ||
-                    role === "human"
-                );
-            });
-
-        return cleanText(
-            firstUser?.text ||
-            firstUser?.content ||
-            firstUser?.message ||
-            ""
+                return Boolean(text);
+            }
         );
     }
 
-    function titleCase(value) {
-        const smallWords =
-            new Set([
-                "a",
-                "an",
-                "and",
-                "as",
-                "at",
-                "by",
-                "for",
-                "from",
-                "in",
-                "of",
-                "on",
-                "or",
-                "the",
-                "to",
-                "with"
-            ]);
+    function firstUserText(chat) {
+        const firstUser =
+            usableMessages(chat).find(
+                function (message) {
+                    const role =
+                        String(
+                            message.role ||
+                            message.sender ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
 
+                    return (
+                        role === "me" ||
+                        role === "user" ||
+                        role === "human"
+                    );
+                }
+            );
+
+        return String(
+            firstUser?.text ??
+            firstUser?.content ??
+            firstUser?.message ??
+            ""
+        )
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function titleCase(value) {
         return String(value || "")
             .split(/\s+/)
             .filter(Boolean)
-            .map(function (word, index) {
-                const lower =
-                    word.toLowerCase();
-
-                if (
-                    index > 0 &&
-                    smallWords.has(lower)
-                ) {
-                    return lower;
-                }
-
+            .map(function (word) {
                 return (
-                    lower.charAt(0).toUpperCase() +
-                    lower.slice(1)
+                    word.charAt(0).toUpperCase() +
+                    word.slice(1).toLowerCase()
                 );
             })
             .join(" ");
     }
 
-    function createSmartTitle(message) {
+    function meaningfulTitle(message) {
         const text =
-            cleanText(message);
+            String(message || "")
+                .replace(/https?:\/\/\S+/gi, " ")
+                .replace(/\s+/g, " ")
+                .trim();
 
         const lower =
             text.toLowerCase();
 
         if (!text) {
-            return "New Chat";
+            return "General Chat";
         }
 
         if (
-            /^(hi|hii+|hello|hey|hello there|good morning|good afternoon|good evening)\b/i.test(
+            /^(hi|hii+|hello|hey|good morning|good afternoon|good evening)\b/i.test(
                 text
             )
         ) {
@@ -20705,25 +20650,21 @@ document.addEventListener(
         }
 
         if (
-            /^(bye|goodbye|see you|good night|thanks|thank you)\b/i.test(
-                text
-            )
+            /\bhow are you\b/i.test(lower)
         ) {
             return "General Conversation";
         }
 
         if (
-            /\bhow are you\b/i.test(text)
+            /\bpython\b.*\bcalculator\b/i.test(lower)
         ) {
-            return "General Conversation";
+            return "Python Calculator";
         }
 
         if (
-            /\bpython\b.*\b(calculator|code|program|script|app)\b/i.test(
-                lower
-            )
+            /\bpython\b.*\b(error|fix|bug|issue)\b/i.test(lower)
         ) {
-            return "Python Project";
+            return "Python Debugging";
         }
 
         if (
@@ -20733,49 +20674,15 @@ document.addEventListener(
         }
 
         if (
-            /\bjavascript\b.*\b(error|bug|fix|issue|problem)\b/i.test(
-                lower
-            )
+            /\bjavascript\b.*\b(error|fix|bug|issue)\b/i.test(lower)
         ) {
             return "JavaScript Debugging";
         }
 
         if (
-            /\bhtml\b.*\b(login|page|website|form)\b/i.test(
-                lower
-            )
+            /\bhtml\b.*\b(login|page|website|form)\b/i.test(lower)
         ) {
             return "HTML Web Page";
-        }
-
-        if (
-            /\b(error|bug|fix|repair|not working|issue|problem)\b/i.test(
-                lower
-            )
-        ) {
-            return "Technical Troubleshooting";
-        }
-
-        if (
-            /\btranslate\b.*\b(sinhala|සිංහල)\b/i.test(
-                lower
-            )
-        ) {
-            return "Sinhala Translation";
-        }
-
-        if (
-            /\btranslate\b.*\b(tamil|தமிழ்)\b/i.test(
-                lower
-            )
-        ) {
-            return "Tamil Translation";
-        }
-
-        if (
-            /\btranslate\b/i.test(lower)
-        ) {
-            return "Language Translation";
         }
 
         if (
@@ -20797,166 +20704,104 @@ document.addEventListener(
                 return "Football Scores";
             }
 
-            return "Live Sports Scores";
+            return "Live Sports";
         }
 
         if (
-            /\b(weather|temperature|forecast|rain)\b/i.test(
-                lower
-            )
+            /\b(weather|temperature|forecast|rain)\b/i.test(lower)
         ) {
-            const locationMatch =
-                text.match(
-                    /\b(?:in|at|for)\s+([\p{L}\s]{2,30})$/iu
-                );
-
-            if (locationMatch) {
-                return titleCase(
-                    locationMatch[1] +
-                    " Weather"
-                );
-            }
-
             return "Weather Forecast";
         }
 
         if (
-            /\b(latest|today|breaking)\b.*\bnews\b/i.test(
-                lower
-            ) ||
-            /\bnews\b/i.test(lower)
+            /\b(news|breaking news|latest news)\b/i.test(lower)
         ) {
             return "Latest News";
         }
 
         if (
-            /\btime\b/i.test(lower)
+            /\b(time now|current time|what time|වෙලාව|වේලාව|நேரம்)\b/i.test(
+                lower
+            )
         ) {
             return "Current Time";
         }
 
         if (
-            /\b(ai|artificial intelligence)\b/i.test(
-                lower
-            )
+            /\btranslate\b.*\b(sinhala|සිංහල)\b/i.test(lower)
         ) {
-            return "Artificial Intelligence";
+            return "Sinhala Translation";
         }
 
         if (
-            /\bquantum\b/i.test(lower)
+            /\btranslate\b.*\b(tamil|தமிழ்)\b/i.test(lower)
         ) {
-            return "Quantum Computing";
+            return "Tamil Translation";
         }
 
         if (
-            /\b(cv|resume|curriculum vitae)\b/i.test(
-                lower
-            )
+            /\btranslate\b/i.test(lower)
+        ) {
+            return "Language Translation";
+        }
+
+        if (
+            /\b(cv|resume|curriculum vitae)\b/i.test(lower)
         ) {
             return "Resume Writing";
         }
 
         if (
-            /\bexam\b.*\b(schedule|timetable|plan)\b/i.test(
-                lower
-            )
-        ) {
-            return "Exam Schedule";
-        }
-
-        if (
-            /\b(study|learn|learning)\b/i.test(
-                lower
-            )
-        ) {
-            return "Learning Plan";
-        }
-
-        if (
-            /\b(logo|icon|branding)\b/i.test(
-                lower
-            )
+            /\b(logo|icon|branding)\b/i.test(lower)
         ) {
             return "Logo Design";
         }
 
         if (
-            /\b(laptop|computer|phone)\b.*\b(buy|best|recommend|under)\b/i.test(
-                lower
-            )
+            /\b(error|bug|issue|problem|not working|fix)\b/i.test(lower)
         ) {
-            return "Buying Guide";
+            return "Technical Troubleshooting";
         }
 
         const stopWords =
             new Set([
-                "a",
-                "about",
-                "an",
-                "and",
-                "are",
-                "can",
-                "could",
-                "create",
-                "do",
-                "explain",
-                "for",
-                "give",
-                "help",
-                "how",
-                "i",
-                "is",
-                "make",
-                "me",
-                "my",
-                "of",
-                "please",
-                "tell",
-                "the",
-                "this",
-                "to",
-                "want",
-                "what",
-                "when",
-                "where",
-                "which",
-                "who",
-                "why",
-                "with",
-                "write",
-                "you"
+                "a", "an", "and", "are", "can", "create",
+                "do", "explain", "for", "from", "give",
+                "help", "how", "i", "in", "is", "make",
+                "me", "my", "of", "on", "please", "tell",
+                "the", "this", "to", "want", "what",
+                "when", "where", "which", "who", "why",
+                "with", "write", "you"
             ]);
 
-        const usefulWords =
+        const words =
             text
+                .replace(/[^\p{L}\p{N}\s+#.-]/gu, " ")
                 .split(/\s+/)
-                .map(function (word) {
-                    return word.trim();
-                })
+                .filter(Boolean)
                 .filter(function (word) {
-                    const normalized =
-                        word.toLowerCase();
-
                     return (
-                        normalized.length > 1 &&
-                        !stopWords.has(normalized)
+                        word.length > 1 &&
+                        !stopWords.has(
+                            word.toLowerCase()
+                        )
                     );
                 })
                 .slice(0, 4);
 
-        if (usefulWords.length === 0) {
+        if (!words.length) {
             return "General Conversation";
         }
 
         let title =
             titleCase(
-                usefulWords.join(" ")
+                words.join(" ")
             );
 
         if (title.length > 38) {
             title =
-                title.slice(0, 38)
+                title
+                    .slice(0, 38)
                     .replace(/\s+\S*$/, "")
                     .trim();
         }
@@ -20967,377 +20812,471 @@ document.addEventListener(
         );
     }
 
-    function currentTitle(chatId) {
-        let chatMap = null;
-
-        try {
-            if (
-                typeof chats !== "undefined" &&
-                chats &&
-                typeof chats === "object"
-            ) {
-                chatMap = chats;
-            }
-        }
-        catch (error) {
-            // Ignore inaccessible binding.
-        }
-
-        chatMap =
-            chatMap ||
-            window.chats ||
-            {};
-
-        const chat =
-            chatMap[chatId];
-
-        if (
-            chat &&
-            !Array.isArray(chat)
-        ) {
-            return String(
-                chat.title ||
-                chat.name ||
-                chat.chatName ||
-                ""
-            ).trim();
-        }
-
-        const listItem =
-            document.querySelector(
-                [
-                    `[data-chat-id="${CSS.escape(chatId)}"]`,
-                    `[data-id="${CSS.escape(chatId)}"]`,
-                    `#chat-${CSS.escape(chatId)}`
-                ].join(",")
-            );
-
-        return String(
-            listItem?.dataset.title ||
-            listItem?.textContent ||
-            ""
-        ).trim();
-    }
-
-    function titleCanBeReplaced(chatId) {
-        if (
-            wasManuallyRenamed(chatId) ||
-            wasAutoTitled(chatId)
-        ) {
-            return false;
-        }
-
-        const title =
-            currentTitle(chatId)
-                .toLowerCase();
-
-        if (!title) {
-            return true;
-        }
-
+    function manualKey(chatId) {
         return (
-            title === "new chat" ||
-            title.startsWith("chat_") ||
-            title.startsWith("chat ") ||
-            /^chat_\d+$/.test(title)
+            MANUAL_PREFIX +
+            encodeURIComponent(chatId)
         );
     }
 
-    function writeTitleToState(
+    function isManual(chatId) {
+        return (
+            localStorage.getItem(
+                manualKey(chatId)
+            ) === "true"
+        );
+    }
+
+    function updateTitle(
         chatId,
+        chat,
         title
     ) {
-        let chatMap = null;
+        chat.title = title;
+        chat.name = title;
+        chat.chatName = title;
+        chat.updatedAt = Date.now();
 
-        try {
-            if (
-                typeof chats !== "undefined" &&
-                chats &&
-                typeof chats === "object"
-            ) {
-                chatMap = chats;
-            }
-        }
-        catch (error) {
-            // Ignore inaccessible binding.
-        }
-
-        chatMap =
-            chatMap ||
-            window.chats;
-
-        const chat =
-            chatMap?.[chatId];
+        const token =
+            localStorage.getItem(
+                "mi_supabase_token"
+            );
 
         if (
-            chat &&
-            !Array.isArray(chat)
+            token &&
+            typeof isAuthenticated === "function" &&
+            isAuthenticated()
         ) {
-            chat.title = title;
-            chat.name = title;
-            chat.chatName = title;
-            chat.updatedAt = Date.now();
-        }
+            fetch(
+                "/api/conversations/" +
+                encodeURIComponent(chatId),
+                {
+                    method: "PATCH",
 
-        try {
-            if (
-                typeof chatTitles !== "undefined" &&
-                chatTitles &&
-                typeof chatTitles === "object"
-            ) {
-                chatTitles[chatId] =
-                    title;
-            }
-        }
-        catch (error) {
-            // Ignore inaccessible binding.
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            "Bearer " + token,
+
+                        "X-User-Id":
+                            localStorage.getItem(
+                                "mi_user_id"
+                            ) || "",
+
+                        "X-User-Email":
+                            localStorage.getItem(
+                                "mi_user_email"
+                            ) || ""
+                    },
+
+                    body:
+                        JSON.stringify({
+                            title: title
+                        })
+                }
+            ).catch(function () {});
         }
 
         if (
-            window.chatTitles &&
-            typeof window.chatTitles ===
-                "object"
+            window.firestorePersistence &&
+            window.miFirebaseUser
         ) {
-            window.chatTitles[chatId] =
-                title;
+            window.firestorePersistence
+                .saveChat(
+                    chatId,
+                    {
+                        title: title,
+                        pin:
+                            Boolean(chat.pin),
+                        messageCount:
+                            usableMessages(chat)
+                                .length
+                    }
+                )
+                .catch(function () {});
         }
     }
 
-    function updateVisibleTitle(
-        chatId,
-        title
-    ) {
-        const selectors = [
-            `[data-chat-id="${CSS.escape(chatId)}"]`,
-            `[data-id="${CSS.escape(chatId)}"]`,
-            `#chat-${CSS.escape(chatId)}`
-        ];
+    function deleteRemoteEmptyChat(chatId) {
+        const token =
+            localStorage.getItem(
+                "mi_supabase_token"
+            );
 
-        document
-            .querySelectorAll(
-                selectors.join(",")
-            )
-            .forEach(function (item) {
-                const label =
-                    item.querySelector(
-                        [
-                            ".chat-title",
-                            ".title",
-                            ".name",
-                            "span"
-                        ].join(",")
-                    );
+        if (
+            token &&
+            typeof isAuthenticated === "function" &&
+            isAuthenticated()
+        ) {
+            fetch(
+                "/api/conversations/" +
+                encodeURIComponent(chatId),
+                {
+                    method: "DELETE",
 
-                if (label) {
-                    label.textContent =
-                        title;
-                }
-                else {
-                    const textNode =
-                        Array.from(
-                            item.childNodes
-                        ).find(function (node) {
-                            return (
-                                node.nodeType ===
-                                Node.TEXT_NODE &&
-                                node.textContent.trim()
-                            );
-                        });
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token,
 
-                    if (textNode) {
-                        textNode.textContent =
-                            " " + title;
+                        "X-User-Id":
+                            localStorage.getItem(
+                                "mi_user_id"
+                            ) || "",
+
+                        "X-User-Email":
+                            localStorage.getItem(
+                                "mi_user_email"
+                            ) || ""
                     }
                 }
+            ).catch(function () {});
+        }
 
-                item.dataset.title =
-                    title;
-            });
+        try {
+            if (
+                window.firebase &&
+                window.miFirebaseUser
+            ) {
+                window.firebase
+                    .firestore()
+                    .collection("users")
+                    .doc(
+                        window.miFirebaseUser.uid
+                    )
+                    .collection("chats")
+                    .doc(chatId)
+                    .delete()
+                    .catch(function () {});
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Titles] Firestore empty-chat deletion failed.",
+                error
+            );
+        }
     }
 
-    function persistTitle() {
-        const saveFunctions = [
-            window.save,
-            window.saveChats,
-            window.persistChats,
-            window.saveUserChats
-        ];
+    function processAllChats() {
+        if (running) {
+            return;
+        }
 
-        for (
-            const saveFunction
-            of saveFunctions
-        ) {
+        running = true;
+
+        try {
+            const map =
+                chatMap();
+
+            const ids =
+                Object.keys(map);
+
+            let changed = false;
+            let deleted = 0;
+            let titled = 0;
+
+            ids.forEach(function (chatId) {
+                const chat =
+                    map[chatId];
+
+                const messages =
+                    usableMessages(chat);
+
+                if (messages.length === 0) {
+                    deleteRemoteEmptyChat(
+                        chatId
+                    );
+
+                    delete map[chatId];
+
+                    localStorage.removeItem(
+                        manualKey(chatId)
+                    );
+
+                    deleted += 1;
+                    changed = true;
+                    return;
+                }
+
+                if (isManual(chatId)) {
+                    return;
+                }
+
+                const firstMessage =
+                    firstUserText(chat);
+
+                if (!firstMessage) {
+                    return;
+                }
+
+                const title =
+                    meaningfulTitle(
+                        firstMessage
+                    );
+
+                if (
+                    chat.title !== title ||
+                    chat.name !== title
+                ) {
+                    updateTitle(
+                        chatId,
+                        chat,
+                        title
+                    );
+
+                    titled += 1;
+                    changed = true;
+                }
+            });
+
+            const remainingIds =
+                Object.keys(map);
+
+            try {
+                if (
+                    typeof currentChat !==
+                        "undefined" &&
+                    (
+                        !currentChat ||
+                        !map[currentChat]
+                    )
+                ) {
+                    currentChat =
+                        remainingIds[0] ||
+                        null;
+                }
+            }
+            catch (error) {
+                window.currentChat =
+                    remainingIds[0] ||
+                    null;
+            }
+
             if (
-                typeof saveFunction ===
-                    "function"
+                !window.currentChat ||
+                !map[window.currentChat]
             ) {
+                window.currentChat =
+                    remainingIds[0] ||
+                    null;
+            }
+
+            if (changed) {
                 try {
-                    saveFunction();
-                    break;
+                    if (
+                        typeof save ===
+                            "function"
+                    ) {
+                        save();
+                    }
                 }
                 catch (error) {
                     console.warn(
-                        "[MI AI Title] Save function failed.",
+                        "[MI AI Titles] Save failed.",
                         error
                     );
                 }
             }
-        }
 
-        try {
-            if (
-                typeof save === "function"
-            ) {
-                save();
+            try {
+                if (
+                    typeof renderList ===
+                        "function"
+                ) {
+                    renderList();
+                }
             }
+            catch (error) {
+                console.warn(
+                    "[MI AI Titles] List render failed.",
+                    error
+                );
+            }
+
+            if (
+                remainingIds.length === 0
+            ) {
+                const chatBox =
+                    document.getElementById(
+                        "chat"
+                    );
+
+                if (chatBox) {
+                    chatBox.innerHTML = "";
+                }
+
+                localStorage.removeItem(
+                    "last_chat"
+                );
+            }
+            else {
+                const selected =
+                    (
+                        typeof currentChat !==
+                            "undefined"
+                            ? currentChat
+                            : window.currentChat
+                    );
+
+                if (
+                    selected &&
+                    map[selected] &&
+                    typeof openChat ===
+                        "function"
+                ) {
+                    openChat(selected);
+                }
+            }
+
+            console.log(
+                "[MI AI Titles] Completed:",
+                {
+                    titled: titled,
+                    deletedEmpty: deleted,
+                    remaining:
+                        remainingIds.length
+                }
+            );
         }
-        catch (error) {
-            // The window save function may already have run.
+        finally {
+            running = false;
         }
     }
 
-    function applyTitle(chatId) {
-        const id =
-            String(
-                chatId ||
-                currentChatIdValue()
-            );
-
-        if (
-            !id ||
-            !titleCanBeReplaced(id)
-        ) {
-            return false;
-        }
-
-        const firstMessage =
-            firstUserMessage(id);
-
-        if (!firstMessage) {
-            return false;
-        }
-
-        const title =
-            createSmartTitle(
-                firstMessage
-            );
-
-        writeTitleToState(
-            id,
-            title
+    function scheduleProcess(delay) {
+        clearTimeout(
+            scheduledTimer
         );
 
-        updateVisibleTitle(
-            id,
-            title
-        );
-
-        markAutoTitled(id);
-        persistTitle();
-
-        try {
-            if (
-                typeof renderList ===
-                    "function"
-            ) {
-                renderList();
-            }
-        }
-        catch (error) {
-            // Visible title was already updated directly.
-        }
-
-        console.log(
-            "[MI AI Title] Generated:",
-            title
-        );
-
-        return true;
-    }
-
-    function scheduleTitle(
-        chatId,
-        delay
-    ) {
-        clearTimeout(titleTimer);
-
-        titleTimer =
+        scheduledTimer =
             setTimeout(
-                function () {
-                    applyTitle(chatId);
-                },
-                typeof delay ===
-                    "number"
+                processAllChats,
+                typeof delay === "number"
                     ? delay
                     : 350
             );
     }
 
-    function markManualRename(
-        event
-    ) {
-        const details =
-            [
-                event.target?.id,
-                event.target?.className,
-                event.target
-                    ?.getAttribute?.(
-                        "data-action"
-                    ),
-                event.target?.textContent
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
+    function installRenameTracking() {
+        let existingRename = null;
+
+        try {
+            existingRename =
+                window.renameChat ||
+                (
+                    typeof renameChat ===
+                        "function"
+                        ? renameChat
+                        : null
+                );
+        }
+        catch (error) {
+            existingRename =
+                window.renameChat ||
+                null;
+        }
 
         if (
-            !details.includes("rename")
+            typeof existingRename !==
+                "function" ||
+            existingRename
+                .__miManualTracking
         ) {
             return;
         }
 
-        const chatElement =
-            event.target.closest(
-                [
-                    "[data-chat-id]",
-                    "[data-id]",
-                    "[id^='chat-']"
-                ].join(",")
-            );
+        const wrappedRename =
+            function () {
+                const id =
+                    String(
+                        window.selectedChat ||
+                        (
+                            typeof selectedChat !==
+                                "undefined"
+                                ? selectedChat
+                                : ""
+                        ) ||
+                        ""
+                    );
 
-        const chatId =
-            chatElement?.dataset.chatId ||
-            chatElement?.dataset.id ||
-            chatElement?.id
-                ?.replace(/^chat-/, "") ||
-            currentChatIdValue();
+                const before =
+                    id
+                        ? chatMap()[id]
+                            ?.title
+                        : "";
 
-        if (!chatId) {
-            return;
+                const result =
+                    existingRename.apply(
+                        this,
+                        arguments
+                    );
+
+                setTimeout(
+                    function () {
+                        const after =
+                            id
+                                ? chatMap()[id]
+                                    ?.title
+                                : "";
+
+                        if (
+                            id &&
+                            after &&
+                            after !== before
+                        ) {
+                            localStorage.setItem(
+                                manualKey(id),
+                                "true"
+                            );
+                        }
+                    },
+                    50
+                );
+
+                return result;
+            };
+
+        wrappedRename
+            .__miManualTracking =
+            true;
+
+        window.renameChat =
+            wrappedRename;
+
+        try {
+            renameChat =
+                wrappedRename;
         }
-
-        localStorage.setItem(
-            manualTitleKey(chatId),
-            "true"
-        );
+        catch (error) {
+            // window binding remains available.
+        }
     }
 
     function start() {
+        installRenameTracking();
+
+        /*
+          Process every existing chat after local/Firebase data loads.
+        */
+        scheduleProcess(100);
+        scheduleProcess(700);
+        scheduleProcess(1800);
+        scheduleProcess(4000);
+
         document.addEventListener(
             "click",
             function (event) {
-                markManualRename(event);
-
                 const details =
                     [
                         event.target?.id,
                         event.target?.className,
+                        event.target?.textContent,
                         event.target
                             ?.getAttribute?.(
                                 "data-action"
-                            ),
-                        event.target
-                            ?.textContent
+                            )
                     ]
                         .filter(Boolean)
                         .join(" ")
@@ -21345,24 +21284,10 @@ document.addEventListener(
 
                 if (
                     details.includes("send") ||
-                    details.includes("new chat")
+                    details.includes("new chat") ||
+                    details.includes("delete")
                 ) {
-                    const id =
-                        currentChatIdValue();
-
-                    scheduleTitle(
-                        id,
-                        700
-                    );
-
-                    setTimeout(
-                        function () {
-                            applyTitle(
-                                currentChatIdValue()
-                            );
-                        },
-                        1800
-                    );
+                    scheduleProcess(900);
                 }
             },
             false
@@ -21372,86 +21297,43 @@ document.addEventListener(
             "keydown",
             function (event) {
                 if (
-                    event.key !== "Enter" ||
-                    event.shiftKey
+                    event.key === "Enter" &&
+                    !event.shiftKey
                 ) {
-                    return;
+                    scheduleProcess(1000);
                 }
-
-                const target =
-                    event.target;
-
-                if (
-                    !target?.matches?.(
-                        [
-                            "#inputBox",
-                            "textarea",
-                            "[contenteditable='true']"
-                        ].join(",")
-                    )
-                ) {
-                    return;
-                }
-
-                scheduleTitle(
-                    currentChatIdValue(),
-                    700
-                );
-
-                setTimeout(
-                    function () {
-                        applyTitle(
-                            currentChatIdValue()
-                        );
-                    },
-                    1800
-                );
             },
             false
         );
 
         window.addEventListener(
-            "mi-message-saved",
+            "mi-chat-user-changed",
             function () {
-                scheduleTitle(
-                    currentChatIdValue(),
-                    250
-                );
+                scheduleProcess(500);
+                scheduleProcess(1800);
             }
         );
 
         window.addEventListener(
-            "mi-chat-user-changed",
+            "pageshow",
             function () {
-                scheduleTitle(
-                    currentChatIdValue(),
-                    500
-                );
+                scheduleProcess(300);
             }
         );
     }
 
-    window.MISmartChatTitle = {
-        generate:
-            createSmartTitle,
+    window.MIChatTitleCleanup = {
+        run:
+            processAllChats,
 
-        apply:
-            function (chatId) {
-                return applyTitle(
-                    chatId ||
-                    currentChatIdValue()
-                );
-            },
+        titleFromMessage:
+            meaningfulTitle,
 
         markManual:
             function (chatId) {
-                const id =
-                    chatId ||
-                    currentChatIdValue();
-
-                if (id) {
+                if (chatId) {
                     localStorage.setItem(
-                        manualTitleKey(id),
+                        manualKey(chatId),
                         "true"
                     );
                 }
@@ -21459,7 +21341,8 @@ document.addEventListener(
     };
 
     if (
-        document.readyState === "loading"
+        document.readyState ===
+        "loading"
     ) {
         document.addEventListener(
             "DOMContentLoaded",
@@ -21474,7 +21357,7 @@ document.addEventListener(
     }
 })();
 
-/* MI AI SMART CHAT TITLE V1 - END */
+/* MI AI CHAT TITLE AND EMPTY CLEANUP V2 - END */
 </script>
 </body>
 </html>
