@@ -1564,15 +1564,31 @@ def api_chat():
 def api_chat_get():
     return jsonify({"response": "Method not allowed"}), 405
 
-# MI AI GROQ SMALL LIVE SEARCH V4 - START
+# MI AI GROQ BROWSER SEARCH V5 - START
+
+def _mi_browser_search_text(provider_data):
+    if not isinstance(provider_data, dict):
+        return ""
+
+    choices = provider_data.get("choices") or []
+
+    if not choices:
+        return ""
+
+    message = choices[0].get("message") or {}
+
+    return str(
+        message.get("content") or ""
+    ).strip()
+
 
 @app.route("/api/live-assist", methods=["POST", "OPTIONS"])
-def mi_groq_small_live_assist():
+def mi_groq_browser_search():
     """
-    Small Groq Compound Mini live-search request.
+    Use Groq GPT-OSS browser search for current information.
 
-    Only the user's current question and compact device context are sent.
-    Chat history, attachments and unrelated frontend payload data are ignored.
+    The frontend sends only the current question and compact
+    device context. Normal /api/chat is not changed.
     """
     import json
     import os
@@ -1580,9 +1596,13 @@ def mi_groq_small_live_assist():
     import urllib.request
 
     if request.method == "OPTIONS":
-        return jsonify({"ok": True}), 200
+        return jsonify({
+            "ok": True
+        }), 200
 
-    incoming = request.get_json(silent=True) or {}
+    incoming = request.get_json(
+        silent=True
+    ) or {}
 
     query = str(
         incoming.get("query")
@@ -1593,11 +1613,12 @@ def mi_groq_small_live_assist():
 
     if not query:
         return jsonify({
-            "error": "A live-search question is required."
+            "error":
+                "A live-search question is required."
         }), 400
 
-    # Prevent oversized requests.
-    query = query[:4000]
+    # Keep the request compact.
+    query = query[:3000]
 
     api_key = str(
         os.getenv("GROQ_API_KEY")
@@ -1606,10 +1627,13 @@ def mi_groq_small_live_assist():
 
     if not api_key:
         return jsonify({
-            "error": "GROQ_API_KEY is not configured on the server."
+            "error":
+                "GROQ_API_KEY is not configured on the server."
         }), 500
 
-    context = incoming.get("client_context")
+    context = incoming.get(
+        "client_context"
+    )
 
     if not isinstance(context, dict):
         context = {}
@@ -1624,8 +1648,13 @@ def mi_groq_small_live_assist():
         or ""
     ).strip()[:100]
 
-    latitude = context.get("latitude")
-    longitude = context.get("longitude")
+    latitude = context.get(
+        "latitude"
+    )
+
+    longitude = context.get(
+        "longitude"
+    )
 
     context_parts = []
 
@@ -1636,7 +1665,7 @@ def mi_groq_small_live_assist():
 
     if local_time:
         context_parts.append(
-            "Device time: " + local_time
+            "Device timestamp: " + local_time
         )
 
     if (
@@ -1652,19 +1681,23 @@ def mi_groq_small_live_assist():
 
     compact_context = "; ".join(
         context_parts
-    )[:500]
+    )[:400]
 
-    user_content = (
-        "Search the live web and answer this current question accurately.\n"
-        "Answer in the same language as the question.\n"
-        "Never invent live scores, news, weather, prices or current facts.\n"
-        "For sports, include the current score/status and when checked.\n\n"
+    prompt = (
+        "Search the web and answer the following current "
+        "question accurately.\n"
+        "Answer in the same language as the user.\n"
+        "Never invent live scores, news, weather, prices, "
+        "results, schedules or current facts.\n"
+        "For a sports question, include the teams, current "
+        "score or status, and when the information was checked.\n"
+        "Give a clear and direct final answer.\n\n"
         "Question: "
         + query
     )
 
     if compact_context:
-        user_content += (
+        prompt += (
             "\n\nDevice context: "
             + compact_context
         )
@@ -1672,18 +1705,30 @@ def mi_groq_small_live_assist():
     request_data = {
         "model": os.getenv(
             "GROQ_LIVE_MODEL",
-            "groq/compound-mini"
+            "openai/gpt-oss-20b"
         ),
 
         "messages": [
             {
                 "role": "user",
-                "content": user_content,
+                "content": prompt,
             }
         ],
 
-        "temperature": 0.1,
-        "max_completion_tokens": 1200,
+        "temperature": 1,
+        "top_p": 1,
+        "stream": False,
+        "reasoning_effort": "low",
+        "max_completion_tokens": 1600,
+
+        # Force Groq's supported browser-search tool.
+        "tool_choice": "required",
+
+        "tools": [
+            {
+                "type": "browser_search"
+            }
+        ],
     }
 
     encoded = json.dumps(
@@ -1692,29 +1737,28 @@ def mi_groq_small_live_assist():
         separators=(",", ":")
     ).encode("utf-8")
 
-    # This request should remain very small.
     app.logger.info(
-        "Groq live request bytes=%s query_chars=%s model=%s",
+        "Groq browser-search request bytes=%s query_chars=%s",
         len(encoded),
         len(query),
-        request_data["model"],
     )
-
-    if len(encoded) > 20000:
-        return jsonify({
-            "error": "The live-search request was too large before sending."
-        }), 413
 
     groq_request = urllib.request.Request(
         "https://api.groq.com/openai/v1/chat/completions",
         data=encoded,
         method="POST",
         headers={
-            "Authorization": "Bearer " + api_key,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "User-Agent": "MI-AI-Live/4.0",
-            "Content-Length": str(len(encoded)),
+            "Authorization":
+                "Bearer " + api_key,
+
+            "Content-Type":
+                "application/json",
+
+            "Accept":
+                "application/json",
+
+            "User-Agent":
+                "MI-AI-Browser-Search/5.0",
         },
     )
 
@@ -1728,25 +1772,16 @@ def mi_groq_small_live_assist():
                 errors="replace"
             )
 
-        data = json.loads(raw)
+        provider_data = json.loads(raw)
 
-        choices = data.get("choices") or []
-
-        if not choices:
-            return jsonify({
-                "error": "Groq returned no answer choices."
-            }), 502
-
-        message = choices[0].get("message") or {}
-
-        answer = str(
-            message.get("content")
-            or ""
-        ).strip()
+        answer = _mi_browser_search_text(
+            provider_data
+        )
 
         if not answer:
             return jsonify({
-                "error": "Groq returned an empty live-search answer."
+                "error":
+                    "Groq browser search returned an empty answer."
             }), 502
 
         return jsonify({
@@ -1759,64 +1794,76 @@ def mi_groq_small_live_assist():
         }), 200
 
     except urllib.error.HTTPError as error:
-        provider_status = int(
+        status = int(
             getattr(error, "code", 500)
             or 500
         )
 
         try:
-            provider_body = error.read().decode(
-                "utf-8",
-                errors="replace"
+            provider_body = (
+                error.read()
+                .decode(
+                    "utf-8",
+                    errors="replace"
+                )
             )
         except Exception:
             provider_body = ""
 
         app.logger.error(
-            "Groq live error status=%s request_bytes=%s body=%s",
-            provider_status,
+            "Groq browser-search error "
+            "status=%s request_bytes=%s body=%s",
+            status,
             len(encoded),
             provider_body[:2000],
         )
 
-        if provider_status == 413:
+        if status in (401, 403):
             public_error = (
-                "Groq rejected the live-search request size. "
-                "The request has now been reduced to a minimal payload."
+                "The GROQ_API_KEY is invalid "
+                "or the model is not permitted."
             )
-        elif provider_status in (401, 403):
+        elif status == 429:
             public_error = (
-                "The GROQ_API_KEY is invalid or unauthorized."
+                "The Groq API rate limit "
+                "or quota was reached."
             )
-        elif provider_status == 429:
+        elif status == 413:
             public_error = (
-                "The Groq API rate limit or quota was reached."
+                "Groq browser search rejected "
+                "the provider-side search result size."
+            )
+        elif status == 400:
+            public_error = (
+                "Groq rejected the browser-search request."
             )
         else:
             public_error = (
-                "Groq live search is temporarily unavailable."
+                "Groq browser search is temporarily unavailable."
             )
 
         return jsonify({
             "error": public_error,
-            "provider_status": provider_status,
+            "provider_status": status,
             "request_bytes": len(encoded),
-            "provider_details": provider_body[:800],
-        }), provider_status
+            "provider_details":
+                provider_body[:1000],
+        }), status
 
     except urllib.error.URLError as error:
         app.logger.error(
-            "Groq live connection failed: %s",
+            "Groq connection error: %s",
             error,
         )
 
         return jsonify({
-            "error": "The server could not connect to Groq."
+            "error":
+                "The server could not connect to Groq."
         }), 502
 
     except Exception as error:
         app.logger.exception(
-            "Unexpected Groq live-search error."
+            "Unexpected Groq browser-search error."
         )
 
         return jsonify({
@@ -1824,7 +1871,7 @@ def mi_groq_small_live_assist():
         }), 500
 
 
-# MI AI GROQ SMALL LIVE SEARCH V4 - END
+# MI AI GROQ BROWSER SEARCH V5 - END
 
 if __name__=="__main__":
     app.run(
