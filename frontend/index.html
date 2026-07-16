@@ -22234,5 +22234,1132 @@ document.addEventListener(
 
 /* MI AI NEW CHAT WELCOME JS V1 - END */
 </script>
+
+<script>
+/* MI AI NEW CHAT LIFECYCLE V3 - START */
+
+(function () {
+    "use strict";
+
+    const TRANSIENT_PREFIX =
+        "mi_transient_new_chat_v3_";
+
+    let actionTimer = null;
+    let previousActiveChat = "";
+
+    function getChatMap() {
+        try {
+            if (
+                typeof chats !== "undefined" &&
+                chats &&
+                typeof chats === "object" &&
+                !Array.isArray(chats)
+            ) {
+                return chats;
+            }
+        }
+        catch (error) {
+            // Fall back to window.chats.
+        }
+
+        if (
+            window.chats &&
+            typeof window.chats === "object" &&
+            !Array.isArray(window.chats)
+        ) {
+            return window.chats;
+        }
+
+        return {};
+    }
+
+    function currentChatId() {
+        try {
+            if (
+                typeof currentChat !== "undefined" &&
+                currentChat
+            ) {
+                return String(currentChat);
+            }
+        }
+        catch (error) {
+            // Fall back below.
+        }
+
+        return String(
+            window.currentChat ||
+            localStorage.getItem("last_chat") ||
+            ""
+        );
+    }
+
+    function setCurrentChatId(chatId) {
+        try {
+            if (
+                typeof currentChat !== "undefined"
+            ) {
+                currentChat = chatId || null;
+            }
+        }
+        catch (error) {
+            // Keep the window value below.
+        }
+
+        window.currentChat =
+            chatId || null;
+
+        if (chatId) {
+            localStorage.setItem(
+                "last_chat",
+                chatId
+            );
+        }
+        else {
+            localStorage.removeItem(
+                "last_chat"
+            );
+        }
+    }
+
+    function transientKey(chatId) {
+        return (
+            TRANSIENT_PREFIX +
+            encodeURIComponent(
+                String(chatId || "")
+            )
+        );
+    }
+
+    function markTransient(chatId) {
+        if (!chatId) {
+            return;
+        }
+
+        localStorage.setItem(
+            transientKey(chatId),
+            "true"
+        );
+    }
+
+    function clearTransient(chatId) {
+        if (!chatId) {
+            return;
+        }
+
+        localStorage.removeItem(
+            transientKey(chatId)
+        );
+    }
+
+    function isTransient(chatId) {
+        return Boolean(
+            chatId &&
+            localStorage.getItem(
+                transientKey(chatId)
+            ) === "true"
+        );
+    }
+
+    function chatMessages(chatId) {
+        const chat =
+            getChatMap()[chatId];
+
+        if (Array.isArray(chat)) {
+            return chat;
+        }
+
+        if (
+            chat &&
+            Array.isArray(chat.messages)
+        ) {
+            return chat.messages;
+        }
+
+        return [];
+    }
+
+    function validMessages(chatId) {
+        return chatMessages(chatId)
+            .filter(function (message) {
+                if (
+                    !message ||
+                    typeof message !== "object"
+                ) {
+                    return false;
+                }
+
+                return Boolean(
+                    String(
+                        message.text ??
+                        message.content ??
+                        message.message ??
+                        ""
+                    ).trim()
+                );
+            });
+    }
+
+    function firstUserMessage(chatId) {
+        const message =
+            validMessages(chatId)
+                .find(function (item) {
+                    const role =
+                        String(
+                            item.role ||
+                            item.sender ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    return (
+                        role === "user" ||
+                        role === "me" ||
+                        role === "human"
+                    );
+                });
+
+        return String(
+            message?.text ??
+            message?.content ??
+            message?.message ??
+            ""
+        )
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function isEmptyChat(chatId) {
+        return (
+            validMessages(chatId).length === 0
+        );
+    }
+
+    function titleCase(value) {
+        return String(value || "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(function (word) {
+                const lower =
+                    word.toLowerCase();
+
+                return (
+                    lower.charAt(0).toUpperCase() +
+                    lower.slice(1)
+                );
+            })
+            .join(" ");
+    }
+
+    function createTitle(message) {
+        const text =
+            String(message || "")
+                .replace(/https?:\/\/\S+/gi, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+
+        const lower =
+            text.toLowerCase();
+
+        if (!text) {
+            return "NEW CHAT";
+        }
+
+        if (
+            /^(hi|hii+|hello|hey|good morning|good afternoon|good evening)\b/i.test(
+                text
+            )
+        ) {
+            return "User Greeting";
+        }
+
+        if (
+            /\bhow are you\b/i.test(lower)
+        ) {
+            return "General Conversation";
+        }
+
+        if (
+            /\bpython\b.*\bcalculator\b/i.test(lower)
+        ) {
+            return "Python Calculator";
+        }
+
+        if (
+            /\bjavascript\b.*\b(error|bug|fix|issue)\b/i.test(lower)
+        ) {
+            return "JavaScript Debugging";
+        }
+
+        if (
+            /\bpython\b.*\b(error|bug|fix|issue)\b/i.test(lower)
+        ) {
+            return "Python Debugging";
+        }
+
+        if (
+            /\b(cricket|football|soccer|rugby|basketball)\b.*\b(score|match|result|live)\b/i.test(
+                lower
+            ) ||
+            /\b(score|match|result|live)\b.*\b(cricket|football|soccer|rugby|basketball)\b/i.test(
+                lower
+            )
+        ) {
+            if (lower.includes("cricket")) {
+                return "Cricket Scores";
+            }
+
+            if (
+                lower.includes("football") ||
+                lower.includes("soccer")
+            ) {
+                return "Football Scores";
+            }
+
+            return "Live Sports";
+        }
+
+        if (
+            /\b(weather|forecast|temperature|rain)\b/i.test(
+                lower
+            )
+        ) {
+            return "Weather Forecast";
+        }
+
+        if (
+            /\b(news|breaking news|latest news)\b/i.test(
+                lower
+            )
+        ) {
+            return "Latest News";
+        }
+
+        if (
+            /\b(time now|current time|what time|වෙලාව|වේලාව|நேரம்)\b/i.test(
+                lower
+            )
+        ) {
+            return "Current Time";
+        }
+
+        if (
+            /\btranslate\b.*\b(sinhala|සිංහල)\b/i.test(
+                lower
+            )
+        ) {
+            return "Sinhala Translation";
+        }
+
+        if (
+            /\btranslate\b.*\b(tamil|தமிழ்)\b/i.test(
+                lower
+            )
+        ) {
+            return "Tamil Translation";
+        }
+
+        if (
+            /\btranslate\b/i.test(lower)
+        ) {
+            return "Language Translation";
+        }
+
+        if (
+            /\b(html|website|web page)\b.*\b(login|form|page)\b/i.test(
+                lower
+            )
+        ) {
+            return "HTML Web Page";
+        }
+
+        if (
+            /\b(ai|artificial intelligence)\b/i.test(
+                lower
+            )
+        ) {
+            return "Artificial Intelligence";
+        }
+
+        if (
+            /\b(cv|resume|curriculum vitae)\b/i.test(
+                lower
+            )
+        ) {
+            return "Resume Writing";
+        }
+
+        if (
+            /\b(logo|branding|icon)\b/i.test(
+                lower
+            )
+        ) {
+            return "Logo Design";
+        }
+
+        if (
+            /\b(error|bug|issue|problem|not working|fix)\b/i.test(
+                lower
+            )
+        ) {
+            return "Technical Troubleshooting";
+        }
+
+        const stopWords =
+            new Set([
+                "a", "an", "and", "are", "can",
+                "create", "do", "explain", "for",
+                "from", "give", "help", "how", "i",
+                "in", "is", "make", "me", "my",
+                "of", "on", "please", "tell", "the",
+                "this", "to", "want", "what", "when",
+                "where", "which", "who", "why",
+                "with", "write", "you"
+            ]);
+
+        const words =
+            text
+                .replace(
+                    /[^\p{L}\p{N}\s+#.-]/gu,
+                    " "
+                )
+                .split(/\s+/)
+                .filter(Boolean)
+                .filter(function (word) {
+                    return (
+                        word.length > 1 &&
+                        !stopWords.has(
+                            word.toLowerCase()
+                        )
+                    );
+                })
+                .slice(0, 4);
+
+        if (!words.length) {
+            return "General Conversation";
+        }
+
+        let title =
+            titleCase(
+                words.join(" ")
+            );
+
+        if (title.length > 38) {
+            title =
+                title
+                    .slice(0, 38)
+                    .replace(/\s+\S*$/, "")
+                    .trim();
+        }
+
+        return (
+            title ||
+            "General Conversation"
+        );
+    }
+
+    function setChatTitle(
+        chatId,
+        title
+    ) {
+        const chat =
+            getChatMap()[chatId];
+
+        if (!chat) {
+            return false;
+        }
+
+        chat.title = title;
+        chat.name = title;
+        chat.chatName = title;
+        chat.updatedAt = Date.now();
+
+        document
+            .querySelectorAll(
+                [
+                    `[data-chat-id="${CSS.escape(chatId)}"]`,
+                    `[data-id="${CSS.escape(chatId)}"]`,
+                    `#chat-${CSS.escape(chatId)}`
+                ].join(",")
+            )
+            .forEach(function (item) {
+                item.dataset.title =
+                    title;
+
+                const label =
+                    item.querySelector(
+                        [
+                            ".chat-title",
+                            ".title",
+                            ".name",
+                            ".chat-name"
+                        ].join(",")
+                    );
+
+                if (label) {
+                    label.textContent =
+                        title;
+                }
+            });
+
+        return true;
+    }
+
+    function saveChats() {
+        try {
+            if (
+                typeof save === "function"
+            ) {
+                save();
+                return;
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI New Chat] save() failed.",
+                error
+            );
+        }
+
+        try {
+            if (
+                typeof window.save ===
+                    "function"
+            ) {
+                window.save();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI New Chat] window.save() failed.",
+                error
+            );
+        }
+    }
+
+    function refreshList() {
+        try {
+            if (
+                typeof renderList ===
+                    "function"
+            ) {
+                renderList();
+                return;
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI New Chat] renderList failed.",
+                error
+            );
+        }
+
+        try {
+            if (
+                typeof window.renderList ===
+                    "function"
+            ) {
+                window.renderList();
+            }
+        }
+        catch (error) {
+            // Ignore.
+        }
+    }
+
+    function persistRemoteTitle(
+        chatId,
+        title
+    ) {
+        const token =
+            localStorage.getItem(
+                "mi_supabase_token"
+            );
+
+        if (!token) {
+            return;
+        }
+
+        fetch(
+            "/api/conversations/" +
+            encodeURIComponent(chatId),
+            {
+                method: "PATCH",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    "Authorization":
+                        "Bearer " + token,
+
+                    "X-User-Id":
+                        localStorage.getItem(
+                            "mi_user_id"
+                        ) || "",
+
+                    "X-User-Email":
+                        localStorage.getItem(
+                            "mi_user_email"
+                        ) || ""
+                },
+
+                body:
+                    JSON.stringify({
+                        title: title
+                    })
+            }
+        ).catch(function () {});
+    }
+
+    function deleteRemoteChat(chatId) {
+        const token =
+            localStorage.getItem(
+                "mi_supabase_token"
+            );
+
+        if (token) {
+            fetch(
+                "/api/conversations/" +
+                encodeURIComponent(chatId),
+                {
+                    method: "DELETE",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token,
+
+                        "X-User-Id":
+                            localStorage.getItem(
+                                "mi_user_id"
+                            ) || "",
+
+                        "X-User-Email":
+                            localStorage.getItem(
+                                "mi_user_email"
+                            ) || ""
+                    }
+                }
+            ).catch(function () {});
+        }
+
+        try {
+            if (
+                window.firebase &&
+                window.miFirebaseUser
+            ) {
+                window.firebase
+                    .firestore()
+                    .collection("users")
+                    .doc(
+                        window.miFirebaseUser.uid
+                    )
+                    .collection("chats")
+                    .doc(chatId)
+                    .delete()
+                    .catch(function () {});
+            }
+        }
+        catch (error) {
+            // Firestore may not be in use.
+        }
+    }
+
+    function deleteEmptyTransientChat(
+        chatId
+    ) {
+        if (
+            !chatId ||
+            !isTransient(chatId) ||
+            !isEmptyChat(chatId)
+        ) {
+            return false;
+        }
+
+        const map =
+            getChatMap();
+
+        delete map[chatId];
+
+        clearTransient(chatId);
+        deleteRemoteChat(chatId);
+
+        if (
+            currentChatId() === chatId
+        ) {
+            const remaining =
+                Object.keys(map);
+
+            setCurrentChatId(
+                remaining[0] || null
+            );
+        }
+
+        saveChats();
+        refreshList();
+
+        console.log(
+            "[MI AI New Chat] Empty chat deleted:",
+            chatId
+        );
+
+        return true;
+    }
+
+    function finalizeChatTitle(chatId) {
+        if (
+            !chatId ||
+            !isTransient(chatId)
+        ) {
+            return false;
+        }
+
+        const firstMessage =
+            firstUserMessage(chatId);
+
+        if (!firstMessage) {
+            return false;
+        }
+
+        const title =
+            createTitle(firstMessage);
+
+        setChatTitle(
+            chatId,
+            title
+        );
+
+        clearTransient(chatId);
+        persistRemoteTitle(
+            chatId,
+            title
+        );
+
+        saveChats();
+        refreshList();
+
+        console.log(
+            "[MI AI New Chat] Title created:",
+            title
+        );
+
+        return true;
+    }
+
+    function markCurrentAsNewChat() {
+        const chatId =
+            currentChatId();
+
+        if (!chatId) {
+            return false;
+        }
+
+        const chat =
+            getChatMap()[chatId];
+
+        if (!chat) {
+            return false;
+        }
+
+        if (!isEmptyChat(chatId)) {
+            return false;
+        }
+
+        markTransient(chatId);
+
+        setChatTitle(
+            chatId,
+            "NEW CHAT"
+        );
+
+        saveChats();
+        refreshList();
+
+        previousActiveChat =
+            chatId;
+
+        console.log(
+            "[MI AI New Chat] Created:",
+            chatId
+        );
+
+        return true;
+    }
+
+    function selectedChatIdFromElement(
+        element
+    ) {
+        if (!(element instanceof Element)) {
+            return "";
+        }
+
+        const item =
+            element.closest(
+                [
+                    "[data-chat-id]",
+                    "[data-id]",
+                    "[id^='chat-']"
+                ].join(",")
+            );
+
+        if (!item) {
+            return "";
+        }
+
+        return String(
+            item.dataset.chatId ||
+            item.dataset.id ||
+            item.id.replace(
+                /^chat-/,
+                ""
+            ) ||
+            ""
+        );
+    }
+
+    function isNewChatControl(
+        element
+    ) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        const control =
+            element.closest(
+                "button, [role='button'], a"
+            );
+
+        const details =
+            [
+                control?.id,
+                control?.className,
+                control?.getAttribute(
+                    "data-action"
+                ),
+                control?.textContent
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .replace(/\s+/g, " ")
+                .trim()
+                .toLowerCase();
+
+        return (
+            details.includes("newchat") ||
+            details.includes("new chat")
+        );
+    }
+
+    function isSendControl(
+        element
+    ) {
+        if (!(element instanceof Element)) {
+            return false;
+        }
+
+        const control =
+            element.closest(
+                [
+                    "button",
+                    "[role='button']",
+                    "input[type='submit']"
+                ].join(",")
+            );
+
+        const details =
+            [
+                control?.id,
+                control?.className,
+                control?.getAttribute(
+                    "data-action"
+                ),
+                control?.textContent
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+        return (
+            details.includes("send") ||
+            details.includes("submit")
+        );
+    }
+
+    function scheduleAction(
+        callback,
+        delay
+    ) {
+        clearTimeout(actionTimer);
+
+        actionTimer =
+            setTimeout(
+                callback,
+                delay
+            );
+    }
+
+    function handleChatSwitch(
+        oldChatId
+    ) {
+        const newChatId =
+            currentChatId();
+
+        if (
+            oldChatId &&
+            oldChatId !== newChatId
+        ) {
+            deleteEmptyTransientChat(
+                oldChatId
+            );
+        }
+
+        previousActiveChat =
+            newChatId;
+    }
+
+    function start() {
+        previousActiveChat =
+            currentChatId();
+
+        /*
+          Existing transient NEW CHAT entries with no messages
+          remain until the user switches away from them.
+        */
+        document.addEventListener(
+            "pointerdown",
+            function (event) {
+                const selectedId =
+                    selectedChatIdFromElement(
+                        event.target
+                    );
+
+                if (
+                    selectedId &&
+                    selectedId !==
+                        currentChatId()
+                ) {
+                    previousActiveChat =
+                        currentChatId();
+                }
+            },
+            true
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    isNewChatControl(
+                        event.target
+                    )
+                ) {
+                    const oldChat =
+                        currentChatId();
+
+                    setTimeout(
+                        function () {
+                            deleteEmptyTransientChat(
+                                oldChat
+                            );
+
+                            markCurrentAsNewChat();
+                        },
+                        100
+                    );
+
+                    setTimeout(
+                        markCurrentAsNewChat,
+                        350
+                    );
+
+                    return;
+                }
+
+                const selectedId =
+                    selectedChatIdFromElement(
+                        event.target
+                    );
+
+                if (selectedId) {
+                    const oldChat =
+                        previousActiveChat ||
+                        currentChatId();
+
+                    setTimeout(
+                        function () {
+                            handleChatSwitch(
+                                oldChat
+                            );
+                        },
+                        80
+                    );
+
+                    return;
+                }
+
+                if (
+                    isSendControl(
+                        event.target
+                    )
+                ) {
+                    const chatId =
+                        currentChatId();
+
+                    scheduleAction(
+                        function () {
+                            finalizeChatTitle(
+                                chatId
+                            );
+                        },
+                        500
+                    );
+
+                    setTimeout(
+                        function () {
+                            finalizeChatTitle(
+                                chatId
+                            );
+                        },
+                        1300
+                    );
+                }
+            },
+            false
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key !== "Enter" ||
+                    event.shiftKey
+                ) {
+                    return;
+                }
+
+                const target =
+                    event.target;
+
+                if (
+                    !target?.matches?.(
+                        [
+                            "#inputBox",
+                            "textarea",
+                            "[contenteditable='true']"
+                        ].join(",")
+                    )
+                ) {
+                    return;
+                }
+
+                const enteredText =
+                    String(
+                        target.value ??
+                        target.textContent ??
+                        ""
+                    ).trim();
+
+                if (!enteredText) {
+                    return;
+                }
+
+                const chatId =
+                    currentChatId();
+
+                setTimeout(
+                    function () {
+                        finalizeChatTitle(
+                            chatId
+                        );
+                    },
+                    500
+                );
+
+                setTimeout(
+                    function () {
+                        finalizeChatTitle(
+                            chatId
+                        );
+                    },
+                    1300
+                );
+            },
+            false
+        );
+
+        window.addEventListener(
+            "mi-message-saved",
+            function () {
+                finalizeChatTitle(
+                    currentChatId()
+                );
+            }
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                const oldChat =
+                    previousActiveChat;
+
+                setTimeout(
+                    function () {
+                        handleChatSwitch(
+                            oldChat
+                        );
+                    },
+                    100
+                );
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                previousActiveChat =
+                    currentChatId();
+
+                finalizeChatTitle(
+                    currentChatId()
+                );
+            }
+        );
+    }
+
+    window.MINewChatLifecycle = {
+        create:
+            markCurrentAsNewChat,
+
+        finalize:
+            finalizeChatTitle,
+
+        deleteIfEmpty:
+            deleteEmptyTransientChat,
+
+        titleFromMessage:
+            createTitle,
+
+        isTransient:
+            isTransient
+    };
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI NEW CHAT LIFECYCLE V3 - END */
+</script>
 </body>
 </html>
