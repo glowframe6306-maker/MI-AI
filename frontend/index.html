@@ -8437,7 +8437,9 @@ button,
 
 
 
-/* MI AI SEMANTIC TITLE NEW CHAT V2 CSS - START */
+
+
+/* MI AI SEMANTIC TITLE NEW CHAT V3 CSS - START */
 
 #newChatBtn,
 .new-chat-btn,
@@ -8448,11 +8450,14 @@ button[onclick*="newChat"],
         opacity;
 
     transition:
-        transform 140ms
+        transform 150ms
             cubic-bezier(.16, 1, .3, 1),
-        opacity 140ms ease,
-        filter 140ms ease
+        opacity 150ms ease,
+        filter 150ms ease
         !important;
+
+    -webkit-tap-highlight-color:
+        transparent;
 }
 
 #newChatBtn:active,
@@ -8488,14 +8493,14 @@ button[onclick*="newChat"]:active,
 .mi-chat-content-ready {
     animation:
         miChatContentReady
-        230ms
+        240ms
         cubic-bezier(.16, 1, .3, 1);
 }
 
 .mi-new-chat-list-entry {
     animation:
         miNewChatListEntry
-        260ms
+        270ms
         cubic-bezier(.16, 1, .3, 1);
 }
 
@@ -8556,7 +8561,7 @@ button[onclick*="newChat"]:active,
     }
 }
 
-/* MI AI SEMANTIC TITLE NEW CHAT V2 CSS - END */
+/* MI AI SEMANTIC TITLE NEW CHAT V3 CSS - END */
 </style>
 </head>
 
@@ -24611,8 +24616,10 @@ document.addEventListener(
 
 
 
+
+
 <script>
-/* MI AI SEMANTIC TITLE NEW CHAT V2 JS - START */
+/* MI AI SEMANTIC TITLE NEW CHAT V3 JS - START */
 
 (function () {
     "use strict";
@@ -24623,11 +24630,11 @@ document.addEventListener(
     const MAX_TITLE_LENGTH =
         38;
 
-    let originalNewChat =
-        null;
-
     let installed =
         false;
+
+    let originalNewChat =
+        null;
 
     let newChatQueue =
         Promise.resolve();
@@ -24711,7 +24718,7 @@ document.addEventListener(
         }
 
         if (
-            /bye|goodbye|see you|ගිහින් එන්නම්|බායි/
+            /bye|goodbye|see you|බායි/
                 .test(text)
         ) {
             return "User Farewell";
@@ -24732,7 +24739,7 @@ document.addEventListener(
         }
 
         if (
-            /rename|title|chat name/
+            /rename|chat title|chat name/
                 .test(text)
         ) {
             return "Chat Naming Request";
@@ -24767,7 +24774,7 @@ document.addEventListener(
         }
 
         if (
-            /translate|translation|භාෂා|පරිවර්තනය|සිංහලට|english to|tamil to/
+            /translate|translation|පරිවර්තනය|සිංහලට|english to|tamil to/
                 .test(text)
         ) {
             return "Translation Request";
@@ -24860,7 +24867,8 @@ document.addEventListener(
 
             if (topic) {
                 return compactTitle(
-                    topic + " Question"
+                    topic +
+                    " Question"
                 );
             }
 
@@ -24883,37 +24891,40 @@ document.addEventListener(
             );
         }
 
+        const ignoredWords = [
+            "please",
+            "can",
+            "could",
+            "would",
+            "will",
+            "you",
+            "me",
+            "my",
+            "the",
+            "a",
+            "an",
+            "to",
+            "for",
+            "of",
+            "is",
+            "are",
+            "this",
+            "that",
+            "eka",
+            "meka",
+            "mata",
+            "one",
+            "denna"
+        ];
+
         const usefulWords =
             words
                 .filter(
                     function (word) {
-                        return ![
-                            "please",
-                            "can",
-                            "could",
-                            "would",
-                            "will",
-                            "you",
-                            "me",
-                            "my",
-                            "the",
-                            "a",
-                            "an",
-                            "to",
-                            "for",
-                            "of",
-                            "is",
-                            "are",
-                            "this",
-                            "that",
-                            "eka",
-                            "meka",
-                            "mata",
-                            "one",
-                            "denna"
-                        ].includes(
-                            word.toLowerCase()
-                        );
+                        return !ignoredWords
+                            .includes(
+                                word.toLowerCase()
+                            );
                     }
                 )
                 .slice(
@@ -24924,17 +24935,22 @@ document.addEventListener(
         const selected =
             usefulWords.length
                 ? usefulWords
-                : words.slice(0, 5);
+                : words.slice(
+                    0,
+                    5
+                );
 
         const title =
             selected
                 .map(
                     function (word) {
                         if (
-                            /[a-z]/i.test(word)
+                            /[a-z]/i
+                                .test(word)
                         ) {
                             return (
-                                word.charAt(0)
+                                word
+                                    .charAt(0)
                                     .toUpperCase() +
                                 word.slice(1)
                             );
@@ -25039,7 +25055,7 @@ document.addEventListener(
         }
         catch (error) {
             console.warn(
-                "[MI AI] Could not save last_chat.",
+                "[MI AI] Could not save last chat.",
                 error
             );
         }
@@ -25207,8 +25223,7 @@ document.addEventListener(
 
         try {
             if (
-                window
-                    .MIAccountPersistence &&
+                window.MIAccountPersistence &&
                 typeof window
                     .MIAccountPersistence
                     .save ===
@@ -25284,8 +25299,7 @@ document.addEventListener(
                 openChat(chatId);
             }
             else if (
-                typeof window
-                    .openChat ===
+                typeof window.openChat ===
                     "function"
             ) {
                 window.openChat(
@@ -25333,11 +25347,15 @@ document.addEventListener(
             generateChatId();
 
         /*
-          A completely new array guarantees that
-          no messages from another chat are reused.
+          This is always a brand-new array.
+          No messages from another chat are copied.
         */
         const blankChat =
             [];
+
+        const now =
+            new Date()
+                .toISOString();
 
         setTitle(
             blankChat,
@@ -25345,11 +25363,10 @@ document.addEventListener(
         );
 
         blankChat.createdAt =
-            new Date()
-                .toISOString();
+            now;
 
         blankChat.updatedAt =
-            blankChat.createdAt;
+            now;
 
         blankChat.isEmpty =
             true;
@@ -25599,7 +25616,11 @@ document.addEventListener(
         await new Promise(
             function (resolve) {
                 requestAnimationFrame(
-                    resolve
+                    function () {
+                        requestAnimationFrame(
+                            resolve
+                        );
+                    }
                 );
             }
         );
@@ -25630,15 +25651,15 @@ document.addEventListener(
         finally {
             setTimeout(
                 animateFinish,
-                45
+                50
             );
         }
     }
 
     function queueNewChat() {
         /*
-          Every press is added to the queue.
-          No press is discarded, even during rapid clicks.
+          Every button press creates a separate chat.
+          Rapid presses are queued and never discarded.
         */
         const task =
             newChatQueue.then(
@@ -25673,7 +25694,7 @@ document.addEventListener(
         if (
             candidate &&
             candidate
-                .__miSemanticNewChatV2
+                .__miSemanticNewChatV3
         ) {
             installed =
                 true;
@@ -25689,7 +25710,7 @@ document.addEventListener(
                 return queueNewChat();
             };
 
-        wrapped.__miSemanticNewChatV2 =
+        wrapped.__miSemanticNewChatV3 =
             true;
 
         wrapped.__miOriginal =
@@ -25703,7 +25724,7 @@ document.addEventListener(
                 wrapped;
         }
         catch (error) {
-            // window.newChat is enough.
+            // window.newChat remains available.
         }
 
         installed =
@@ -25725,7 +25746,7 @@ document.addEventListener(
 
         setTimeout(
             renameAllChats,
-            650
+            700
         );
     }
 
@@ -25797,7 +25818,7 @@ document.addEventListener(
 
         setInterval(
             renameAllChats,
-            1500
+            1600
         );
     }
 
@@ -25848,7 +25869,7 @@ document.addEventListener(
         };
 
         console.log(
-            "[MI AI] Semantic titles and independent New Chat V2 installed."
+            "[MI AI] Semantic titles and independent New Chat V3 installed."
         );
     }
 
@@ -25870,7 +25891,7 @@ document.addEventListener(
     }
 })();
 
-/* MI AI SEMANTIC TITLE NEW CHAT V2 JS - END */
+/* MI AI SEMANTIC TITLE NEW CHAT V3 JS - END */
 </script>
 </body>
 </html>
