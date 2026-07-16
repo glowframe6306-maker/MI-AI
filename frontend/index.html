@@ -9004,12 +9004,53 @@ async function send() {
       chats[conversationId].updatedAt = Date.now(); chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1; chats[conversationId].lastPreview = 'The AI is taking longer than expected. Please try again in a moment.'; save(); scroll();
       return;
     }
-    console.error(e);
-    const thinking = document.querySelector('.thinking'); if (thinking) thinking.remove();
-    replyInProgress = false; setReplyControlState(false);
-    const errorBubble = document.createElement('div'); errorBubble.className = 'ai'; errorBubble.innerText = 'The AI is unavailable right now. Please try again.'; chatBox.appendChild(errorBubble);
-    chats[conversationId].push({ role: 'ai', text: 'The AI is unavailable right now. Please try again.' });
-    chats[conversationId].updatedAt = Date.now(); chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1; chats[conversationId].lastPreview = 'The AI is unavailable right now. Please try again.'; save(); scroll();
+    console.error("[MI AI] Reply request failed:", e);
+
+    const thinking =
+      document.querySelector('.thinking');
+
+    if (thinking) {
+      thinking.remove();
+    }
+
+    replyInProgress = false;
+    setReplyControlState(false);
+
+    /*
+      Do not save a fake AI reply when both requests fail.
+      Show the real server reason instead of the old generic message.
+    */
+    let serverMessage =
+      String(
+        e?.message ||
+        "Unable to get an AI response."
+      ).trim();
+
+    try {
+      const parsedError =
+        JSON.parse(serverMessage);
+
+      serverMessage =
+        String(
+          parsedError.error ||
+          parsedError.message ||
+          serverMessage
+        ).trim();
+    }
+    catch (parseError) {
+      // The error was plain text.
+    }
+
+    const errorBubble =
+      document.createElement('div');
+
+    errorBubble.className = 'ai';
+    errorBubble.innerText =
+      "Unable to get an answer: " +
+      serverMessage;
+
+    chatBox.appendChild(errorBubble);
+    scroll();
   }
 }
 
@@ -15502,10 +15543,31 @@ document.addEventListener(
                             question
                         )
                     ) {
-                        return await requestLiveSearch(
-                            payload,
-                            signal
-                        );
+                        try {
+                            return await requestLiveSearch(
+                                payload,
+                                signal
+                            );
+                        }
+                        catch (liveSearchError) {
+                            console.warn(
+                                "[MI AI] Live search failed. Using normal AI instead.",
+                                liveSearchError
+                            );
+
+                            /*
+                              Live search must never end the chat with
+                              the generic unavailable message.
+
+                              When Groq live search fails, retry the same
+                              question through the already-working /api/chat.
+                            */
+                            return await originalFetchChatReply(
+                                payload,
+                                signal,
+                                false
+                            );
+                        }
                     }
 
                     return await originalFetchChatReply(
