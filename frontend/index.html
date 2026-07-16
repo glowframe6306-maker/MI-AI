@@ -6768,6 +6768,173 @@ body.mi-shared-chat-viewer.mi-view-only .composer {
 
 /* MI AI REAL HEADER GLASS BLUR V2 - END */
 </style>
+
+<style>
+/* MI AI MANDATORY SHARE PASSWORD V1 - START */
+
+body.mi-share-password-locked {
+    overflow: hidden !important;
+}
+
+/*
+  Hide all shared-chat content until the correct password is entered.
+*/
+body.mi-share-password-locked #main,
+body.mi-share-password-locked #sidebar,
+body.mi-share-password-locked #header,
+body.mi-share-password-locked #chat,
+body.mi-share-password-locked #inputArea,
+body.mi-share-password-locked #inputBox,
+body.mi-share-password-locked .composer {
+    visibility: hidden !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+#miSharePasswordGate {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(3, 12, 30, 0.82),
+            rgba(27, 17, 58, 0.84)
+        );
+
+    -webkit-backdrop-filter:
+        blur(26px)
+        saturate(170%);
+
+    backdrop-filter:
+        blur(26px)
+        saturate(170%);
+}
+
+#miSharePasswordCard {
+    width: min(410px, 100%);
+    padding: 24px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.19);
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(21, 34, 59, 0.94),
+            rgba(18, 25, 45, 0.96)
+        );
+
+    box-shadow:
+        0 28px 70px
+            rgba(0, 0, 0, 0.48),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.12);
+
+    color: #ffffff;
+}
+
+#miSharePasswordCard h2 {
+    margin: 0 0 8px;
+    font-size: 22px;
+}
+
+#miSharePasswordCard p {
+    margin: 0 0 18px;
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.5;
+}
+
+#miSharePasswordInput {
+    width: 100%;
+    min-height: 50px;
+    padding: 0 15px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.18);
+
+    border-radius: 15px;
+
+    outline: none;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    color: #ffffff;
+    font-size: 16px;
+}
+
+#miSharePasswordInput:focus {
+    border-color:
+        rgba(96, 165, 250, 0.9);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(59, 130, 246, 0.18);
+}
+
+#miSharePasswordSubmit {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 14px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.20);
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.94),
+            rgba(126, 58, 237, 0.94)
+        );
+
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+#miSharePasswordSubmit:disabled {
+    cursor: wait;
+    opacity: 0.64;
+}
+
+#miSharePasswordError {
+    min-height: 21px;
+    margin-top: 12px;
+
+    color: #fda4af;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/*
+  No Close, X or Cancel button exists in the password gate.
+*/
+#miSharePasswordGate button[aria-label="Close"],
+#miSharePasswordGate .close,
+#miSharePasswordGate .cancel,
+#miSharePasswordGate [data-action="close"],
+#miSharePasswordGate [data-action="cancel"] {
+    display: none !important;
+}
+
+/* MI AI MANDATORY SHARE PASSWORD V1 - END */
+</style>
 </head>
 
 <body>
@@ -17824,6 +17991,757 @@ document.addEventListener(
 })();
 
 /* MI AI SHARED CHAT ISOLATION JS V1 - END */
+</script>
+
+<script>
+/* MI AI MANDATORY SHARE PASSWORD JS V1 - START */
+
+(function () {
+    "use strict";
+
+    let unlocked = false;
+    let activePayload = null;
+
+    function getShareParameters() {
+        return new URLSearchParams(
+            window.location.search
+        );
+    }
+
+    function isSharedLink() {
+        const params =
+            getShareParameters();
+
+        return Boolean(
+            params.get("s") ||
+            params.get("share") ||
+            window.MI_SHARED_VIEWER_MODE
+        );
+    }
+
+    function getSharedPayload() {
+        const candidates = [
+            window.MI_SHARED_VIEWER_PAYLOAD,
+            window.sharedChatData,
+            window.sharedPayload
+        ];
+
+        try {
+            if (
+                typeof sharedChatData !==
+                    "undefined"
+            ) {
+                candidates.push(
+                    sharedChatData
+                );
+            }
+        }
+        catch (error) {
+            // Ignore unavailable global binding.
+        }
+
+        try {
+            if (
+                typeof sharedPayload !==
+                    "undefined"
+            ) {
+                candidates.push(
+                    sharedPayload
+                );
+            }
+        }
+        catch (error) {
+            // Ignore unavailable global binding.
+        }
+
+        return (
+            candidates.find(
+                function (item) {
+                    return (
+                        item &&
+                        typeof item ===
+                            "object"
+                    );
+                }
+            ) ||
+            null
+        );
+    }
+
+    function firstValue(
+        object,
+        keys
+    ) {
+        if (
+            !object ||
+            typeof object !==
+                "object"
+        ) {
+            return "";
+        }
+
+        for (const key of keys) {
+            const value =
+                object[key];
+
+            if (
+                value !== undefined &&
+                value !== null &&
+                String(value).trim()
+            ) {
+                return String(value).trim();
+            }
+        }
+
+        return "";
+    }
+
+    function passwordMetadata(payload) {
+        const security =
+            payload?.security &&
+            typeof payload.security ===
+                "object"
+                ? payload.security
+                : {};
+
+        const password =
+            payload?.password &&
+            typeof payload.password ===
+                "object"
+                ? payload.password
+                : {};
+
+        const enabledValue =
+            payload?.passwordRequired ??
+            payload?.password_required ??
+            payload?.passwordEnabled ??
+            payload?.password_enabled ??
+            payload?.requiresPassword ??
+            security.passwordRequired ??
+            security.passwordEnabled ??
+            password.required ??
+            password.enabled;
+
+        const plainPassword =
+            firstValue(
+                payload,
+                [
+                    "sharePassword",
+                    "passwordValue",
+                    "plainPassword"
+                ]
+            ) ||
+            firstValue(
+                security,
+                [
+                    "password",
+                    "passwordValue"
+                ]
+            );
+
+        const passwordHash =
+            firstValue(
+                payload,
+                [
+                    "passwordHash",
+                    "password_hash",
+                    "sharePasswordHash",
+                    "share_password_hash"
+                ]
+            ) ||
+            firstValue(
+                security,
+                [
+                    "passwordHash",
+                    "password_hash"
+                ]
+            ) ||
+            firstValue(
+                password,
+                [
+                    "hash",
+                    "passwordHash"
+                ]
+            );
+
+        const passwordSalt =
+            firstValue(
+                payload,
+                [
+                    "passwordSalt",
+                    "password_salt"
+                ]
+            ) ||
+            firstValue(
+                security,
+                [
+                    "passwordSalt",
+                    "password_salt"
+                ]
+            ) ||
+            firstValue(
+                password,
+                [
+                    "salt"
+                ]
+            );
+
+        const enabled =
+            enabledValue === true ||
+            enabledValue === 1 ||
+            String(
+                enabledValue || ""
+            ).toLowerCase() === "true" ||
+            Boolean(
+                plainPassword ||
+                passwordHash
+            );
+
+        return {
+            enabled:
+                enabled,
+
+            plainPassword:
+                plainPassword,
+
+            passwordHash:
+                passwordHash,
+
+            passwordSalt:
+                passwordSalt
+        };
+    }
+
+    async function sha256(value) {
+        const bytes =
+            new TextEncoder()
+                .encode(
+                    String(value)
+                );
+
+        const digest =
+            await crypto.subtle.digest(
+                "SHA-256",
+                bytes
+            );
+
+        return Array.from(
+            new Uint8Array(digest)
+        )
+            .map(
+                function (byte) {
+                    return byte
+                        .toString(16)
+                        .padStart(2, "0");
+                }
+            )
+            .join("");
+    }
+
+    function constantTimeEqual(
+        first,
+        second
+    ) {
+        const left =
+            String(first || "")
+                .toLowerCase();
+
+        const right =
+            String(second || "")
+                .toLowerCase();
+
+        if (
+            !left ||
+            !right ||
+            left.length !== right.length
+        ) {
+            return false;
+        }
+
+        let difference = 0;
+
+        for (
+            let index = 0;
+            index < left.length;
+            index += 1
+        ) {
+            difference |=
+                left.charCodeAt(index) ^
+                right.charCodeAt(index);
+        }
+
+        return difference === 0;
+    }
+
+    async function checkPassword(
+        enteredPassword,
+        metadata
+    ) {
+        if (!metadata.enabled) {
+            return true;
+        }
+
+        /*
+          Support an existing application validator when available.
+        */
+        const validators = [
+            window.verifySharedChatPassword,
+            window.validateSharedChatPassword,
+            window.checkSharedChatPassword
+        ];
+
+        for (const validator of validators) {
+            if (
+                typeof validator !==
+                    "function"
+            ) {
+                continue;
+            }
+
+            try {
+                const result =
+                    await validator(
+                        enteredPassword,
+                        activePayload
+                    );
+
+                if (result === true) {
+                    return true;
+                }
+
+                if (result === false) {
+                    return false;
+                }
+            }
+            catch (error) {
+                console.warn(
+                    "[MI AI Share] Existing password validator failed.",
+                    error
+                );
+            }
+        }
+
+        /*
+          Plain-password fallback for existing old share links.
+          New links should use a password hash instead.
+        */
+        if (metadata.plainPassword) {
+            return (
+                enteredPassword ===
+                metadata.plainPassword
+            );
+        }
+
+        if (metadata.passwordHash) {
+            const salted =
+                metadata.passwordSalt
+                    ? (
+                        metadata.passwordSalt +
+                        enteredPassword
+                    )
+                    : enteredPassword;
+
+            const enteredHash =
+                await sha256(salted);
+
+            return constantTimeEqual(
+                enteredHash,
+                metadata.passwordHash
+            );
+        }
+
+        /*
+          Password protection is marked as enabled but no
+          validation information exists. Keep the chat locked.
+        */
+        return false;
+    }
+
+    function removeGate() {
+        document
+            .getElementById(
+                "miSharePasswordGate"
+            )
+            ?.remove();
+
+        document.body.classList.remove(
+            "mi-share-password-locked"
+        );
+
+        document
+            .documentElement
+            .classList
+            .remove(
+                "mi-share-password-locked"
+            );
+    }
+
+    function unlockSharedChat() {
+        unlocked = true;
+
+        sessionStorage.setItem(
+            "mi_shared_password_unlocked_" +
+            (
+                activePayload?.id ||
+                activePayload?.chatId ||
+                window.location.search
+            ),
+            "true"
+        );
+
+        removeGate();
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-shared-password-unlocked",
+                {
+                    detail: {
+                        payload:
+                            activePayload
+                    }
+                }
+            )
+        );
+
+        try {
+            if (
+                window
+                    .MISharedChatIsolation &&
+                typeof window
+                    .MISharedChatIsolation
+                    .apply === "function"
+            ) {
+                window
+                    .MISharedChatIsolation
+                    .apply();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Share] Shared chat render refresh failed.",
+                error
+            );
+        }
+    }
+
+    function createGate(metadata) {
+        if (
+            document.getElementById(
+                "miSharePasswordGate"
+            )
+        ) {
+            return;
+        }
+
+        document.body.classList.add(
+            "mi-share-password-locked"
+        );
+
+        document
+            .documentElement
+            .classList
+            .add(
+                "mi-share-password-locked"
+            );
+
+        const gate =
+            document.createElement(
+                "div"
+            );
+
+        gate.id =
+            "miSharePasswordGate";
+
+        gate.innerHTML = `
+            <form
+                id="miSharePasswordForm"
+                autocomplete="off"
+            >
+                <div id="miSharePasswordCard">
+                    <h2>Password required</h2>
+
+                    <p>
+                        Enter the password to view this
+                        shared chat.
+                    </p>
+
+                    <input
+                        id="miSharePasswordInput"
+                        type="password"
+                        autocomplete="current-password"
+                        placeholder="Enter password"
+                        required
+                        autofocus
+                    >
+
+                    <button
+                        id="miSharePasswordSubmit"
+                        type="submit"
+                    >
+                        Open shared chat
+                    </button>
+
+                    <div
+                        id="miSharePasswordError"
+                        role="alert"
+                        aria-live="polite"
+                    ></div>
+                </div>
+            </form>
+        `;
+
+        /*
+          Clicking outside does nothing.
+          There is deliberately no close button.
+        */
+        gate.addEventListener(
+            "click",
+            function (event) {
+                event.stopPropagation();
+            },
+            true
+        );
+
+        document.body.appendChild(
+            gate
+        );
+
+        const form =
+            document.getElementById(
+                "miSharePasswordForm"
+            );
+
+        const input =
+            document.getElementById(
+                "miSharePasswordInput"
+            );
+
+        const button =
+            document.getElementById(
+                "miSharePasswordSubmit"
+            );
+
+        const errorBox =
+            document.getElementById(
+                "miSharePasswordError"
+            );
+
+        form.addEventListener(
+            "submit",
+            async function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const enteredPassword =
+                    String(
+                        input.value || ""
+                    );
+
+                if (!enteredPassword) {
+                    errorBox.textContent =
+                        "Password is required.";
+
+                    input.focus();
+                    return;
+                }
+
+                button.disabled = true;
+                button.textContent =
+                    "Checking...";
+
+                errorBox.textContent = "";
+
+                try {
+                    const correct =
+                        await checkPassword(
+                            enteredPassword,
+                            metadata
+                        );
+
+                    if (!correct) {
+                        errorBox.textContent =
+                            "Incorrect password.";
+
+                        input.value = "";
+                        input.focus();
+                        return;
+                    }
+
+                    unlockSharedChat();
+                }
+                catch (error) {
+                    console.error(
+                        "[MI AI Share] Password check failed.",
+                        error
+                    );
+
+                    errorBox.textContent =
+                        "Password verification failed.";
+                }
+                finally {
+                    button.disabled = false;
+                    button.textContent =
+                        "Open shared chat";
+                }
+            }
+        );
+
+        requestAnimationFrame(
+            function () {
+                input.focus();
+            }
+        );
+    }
+
+    function lockSharedChat() {
+        if (
+            unlocked ||
+            !isSharedLink()
+        ) {
+            return false;
+        }
+
+        activePayload =
+            getSharedPayload();
+
+        if (!activePayload) {
+            return false;
+        }
+
+        const metadata =
+            passwordMetadata(
+                activePayload
+            );
+
+        if (!metadata.enabled) {
+            unlocked = true;
+            return false;
+        }
+
+        const sessionKey =
+            "mi_shared_password_unlocked_" +
+            (
+                activePayload.id ||
+                activePayload.chatId ||
+                window.location.search
+            );
+
+        if (
+            sessionStorage.getItem(
+                sessionKey
+            ) === "true"
+        ) {
+            unlocked = true;
+            removeGate();
+            return false;
+        }
+
+        createGate(metadata);
+        return true;
+    }
+
+    /*
+      Escape cannot close the required-password dialog.
+    */
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.key !== "Escape" ||
+                !document.getElementById(
+                    "miSharePasswordGate"
+                )
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        },
+        true
+    );
+
+    /*
+      Prevent older overlay-close functions from removing
+      the password gate.
+    */
+    document.addEventListener(
+        "pointerdown",
+        function (event) {
+            const gate =
+                document.getElementById(
+                    "miSharePasswordGate"
+                );
+
+            if (
+                !gate ||
+                gate.contains(
+                    event.target
+                )
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        },
+        true
+    );
+
+    function start() {
+        if (lockSharedChat()) {
+            return;
+        }
+
+        let attempts = 0;
+
+        const timer =
+            setInterval(
+                function () {
+                    attempts += 1;
+
+                    if (
+                        lockSharedChat() ||
+                        unlocked ||
+                        attempts >= 80
+                    ) {
+                        clearInterval(timer);
+                    }
+                },
+                100
+            );
+    }
+
+    window.MIMandatorySharePassword = {
+        lock:
+            lockSharedChat,
+
+        isUnlocked:
+            function () {
+                return unlocked;
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI MANDATORY SHARE PASSWORD JS V1 - END */
 </script>
 </body>
 </html>
