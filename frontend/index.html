@@ -9027,6 +9027,764 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
 }
 
 /* MI AI WELCOME ANIMATION V10 CSS - END */
+
+/* MI AI SHARE NOTIFICATIONS V1 CSS - START */
+
+#miNotificationButton {
+    position:
+        relative;
+
+    width:
+        40px;
+
+    min-width:
+        40px;
+
+    height:
+        40px;
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28)
+        !important;
+
+    border-radius:
+        50% !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.25),
+            rgba(255, 255, 255, 0.08)
+        )
+        !important;
+
+    color:
+        #ffffff !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.38),
+        0 8px 22px
+            rgba(0, 0, 0, 0.22)
+        !important;
+
+    backdrop-filter:
+        blur(18px)
+        saturate(170%);
+
+    -webkit-backdrop-filter:
+        blur(18px)
+        saturate(170%);
+
+    cursor:
+        pointer;
+
+    flex:
+        0 0 auto;
+}
+
+#miNotificationButton:hover {
+    transform:
+        translateY(-1px)
+        scale(1.04);
+}
+
+#miNotificationButton:active {
+    transform:
+        scale(0.92)
+        !important;
+}
+
+#miNotificationBellIcon {
+    width:
+        19px;
+
+    height:
+        19px;
+
+    display:
+        block;
+
+    fill:
+        none;
+
+    stroke:
+        currentColor;
+
+    stroke-width:
+        1.9;
+
+    stroke-linecap:
+        round;
+
+    stroke-linejoin:
+        round;
+
+    pointer-events:
+        none;
+}
+
+#miNotificationDot {
+    position:
+        absolute;
+
+    top:
+        3px;
+
+    right:
+        3px;
+
+    width:
+        10px;
+
+    height:
+        10px;
+
+    display:
+        none;
+
+    border:
+        2px solid
+        rgba(20, 25, 39, 0.96);
+
+    border-radius:
+        50%;
+
+    background:
+        #ff3b30;
+
+    box-shadow:
+        0 0 0 2px
+            rgba(255, 59, 48, 0.17),
+        0 0 12px
+            rgba(255, 59, 48, 0.72);
+
+    animation:
+        miNotificationDotPulse
+        1.6s ease-in-out
+        infinite;
+}
+
+#miNotificationButton.mi-has-unread
+#miNotificationDot {
+    display:
+        block;
+}
+
+#miNotificationCount {
+    position:
+        absolute;
+
+    top:
+        -7px;
+
+    right:
+        -8px;
+
+    min-width:
+        19px;
+
+    height:
+        19px;
+
+    display:
+        none;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        0 5px;
+
+    border:
+        2px solid
+        rgba(18, 23, 36, 0.96);
+
+    border-radius:
+        999px;
+
+    background:
+        #ff3b30;
+
+    color:
+        #ffffff;
+
+    font-size:
+        10px;
+
+    font-weight:
+        800;
+
+    line-height:
+        1;
+}
+
+#miNotificationButton.mi-has-many
+#miNotificationCount {
+    display:
+        flex;
+}
+
+#miNotificationButton.mi-has-many
+#miNotificationDot {
+    display:
+        none;
+}
+
+#miNotificationBackdrop {
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    z-index:
+        2147482500;
+
+    display:
+        flex;
+
+    align-items:
+        flex-start;
+
+    justify-content:
+        flex-end;
+
+    padding:
+        72px 14px 14px;
+
+    background:
+        rgba(4, 7, 13, 0.20);
+
+    backdrop-filter:
+        blur(7px);
+
+    -webkit-backdrop-filter:
+        blur(7px);
+
+    opacity:
+        0;
+
+    visibility:
+        hidden;
+
+    pointer-events:
+        none;
+
+    transition:
+        opacity 190ms ease,
+        visibility 190ms ease;
+}
+
+#miNotificationBackdrop.mi-notifications-open {
+    opacity:
+        1;
+
+    visibility:
+        visible;
+
+    pointer-events:
+        auto;
+}
+
+#miNotificationPanel {
+    width:
+        min(92vw, 410px);
+
+    max-height:
+        min(75vh, 650px);
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    overflow:
+        hidden;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.25);
+
+    border-radius:
+        27px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(31, 37, 55, 0.94),
+            rgba(17, 23, 38, 0.90)
+        );
+
+    color:
+        #ffffff;
+
+    box-shadow:
+        0 30px 90px
+            rgba(0, 0, 0, 0.48),
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.15);
+
+    backdrop-filter:
+        blur(32px)
+        saturate(180%);
+
+    -webkit-backdrop-filter:
+        blur(32px)
+        saturate(180%);
+
+    opacity:
+        0;
+
+    transform:
+        translateY(-14px)
+        scale(0.94);
+
+    transition:
+        opacity 210ms ease,
+        transform 400ms
+            cubic-bezier(.16, 1, .3, 1);
+}
+
+#miNotificationBackdrop.mi-notifications-open
+#miNotificationPanel {
+    opacity:
+        1;
+
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+.mi-notification-header {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        10px;
+
+    padding:
+        16px;
+
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.10);
+}
+
+.mi-notification-header-text {
+    min-width:
+        0;
+
+    flex:
+        1;
+}
+
+.mi-notification-title {
+    margin:
+        0;
+
+    font-size:
+        18px;
+
+    font-weight:
+        780;
+
+    letter-spacing:
+        -0.25px;
+}
+
+.mi-notification-subtitle {
+    margin-top:
+        3px;
+
+    color:
+        rgba(255, 255, 255, 0.58);
+
+    font-size:
+        12px;
+}
+
+#miNotificationClose {
+    width:
+        33px;
+
+    min-width:
+        33px;
+
+    height:
+        33px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    border:
+        0 !important;
+
+    border-radius:
+        50% !important;
+
+    background:
+        rgba(255, 255, 255, 0.10)
+        !important;
+
+    color:
+        #ffffff;
+
+    font-size:
+        20px;
+
+    line-height:
+        1;
+}
+
+#miNotificationRows {
+    min-height:
+        120px;
+
+    overflow-y:
+        auto;
+
+    padding:
+        9px;
+}
+
+.mi-notification-row {
+    position:
+        relative;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        42px minmax(0, 1fr);
+
+    gap:
+        11px;
+
+    padding:
+        12px;
+
+    margin-bottom:
+        7px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.09);
+
+    border-radius:
+        18px;
+
+    background:
+        rgba(255, 255, 255, 0.065);
+
+    animation:
+        miNotificationRowEnter
+        260ms
+        cubic-bezier(.16, 1, .3, 1);
+}
+
+.mi-notification-row.mi-notification-unread {
+    border-color:
+        rgba(77, 166, 255, 0.35);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(48, 142, 255, 0.16),
+            rgba(255, 255, 255, 0.065)
+        );
+}
+
+.mi-notification-row.mi-notification-unread::after {
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        13px;
+
+    right:
+        13px;
+
+    width:
+        8px;
+
+    height:
+        8px;
+
+    border-radius:
+        50%;
+
+    background:
+        #ff453a;
+
+    box-shadow:
+        0 0 9px
+        rgba(255, 69, 58, 0.72);
+}
+
+.mi-notification-row-icon {
+    width:
+        42px;
+
+    height:
+        42px;
+
+    display:
+        grid;
+
+    place-items:
+        center;
+
+    border-radius:
+        14px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #0a84ff,
+            #5865f2
+        );
+
+    box-shadow:
+        0 8px 20px
+        rgba(10, 132, 255, 0.24);
+
+    font-size:
+        19px;
+}
+
+.mi-notification-row-content {
+    min-width:
+        0;
+
+    padding-right:
+        12px;
+}
+
+.mi-notification-row-title {
+    overflow:
+        hidden;
+
+    color:
+        #ffffff;
+
+    font-size:
+        14px;
+
+    font-weight:
+        750;
+
+    line-height:
+        1.3;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+}
+
+.mi-notification-row-message {
+    margin-top:
+        3px;
+
+    color:
+        rgba(255, 255, 255, 0.68);
+
+    font-size:
+        12px;
+
+    line-height:
+        1.35;
+}
+
+.mi-notification-row-time {
+    margin-top:
+        6px;
+
+    color:
+        rgba(173, 205, 255, 0.85);
+
+    font-size:
+        11px;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+.mi-notification-empty {
+    min-height:
+        150px;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        25px;
+
+    color:
+        rgba(255, 255, 255, 0.58);
+
+    text-align:
+        center;
+}
+
+.mi-notification-empty-icon {
+    margin-bottom:
+        10px;
+
+    font-size:
+        35px;
+
+    opacity:
+        0.72;
+}
+
+@keyframes miNotificationDotPulse {
+    0%,
+    100% {
+        transform:
+            scale(0.90);
+    }
+
+    50% {
+        transform:
+            scale(1.18);
+    }
+}
+
+@keyframes miNotificationRowEnter {
+    from {
+        opacity:
+            0;
+
+        transform:
+            translateY(-6px)
+            scale(0.98);
+    }
+
+    to {
+        opacity:
+            1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@media (
+    max-width:
+    700px
+) {
+    #header .headerActions {
+        gap:
+            6px;
+    }
+
+    #miNotificationButton {
+        width:
+            37px;
+
+        min-width:
+            37px;
+
+        height:
+            37px;
+    }
+
+    #miNotificationBackdrop {
+        align-items:
+            flex-end;
+
+        padding:
+            8px;
+    }
+
+    #miNotificationPanel {
+        width:
+            100%;
+
+        max-height:
+            82vh;
+
+        border-radius:
+            28px 28px 21px 21px;
+
+        transform:
+            translateY(40px)
+            scale(0.97);
+    }
+
+    #miNotificationBackdrop.mi-notifications-open
+    #miNotificationPanel {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    #miNotificationDot,
+    #miNotificationPanel,
+    #miNotificationBackdrop,
+    .mi-notification-row {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+}
+
+/* MI AI SHARE NOTIFICATIONS V1 CSS - END */
 </style>
 </head>
 
@@ -25083,6 +25841,1853 @@ document.addEventListener(
 })();
 
 /* MI AI WELCOME ANIMATION V10 JS - END */
+</script>
+
+<script>
+/* MI AI SHARE NOTIFICATIONS V1 JS - START */
+
+(function () {
+    "use strict";
+
+    const SHARE_COLLECTION =
+        "miPublicShareLinks";
+
+    const READ_IDS_PREFIX =
+        "mi_share_notification_read_ids_";
+
+    const VIEWER_ID_KEY =
+        "mi_share_viewer_id";
+
+    const REPORTED_PREFIX =
+        "mi_share_open_reported_";
+
+    let notifications =
+        [];
+
+    let ownerUnsubscribers =
+        [];
+
+    let installed =
+        false;
+
+    let ownerUid =
+        "";
+
+    function cleanText(
+        value,
+        maximumLength
+    ) {
+        return String(
+            value || ""
+        )
+            .replace(
+                /<[^>]*>/g,
+                " "
+            )
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim()
+            .slice(
+                0,
+                maximumLength || 180
+            );
+    }
+
+    function firebaseReady() {
+        return Boolean(
+            window.firebase &&
+            typeof window.firebase
+                .firestore ===
+                "function" &&
+            typeof window.firebase
+                .auth ===
+                "function"
+        );
+    }
+
+    function database() {
+        if (!firebaseReady()) {
+            return null;
+        }
+
+        try {
+            return window.firebase
+                .firestore();
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Notifications] Firestore is unavailable.",
+                error
+            );
+
+            return null;
+        }
+    }
+
+    function currentFirebaseUser() {
+        if (!firebaseReady()) {
+            return null;
+        }
+
+        try {
+            return window.firebase
+                .auth()
+                .currentUser;
+        }
+        catch (error) {
+            return null;
+        }
+    }
+
+    function chatMessages(chatId) {
+        try {
+            const chat =
+                window.chats?.[chatId] ||
+                (
+                    typeof chats !==
+                        "undefined"
+                        ? chats?.[chatId]
+                        : null
+                );
+
+            if (Array.isArray(chat)) {
+                return chat;
+            }
+
+            if (
+                chat &&
+                Array.isArray(
+                    chat.messages
+                )
+            ) {
+                return chat.messages;
+            }
+        }
+        catch (error) {
+            // Return empty array below.
+        }
+
+        return [];
+    }
+
+    function chatTitle(chatId) {
+        try {
+            const chat =
+                window.chats?.[chatId] ||
+                (
+                    typeof chats !==
+                        "undefined"
+                        ? chats?.[chatId]
+                        : null
+                );
+
+            const stored =
+                cleanText(
+                    chat?.title ||
+                    chat?.name ||
+                    chat?.chatName,
+                    100
+                );
+
+            if (
+                stored &&
+                !/^chat[_-]/i.test(
+                    stored
+                )
+            ) {
+                return stored;
+            }
+
+            const first =
+                chatMessages(chatId)
+                    .find(
+                        function (message) {
+                            const role =
+                                String(
+                                    message?.role ||
+                                    message?.sender ||
+                                    ""
+                                )
+                                    .toLowerCase();
+
+                            return (
+                                role === "me" ||
+                                role === "user" ||
+                                role === "human"
+                            );
+                        }
+                    );
+
+            const firstText =
+                cleanText(
+                    first?.text ||
+                    first?.content,
+                    80
+                );
+
+            if (firstText) {
+                return firstText;
+            }
+        }
+        catch (error) {
+            // Use fallback below.
+        }
+
+        return "Shared Chat";
+    }
+
+    function makeShareId() {
+        if (
+            window.crypto &&
+            typeof window.crypto
+                .randomUUID ===
+                "function"
+        ) {
+            return window.crypto
+                .randomUUID()
+                .replace(
+                    /-/g,
+                    ""
+                )
+                .slice(
+                    0,
+                    24
+                );
+        }
+
+        return (
+            Date.now()
+                .toString(36) +
+            Math.random()
+                .toString(36)
+                .slice(2, 16)
+        );
+    }
+
+    function randomString(length) {
+        const bytes =
+            new Uint8Array(
+                length
+            );
+
+        if (
+            window.crypto &&
+            typeof window.crypto
+                .getRandomValues ===
+                "function"
+        ) {
+            window.crypto
+                .getRandomValues(
+                    bytes
+                );
+        }
+        else {
+            for (
+                let index = 0;
+                index < bytes.length;
+                index += 1
+            ) {
+                bytes[index] =
+                    Math.floor(
+                        Math.random() *
+                        256
+                    );
+            }
+        }
+
+        return Array.from(bytes)
+            .map(
+                function (value) {
+                    return value
+                        .toString(16)
+                        .padStart(2, "0");
+                }
+            )
+            .join("");
+    }
+
+    async function sha256(value) {
+        const data =
+            new TextEncoder()
+                .encode(
+                    String(value)
+                );
+
+        const digest =
+            await window.crypto
+                .subtle
+                .digest(
+                    "SHA-256",
+                    data
+                );
+
+        return Array.from(
+            new Uint8Array(digest)
+        )
+            .map(
+                function (byte) {
+                    return byte
+                        .toString(16)
+                        .padStart(2, "0");
+                }
+            )
+            .join("");
+    }
+
+    async function secureSharePayload(
+        payload
+    ) {
+        const copy =
+            JSON.parse(
+                JSON.stringify(payload)
+            );
+
+        const security =
+            copy.security ||
+            {};
+
+        const password =
+            String(
+                security.password ||
+                ""
+            );
+
+        if (password) {
+            const salt =
+                randomString(16);
+
+            security.passwordHash =
+                await sha256(
+                    salt +
+                    password
+                );
+
+            security.passwordSalt =
+                salt;
+
+            security.passwordEnabled =
+                true;
+
+            delete security.password;
+        }
+        else {
+            security.passwordEnabled =
+                false;
+
+            delete security.password;
+            delete security.passwordHash;
+            delete security.passwordSalt;
+        }
+
+        copy.security =
+            security;
+
+        return copy;
+    }
+
+    function viewerId() {
+        let id =
+            localStorage.getItem(
+                VIEWER_ID_KEY
+            );
+
+        if (!id) {
+            id =
+                "viewer_" +
+                makeShareId();
+
+            localStorage.setItem(
+                VIEWER_ID_KEY,
+                id
+            );
+        }
+
+        return id;
+    }
+
+    function readIdsKey(uid) {
+        return (
+            READ_IDS_PREFIX +
+            uid
+        );
+    }
+
+    function getReadIds(uid) {
+        try {
+            const raw =
+                localStorage.getItem(
+                    readIdsKey(uid)
+                );
+
+            const parsed =
+                raw
+                    ? JSON.parse(raw)
+                    : [];
+
+            return new Set(
+                Array.isArray(parsed)
+                    ? parsed
+                    : []
+            );
+        }
+        catch (error) {
+            return new Set();
+        }
+    }
+
+    function saveReadIds(
+        uid,
+        ids
+    ) {
+        try {
+            localStorage.setItem(
+                readIdsKey(uid),
+                JSON.stringify(
+                    Array.from(ids)
+                        .slice(-1000)
+                )
+            );
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Notifications] Could not save read state.",
+                error
+            );
+        }
+    }
+
+    function timestampMilliseconds(value) {
+        if (!value) {
+            return 0;
+        }
+
+        if (
+            typeof value.toMillis ===
+                "function"
+        ) {
+            return value.toMillis();
+        }
+
+        if (
+            typeof value.seconds ===
+                "number"
+        ) {
+            return (
+                value.seconds *
+                1000
+            );
+        }
+
+        const number =
+            Number(value);
+
+        return Number.isFinite(number)
+            ? number
+            : 0;
+    }
+
+    function formatExactTime(value) {
+        const milliseconds =
+            timestampMilliseconds(
+                value
+            );
+
+        if (!milliseconds) {
+            return "Opening time pending";
+        }
+
+        const date =
+            new Date(milliseconds);
+
+        return new Intl.DateTimeFormat(
+            undefined,
+            {
+                year:
+                    "numeric",
+
+                month:
+                    "short",
+
+                day:
+                    "2-digit",
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit",
+
+                second:
+                    "2-digit"
+            }
+        ).format(date);
+    }
+
+    function notificationId(
+        shareId,
+        openId
+    ) {
+        return (
+            shareId +
+            "_" +
+            openId
+        );
+    }
+
+    function createBellButton() {
+        let button =
+            document.getElementById(
+                "miNotificationButton"
+            );
+
+        if (button) {
+            return button;
+        }
+
+        const logoutButton =
+            document.getElementById(
+                "logoutBtn"
+            );
+
+        const actions =
+            logoutButton?.parentElement ||
+            document.querySelector(
+                "#header .headerActions"
+            );
+
+        if (!actions) {
+            return null;
+        }
+
+        button =
+            document.createElement(
+                "button"
+            );
+
+        button.id =
+            "miNotificationButton";
+
+        button.type =
+            "button";
+
+        button.setAttribute(
+            "aria-label",
+            "Open notifications"
+        );
+
+        button.setAttribute(
+            "aria-haspopup",
+            "dialog"
+        );
+
+        button.innerHTML = `
+            <svg
+                id="miNotificationBellIcon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                <path d="M10 21h4"></path>
+            </svg>
+
+            <span
+                id="miNotificationDot"
+                aria-hidden="true"
+            ></span>
+
+            <span
+                id="miNotificationCount"
+                aria-hidden="true"
+            ></span>
+        `;
+
+        button.addEventListener(
+            "click",
+            function () {
+                openPanel();
+            }
+        );
+
+        if (logoutButton) {
+            actions.insertBefore(
+                button,
+                logoutButton
+            );
+        }
+        else {
+            actions.appendChild(
+                button
+            );
+        }
+
+        return button;
+    }
+
+    function createPanel() {
+        let backdrop =
+            document.getElementById(
+                "miNotificationBackdrop"
+            );
+
+        if (backdrop) {
+            return backdrop;
+        }
+
+        backdrop =
+            document.createElement(
+                "div"
+            );
+
+        backdrop.id =
+            "miNotificationBackdrop";
+
+        backdrop.innerHTML = `
+            <section
+                id="miNotificationPanel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="miNotificationPanelTitle"
+            >
+                <header class="mi-notification-header">
+                    <div class="mi-notification-header-text">
+                        <h2
+                            id="miNotificationPanelTitle"
+                            class="mi-notification-title"
+                        >
+                            Shared Chat Notifications
+                        </h2>
+
+                        <div
+                            id="miNotificationPanelSubtitle"
+                            class="mi-notification-subtitle"
+                        >
+                            Viewer opening history
+                        </div>
+                    </div>
+
+                    <button
+                        id="miNotificationClose"
+                        type="button"
+                        aria-label="Close notifications"
+                    >
+                        ×
+                    </button>
+                </header>
+
+                <div id="miNotificationRows"></div>
+            </section>
+        `;
+
+        backdrop.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    event.target ===
+                    backdrop
+                ) {
+                    closePanel();
+                }
+            }
+        );
+
+        backdrop
+            .querySelector(
+                "#miNotificationClose"
+            )
+            ?.addEventListener(
+                "click",
+                closePanel
+            );
+
+        document.body.appendChild(
+            backdrop
+        );
+
+        return backdrop;
+    }
+
+    function renderNotifications() {
+        const rows =
+            document.getElementById(
+                "miNotificationRows"
+            );
+
+        if (!rows) {
+            return;
+        }
+
+        rows.replaceChildren();
+
+        if (
+            notifications.length ===
+            0
+        ) {
+            const empty =
+                document.createElement(
+                    "div"
+                );
+
+            empty.className =
+                "mi-notification-empty";
+
+            empty.innerHTML = `
+                <div class="mi-notification-empty-icon">🔔</div>
+                <div>No shared-chat opening notifications yet.</div>
+            `;
+
+            rows.appendChild(
+                empty
+            );
+
+            return;
+        }
+
+        const readIds =
+            getReadIds(ownerUid);
+
+        notifications
+            .slice()
+            .sort(
+                function (first, second) {
+                    return (
+                        timestampMilliseconds(
+                            second.openedAt
+                        ) -
+                        timestampMilliseconds(
+                            first.openedAt
+                        )
+                    );
+                }
+            )
+            .forEach(
+                function (item) {
+                    const id =
+                        notificationId(
+                            item.shareId,
+                            item.openId
+                        );
+
+                    const row =
+                        document.createElement(
+                            "article"
+                        );
+
+                    row.className =
+                        "mi-notification-row";
+
+                    if (!readIds.has(id)) {
+                        row.classList.add(
+                            "mi-notification-unread"
+                        );
+                    }
+
+                    const icon =
+                        document.createElement(
+                            "div"
+                        );
+
+                    icon.className =
+                        "mi-notification-row-icon";
+
+                    icon.textContent =
+                        "↗";
+
+                    const content =
+                        document.createElement(
+                            "div"
+                        );
+
+                    content.className =
+                        "mi-notification-row-content";
+
+                    const title =
+                        document.createElement(
+                            "div"
+                        );
+
+                    title.className =
+                        "mi-notification-row-title";
+
+                    title.textContent =
+                        cleanText(
+                            item.chatTitle,
+                            100
+                        ) ||
+                        "Shared Chat";
+
+                    const message =
+                        document.createElement(
+                            "div"
+                        );
+
+                    message.className =
+                        "mi-notification-row-message";
+
+                    message.textContent =
+                        "A viewer opened this shared chat.";
+
+                    const time =
+                        document.createElement(
+                            "div"
+                        );
+
+                    time.className =
+                        "mi-notification-row-time";
+
+                    time.textContent =
+                        formatExactTime(
+                            item.openedAt
+                        );
+
+                    content.appendChild(
+                        title
+                    );
+
+                    content.appendChild(
+                        message
+                    );
+
+                    content.appendChild(
+                        time
+                    );
+
+                    row.appendChild(
+                        icon
+                    );
+
+                    row.appendChild(
+                        content
+                    );
+
+                    rows.appendChild(
+                        row
+                    );
+                }
+            );
+    }
+
+    function unreadCount() {
+        if (!ownerUid) {
+            return 0;
+        }
+
+        const readIds =
+            getReadIds(ownerUid);
+
+        return notifications
+            .filter(
+                function (item) {
+                    return !readIds.has(
+                        notificationId(
+                            item.shareId,
+                            item.openId
+                        )
+                    );
+                }
+            )
+            .length;
+    }
+
+    function updateBell() {
+        const button =
+            createBellButton();
+
+        if (!button) {
+            return;
+        }
+
+        const count =
+            unreadCount();
+
+        button.classList.toggle(
+            "mi-has-unread",
+            count === 1
+        );
+
+        button.classList.toggle(
+            "mi-has-many",
+            count > 1
+        );
+
+        const countElement =
+            document.getElementById(
+                "miNotificationCount"
+            );
+
+        if (countElement) {
+            countElement.textContent =
+                count > 99
+                    ? "99+"
+                    : String(count);
+        }
+
+        button.setAttribute(
+            "aria-label",
+            count > 0
+                ? (
+                    "Open notifications, " +
+                    count +
+                    " unread"
+                )
+                : "Open notifications"
+        );
+    }
+
+    function markAllRead() {
+        if (!ownerUid) {
+            return;
+        }
+
+        const ids =
+            getReadIds(ownerUid);
+
+        notifications.forEach(
+            function (item) {
+                ids.add(
+                    notificationId(
+                        item.shareId,
+                        item.openId
+                    )
+                );
+            }
+        );
+
+        saveReadIds(
+            ownerUid,
+            ids
+        );
+
+        updateBell();
+        renderNotifications();
+    }
+
+    function openPanel() {
+        const backdrop =
+            createPanel();
+
+        renderNotifications();
+
+        requestAnimationFrame(
+            function () {
+                backdrop.classList.add(
+                    "mi-notifications-open"
+                );
+            }
+        );
+
+        setTimeout(
+            markAllRead,
+            250
+        );
+    }
+
+    function closePanel() {
+        document
+            .getElementById(
+                "miNotificationBackdrop"
+            )
+            ?.classList.remove(
+                "mi-notifications-open"
+            );
+    }
+
+    function clearOwnerListeners() {
+        ownerUnsubscribers.forEach(
+            function (unsubscribe) {
+                try {
+                    unsubscribe();
+                }
+                catch (error) {
+                    // Ignore an already-closed listener.
+                }
+            }
+        );
+
+        ownerUnsubscribers =
+            [];
+
+        notifications =
+            [];
+
+        updateBell();
+        renderNotifications();
+    }
+
+    function replaceShareNotifications(
+        shareId,
+        title,
+        snapshot
+    ) {
+        notifications =
+            notifications.filter(
+                function (item) {
+                    return (
+                        item.shareId !==
+                        shareId
+                    );
+                }
+            );
+
+        snapshot.docs.forEach(
+            function (documentSnapshot) {
+                const data =
+                    documentSnapshot.data() ||
+                    {};
+
+                notifications.push({
+                    shareId:
+                        shareId,
+
+                    openId:
+                        documentSnapshot.id,
+
+                    chatTitle:
+                        cleanText(
+                            data.chatTitle ||
+                            title,
+                            100
+                        ),
+
+                    openedAt:
+                        data.openedAt
+                });
+            }
+        );
+
+        updateBell();
+        renderNotifications();
+    }
+
+    async function startOwnerListeners(
+        user
+    ) {
+        clearOwnerListeners();
+
+        if (!user?.uid) {
+            ownerUid =
+                "";
+
+            return;
+        }
+
+        ownerUid =
+            user.uid;
+
+        createBellButton();
+        createPanel();
+
+        const db =
+            database();
+
+        if (!db) {
+            return;
+        }
+
+        try {
+            const shareSnapshot =
+                await db
+                    .collection(
+                        SHARE_COLLECTION
+                    )
+                    .where(
+                        "ownerUid",
+                        "==",
+                        user.uid
+                    )
+                    .get();
+
+            shareSnapshot.docs
+                .forEach(
+                    function (
+                        shareDocument
+                    ) {
+                        const shareData =
+                            shareDocument.data() ||
+                            {};
+
+                        const shareId =
+                            shareDocument.id;
+
+                        const title =
+                            cleanText(
+                                shareData.chatTitle,
+                                100
+                            ) ||
+                            "Shared Chat";
+
+                        const unsubscribe =
+                            shareDocument.ref
+                                .collection(
+                                    "opens"
+                                )
+                                .orderBy(
+                                    "openedAt",
+                                    "desc"
+                                )
+                                .limit(100)
+                                .onSnapshot(
+                                    function (
+                                        snapshot
+                                    ) {
+                                        replaceShareNotifications(
+                                            shareId,
+                                            title,
+                                            snapshot
+                                        );
+                                    },
+                                    function (
+                                        error
+                                    ) {
+                                        console.warn(
+                                            "[MI AI Notifications] Open-event listener failed.",
+                                            error
+                                        );
+                                    }
+                                );
+
+                        ownerUnsubscribers.push(
+                            unsubscribe
+                        );
+                    }
+                );
+        }
+        catch (error) {
+            console.error(
+                "[MI AI Notifications] Could not load owner share links.",
+                error
+            );
+        }
+    }
+
+    async function saveShareToFirestore(
+        payload
+    ) {
+        const user =
+            currentFirebaseUser();
+
+        const db =
+            database();
+
+        if (
+            !user ||
+            !db
+        ) {
+            throw new Error(
+                "Firebase login is required before generating a notification-enabled share link."
+            );
+        }
+
+        const securedPayload =
+            await secureSharePayload(
+                payload
+            );
+
+        securedPayload.ownerUid =
+            user.uid;
+
+        securedPayload.ownerEmail =
+            cleanText(
+                user.email ||
+                localStorage.getItem(
+                    "mi_user_email"
+                ),
+                180
+            )
+                .toLowerCase();
+
+        securedPayload.chatTitle =
+            cleanText(
+                payload.chatTitle,
+                100
+            ) ||
+            "Shared Chat";
+
+        await db
+            .collection(
+                SHARE_COLLECTION
+            )
+            .doc(
+                securedPayload.id
+            )
+            .set(
+                {
+                    ownerUid:
+                        securedPayload
+                            .ownerUid,
+
+                    ownerEmail:
+                        securedPayload
+                            .ownerEmail,
+
+                    shareId:
+                        securedPayload.id,
+
+                    chatId:
+                        String(
+                            securedPayload
+                                .chatId ||
+                            ""
+                        ),
+
+                    chatTitle:
+                        securedPayload
+                            .chatTitle,
+
+                    permission:
+                        securedPayload
+                            .permission,
+
+                    notificationEnabled:
+                        securedPayload
+                            .security
+                            ?.notification ===
+                            "on",
+
+                    createdAt:
+                        window.firebase
+                            .firestore
+                            .FieldValue
+                            .serverTimestamp()
+                },
+                {
+                    merge:
+                        true
+                }
+            );
+
+        return securedPayload;
+    }
+
+    async function generateSharedChatLinkV1(
+        chatId
+    ) {
+        const permissionSelect =
+            document.getElementById(
+                "sharePermissionSelect"
+            );
+
+        const permission =
+            permissionSelect &&
+            permissionSelect.value ===
+                "view"
+                ? "view"
+                : "edit";
+
+        const openLimitSelect =
+            document.getElementById(
+                "shareOpenLimitSelect"
+            );
+
+        const openLimitCustom =
+            document.getElementById(
+                "shareOpenLimitCustom"
+            );
+
+        const timeLimitValue =
+            document.getElementById(
+                "shareTimeLimitValue"
+            );
+
+        const timeLimitUnit =
+            document.getElementById(
+                "shareTimeLimitUnit"
+            );
+
+        const passwordEnabled =
+            document.getElementById(
+                "sharePasswordEnabled"
+            );
+
+        const passwordField =
+            document.getElementById(
+                "sharePassword"
+            );
+
+        const passwordConfirmField =
+            document.getElementById(
+                "sharePasswordConfirm"
+            );
+
+        const notificationSelect =
+            document.getElementById(
+                "shareNotificationSelect"
+            );
+
+        const openLimitMode =
+            openLimitSelect
+                ? openLimitSelect.value
+                : "no-expiry";
+
+        const customOpenCount =
+            openLimitCustom &&
+            openLimitCustom.value
+                ? Number(
+                    openLimitCustom.value
+                )
+                : "";
+
+        const timeLimitUnitValue =
+            timeLimitUnit
+                ? timeLimitUnit.value
+                : "no-expiry";
+
+        const timeLimitValueNumber =
+            timeLimitValue &&
+            timeLimitValue.value
+                ? Number(
+                    timeLimitValue.value
+                )
+                : "";
+
+        const passwordEnabledValue =
+            Boolean(
+                passwordEnabled &&
+                passwordEnabled.checked
+            );
+
+        const password =
+            passwordEnabledValue
+                ? String(
+                    passwordField?.value ||
+                    ""
+                )
+                : "";
+
+        const passwordConfirm =
+            passwordEnabledValue
+                ? String(
+                    passwordConfirmField
+                        ?.value ||
+                    ""
+                )
+                : "";
+
+        if (
+            passwordEnabledValue &&
+            password !==
+                passwordConfirm
+        ) {
+            window.showShareFeedback?.(
+                "Passwords do not match."
+            );
+
+            return;
+        }
+
+        if (
+            openLimitMode ===
+                "custom" &&
+            (
+                !customOpenCount ||
+                !Number.isInteger(
+                    customOpenCount
+                ) ||
+                customOpenCount < 1
+            )
+        ) {
+            window.showShareFeedback?.(
+                "Enter a valid open count."
+            );
+
+            return;
+        }
+
+        if (
+            timeLimitUnitValue !==
+                "no-expiry" &&
+            (
+                !timeLimitValueNumber ||
+                !Number.isInteger(
+                    timeLimitValueNumber
+                ) ||
+                timeLimitValueNumber < 1
+            )
+        ) {
+            window.showShareFeedback?.(
+                "Enter a valid time value."
+            );
+
+            return;
+        }
+
+        const messages =
+            chatMessages(chatId)
+                .map(
+                    function (message) {
+                        return {
+                            role:
+                                message.role,
+
+                            text:
+                                message.text ||
+                                message.content ||
+                                ""
+                        };
+                    }
+                );
+
+        const payload = {
+            id:
+                makeShareId(),
+
+            chatId:
+                String(chatId),
+
+            chatTitle:
+                chatTitle(chatId),
+
+            messages:
+                messages,
+
+            permission:
+                permission,
+
+            ownerEmail:
+                cleanText(
+                    localStorage.getItem(
+                        "mi_user_email"
+                    ),
+                    180
+                )
+                    .toLowerCase(),
+
+            createdAt:
+                Date.now(),
+
+            security: {
+                openLimitMode:
+                    openLimitMode,
+
+                openLimitCustom:
+                    openLimitMode ===
+                        "custom"
+                        ? customOpenCount
+                        : "",
+
+                timeLimitUnit:
+                    timeLimitUnitValue,
+
+                timeLimitValue:
+                    timeLimitUnitValue ===
+                        "no-expiry"
+                        ? ""
+                        : timeLimitValueNumber,
+
+                password:
+                    passwordEnabledValue
+                        ? password
+                        : "",
+
+                notification:
+                    notificationSelect
+                        ? notificationSelect
+                            .value
+                        : "off"
+            }
+        };
+
+        let publicPayload;
+
+        try {
+            publicPayload =
+                await saveShareToFirestore(
+                    payload
+                );
+        }
+        catch (error) {
+            console.error(
+                "[MI AI Notifications] Share save failed.",
+                error
+            );
+
+            window.showShareFeedback?.(
+                error.message ||
+                "Could not create the shared link."
+            );
+
+            return;
+        }
+
+        /*
+          Include the secured payload in the URL.
+          This allows another browser/device to open it,
+          while Firestore stores only its metadata and events.
+        */
+        const encodedPayload =
+            encodeURIComponent(
+                JSON.stringify(
+                    publicPayload
+                )
+            );
+
+        const shareLink =
+            window.location.origin +
+            window.location.pathname +
+            "?share=" +
+            encodedPayload;
+
+        try {
+            if (
+                typeof window
+                    .copyTextToClipboard ===
+                    "function"
+            ) {
+                await window
+                    .copyTextToClipboard(
+                        shareLink
+                    );
+            }
+            else {
+                await navigator
+                    .clipboard
+                    .writeText(
+                        shareLink
+                    );
+            }
+
+            window.showShareFeedback?.(
+                publicPayload.security
+                    ?.notification ===
+                    "on"
+                    ? "Link copied. Viewer notifications are ON."
+                    : "Link copied. Viewer notifications are OFF."
+            );
+
+            window
+                .closeShareOverlayAfterGenerate
+                ?.();
+
+            startOwnerListeners(
+                currentFirebaseUser()
+            );
+        }
+        catch (error) {
+            console.error(
+                "[MI AI Notifications] Clipboard copy failed.",
+                error
+            );
+
+            window.showShareFeedback?.(
+                "The link was created, but could not be copied."
+            );
+        }
+    }
+
+    function sharedPayload() {
+        if (
+            window.sharedChatData &&
+            Array.isArray(
+                window.sharedChatData
+                    .messages
+            )
+        ) {
+            return window
+                .sharedChatData;
+        }
+
+        try {
+            if (
+                typeof window
+                    .getSharedChatPayloadFromUrl ===
+                    "function"
+            ) {
+                return window
+                    .getSharedChatPayloadFromUrl();
+            }
+
+            if (
+                typeof getSharedChatPayloadFromUrl ===
+                    "function"
+            ) {
+                return getSharedChatPayloadFromUrl();
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Notifications] Shared payload could not be read.",
+                error
+            );
+        }
+
+        return null;
+    }
+
+    async function reportViewerOpen() {
+        const payload =
+            sharedPayload();
+
+        if (
+            !payload ||
+            !payload.id ||
+            payload.security
+                ?.notification !==
+                "on"
+        ) {
+            return false;
+        }
+
+        const reportKey =
+            REPORTED_PREFIX +
+            payload.id;
+
+        if (
+            sessionStorage.getItem(
+                reportKey
+            ) === "1"
+        ) {
+            return false;
+        }
+
+        const db =
+            database();
+
+        if (!db) {
+            return false;
+        }
+
+        sessionStorage.setItem(
+            reportKey,
+            "1"
+        );
+
+        try {
+            await db
+                .collection(
+                    SHARE_COLLECTION
+                )
+                .doc(
+                    String(payload.id)
+                )
+                .collection(
+                    "opens"
+                )
+                .add({
+                    shareId:
+                        String(payload.id),
+
+                    chatTitle:
+                        cleanText(
+                            payload.chatTitle ||
+                            "Shared Chat",
+                            100
+                        ),
+
+                    viewerId:
+                        viewerId(),
+
+                    openedAt:
+                        window.firebase
+                            .firestore
+                            .FieldValue
+                            .serverTimestamp()
+                });
+
+            console.log(
+                "[MI AI Notifications] Viewer open reported."
+            );
+
+            return true;
+        }
+        catch (error) {
+            sessionStorage.removeItem(
+                reportKey
+            );
+
+            console.error(
+                "[MI AI Notifications] Viewer open report failed.",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    function installShareGenerator() {
+        const wrapped =
+            function (chatId) {
+                return generateSharedChatLinkV1(
+                    chatId
+                );
+            };
+
+        wrapped
+            .__miShareNotificationsV1 =
+            true;
+
+        window.generateSharedChatLink =
+            wrapped;
+
+        try {
+            generateSharedChatLink =
+                wrapped;
+        }
+        catch (error) {
+            // window function remains available.
+        }
+    }
+
+    function installAuthenticationListener() {
+        if (!firebaseReady()) {
+            return false;
+        }
+
+        window.firebase
+            .auth()
+            .onAuthStateChanged(
+                function (user) {
+                    if (user) {
+                        createBellButton();
+                        createPanel();
+
+                        startOwnerListeners(
+                            user
+                        );
+                    }
+                    else {
+                        ownerUid =
+                            "";
+
+                        clearOwnerListeners();
+
+                        document
+                            .getElementById(
+                                "miNotificationButton"
+                            )
+                            ?.remove();
+                    }
+                }
+            );
+
+        return true;
+    }
+
+    function start() {
+        if (installed) {
+            return;
+        }
+
+        installed =
+            true;
+
+        createBellButton();
+        createPanel();
+        installShareGenerator();
+
+        if (
+            !installAuthenticationListener()
+        ) {
+            let attempts =
+                0;
+
+            const timer =
+                setInterval(
+                    function () {
+                        attempts += 1;
+
+                        installShareGenerator();
+
+                        if (
+                            installAuthenticationListener() ||
+                            attempts >= 100
+                        ) {
+                            clearInterval(
+                                timer
+                            );
+                        }
+                    },
+                    100
+                );
+        }
+
+        window.addEventListener(
+            "mi-firebase-ready",
+            function () {
+                installAuthenticationListener();
+            }
+        );
+
+        window.addEventListener(
+            "mi-shared-single-chat-enabled",
+            function () {
+                setTimeout(
+                    reportViewerOpen,
+                    250
+                );
+            }
+        );
+
+        /*
+          Fallback for shared-chat scripts that activate
+          before this controller is installed.
+        */
+        [600, 1500, 3000].forEach(
+            function (delay) {
+                setTimeout(
+                    reportViewerOpen,
+                    delay
+                );
+            }
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key ===
+                        "Escape"
+                ) {
+                    closePanel();
+                }
+            }
+        );
+
+        window.MIShareNotificationsV1 = {
+            openPanel:
+                openPanel,
+
+            closePanel:
+                closePanel,
+
+            reportOpen:
+                reportViewerOpen,
+
+            generateLink:
+                generateSharedChatLinkV1,
+
+            refresh:
+                function () {
+                    return startOwnerListeners(
+                        currentFirebaseUser()
+                    );
+                }
+        };
+
+        console.log(
+            "[MI AI] Share Notifications V1 installed."
+        );
+    }
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once:
+                    true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SHARE NOTIFICATIONS V1 JS - END */
 </script>
 </body>
 </html>
