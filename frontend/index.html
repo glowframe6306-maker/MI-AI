@@ -5686,6 +5686,159 @@ select[data-mi-ios-ready="true"] {
 }
 
 /* MI AI IOS SELECT AND ICON SYSTEM - END */
+
+/* MI AI SHARED SINGLE CHAT CSS - START */
+
+/*
+   A viewer opening a shared link sees only the shared conversation.
+*/
+
+body.mi-shared-single-chat #sidebar,
+body.mi-shared-single-chat #mobileMenuToggle,
+body.mi-shared-single-chat #mobileMenuClose,
+body.mi-shared-single-chat #mobileMenuBackdrop,
+body.mi-shared-single-chat #chatList,
+body.mi-shared-single-chat #menu,
+body.mi-shared-single-chat #miChatMoreMenu,
+body.mi-shared-single-chat #approvalAlert,
+body.mi-shared-single-chat #settingsBtn,
+body.mi-shared-single-chat #newChatBtn,
+body.mi-shared-single-chat #supportBtn,
+body.mi-shared-single-chat .new-chat-btn,
+body.mi-shared-single-chat .chat-history,
+body.mi-shared-single-chat .conversation-list,
+body.mi-shared-single-chat .sidebar {
+    display: none !important;
+}
+
+/* Hide login/profile actions from the shared viewer page. */
+body.mi-shared-single-chat #header .headerActions,
+body.mi-shared-single-chat #loginBtn,
+body.mi-shared-single-chat #logoutBtn {
+    display: none !important;
+}
+
+body.mi-shared-single-chat {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+body.mi-shared-single-chat #main {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    left: 0 !important;
+}
+
+/* Keep header and shared conversation visible. */
+body.mi-shared-single-chat #header {
+    width: 100% !important;
+}
+
+body.mi-shared-single-chat #chat {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Do not show chat-management controls created dynamically. */
+body.mi-shared-single-chat [data-chat-id],
+body.mi-shared-single-chat [data-conversation-id],
+body.mi-shared-single-chat .chatItem,
+body.mi-shared-single-chat .chat-item,
+body.mi-shared-single-chat .history-item,
+body.mi-shared-single-chat .conversation-item {
+    display: none !important;
+}
+
+/* Shared chat status badge */
+#miSharedSingleChatBadge {
+    position: fixed;
+    top: max(74px, calc(env(safe-area-inset-top, 0px) + 64px));
+    left: 50%;
+    z-index: 50000;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    max-width: calc(100vw - 24px);
+
+    padding: 8px 13px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.28);
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(35, 48, 70, 0.80),
+            rgba(15, 23, 42, 0.68)
+        );
+
+    color: #ffffff;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    backdrop-filter:
+        blur(22px)
+        saturate(180%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.22),
+        0 10px 32px
+            rgba(0, 0, 0, 0.25);
+
+    transform: translateX(-50%);
+}
+
+body.mi-shared-single-chat #miSharedSingleChatBadge {
+    display: inline-flex;
+}
+
+@media (max-width: 700px) {
+    body.mi-shared-single-chat #main {
+        width: 100vw !important;
+    }
+
+    body.mi-shared-single-chat #chat {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    #miSharedSingleChatBadge {
+        top:
+            max(
+                66px,
+                calc(
+                    env(safe-area-inset-top, 0px)
+                    + 58px
+                )
+            );
+
+        font-size: 11px;
+    }
+}
+
+/* MI AI SHARED SINGLE CHAT CSS - END */
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -16175,6 +16328,769 @@ document.addEventListener(
 })();
 
 /* MI AI RESPONSE FORMAT ADAPTER V1 - END */
+</script>
+
+<script>
+/* MI AI SHARED SINGLE CHAT JS - START */
+
+(function () {
+    "use strict";
+
+    let sharedModeActive = false;
+    let sharedId = "";
+    let sharedMessages = [];
+    let sharedPermission = "view";
+    let enforcementPending = false;
+
+    const blockedFunctionNames = [
+        "newChat",
+        "createNewChat",
+        "renameChat",
+        "renameConversation",
+        "pinChat",
+        "togglePinChat",
+        "toggleChatPin",
+        "deleteChat",
+        "deleteConversation",
+        "removeChat",
+        "shareChat",
+        "shareConversation",
+        "customerSupport",
+        "toggleSettings",
+        "openSettings",
+        "openProfilePanel"
+    ];
+
+    function hasShareParameter() {
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        return Boolean(
+            params.get("s") ||
+            params.get("share")
+        );
+    }
+
+    function getPayload() {
+        try {
+            if (
+                typeof sharedChatData !==
+                    "undefined" &&
+                sharedChatData &&
+                typeof sharedChatData ===
+                    "object"
+            ) {
+                return sharedChatData;
+            }
+        }
+        catch (error) {
+            // Continue to the existing URL loader.
+        }
+
+        try {
+            if (
+                typeof getSharedChatPayloadFromUrl ===
+                    "function"
+            ) {
+                const value =
+                    getSharedChatPayloadFromUrl();
+
+                if (
+                    value &&
+                    typeof value ===
+                        "object"
+                ) {
+                    return value;
+                }
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Shared Isolation] Payload lookup failed:",
+                error
+            );
+        }
+
+        return null;
+    }
+
+    function obtainSharedId(payload) {
+        return String(
+            payload?.id ||
+            payload?.chatId ||
+            payload?.conversationId ||
+            sharedId ||
+            "shared_conversation"
+        );
+    }
+
+    function replaceChatState() {
+        if (
+            !sharedModeActive ||
+            !sharedId
+        ) {
+            return;
+        }
+
+        const singleton = {
+            [sharedId]:
+                Array.isArray(
+                    sharedMessages
+                )
+                    ? sharedMessages
+                    : []
+        };
+
+        try {
+            if (
+                typeof chats !==
+                    "undefined"
+            ) {
+                chats = singleton;
+            }
+        }
+        catch (error) {
+            // Global lexical binding may not be writable.
+        }
+
+        window.chats = singleton;
+
+        try {
+            if (
+                typeof currentChat !==
+                    "undefined"
+            ) {
+                currentChat = sharedId;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible global.
+        }
+
+        window.currentChat = sharedId;
+
+        try {
+            if (
+                typeof selectedChat !==
+                    "undefined"
+            ) {
+                selectedChat = null;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible global.
+        }
+    }
+
+    function clearOtherChatUi() {
+        const chatList =
+            document.getElementById(
+                "chatList"
+            );
+
+        if (chatList) {
+            chatList.replaceChildren();
+            chatList.style.display =
+                "none";
+        }
+
+        document
+            .querySelectorAll(
+                [
+                    "[data-chat-id]",
+                    "[data-conversation-id]",
+                    ".chatItem",
+                    ".chat-item",
+                    ".history-item",
+                    ".conversation-item"
+                ].join(",")
+            )
+            .forEach(function (element) {
+                if (
+                    !element.closest("#chat")
+                ) {
+                    element.remove();
+                }
+            });
+
+        [
+            "menu",
+            "miChatMoreMenu"
+        ].forEach(function (id) {
+            const element =
+                document.getElementById(id);
+
+            if (element) {
+                element.style.display =
+                    "none";
+
+                element.classList.remove(
+                    "open",
+                    "show",
+                    "active",
+                    "mi-visible"
+                );
+            }
+        });
+    }
+
+    function languageCode() {
+        return String(
+            document.getElementById(
+                "languageSelect"
+            )?.value ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            "en"
+        ).toLowerCase();
+    }
+
+    function badgeText() {
+        const values = {
+            en:
+                "Shared conversation — only this chat is available",
+
+            si:
+                "බෙදාගත් කතාබහ — මෙම chat එක පමණක් පෙන්වයි",
+
+            ta:
+                "பகிரப்பட்ட உரையாடல் — இந்த அரட்டை மட்டும் கிடைக்கும்"
+        };
+
+        return (
+            values[languageCode()] ||
+            values.en
+        );
+    }
+
+    function ensureBadge() {
+        let badge =
+            document.getElementById(
+                "miSharedSingleChatBadge"
+            );
+
+        if (!badge) {
+            badge =
+                document.createElement(
+                    "div"
+                );
+
+            badge.id =
+                "miSharedSingleChatBadge";
+
+            badge.setAttribute(
+                "role",
+                "status"
+            );
+
+            const icon =
+                document.createElement(
+                    "span"
+                );
+
+            icon.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            icon.textContent = "🔗";
+
+            const text =
+                document.createElement(
+                    "span"
+                );
+
+            text.className =
+                "mi-shared-single-chat-text";
+
+            badge.append(
+                icon,
+                text
+            );
+
+            document.body.appendChild(
+                badge
+            );
+        }
+
+        const text =
+            badge.querySelector(
+                ".mi-shared-single-chat-text"
+            );
+
+        if (text) {
+            text.textContent =
+                badgeText();
+        }
+    }
+
+    function installBlockedFunctions() {
+        blockedFunctionNames.forEach(
+            function (name) {
+                const original =
+                    window[name];
+
+                if (
+                    typeof original !==
+                        "function" ||
+                    original
+                        .__miSharedBlocked
+                ) {
+                    return;
+                }
+
+                const wrapped =
+                    function (...args) {
+                        if (sharedModeActive) {
+                            return false;
+                        }
+
+                        return original.apply(
+                            this,
+                            args
+                        );
+                    };
+
+                wrapped.__miSharedBlocked =
+                    true;
+
+                wrapped.__miOriginal =
+                    original;
+
+                window[name] = wrapped;
+
+                try {
+                    eval(
+                        name +
+                        " = window['" +
+                        name +
+                        "']"
+                    );
+                }
+                catch (error) {
+                    // Global lexical binding may be read-only.
+                }
+            }
+        );
+    }
+
+    function installOpenChatGuard() {
+        const original =
+            window.openChat;
+
+        if (
+            typeof original !==
+                "function" ||
+            original
+                .__miSharedSingleGuard
+        ) {
+            return;
+        }
+
+        const wrapped =
+            function (
+                requestedId,
+                ...args
+            ) {
+                if (
+                    sharedModeActive &&
+                    String(requestedId) !==
+                        String(sharedId)
+                ) {
+                    return false;
+                }
+
+                return original.call(
+                    this,
+                    sharedModeActive
+                        ? sharedId
+                        : requestedId,
+                    ...args
+                );
+            };
+
+        wrapped.__miSharedSingleGuard =
+            true;
+
+        wrapped.__miOriginal =
+            original;
+
+        window.openChat = wrapped;
+
+        try {
+            openChat = wrapped;
+        }
+        catch (error) {
+            // Ignore inaccessible binding.
+        }
+    }
+
+    function installRenderListGuard() {
+        const original =
+            window.renderList;
+
+        if (
+            typeof original !==
+                "function" ||
+            original
+                .__miSharedListGuard
+        ) {
+            return;
+        }
+
+        const wrapped =
+            function (...args) {
+                if (sharedModeActive) {
+                    clearOtherChatUi();
+                    return false;
+                }
+
+                return original.apply(
+                    this,
+                    args
+                );
+            };
+
+        wrapped.__miSharedListGuard =
+            true;
+
+        wrapped.__miOriginal =
+            original;
+
+        window.renderList = wrapped;
+
+        try {
+            renderList = wrapped;
+        }
+        catch (error) {
+            // Ignore inaccessible binding.
+        }
+    }
+
+    function renderSharedConversation() {
+        replaceChatState();
+
+        try {
+            if (
+                typeof openChat ===
+                    "function"
+            ) {
+                openChat(sharedId);
+            }
+            else if (
+                typeof window.openChat ===
+                    "function"
+            ) {
+                window.openChat(sharedId);
+            }
+        }
+        catch (error) {
+            console.warn(
+                "[MI AI Shared Isolation] Shared chat render failed:",
+                error
+            );
+        }
+    }
+
+    function enforce() {
+        if (!sharedModeActive) {
+            return;
+        }
+
+        replaceChatState();
+        clearOtherChatUi();
+        ensureBadge();
+        installBlockedFunctions();
+        installOpenChatGuard();
+        installRenderListGuard();
+
+        document.body.classList.add(
+            "mi-shared-single-chat"
+        );
+
+        document.body.dataset
+            .sharedChatOnly =
+            "true";
+
+        window.MI_SHARED_CHAT_ONLY =
+            true;
+    }
+
+    function scheduleEnforcement() {
+        if (
+            !sharedModeActive ||
+            enforcementPending
+        ) {
+            return;
+        }
+
+        enforcementPending = true;
+
+        requestAnimationFrame(
+            function () {
+                enforcementPending =
+                    false;
+
+                enforce();
+            }
+        );
+    }
+
+    function activate(payload) {
+        if (
+            !payload ||
+            !Array.isArray(
+                payload.messages
+            )
+        ) {
+            return false;
+        }
+
+        sharedModeActive = true;
+
+        sharedId =
+            obtainSharedId(payload);
+
+        sharedMessages =
+            payload.messages;
+
+        sharedPermission =
+            payload.permission ===
+                "edit"
+                ? "edit"
+                : "view";
+
+        try {
+            if (
+                typeof sharedChatData !==
+                    "undefined"
+            ) {
+                sharedChatData =
+                    payload;
+            }
+        }
+        catch (error) {
+            // Ignore inaccessible binding.
+        }
+
+        window.sharedChatData =
+            payload;
+
+        enforce();
+        renderSharedConversation();
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-shared-single-chat-enabled",
+                {
+                    detail: {
+                        chatId:
+                            sharedId,
+
+                        permission:
+                            sharedPermission
+                    }
+                }
+            )
+        );
+
+        console.log(
+            "[MI AI] Shared single-chat isolation enabled:",
+            sharedId
+        );
+
+        return true;
+    }
+
+    function detectAndActivate() {
+        if (!hasShareParameter()) {
+            return false;
+        }
+
+        const payload =
+            getPayload();
+
+        if (payload) {
+            return activate(payload);
+        }
+
+        return false;
+    }
+
+    function blockOtherChatActions(
+        event
+    ) {
+        if (!sharedModeActive) {
+            return;
+        }
+
+        const forbidden =
+            event.target.closest(
+                [
+                    "#sidebar",
+                    "#chatList",
+                    "#menu",
+                    "#miChatMoreMenu",
+                    "[data-chat-id]",
+                    "[data-conversation-id]",
+                    ".chatItem",
+                    ".chat-item",
+                    ".history-item",
+                    ".conversation-item"
+                ].join(",")
+            );
+
+        if (!forbidden) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        clearOtherChatUi();
+    }
+
+    document.addEventListener(
+        "click",
+        blockOtherChatActions,
+        true
+    );
+
+    document.addEventListener(
+        "contextmenu",
+        blockOtherChatActions,
+        true
+    );
+
+    document.addEventListener(
+        "pointerdown",
+        blockOtherChatActions,
+        true
+    );
+
+    function start() {
+        if (!hasShareParameter()) {
+            return;
+        }
+
+        let attempts = 0;
+
+        const timer =
+            setInterval(
+                function () {
+                    attempts += 1;
+
+                    if (
+                        detectAndActivate() ||
+                        attempts >= 120
+                    ) {
+                        clearInterval(
+                            timer
+                        );
+                    }
+                },
+                100
+            );
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    if (!sharedModeActive) {
+                        detectAndActivate();
+                        return;
+                    }
+
+                    scheduleEnforcement();
+                }
+            );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            scheduleEnforcement
+        );
+
+        window.addEventListener(
+            "popstate",
+            scheduleEnforcement
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            scheduleEnforcement
+        );
+
+        window.addEventListener(
+            "mi-language-changed",
+            function () {
+                ensureBadge();
+                scheduleEnforcement();
+            }
+        );
+
+        /*
+          Account/chat restore scripts may run later.
+          Reapply the shared singleton state safely.
+        */
+        setInterval(
+            function () {
+                if (sharedModeActive) {
+                    enforce();
+                }
+            },
+            1500
+        );
+    }
+
+    window.MISharedSingleChat = {
+        isActive:
+            function () {
+                return sharedModeActive;
+            },
+
+        getChatId:
+            function () {
+                return sharedId;
+            },
+
+        getPermission:
+            function () {
+                return sharedPermission;
+            },
+
+        refresh:
+            scheduleEnforcement
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SHARED SINGLE CHAT JS - END */
 </script>
 </body>
 </html>
