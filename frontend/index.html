@@ -8100,6 +8100,473 @@ button,
 }
 
 /* MI AI SMOOTH NEW CHAT CSS - END */
+
+/* MI AI LOGIN SUCCESS POPUP CSS - START */
+
+#miLoginSuccessBackdrop {
+    position: fixed;
+    inset: 0;
+
+    z-index: 2147483500;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding:
+        max(18px, env(safe-area-inset-top, 0px))
+        max(16px, env(safe-area-inset-right, 0px))
+        max(18px, env(safe-area-inset-bottom, 0px))
+        max(16px, env(safe-area-inset-left, 0px));
+
+    background:
+        rgba(3, 8, 18, 0.45);
+
+    -webkit-backdrop-filter:
+        blur(14px)
+        saturate(155%);
+
+    backdrop-filter:
+        blur(14px)
+        saturate(155%);
+
+    opacity: 0;
+
+    transition:
+        opacity 220ms ease;
+}
+
+#miLoginSuccessBackdrop.mi-login-success-visible {
+    display: flex;
+    opacity: 1;
+}
+
+#miLoginSuccessPopup {
+    position: relative;
+
+    width:
+        min(
+            410px,
+            calc(100vw - 28px)
+        );
+
+    overflow: hidden;
+
+    padding:
+        30px 24px 22px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.55);
+
+    border-radius:
+        31px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.94),
+            rgba(222, 232, 246, 0.83)
+        );
+
+    color:
+        #111827;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif;
+
+    text-align: center;
+
+    -webkit-backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    backdrop-filter:
+        blur(34px)
+        saturate(190%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 1),
+        0 30px 90px
+            rgba(0, 0, 0, 0.34);
+
+    opacity: 0;
+
+    transform:
+        translateY(22px)
+        scale(0.90);
+
+    transition:
+        opacity 260ms ease,
+        transform 380ms
+            cubic-bezier(.16, 1.28, .3, 1);
+}
+
+#miLoginSuccessBackdrop.mi-login-success-visible
+#miLoginSuccessPopup {
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+}
+
+#miLoginSuccessPopup::before {
+    content: "";
+
+    position: absolute;
+
+    top: -100px;
+    right: -90px;
+
+    width: 230px;
+    height: 230px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(
+            var(--mi-theme-rgb, 30, 136, 229),
+            0.27
+        );
+
+    filter:
+        blur(34px);
+
+    pointer-events: none;
+}
+
+#miLoginSuccessPopup::after {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 7%;
+    right: 7%;
+
+    height: 42%;
+
+    border-radius:
+        0 0 999px 999px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.72),
+            rgba(255, 255, 255, 0)
+        );
+
+    pointer-events: none;
+}
+
+#miLoginSuccessIcon {
+    position: relative;
+    z-index: 2;
+
+    width: 82px;
+    height: 82px;
+
+    margin:
+        0 auto
+        17px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.82);
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(
+                var(--mi-theme-rgb, 30, 136, 229),
+                0.78
+            ),
+            rgba(
+                var(--mi-theme-rgb, 30, 136, 229),
+                0.40
+            )
+        );
+
+    color: #ffffff;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.62),
+        0 15px 38px
+            rgba(
+                var(--mi-theme-rgb, 30, 136, 229),
+                0.30
+            );
+
+    animation:
+        miLoginSuccessIconIn
+        540ms
+        cubic-bezier(.16, 1.5, .3, 1)
+        both;
+}
+
+#miLoginSuccessIcon svg {
+    width: 42px;
+    height: 42px;
+
+    fill: none;
+
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#miLoginSuccessTitle {
+    position: relative;
+    z-index: 2;
+
+    margin: 0;
+
+    color:
+        #111827;
+
+    font-size:
+        25px;
+
+    font-weight:
+        800;
+
+    line-height:
+        1.25;
+}
+
+#miLoginSuccessMessage {
+    position: relative;
+    z-index: 2;
+
+    margin:
+        9px 0 0;
+
+    color:
+        #4b5563;
+
+    font-size:
+        15px;
+
+    font-weight:
+        600;
+
+    line-height:
+        1.55;
+}
+
+#miLoginSuccessEmail {
+    position: relative;
+    z-index: 2;
+
+    max-width: 100%;
+
+    margin:
+        14px auto 0;
+
+    padding:
+        8px 12px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.82);
+
+    border-radius: 999px;
+
+    background:
+        rgba(255, 255, 255, 0.62);
+
+    color:
+        #263244;
+
+    font-size:
+        13px;
+
+    font-weight:
+        700;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.92);
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#miLoginSuccessContinue {
+    position: relative;
+    z-index: 2;
+
+    width: 100% !important;
+    min-height: 54px !important;
+
+    margin:
+        21px 0 0 !important;
+
+    padding:
+        12px 18px !important;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.74)
+        !important;
+
+    border-radius:
+        18px !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(
+                var(--mi-theme-rgb, 30, 136, 229),
+                0.72
+            ),
+            rgba(
+                var(--mi-theme-rgb, 30, 136, 229),
+                0.42
+            )
+        )
+        !important;
+
+    color:
+        #ffffff !important;
+
+    font-family:
+        "Nirmala UI",
+        "Segoe UI",
+        sans-serif
+        !important;
+
+    font-size:
+        16px !important;
+
+    font-weight:
+        800 !important;
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.43),
+        0 12px 32px
+            rgba(
+                var(--mi-theme-rgb, 30, 136, 229),
+                0.28
+            )
+        !important;
+
+    cursor: pointer;
+}
+
+#miLoginSuccessContinue:active {
+    transform:
+        scale(0.96)
+        !important;
+}
+
+@keyframes miLoginSuccessIconIn {
+    0% {
+        opacity: 0;
+
+        transform:
+            scale(0.50)
+            rotate(-10deg);
+    }
+
+    65% {
+        transform:
+            scale(1.10)
+            rotate(3deg);
+    }
+
+    100% {
+        opacity: 1;
+
+        transform:
+            scale(1)
+            rotate(0);
+    }
+}
+
+@media (max-width: 700px) {
+    #miLoginSuccessPopup {
+        width:
+            calc(100vw - 20px);
+
+        padding:
+            28px 19px 20px;
+
+        border-radius:
+            28px;
+    }
+
+    #miLoginSuccessIcon {
+        width:
+            88px;
+
+        height:
+            88px;
+    }
+
+    #miLoginSuccessTitle {
+        font-size:
+            26px;
+    }
+
+    #miLoginSuccessMessage {
+        font-size:
+            17px;
+    }
+
+    #miLoginSuccessEmail {
+        max-width:
+            calc(100vw - 70px);
+
+        font-size:
+            14px;
+    }
+
+    #miLoginSuccessContinue {
+        min-height:
+            58px !important;
+
+        font-size:
+            18px !important;
+    }
+}
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+    #miLoginSuccessBackdrop,
+    #miLoginSuccessPopup,
+    #miLoginSuccessIcon {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+}
+
+/* MI AI LOGIN SUCCESS POPUP CSS - END */
 </style>
 </head>
 
@@ -11779,7 +12246,19 @@ async function loginEmail() {
     const loginBox = document.getElementById('loginBox');
     if (loginBox) loginBox.style.display = 'none';
     setAuthMessage(t('auth.signInSuccess', 'Signed in successfully.'), false);
-    await loadUserChats();
+
+    window.dispatchEvent(
+      new CustomEvent(
+        'mi-login-success',
+        {
+          detail: {
+            email: firebaseUser.email || '',
+            user: firebaseUser
+          }
+        }
+      )
+    );
+await loadUserChats();
   } catch (err) {
     const message = err?.message || 'Authentication failed.';
     const normalized = String(message || '').toLowerCase();
@@ -24130,6 +24609,374 @@ document.addEventListener(
 })();
 
 /* MI AI SMOOTH NEW CHAT JS - END */
+</script>
+
+<script>
+/* MI AI LOGIN SUCCESS POPUP JS - START */
+
+(function () {
+    "use strict";
+
+    let closeTimer = null;
+    let lastShownAt = 0;
+
+    function languageCode() {
+        return String(
+            document.getElementById(
+                "languageSelect"
+            )?.value ||
+            localStorage.getItem(
+                "mi_ui_language"
+            ) ||
+            "en"
+        )
+            .trim()
+            .toLowerCase();
+    }
+
+    function translations() {
+        const values = {
+            en: {
+                title:
+                    "Welcome back!",
+
+                message:
+                    "Thank you for signing in to MI AI. Your chats and settings are ready.",
+
+                continueText:
+                    "Continue"
+            },
+
+            si: {
+                title:
+                    "නැවත සාදරයෙන් පිළිගනිමු!",
+
+                message:
+                    "MI AI වෙත පිවිසීම ගැන ස්තුතියි. ඔබගේ chats සහ settings දැන් සූදානම්.",
+
+                continueText:
+                    "ඉදිරියට යන්න"
+            },
+
+            ta: {
+                title:
+                    "மீண்டும் வரவேற்கிறோம்!",
+
+                message:
+                    "MI AI-ல் உள்நுழைந்ததற்கு நன்றி. உங்கள் அரட்டைகளும் அமைப்புகளும் தயாராக உள்ளன.",
+
+                continueText:
+                    "தொடரவும்"
+            }
+        };
+
+        return (
+            values[languageCode()] ||
+            values.en
+        );
+    }
+
+    function getEmail(detail) {
+        return String(
+            detail?.email ||
+            detail?.user?.email ||
+            window.miFirebaseAuth
+                ?.currentUser
+                ?.email ||
+            window.miFirebaseUser
+                ?.email ||
+            localStorage.getItem(
+                "mi_user_email"
+            ) ||
+            ""
+        )
+            .trim();
+    }
+
+    function ensurePopup() {
+        let backdrop =
+            document.getElementById(
+                "miLoginSuccessBackdrop"
+            );
+
+        if (backdrop) {
+            return backdrop;
+        }
+
+        backdrop =
+            document.createElement(
+                "div"
+            );
+
+        backdrop.id =
+            "miLoginSuccessBackdrop";
+
+        backdrop.setAttribute(
+            "role",
+            "presentation"
+        );
+
+        backdrop.innerHTML = `
+            <section
+                id="miLoginSuccessPopup"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="miLoginSuccessTitle"
+                aria-describedby="miLoginSuccessMessage"
+            >
+                <div id="miLoginSuccessIcon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M5 12.5 9.2 17 19 7"></path>
+                    </svg>
+                </div>
+
+                <h2 id="miLoginSuccessTitle"></h2>
+
+                <p id="miLoginSuccessMessage"></p>
+
+                <div id="miLoginSuccessEmail"></div>
+
+                <button
+                    id="miLoginSuccessContinue"
+                    type="button"
+                ></button>
+            </section>
+        `;
+
+        document.body.appendChild(
+            backdrop
+        );
+
+        backdrop
+            .querySelector(
+                "#miLoginSuccessContinue"
+            )
+            .addEventListener(
+                "click",
+                hide
+            );
+
+        backdrop.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    event.target ===
+                    backdrop
+                ) {
+                    hide();
+                }
+            }
+        );
+
+        return backdrop;
+    }
+
+    function hide() {
+        clearTimeout(closeTimer);
+
+        const backdrop =
+            document.getElementById(
+                "miLoginSuccessBackdrop"
+            );
+
+        if (!backdrop) {
+            return;
+        }
+
+        backdrop.classList.remove(
+            "mi-login-success-visible"
+        );
+
+        setTimeout(
+            function () {
+                if (
+                    !backdrop.classList
+                        .contains(
+                            "mi-login-success-visible"
+                        )
+                ) {
+                    backdrop.style.display =
+                        "none";
+                }
+            },
+            240
+        );
+    }
+
+    function show(detail) {
+        const now =
+            Date.now();
+
+        /*
+          Prevent duplicate auth events from opening
+          the popup more than once.
+        */
+        if (
+            now - lastShownAt <
+            1800
+        ) {
+            return;
+        }
+
+        lastShownAt =
+            now;
+
+        clearTimeout(closeTimer);
+
+        const backdrop =
+            ensurePopup();
+
+        const text =
+            translations();
+
+        const title =
+            backdrop.querySelector(
+                "#miLoginSuccessTitle"
+            );
+
+        const message =
+            backdrop.querySelector(
+                "#miLoginSuccessMessage"
+            );
+
+        const email =
+            backdrop.querySelector(
+                "#miLoginSuccessEmail"
+            );
+
+        const continueButton =
+            backdrop.querySelector(
+                "#miLoginSuccessContinue"
+            );
+
+        title.textContent =
+            text.title;
+
+        message.textContent =
+            text.message;
+
+        continueButton.textContent =
+            text.continueText;
+
+        const emailValue =
+            getEmail(detail);
+
+        if (emailValue) {
+            email.textContent =
+                emailValue;
+
+            email.style.display =
+                "inline-flex";
+        }
+        else {
+            email.textContent =
+                "";
+
+            email.style.display =
+                "none";
+        }
+
+        backdrop.style.display =
+            "flex";
+
+        requestAnimationFrame(
+            function () {
+                requestAnimationFrame(
+                    function () {
+                        backdrop.classList.add(
+                            "mi-login-success-visible"
+                        );
+
+                        continueButton.focus({
+                            preventScroll:
+                                true
+                        });
+                    }
+                );
+            }
+        );
+
+        /*
+          Also use the existing Dynamic Island,
+          when that system is available.
+        */
+        if (
+            window.MIIOS &&
+            typeof window.MIIOS
+                .island ===
+                "function"
+        ) {
+            window.MIIOS.island(
+                text.title,
+                {
+                    type:
+                        "success",
+
+                    duration:
+                        1800
+                }
+            );
+        }
+
+        closeTimer =
+            setTimeout(
+                hide,
+                6500
+            );
+    }
+
+    function start() {
+        ensurePopup();
+
+        window.addEventListener(
+            "mi-login-success",
+            function (event) {
+                show(
+                    event.detail ||
+                    {}
+                );
+            }
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+                    hide();
+                }
+            }
+        );
+    }
+
+    window.MILoginSuccessPopup = {
+        show:
+            show,
+
+        hide:
+            hide
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI LOGIN SUCCESS POPUP JS - END */
 </script>
 </body>
 </html>
