@@ -19899,6 +19899,51 @@ document.addEventListener(
                             useStreaming
                         );
 
+                    /* MI AI LIVE SSE ADAPTER V2 */
+                    if (
+                        useStreaming &&
+                        !(result instanceof Response) &&
+                        result &&
+                        typeof result === "object"
+                    ) {
+                        const streamAnswer =
+                            String(
+                                result.reply ||
+                                result.response ||
+                                result.answer ||
+                                result.message ||
+                                result.text ||
+                                result.content ||
+                                ""
+                            ).trim();
+
+                        if (streamAnswer) {
+                            const streamPayload =
+                                JSON.stringify({
+                                    ...result,
+                                    reply: streamAnswer
+                                });
+
+                            return new Response(
+                                "event: done\\n" +
+                                "data: " +
+                                streamPayload +
+                                "\\n\\n",
+                                {
+                                    status: 200,
+                                    headers: {
+                                        "Content-Type":
+                                            "text/event-stream; charset=utf-8",
+                                        "Cache-Control":
+                                            "no-cache",
+                                        "X-Accel-Buffering":
+                                            "no"
+                                    }
+                                }
+                            );
+                        }
+                    }
+
                     const converted =
                         objectToResponse(result);
 
