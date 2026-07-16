@@ -6566,6 +6566,117 @@ body.mi-shared-single-chat #miSharedSingleChatBadge {
 </script>
 
 <!-- MI AI FIREBASE AUTH END -->
+
+<style>
+/* MI AI IPHONE HEADER BLUR V1 - START */
+
+/*
+  iPhone-style glass header.
+
+  Chat content can move underneath the header while
+  remaining softly blurred behind the glass surface.
+*/
+#header,
+header,
+.header,
+.top-header,
+.app-header,
+.main-header,
+#topbar,
+.topbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(34, 61, 101, 0.68),
+            rgba(74, 54, 132, 0.58)
+        ) !important;
+
+    -webkit-backdrop-filter:
+        blur(22px)
+        saturate(180%)
+        brightness(1.08) !important;
+
+    backdrop-filter:
+        blur(22px)
+        saturate(180%)
+        brightness(1.08) !important;
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.18) !important;
+
+    box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+
+    isolation: isolate !important;
+    transform: translateZ(0);
+}
+
+/* Soft glass highlight */
+#header::before,
+header::before,
+.header::before,
+.top-header::before,
+.app-header::before,
+.main-header::before,
+#topbar::before,
+.topbar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.13),
+            rgba(255, 255, 255, 0.025) 55%,
+            transparent
+        );
+}
+
+/* Keep buttons and logo sharp above the blur */
+#header > *,
+header > *,
+.header > *,
+.top-header > *,
+.app-header > *,
+.main-header > *,
+#topbar > *,
+.topbar > * {
+    position: relative;
+    z-index: 2;
+}
+
+/*
+  Chromium fallback.
+  A translucent header remains visible even if
+  backdrop-filter is unavailable.
+*/
+@supports not (
+    (backdrop-filter: blur(1px)) or
+    (-webkit-backdrop-filter: blur(1px))
+) {
+    #header,
+    header,
+    .header,
+    .top-header,
+    .app-header,
+    .main-header,
+    #topbar,
+    .topbar {
+        background:
+            rgba(37, 53, 91, 0.94) !important;
+    }
+}
+
+/* MI AI IPHONE HEADER BLUR V1 - END */
+</style>
 </head>
 
 <body>
