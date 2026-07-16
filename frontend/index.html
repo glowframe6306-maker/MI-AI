@@ -6677,6 +6677,64 @@ header > *,
 
 /* MI AI IPHONE HEADER BLUR V1 - END */
 </style>
+
+<style>
+/* MI AI SHARED CHAT ISOLATION V1 - START */
+
+/*
+  A shared-link viewer sees only the selected shared chat.
+  The complete message history inside that chat remains visible.
+*/
+body.mi-shared-chat-viewer #sidebar,
+body.mi-shared-chat-viewer #mobileMenuBackdrop,
+body.mi-shared-chat-viewer #mobileMenuToggle,
+body.mi-shared-chat-viewer #mobileMenuClose,
+body.mi-shared-chat-viewer #chatList,
+body.mi-shared-chat-viewer #newChatBtn,
+body.mi-shared-chat-viewer #settingsBtn,
+body.mi-shared-chat-viewer #supportBtn,
+body.mi-shared-chat-viewer #loginBtn,
+body.mi-shared-chat-viewer #logoutBtn,
+body.mi-shared-chat-viewer #approvalAlert,
+body.mi-shared-chat-viewer #menu,
+body.mi-shared-chat-viewer #miChatMoreMenu {
+    display: none !important;
+}
+
+body.mi-shared-chat-viewer {
+    display: block !important;
+}
+
+body.mi-shared-chat-viewer #main {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+}
+
+body.mi-shared-chat-viewer #header {
+    width: 100% !important;
+}
+
+/* Keep every message in the shared chat readable */
+body.mi-shared-chat-viewer #chat {
+    width: 100% !important;
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+}
+
+/*
+  View-only links retain the existing input restrictions.
+  Can-edit links retain the existing composer.
+*/
+body.mi-shared-chat-viewer.mi-view-only #inputBox,
+body.mi-shared-chat-viewer.mi-view-only #inputArea,
+body.mi-shared-chat-viewer.mi-view-only .composer {
+    display: none !important;
+}
+
+/* MI AI SHARED CHAT ISOLATION V1 - END */
+</style>
 </head>
 
 <body>
@@ -8216,6 +8274,18 @@ authReminder = document.getElementById("authReminder");
 
 const sharedPayload = getSharedChatPayloadFromUrl();
 if (sharedPayload) {
+    /*
+      The viewer is entering an isolated shared-chat session.
+
+      Do not expose, merge or render owner/viewer account chats.
+      Only sharedPayload.messages may be displayed.
+    */
+    window.MI_SHARED_VIEWER_MODE = true;
+    window.MI_SHARED_VIEWER_PAYLOAD = sharedPayload;
+
+    document.body.classList.add(
+        'mi-shared-chat-viewer'
+    );
     const previousChats = chats && typeof chats === 'object' && !Array.isArray(chats) ? chats : {};
     const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
     sharedChatData = sharedPayload;
@@ -17452,6 +17522,275 @@ document.addEventListener(
 })();
 
 /* MI AI SHARED SINGLE CHAT JS - END */
+</script>
+
+<script>
+/* MI AI SHARED CHAT ISOLATION JS V1 - START */
+
+(function () {
+    "use strict";
+
+    function hasSharedUrl() {
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        return Boolean(
+            params.get("s") ||
+            params.get("share")
+        );
+    }
+
+    function normalizeMessages(messages) {
+        if (!Array.isArray(messages)) {
+            return [];
+        }
+
+        /*
+          Preserve every valid message in the selected chat.
+          No message-count truncation is applied.
+        */
+        return messages
+            .filter(function (message) {
+                return (
+                    message &&
+                    typeof message === "object"
+                );
+            })
+            .map(function (message) {
+                return {
+                    ...message,
+
+                    role:
+                        message.role ||
+                        "ai",
+
+                    text:
+                        String(
+                            message.text ??
+                            message.content ??
+                            ""
+                        )
+                };
+            });
+    }
+
+    function isolateSharedChat() {
+        if (!hasSharedUrl()) {
+            return false;
+        }
+
+        const payload =
+            window.MI_SHARED_VIEWER_PAYLOAD ||
+            (
+                typeof sharedChatData !==
+                    "undefined"
+                    ? sharedChatData
+                    : null
+            );
+
+        if (
+            !payload ||
+            !Array.isArray(
+                payload.messages
+            )
+        ) {
+            return false;
+        }
+
+        document.body.classList.add(
+            "mi-shared-chat-viewer"
+        );
+
+        window.MI_SHARED_VIEWER_MODE =
+            true;
+
+        const sharedId =
+            String(
+                payload.id ||
+                payload.chatId ||
+                "shared"
+            );
+
+        const sharedMessages =
+            normalizeMessages(
+                payload.messages
+            );
+
+        const isolatedChats = {
+            [sharedId]:
+                sharedMessages
+        };
+
+        /*
+          Replace the active runtime map with exactly one chat.
+          Do not load or merge account chat history.
+        */
+        try {
+            chats = isolatedChats;
+        }
+        catch (error) {
+            window.chats =
+                isolatedChats;
+        }
+
+        window.chats =
+            isolatedChats;
+
+        try {
+            currentChat =
+                sharedId;
+        }
+        catch (error) {
+            window.currentChat =
+                sharedId;
+        }
+
+        window.currentChat =
+            sharedId;
+
+        /*
+          Sidebar is intentionally empty even if an old render
+          function attempts to display account conversations.
+        */
+        const list =
+            document.getElementById(
+                "chatList"
+            );
+
+        if (list) {
+            list.innerHTML = "";
+            list.style.display = "none";
+        }
+
+        const sidebar =
+            document.getElementById(
+                "sidebar"
+            );
+
+        if (sidebar) {
+            sidebar.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            sidebar.inert = true;
+        }
+
+        /*
+          Render all messages from only this shared chat.
+        */
+        try {
+            if (
+                typeof openChat ===
+                    "function"
+            ) {
+                openChat(sharedId);
+            }
+        }
+        catch (error) {
+            console.error(
+                "[MI AI Share] Unable to render shared chat.",
+                error
+            );
+        }
+
+        return true;
+    }
+
+    function blockAccountChatRendering(event) {
+        if (
+            !window.MI_SHARED_VIEWER_MODE ||
+            !hasSharedUrl()
+        ) {
+            return;
+        }
+
+        /*
+          Account/auth persistence events must not replace the
+          isolated shared chat while the share URL is open.
+        */
+        event.stopImmediatePropagation();
+
+        queueMicrotask(
+            isolateSharedChat
+        );
+    }
+
+    function start() {
+        isolateSharedChat();
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            blockAccountChatRendering,
+            true
+        );
+
+        window.addEventListener(
+            "mi-firebase-auth-changed",
+            blockAccountChatRendering,
+            true
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function () {
+                isolateSharedChat();
+            }
+        );
+
+        window.addEventListener(
+            "popstate",
+            function () {
+                isolateSharedChat();
+            }
+        );
+    }
+
+    window.MISharedChatIsolation = {
+        apply:
+            isolateSharedChat,
+
+        isSharedViewer:
+            function () {
+                return Boolean(
+                    window
+                        .MI_SHARED_VIEWER_MODE &&
+                    hasSharedUrl()
+                );
+            },
+
+        getMessages:
+            function () {
+                const payload =
+                    window
+                        .MI_SHARED_VIEWER_PAYLOAD;
+
+                return normalizeMessages(
+                    payload?.messages
+                );
+            }
+    };
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI SHARED CHAT ISOLATION JS V1 - END */
 </script>
 </body>
 </html>
