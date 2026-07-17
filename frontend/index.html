@@ -1,6 +1,7 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>MI AI ChatBOT Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 
@@ -9579,9 +9580,9 @@ span:nth-child(3) {
   <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">âœ•</button>
 </div>
 
-<button onclick="newChat()">âž• New Chat</button>
-<button id="supportBtn" onclick="customerSupport()">ðŸŽ§ Customer Support</button>
-<button id="settingsBtn" onclick="toggleSettings()">âš™ Settings</button>
+<button onclick="newChat()">➕ New Chat</button>
+<button id="supportBtn" onclick="customerSupport()">🎧 Customer Support</button>
+<button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
 
 <div id="chatList"></div>
 
@@ -9600,14 +9601,14 @@ span:nth-child(3) {
   <span>MI AI ChatBOT</span>
   <div class="headerActions">
     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
-    <button id="loginBtn" onclick="openLogin()" type="button">ðŸ“¥ Login</button>
+    <button id="loginBtn" onclick="openLogin()" type="button">🔒 Login</button>
     <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">ðŸ“´ Logout</button>
   </div>
 </div>
 
 <div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
   <div style="display:flex;gap:6px;margin-bottom:18px;">
-    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">Sign In</button>
+    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">🔒 Login</button>
     <button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#cbd5e1;font-weight:700;">Register</button>
   </div>
   <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
@@ -9658,7 +9659,7 @@ span:nth-child(3) {
     <div id="attachmentPreview" style="display:none;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#e2e8f0;font-size:13px;"></div>
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
-      <textarea id="msg" placeholder="Ask from MI AI..."></textarea>
+      <textarea id="msg" placeholder="Ask MI AI..."></textarea>
       <button id="sendBtn" type="button" onclick="sendOrStop()">â†‘</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
@@ -10254,7 +10255,7 @@ function showLoginPrompt(chatId) {
         <li>${t('auth.loginPrompt.benefitPersonal', 'Get faster, more personal replies')}</li>
       </ul>
       <div style="display:flex;justify-content:center;">
-        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">${t('auth.loginPrompt.button', 'Log in')}</button>
+        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">🔒 Login</button>
       </div>
     `;
 
@@ -25697,7 +25698,8 @@ async function generateOwnerShareLink(id){if(!loggedIn()){window.showShareFeedba
 function renderSharedChat(s){const box=document.getElementById("chat");if(!box)return;document.body.classList.add("mi-shared-single-chat");window.sharedChatData=s;const side=document.getElementById("sidebar");if(side)side.style.display="none";box.replaceChildren();(s.messages||[]).forEach(m=>{const d=document.createElement("div");d.className=m.role==="me"?"me":"ai";d.textContent=m.text;box.appendChild(d)});if(s.permission==="view")document.getElementById("inputBox")?.style.setProperty("display","none");box.scrollTop=box.scrollHeight;document.title=(s.chatTitle||"Shared Chat")+" - MI AI"}
 async function openSharedLink(){const token=new URLSearchParams(location.search).get("mi_share");if(!token)return false;let password="";while(true){const r=await fetch("/api/share-links/open",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token,password})});const j=await r.json().catch(()=>({}));if(r.status===401&&j.passwordRequired){const x=prompt("Enter the shared-link password:");if(x===null){document.body.innerHTML="<div style='padding:30px;color:white'>Access cancelled.</div>";return true}password=x;continue}if(!r.ok||!j.share){document.body.innerHTML="<div style='padding:30px;color:white'>"+String(j.message||"Could not open the shared chat.")+"</div>";return true}renderSharedChat(j.share);return true}}
 function createBell(){let b=document.getElementById("miOwnerNotificationBell");if(b)return b;const logout=document.getElementById("logoutBtn"),actions=logout?.parentElement;if(!logout||!actions)return null;b=document.createElement("button");b.id="miOwnerNotificationBell";b.type="button";b.setAttribute("aria-label","Open shared chat notifications");b.innerHTML='<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span id="miOwnerNotificationDot"></span>';b.onclick=openPanel;actions.insertBefore(b,logout);return b}
-function createPanel(){let d=document.getElementById("miOwnerNotificationBackdrop");if(d)return d;d=document.createElement("div");d.id="miOwnerNotificationBackdrop";d.innerHTML='<section id="miOwnerNotificationPanel" role="dialog" aria-modal="true"><header class="mi-owner-notification-header"><strong>Shared Chat Notifications</strong><button id="miOwnerNotificationClose" type="button">Ãƒâ€”</button></header><div id="miOwnerNotificationRows"></div></section>';d.onclick=e=>{if(e.target===d)closePanel()};d.querySelector("#miOwnerNotificationClose")?.addEventListener("click",closePanel);document.body.appendChild(d);return d}
+function createPanel(){let d=document.getElementById("miOwnerNotificationBackdrop");if(d)return d;d=document.createElement("div");d.id="miOwnerNotificationBackdrop";d.innerHTML='<section id="miOwnerNotificationPanel" role="dialog" aria-modal="true"><header class="mi-owner-notification-header">
+<meta charset="UTF-8"><strong>Shared Chat Notifications</strong><button id="miOwnerNotificationClose" type="button">Ãƒâ€”</button></header><div id="miOwnerNotificationRows"></div></section>';d.onclick=e=>{if(e.target===d)closePanel()};d.querySelector("#miOwnerNotificationClose")?.addEventListener("click",closePanel);document.body.appendChild(d);return d}
 function exactTime(v){const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v||"Unknown time");return new Intl.DateTimeFormat(undefined,{year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(d)}
 function renderNotifications(){const rows=document.getElementById("miOwnerNotificationRows");if(!rows)return;rows.replaceChildren();if(!notifications.length){const e=document.createElement("div");e.className="mi-owner-notification-empty";e.textContent="No shared-chat opening notifications yet.";rows.appendChild(e);return}notifications.forEach(item=>{const row=document.createElement("article");row.className="mi-owner-notification-row"+(item.read?"":" unread");const icon=document.createElement("div");icon.className="mi-owner-notification-icon";icon.textContent="Ã¢â€ â€”";const content=document.createElement("div");const title=document.createElement("div");title.className="mi-owner-notification-title";title.textContent=item.chatTitle||"Shared Chat";const msg=document.createElement("div");msg.className="mi-owner-notification-message";msg.textContent="A viewer opened this shared chat.";const time=document.createElement("div");time.className="mi-owner-notification-time";time.textContent=exactTime(item.openedAt);content.append(title,msg,time);row.append(icon,content);rows.appendChild(row)})}
 async function loadNotifications(){if(!loggedIn()){notifications=[];createBell()?.classList.remove("mi-has-unread");return}try{const r=await fetch("/api/share-notifications",{headers:authHeaders(false),cache:"no-store"});const j=await r.json().catch(()=>({}));if(!r.ok)return;notifications=Array.isArray(j.notifications)?j.notifications:[];createBell()?.classList.toggle("mi-has-unread",Number(j.unreadCount||0)>0);renderNotifications()}catch(e){console.warn(e)}}
