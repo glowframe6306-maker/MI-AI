@@ -6090,6 +6090,35 @@ body.mi-shared-single-chat #miSharedSingleChatBadge {
 }
 
 /* MI AI HEADER GLASS BLUR - END */
+
+/* MI AI SMOOTH PERFORMANCE FIX - START */
+#chat,
+#chatList {
+    contain: layout style;
+}
+
+#chat > .me,
+#chat > .ai,
+#chatList > .chatItem {
+    content-visibility: auto;
+    contain: layout paint style;
+}
+
+#chat > .me,
+#chat > .ai {
+    contain-intrinsic-size: auto 70px;
+}
+
+#chatList > .chatItem {
+    contain-intrinsic-size: auto 46px;
+}
+
+body.mi-app-booting #chat,
+body.mi-app-booting #chatList {
+    visibility: hidden;
+}
+/* MI AI SMOOTH PERFORMANCE FIX - END */
+
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -9577,12 +9606,12 @@ span:nth-child(3) {
 <div id="sidebar">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
   <h3 style="margin:0;text-align:left;flex:1;">MI AI ChatBOT</h3>
-  <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">âœ•</button>
+  <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">&#10005;</button>
 </div>
 
-<button onclick="newChat()">➕ New Chat</button>
-<button id="supportBtn" onclick="customerSupport()">🎧 Customer Support</button>
-<button id="settingsBtn" onclick="toggleSettings()">⚙ Settings</button>
+<button onclick="newChat()">&#10133; New Chat</button>
+<button id="supportBtn" onclick="customerSupport()">&#127911; Customer Support</button>
+<button id="settingsBtn" onclick="toggleSettings()">&#9881;&#65039; Settings</button>
 
 <div id="chatList"></div>
 
@@ -9591,7 +9620,7 @@ span:nth-child(3) {
 <!-- MAIN -->
 <div id="main">
 <div id="header">
-<button id="mobileMenuToggle" type="button" onclick="toggleMobileMenu()" aria-label="Open menu">â˜°</button>
+<button id="mobileMenuToggle" type="button" onclick="toggleMobileMenu()" aria-label="Open menu">&#9776;</button>
 <img
     id="headerLogo"
     src="/MIAI.svg"
@@ -9601,14 +9630,14 @@ span:nth-child(3) {
   <span>MI AI ChatBOT</span>
   <div class="headerActions">
     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
-    <button id="loginBtn" onclick="openLogin()" type="button">🔒 Login</button>
-    <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">ðŸ“´ Logout</button>
+    <button id="loginBtn" onclick="openLogin()" type="button">&#128274; Login</button>
+    <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">&#10162; Logout</button>
   </div>
 </div>
 
 <div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
   <div style="display:flex;gap:6px;margin-bottom:18px;">
-    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">🔒 Login</button>
+    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">&#128274; Login</button>
     <button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#cbd5e1;font-weight:700;">Register</button>
   </div>
   <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
@@ -12658,40 +12687,62 @@ async function send() {
 
 /* TYPE */
 function type(text){
-let d=document.createElement("div");
-d.className="ai";
-const contentBox=document.createElement('div');
-contentBox.className=isLongWritingResponse(text) ? 'aiWritingCard' : 'aiMessageBody';
-d.appendChild(contentBox);
-d.appendChild(createCopyButton(text));
-chatBox.appendChild(d);
+    const d = document.createElement("div");
+    d.className = "ai";
 
-let i=0;
-replyTypingTimer=setInterval(()=>{
-if(!replyInProgress){
-clearInterval(replyTypingTimer);
-replyTypingTimer=null;
-return;
-}
+    const contentBox = document.createElement("div");
+    contentBox.className = isLongWritingResponse(text)
+        ? "aiWritingCard"
+        : "aiMessageBody";
 
-contentBox.textContent+=text[i];
-i++;
-scroll();
+    d.appendChild(contentBox);
+    d.appendChild(createCopyButton(text));
+    chatBox.appendChild(d);
 
-if(i>=text.length){
-clearInterval(replyTypingTimer);
-replyTypingTimer=null;
-replyInProgress=false;
-setReplyControlState(false);
+    const fullText = String(text || "");
+    const chunkSize = Math.max(8, Math.min(40, Math.ceil(fullText.length / 90)));
+    let index = 0;
+    let lastScroll = 0;
 
-// Linkify the completed message
-contentBox.innerHTML = linkifyText(text);
+    function finishTyping(){
+        contentBox.innerHTML = linkifyText(fullText);
+        replyTypingTimer = null;
+        replyInProgress = false;
+        setReplyControlState(false);
 
-chats[currentChat].push({role:"ai",text});
-save();
-maybeShowLoginPrompt(currentChat);
-}
-},20);
+        if (!Array.isArray(chats[currentChat])) {
+            chats[currentChat] = [];
+        }
+
+        chats[currentChat].push({role:"ai", text:fullText});
+        save();
+        maybeShowLoginPrompt(currentChat);
+        scroll();
+    }
+
+    function renderChunk(now){
+        if (!replyInProgress) {
+            replyTypingTimer = null;
+            return;
+        }
+
+        index = Math.min(fullText.length, index + chunkSize);
+        contentBox.textContent = fullText.slice(0, index);
+
+        if (!lastScroll || now - lastScroll >= 80) {
+            scroll();
+            lastScroll = now;
+        }
+
+        if (index >= fullText.length) {
+            finishTyping();
+            return;
+        }
+
+        replyTypingTimer = requestAnimationFrame(renderChunk);
+    }
+
+    replyTypingTimer = requestAnimationFrame(renderChunk);
 }
 
 /* ADD */
@@ -18724,16 +18775,27 @@ document.addEventListener(
           Low-frequency safety backup only.
           It does not touch click events or block UI.
         */
-        setInterval(
-            function () {
-                if (authenticated()) {
-                    saveNow(
-                        "safety"
-                    );
-                }
-            },
-            15000
-        );
+        let lifecycleSaveTimer = null;
+
+        function scheduleLifecycleSave(reason) {
+            if (!authenticated()) return;
+            window.clearTimeout(lifecycleSaveTimer);
+            lifecycleSaveTimer = window.setTimeout(function () {
+                saveNow(reason);
+            }, 180);
+        }
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "hidden") {
+                scheduleLifecycleSave("visibility");
+            }
+        });
+
+        window.addEventListener("pagehide", function () {
+            if (authenticated()) {
+                saveNow("pagehide");
+            }
+        });
     }
 
     window.MISafeAccountChatRestore = {
@@ -20102,7 +20164,7 @@ document.addEventListener(
                 "true"
             );
 
-            icon.textContent = "ðŸ”—";
+            icon.innerHTML = "&#8599;";
 
             const text =
                 document.createElement(
@@ -24956,10 +25018,11 @@ document.addEventListener(
         }
         catch (error) {}
 
-        setInterval(
-            refreshTitles,
-            2000
-        );
+        setTimeout(refreshTitles, 250);
+        window.addEventListener("mi-chat-updated", function () {
+            window.clearTimeout(window.__miRefreshTitlesTimer);
+            window.__miRefreshTitlesTimer = window.setTimeout(refreshTitles, 120);
+        });
 
         setTimeout(
             function () {
@@ -25026,649 +25089,7 @@ document.addEventListener(
 
 
 <script>
-/* MI AI WELCOME ANIMATION V10 JS - START */
 
-(function () {
-    "use strict";
-
-    const WELCOME_ID =
-        "miWelcomeV9";
-
-    const EXIT_CLASS =
-        "mi-welcome-v10-leaving";
-
-    const HIDDEN_CLASS =
-        "mi-welcome-v10-hidden";
-
-    const CHAT_START_CLASS =
-        "mi-welcome-v10-message-start";
-
-    const EXIT_TIME_MS =
-        390;
-
-    let exitInProgress =
-        false;
-
-    let observer =
-        null;
-
-    function chatContainer() {
-        try {
-            if (
-                typeof chatBox !==
-                    "undefined" &&
-                chatBox
-            ) {
-                return chatBox;
-            }
-        }
-        catch (error) {
-            // Continue with DOM lookup.
-        }
-
-        return (
-            document.getElementById(
-                "chat"
-            ) ||
-            document.querySelector(
-                [
-                    "#messages",
-                    "#chatMessages",
-                    ".chat-messages",
-                    ".messages"
-                ].join(",")
-            )
-        );
-    }
-
-    function messageInput() {
-        try {
-            if (
-                typeof input !==
-                    "undefined" &&
-                input
-            ) {
-                return input;
-            }
-        }
-        catch (error) {
-            // Continue with DOM lookup.
-        }
-
-        return document.querySelector(
-            [
-                "#msg",
-                "#messageInput",
-                "#chatInput",
-                "#prompt",
-                "textarea[name='message']",
-                ".message-input",
-                ".chat-input",
-                "textarea"
-            ].join(",")
-        );
-    }
-
-    function welcomeElement() {
-        return document.getElementById(
-            WELCOME_ID
-        );
-    }
-
-    function hasTypedMessage() {
-        const field =
-            messageInput();
-
-        return Boolean(
-            String(
-                field?.value ||
-                ""
-            ).trim()
-        );
-    }
-
-    function looksLikeUserMessage(
-        element
-    ) {
-        if (
-            !element ||
-            element.nodeType !==
-                Node.ELEMENT_NODE
-        ) {
-            return false;
-        }
-
-        if (
-            element.matches?.(
-                [
-                    ".me",
-                    ".user",
-                    ".user-message",
-                    ".message.user",
-                    ".message[data-role='user']",
-                    ".chat-message.user",
-                    "[data-role='user']"
-                ].join(",")
-            )
-        ) {
-            return true;
-        }
-
-        return Boolean(
-            element.querySelector?.(
-                [
-                    ".me",
-                    ".user",
-                    ".user-message",
-                    ".message.user",
-                    ".message[data-role='user']",
-                    ".chat-message.user",
-                    "[data-role='user']"
-                ].join(",")
-            )
-        );
-    }
-
-    function removeWelcomeImmediately() {
-        const welcome =
-            welcomeElement();
-
-        if (welcome) {
-            welcome.remove();
-        }
-
-        exitInProgress =
-            false;
-    }
-
-    function fadeOutWelcome() {
-        const welcome =
-            welcomeElement();
-
-        if (
-            !welcome ||
-            exitInProgress
-        ) {
-            return Promise.resolve(
-                false
-            );
-        }
-
-        exitInProgress =
-            true;
-
-        const container =
-            chatContainer();
-
-        container?.classList.add(
-            CHAT_START_CLASS
-        );
-
-        welcome.classList.remove(
-            HIDDEN_CLASS
-        );
-
-        /*
-          Force the browser to register the current state
-          before adding the exit state.
-        */
-        void welcome.offsetWidth;
-
-        welcome.classList.add(
-            EXIT_CLASS
-        );
-
-        return new Promise(
-            function (resolve) {
-                setTimeout(
-                    function () {
-                        const latest =
-                            welcomeElement();
-
-                        if (latest) {
-                            latest.classList.add(
-                                HIDDEN_CLASS
-                            );
-
-                            latest.remove();
-                        }
-
-                        exitInProgress =
-                            false;
-
-                        setTimeout(
-                            function () {
-                                container
-                                    ?.classList
-                                    .remove(
-                                        CHAT_START_CLASS
-                                    );
-                            },
-                            430
-                        );
-
-                        resolve(
-                            true
-                        );
-                    },
-                    EXIT_TIME_MS
-                );
-            }
-        );
-    }
-
-    function prepareBeforeSend() {
-        if (!hasTypedMessage()) {
-            return;
-        }
-
-        fadeOutWelcome();
-    }
-
-    function installSendDetection() {
-        document.addEventListener(
-            "submit",
-            function (event) {
-                const form =
-                    event.target;
-
-                if (
-                    form?.querySelector?.(
-                        [
-                            "#msg",
-                            "#messageInput",
-                            "#chatInput",
-                            "#prompt",
-                            "textarea"
-                        ].join(",")
-                    )
-                ) {
-                    prepareBeforeSend();
-                }
-            },
-            true
-        );
-
-        document.addEventListener(
-            "click",
-            function (event) {
-                const sendButton =
-                    event.target
-                        ?.closest?.(
-                            [
-                                "#sendBtn",
-                                "#sendButton",
-                                ".send-btn",
-                                ".send-button",
-                                '[data-action="send"]',
-                                'button[onclick*="send" i]',
-                                'button[aria-label*="send" i]',
-                                'button[title*="send" i]'
-                            ].join(",")
-                        );
-
-                if (!sendButton) {
-                    return;
-                }
-
-                prepareBeforeSend();
-            },
-            true
-        );
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-                if (
-                    event.key !==
-                        "Enter" ||
-                    event.shiftKey ||
-                    event.isComposing
-                ) {
-                    return;
-                }
-
-                const target =
-                    event.target;
-
-                if (
-                    target?.matches?.(
-                        [
-                            "#msg",
-                            "#messageInput",
-                            "#chatInput",
-                            "#prompt",
-                            "textarea",
-                            ".message-input",
-                            ".chat-input"
-                        ].join(",")
-                    )
-                ) {
-                    prepareBeforeSend();
-                }
-            },
-            true
-        );
-    }
-
-    function installMessageObserver() {
-        const container =
-            chatContainer();
-
-        if (!container) {
-            return false;
-        }
-
-        observer?.disconnect?.();
-
-        observer =
-            new MutationObserver(
-                function (mutations) {
-                    for (
-                        const mutation of
-                        mutations
-                    ) {
-                        for (
-                            const node of
-                            mutation.addedNodes
-                        ) {
-                            if (
-                                looksLikeUserMessage(
-                                    node
-                                )
-                            ) {
-                                const welcome =
-                                    welcomeElement();
-
-                                if (welcome) {
-                                    /*
-                                      A message was already inserted.
-                                      Remove the overlay immediately so
-                                      it cannot stay above the message.
-                                    */
-                                    welcome.classList.add(
-                                        EXIT_CLASS
-                                    );
-
-                                    setTimeout(
-                                        removeWelcomeImmediately,
-                                        180
-                                    );
-                                }
-
-                                return;
-                            }
-                        }
-                    }
-                }
-            );
-
-        observer.observe(
-            container,
-            {
-                childList:
-                    true,
-
-                subtree:
-                    true
-            }
-        );
-
-        return true;
-    }
-
-    function restartWelcomeAnimation() {
-        const welcome =
-            welcomeElement();
-
-        if (!welcome) {
-            return;
-        }
-
-        exitInProgress =
-            false;
-
-        welcome.classList.remove(
-            EXIT_CLASS,
-            HIDDEN_CLASS
-        );
-
-        /*
-          Recreate the entrance animation whenever
-          another empty New Chat opens.
-        */
-        welcome.style.animation =
-            "none";
-
-        void welcome.offsetWidth;
-
-        welcome.style.animation =
-            "";
-
-        const card =
-            welcome.querySelector(
-                "#miWelcomeV9Card"
-            );
-
-        if (card) {
-            card.style.animation =
-                "none";
-
-            void card.offsetWidth;
-
-            card.style.animation =
-                "";
-        }
-    }
-
-    function installWelcomeWatch() {
-        const bodyObserver =
-            new MutationObserver(
-                function (mutations) {
-                    let welcomeAdded =
-                        false;
-
-                    for (
-                        const mutation of
-                        mutations
-                    ) {
-                        for (
-                            const node of
-                            mutation.addedNodes
-                        ) {
-                            if (
-                                node.nodeType !==
-                                    Node.ELEMENT_NODE
-                            ) {
-                                continue;
-                            }
-
-                            if (
-                                node.id ===
-                                    WELCOME_ID ||
-                                node.querySelector?.(
-                                    "#" +
-                                    WELCOME_ID
-                                )
-                            ) {
-                                welcomeAdded =
-                                    true;
-
-                                break;
-                            }
-                        }
-
-                        if (welcomeAdded) {
-                            break;
-                        }
-                    }
-
-                    if (welcomeAdded) {
-                        requestAnimationFrame(
-                            function () {
-                                restartWelcomeAnimation();
-                                installMessageObserver();
-                            }
-                        );
-                    }
-                }
-            );
-
-        bodyObserver.observe(
-            document.body,
-            {
-                childList:
-                    true,
-
-                subtree:
-                    true
-            }
-        );
-    }
-
-    function patchCleanEngineAdd() {
-        /*
-          Wrap the current add function only once.
-          This makes the fade happen before the first
-          user message is rendered.
-        */
-        let attempts =
-            0;
-
-        const installer =
-            setInterval(
-                function () {
-                    attempts +=
-                        1;
-
-                    const currentAdd =
-                        window.add;
-
-                    if (
-                        typeof currentAdd ===
-                            "function" &&
-                        !currentAdd
-                            .__miWelcomeFadeV10
-                    ) {
-                        const wrapped =
-                            function (
-                                role,
-                                text
-                            ) {
-                                const normalizedRole =
-                                    String(
-                                        role || ""
-                                    )
-                                        .trim()
-                                        .toLowerCase();
-
-                                if (
-                                    normalizedRole ===
-                                        "me" ||
-                                    normalizedRole ===
-                                        "user" ||
-                                    normalizedRole ===
-                                        "human"
-                                ) {
-                                    fadeOutWelcome();
-                                }
-
-                                return currentAdd
-                                    .apply(
-                                        this,
-                                        arguments
-                                    );
-                            };
-
-                        wrapped
-                            .__miWelcomeFadeV10 =
-                            true;
-
-                        wrapped
-                            .__miOriginal =
-                            currentAdd;
-
-                        window.add =
-                            wrapped;
-
-                        try {
-                            add =
-                                wrapped;
-                        }
-                        catch (error) {
-                            // window.add remains active.
-                        }
-
-                        clearInterval(
-                            installer
-                        );
-
-                        return;
-                    }
-
-                    if (
-                        attempts >=
-                        100
-                    ) {
-                        clearInterval(
-                            installer
-                        );
-                    }
-                },
-                100
-            );
-    }
-
-    function start() {
-        installSendDetection();
-        installMessageObserver();
-        installWelcomeWatch();
-        patchCleanEngineAdd();
-
-        restartWelcomeAnimation();
-
-        window.MIWelcomeAnimationV10 = {
-            fadeOut:
-                fadeOutWelcome,
-
-            restart:
-                restartWelcomeAnimation,
-
-            remove:
-                removeWelcomeImmediately,
-
-            isVisible:
-                function () {
-                    return Boolean(
-                        welcomeElement()
-                    );
-                }
-        };
-
-        console.log(
-            "[MI AI] Welcome Animation V10 installed."
-        );
-    }
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once:
-                    true
-            }
-        );
-    }
-    else {
-        start();
-    }
-})();
-
-/* MI AI WELCOME ANIMATION V10 JS - END */
 </script>
 
 
@@ -25698,15 +25119,44 @@ async function generateOwnerShareLink(id){if(!loggedIn()){window.showShareFeedba
 function renderSharedChat(s){const box=document.getElementById("chat");if(!box)return;document.body.classList.add("mi-shared-single-chat");window.sharedChatData=s;const side=document.getElementById("sidebar");if(side)side.style.display="none";box.replaceChildren();(s.messages||[]).forEach(m=>{const d=document.createElement("div");d.className=m.role==="me"?"me":"ai";d.textContent=m.text;box.appendChild(d)});if(s.permission==="view")document.getElementById("inputBox")?.style.setProperty("display","none");box.scrollTop=box.scrollHeight;document.title=(s.chatTitle||"Shared Chat")+" - MI AI"}
 async function openSharedLink(){const token=new URLSearchParams(location.search).get("mi_share");if(!token)return false;let password="";while(true){const r=await fetch("/api/share-links/open",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token,password})});const j=await r.json().catch(()=>({}));if(r.status===401&&j.passwordRequired){const x=prompt("Enter the shared-link password:");if(x===null){document.body.innerHTML="<div style='padding:30px;color:white'>Access cancelled.</div>";return true}password=x;continue}if(!r.ok||!j.share){document.body.innerHTML="<div style='padding:30px;color:white'>"+String(j.message||"Could not open the shared chat.")+"</div>";return true}renderSharedChat(j.share);return true}}
 function createBell(){let b=document.getElementById("miOwnerNotificationBell");if(b)return b;const logout=document.getElementById("logoutBtn"),actions=logout?.parentElement;if(!logout||!actions)return null;b=document.createElement("button");b.id="miOwnerNotificationBell";b.type="button";b.setAttribute("aria-label","Open shared chat notifications");b.innerHTML='<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span id="miOwnerNotificationDot"></span>';b.onclick=openPanel;actions.insertBefore(b,logout);return b}
-function createPanel(){let d=document.getElementById("miOwnerNotificationBackdrop");if(d)return d;d=document.createElement("div");d.id="miOwnerNotificationBackdrop";d.innerHTML='<section id="miOwnerNotificationPanel" role="dialog" aria-modal="true"><header class="mi-owner-notification-header">
-<meta charset="UTF-8"><strong>Shared Chat Notifications</strong><button id="miOwnerNotificationClose" type="button">Ãƒâ€”</button></header><div id="miOwnerNotificationRows"></div></section>';d.onclick=e=>{if(e.target===d)closePanel()};d.querySelector("#miOwnerNotificationClose")?.addEventListener("click",closePanel);document.body.appendChild(d);return d}
+function createPanel(){
+    let d = document.getElementById("miOwnerNotificationBackdrop");
+    if (d) return d;
+
+    d = document.createElement("div");
+    d.id = "miOwnerNotificationBackdrop";
+
+    d.innerHTML =
+        '<section id="miOwnerNotificationPanel" role="dialog" aria-modal="true">' +
+        '<header class="mi-owner-notification-header">' +
+        '<strong>Shared Chat Notifications</strong>' +
+        '<button id="miOwnerNotificationClose" type="button" aria-label="Close">&#10005;</button>' +
+        '</header>' +
+        '<div id="miOwnerNotificationRows"></div>' +
+        '</section>';
+
+    d.onclick = function (event) {
+        if (event.target === d) {
+            closePanel();
+        }
+    };
+
+    const closeButton = d.querySelector("#miOwnerNotificationClose");
+    if (closeButton) {
+        closeButton.addEventListener("click", closePanel);
+    }
+
+    document.body.appendChild(d);
+    return d;
+}
+
 function exactTime(v){const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v||"Unknown time");return new Intl.DateTimeFormat(undefined,{year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(d)}
 function renderNotifications(){const rows=document.getElementById("miOwnerNotificationRows");if(!rows)return;rows.replaceChildren();if(!notifications.length){const e=document.createElement("div");e.className="mi-owner-notification-empty";e.textContent="No shared-chat opening notifications yet.";rows.appendChild(e);return}notifications.forEach(item=>{const row=document.createElement("article");row.className="mi-owner-notification-row"+(item.read?"":" unread");const icon=document.createElement("div");icon.className="mi-owner-notification-icon";icon.textContent="Ã¢â€ â€”";const content=document.createElement("div");const title=document.createElement("div");title.className="mi-owner-notification-title";title.textContent=item.chatTitle||"Shared Chat";const msg=document.createElement("div");msg.className="mi-owner-notification-message";msg.textContent="A viewer opened this shared chat.";const time=document.createElement("div");time.className="mi-owner-notification-time";time.textContent=exactTime(item.openedAt);content.append(title,msg,time);row.append(icon,content);rows.appendChild(row)})}
 async function loadNotifications(){if(!loggedIn()){notifications=[];createBell()?.classList.remove("mi-has-unread");return}try{const r=await fetch("/api/share-notifications",{headers:authHeaders(false),cache:"no-store"});const j=await r.json().catch(()=>({}));if(!r.ok)return;notifications=Array.isArray(j.notifications)?j.notifications:[];createBell()?.classList.toggle("mi-has-unread",Number(j.unreadCount||0)>0);renderNotifications()}catch(e){console.warn(e)}}
 async function markAllRead(){if(!loggedIn())return;try{await fetch("/api/share-notifications",{method:"PATCH",headers:authHeaders(true),body:JSON.stringify({markAll:true})})}catch(e){}notifications=notifications.map(i=>Object.assign({},i,{read:true}));createBell()?.classList.remove("mi-has-unread");renderNotifications()}
 function openPanel(){const d=createPanel();renderNotifications();requestAnimationFrame(()=>d.classList.add("mi-open"));setTimeout(markAllRead,250)}
 function closePanel(){document.getElementById("miOwnerNotificationBackdrop")?.classList.remove("mi-open")}
-function startPolling(){clearInterval(pollingTimer);if(!loggedIn())return;loadNotifications();pollingTimer=setInterval(loadNotifications,10000)}
+function startPolling(){clearInterval(pollingTimer);if(!loggedIn())return;loadNotifications();pollingTimer=setInterval(loadNotifications,30000)}
 async function start(){window.generateSharedChatLink=generateOwnerShareLink;try{generateSharedChatLink=generateOwnerShareLink}catch(e){}if(await openSharedLink())return;if(loggedIn()){createBell();createPanel();startPolling()}window.MIOwnerNotificationsFinal={generate:generateOwnerShareLink,refresh:loadNotifications,open:openPanel,close:closePanel};console.log("[MI AI] Owner-only share notifications installed.")}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start()
 })();
@@ -27096,6 +26546,36 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 
 <!-- MI AI CLICKABLE LINKS FINAL END -->
 
+
+
+<script>
+/* MI AI SMOOTH BOOT GUARD - START */
+(function () {
+    "use strict";
+
+    document.body.classList.add("mi-app-booting");
+    let released = false;
+
+    function releaseBootGuard() {
+        if (released) return;
+        released = true;
+
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                document.body.classList.remove("mi-app-booting");
+            });
+        });
+    }
+
+    window.addEventListener("load", releaseBootGuard, { once: true });
+    window.addEventListener("mi-firebase-auth-changed", function () {
+        window.setTimeout(releaseBootGuard, 80);
+    }, { once: true });
+
+    window.setTimeout(releaseBootGuard, 1800);
+})();
+/* MI AI SMOOTH BOOT GUARD - END */
+</script>
 
 </body>
 </html>
