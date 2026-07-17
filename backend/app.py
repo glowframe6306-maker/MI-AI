@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response, Response, stream_with_context
+﻿from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response, Response, stream_with_context
 from flask_cors import CORS
 import os
 import re
@@ -338,11 +338,11 @@ Detect the language and script of the user's latest message.
 
 Always follow these final language rules:
 
-- English message → reply only in English.
-- Sinhala Unicode message → reply only in Sinhala Unicode.
-- Roman Sinhala or Singlish message → reply in natural Sinhala Unicode.
-- Tamil Unicode message → reply only in Tamil Unicode.
-- Another language → reply in that same language.
+- English message â†’ reply only in English.
+- Sinhala Unicode message â†’ reply only in Sinhala Unicode.
+- Roman Sinhala or Singlish message â†’ reply in natural Sinhala Unicode.
+- Tamil Unicode message â†’ reply only in Tamil Unicode.
+- Another language â†’ reply in that same language.
 - Do not translate unless the user asks for translation.
 
 Never use Singlish when replying to a Sinhala or Singlish message.
@@ -378,22 +378,22 @@ Reply:
 I am doing well.
 
 User:
-ඔයා කොහොමද?
+à¶”à¶ºà· à¶šà·œà·„à·œà¶¸à¶¯?
 
 Reply:
-මම හොඳින් ඉන්නවා.
+à¶¸à¶¸ à·„à·œà¶³à·’à¶±à·Š à¶‰à¶±à·Šà¶±à·€à·.
 
 User:
 mata udaw karanna
 
 Reply:
-මම ඔබට උදව් කරන්නම්.
+à¶¸à¶¸ à¶”à¶¶à¶§ à¶‹à¶¯à·€à·Š à¶šà¶»à¶±à·Šà¶±à¶¸à·Š.
 
 User:
-நீ எப்படி இருக்கிறாய்?
+à®¨à¯€ à®Žà®ªà¯à®ªà®Ÿà®¿ à®‡à®°à¯à®•à¯à®•à®¿à®±à®¾à®¯à¯?
 
 Reply:
-நான் நன்றாக இருக்கிறேன்.
+à®¨à®¾à®©à¯ à®¨à®©à¯à®±à®¾à®• à®‡à®°à¯à®•à¯à®•à®¿à®±à¯‡à®©à¯.
 
 ==================================================
 MATHEMATICS
@@ -1702,13 +1702,13 @@ LIVE_SEARCH_KEYWORDS = (
     "election", "stock", "crypto", "bitcoin", "cricket",
     "football", "soccer", "ipl", "world cup",
     "premier league", "champions league", "ada", "dan",
-    "keeyada", "kiyada", "වෙලාව", "දැන්", "අද",
-    "ලකුණු", "තරග", "ප්‍රවෘත්ති", "ස්කෝර්",
+    "keeyada", "kiyada", "à·€à·™à¶½à·à·€", "à¶¯à·à¶±à·Š", "à¶…à¶¯",
+    "à¶½à¶šà·”à¶«à·”", "à¶­à¶»à¶œ", "à¶´à·Šâ€à¶»à·€à·˜à¶­à·Šà¶­à·’", "à·ƒà·Šà¶šà·à¶»à·Š",
 )
 
 LIVE_NEWS_KEYWORDS = (
     "news", "breaking", "headline", "headlines",
-    "latest news", "ප්‍රවෘත්ති",
+    "latest news", "à¶´à·Šâ€à¶»à·€à·˜à¶­à·Šà¶­à·’",
 )
 
 LIVE_FINANCE_KEYWORDS = (
@@ -1719,7 +1719,7 @@ LIVE_FINANCE_KEYWORDS = (
 LIVE_SPORTS_KEYWORDS = (
     "score", "scores", "match", "fixture", "cricket",
     "football", "soccer", "ipl", "world cup",
-    "premier league", "ලකුණු", "තරග", "ස්කෝර්",
+    "premier league", "à¶½à¶šà·”à¶«à·”", "à¶­à¶»à¶œ", "à·ƒà·Šà¶šà·à¶»à·Š",
 )
 
 
@@ -2280,3 +2280,181 @@ if __name__=="__main__":
         port=5000,
         debug=False
     )
+
+
+# === MI AI WEB PHOTO SEARCH START ===
+import re as _mi_photo_re
+from urllib.parse import quote_plus as _mi_photo_quote_plus
+
+try:
+    import requests as _mi_photo_requests
+except Exception:
+    _mi_photo_requests = None
+
+
+def _mi_is_photo_request(value):
+    text = str(value or "").strip().lower()
+    if not text:
+        return False
+
+    image_terms = (
+        "photo", "photos", "image", "images", "picture", "pictures",
+        "wallpaper", "pic", "pics",
+        "ෆොටෝ", "පින්තූර", "පින්තූරයක්",
+        "photo ekak", "image ekak", "picture ekak",
+        "படம்", "புகைப்படம்",
+    )
+
+    request_terms = (
+        "show", "send", "find", "search", "give", "get", "want", "need",
+        "පෙන්න", "එවන්න", "හොය", "දෙන්න", "ඕන",
+        "pennanna", "yawanna", "hoyanna", "denna", "ona",
+    )
+
+    return (
+        any(term in text for term in image_terms)
+        and any(term in text for term in request_terms)
+    )
+
+
+def _mi_clean_photo_query(value):
+    query = str(value or "").strip()
+
+    phrases = (
+        "please show me", "please send me", "show me", "send me",
+        "find me", "search for", "give me", "get me",
+        "photo of", "photos of", "image of", "images of",
+        "picture of", "pictures of",
+        "photo", "photos", "image", "images", "picture", "pictures",
+        "wallpaper", "pic", "pics",
+        "මට", "ෆොටෝ එකක්", "ෆොටෝ එක", "ෆොටෝ",
+        "පින්තූරයක්", "පින්තූර", "පෙන්නන්න", "එවන්න",
+        "හොයන්න", "දෙන්න", "ඕන",
+        "mata", "photo ekak", "image ekak", "picture ekak",
+        "pennanna", "yawanna", "hoyanna", "denna", "ona",
+    )
+
+    for phrase in phrases:
+        query = _mi_photo_re.sub(
+            _mi_photo_re.escape(phrase),
+            " ",
+            query,
+            flags=_mi_photo_re.IGNORECASE,
+        )
+
+    query = _mi_photo_re.sub(r"\s+", " ", query).strip(" .,?!:-")
+    return query or str(value or "").strip()
+
+
+def _mi_search_wikimedia_photos(query, limit=5):
+    if _mi_photo_requests is None:
+        return []
+
+    response = _mi_photo_requests.get(
+        "https://commons.wikimedia.org/w/api.php",
+        params={
+            "action": "query",
+            "generator": "search",
+            "gsrsearch": str(query),
+            "gsrnamespace": 6,
+            "gsrlimit": max(1, min(int(limit), 8)),
+            "prop": "imageinfo",
+            "iiprop": "url",
+            "iiurlwidth": 1200,
+            "format": "json",
+            "origin": "*",
+        },
+        headers={"User-Agent": "MI-AI/1.0"},
+        timeout=15,
+    )
+    response.raise_for_status()
+
+    pages = response.json().get("query", {}).get("pages", {})
+    items = []
+
+    for page in pages.values():
+        info = (page.get("imageinfo") or [{}])[0]
+        direct_url = info.get("thumburl") or info.get("url") or ""
+        page_url = info.get("descriptionurl") or ""
+        title = str(page.get("title") or "Photo").replace("File:", "", 1)
+
+        if direct_url or page_url:
+            items.append({
+                "title": title,
+                "image_url": direct_url,
+                "page_url": page_url,
+            })
+
+    return items[:limit]
+
+
+def _mi_build_photo_reply(value):
+    query = _mi_clean_photo_query(value)
+
+    try:
+        results = _mi_search_wikimedia_photos(query, 5)
+    except Exception as exc:
+        try:
+            app.logger.warning("MI photo search failed: %s", exc)
+        except Exception:
+            pass
+        results = []
+
+    lines = [f'Here are photo links for "{query}":', ""]
+
+    if results:
+        for index, item in enumerate(results, 1):
+            lines.append(f"{index}. {item['title']}")
+            if item.get("page_url"):
+                lines.append(f"Photo page: {item['page_url']}")
+            if item.get("image_url"):
+                lines.append(f"Direct image: {item['image_url']}")
+            lines.append("")
+    else:
+        encoded = _mi_photo_quote_plus(query)
+        lines.extend([
+            "Direct results are temporarily unavailable.",
+            "",
+            "Google Images:",
+            f"https://www.google.com/search?tbm=isch&q={encoded}",
+            "",
+            "Wikimedia Commons:",
+            f"https://commons.wikimedia.org/w/index.php?search={encoded}&title=Special:MediaSearch&type=image",
+        ])
+
+    return "\n".join(lines).strip()
+
+
+@app.route("/api/image-search", methods=["POST", "OPTIONS"])
+def _mi_web_photo_search():
+    if request.method == "OPTIONS":
+        return jsonify({"ok": True}), 200
+
+    payload = request.get_json(silent=True) or {}
+    query = (
+        payload.get("query")
+        or payload.get("message")
+        or payload.get("prompt")
+        or payload.get("text")
+        or ""
+    )
+
+    if not str(query).strip():
+        return jsonify({
+            "ok": False,
+            "error": "Photo search text is required."
+        }), 400
+
+    reply = _mi_build_photo_reply(query)
+
+    return jsonify({
+        "ok": True,
+        "type": "image_search",
+        "reply": reply,
+        "response": reply,
+        "answer": reply,
+        "message": reply,
+        "text": reply,
+    }), 200
+# === MI AI WEB PHOTO SEARCH END ===
+
