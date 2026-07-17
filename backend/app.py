@@ -640,11 +640,35 @@ Always prioritize:
 9. Speed
 10. Friendly communication
 """.strip()
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+supabase_url = (
+    os.getenv("SUPABASE_URL")
+    or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    or ""
+).strip()
 
-supabase = create_client(supabase_url, supabase_key) if create_client and supabase_url and supabase_key else None
+supabase_key = (
+    os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    or os.getenv("SUPABASE_ANON_KEY")
+    or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    or ""
+).strip()
 
+supabase = None
+supabase_initialization_error = ""
+
+if create_client is None:
+    supabase_initialization_error = "The supabase Python package is not installed."
+elif not supabase_url:
+    supabase_initialization_error = "SUPABASE_URL is missing."
+elif not supabase_key:
+    supabase_initialization_error = "SUPABASE_SERVICE_ROLE_KEY is missing."
+else:
+    try:
+        supabase = create_client(supabase_url, supabase_key)
+    except Exception as exc:
+        supabase = None
+        supabase_initialization_error = str(exc)
+        app.logger.exception("Supabase initialization failed.")
 
 def _get_groq_api_key():
     return (os.getenv("GROQ_API_KEY") or "").strip()
@@ -944,6 +968,25 @@ def authenticate_user(email, password):
     except Exception as exc:
         app.logger.error("Supabase authentication failed: %s", exc)
         return None, "Authentication service error."
+
+
+
+@app.route("/api/account-service-health", methods=["GET"])
+def mi_account_service_health():
+    return jsonify({
+        "success": bool(supabase),
+        "supabasePackageLoaded": create_client is not None,
+        "supabaseUrlConfigured": bool(supabase_url),
+        "supabaseKeyConfigured": bool(supabase_key),
+        "initializationError": (
+            ""
+            if supabase
+            else (
+                supabase_initialization_error
+                or "Unknown initialization failure."
+            )
+        ),
+    }), (200 if supabase else 503)
 
 @app.route("/")
 def home():
@@ -1877,7 +1920,17 @@ def mi_read_share_token(token):
 
 def mi_share_authenticated_user():
     if supabase is None:
-        return None, (jsonify({"success": False, "message": "Account service unavailable."}), 503)
+        app.logger.error(
+            "Account service unavailable: %s",
+            supabase_initialization_error or "unknown initialization failure",
+        )
+        return None, (
+            jsonify({
+                "success": False,
+                "message": "Account service unavailable. The server dependency was not loaded.",
+            }),
+            503,
+        )
 
     authorization = str(request.headers.get("Authorization") or "").strip()
     if not authorization.lower().startswith("bearer "):

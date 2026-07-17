@@ -6,3 +6,5 @@ sounddevice
 SpeechRecognition
 vosk
 google-genai>=1.0.0
+
+supabase>=2.4.0
