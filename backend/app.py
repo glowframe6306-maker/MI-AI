@@ -2135,7 +2135,7 @@ def mi_create_share_link_final():
     password = str(security_input.get("password") or "")
 
     security = {
-        "notification": "on" if security_input.get("notification") == "on" else "off",
+        "notification": "off",
         "openLimitMode": str(security_input.get("openLimitMode") or "no-expiry"),
         "openLimitCustom": security_input.get("openLimitCustom") or 0,
         "timeLimitUnit": str(security_input.get("timeLimitUnit") or "no-expiry"),
@@ -2236,18 +2236,6 @@ def mi_open_share_link_final():
 
         metadata[MI_SHARE_LINKS_KEY] = links[-MI_SHARE_LINK_LIMIT:]
 
-        if security.get("notification") == "on":
-            notifications = list(metadata.get(MI_SHARE_NOTIFICATIONS_KEY) or [])
-            notifications.append({
-                "id": secrets.token_urlsafe(14),
-                "shareId": share_id,
-                "chatId": str(link.get("chatId") or ""),
-                "chatTitle": str(link.get("chatTitle") or "Shared Chat")[:120],
-                "openedAt": opened_at,
-                "read": False,
-            })
-            metadata[MI_SHARE_NOTIFICATIONS_KEY] = notifications[-MI_SHARE_NOTIFICATION_LIMIT:]
-
         mi_share_save_metadata(owner_id, metadata)
 
         return jsonify({
@@ -2314,6 +2302,113 @@ def mi_share_notifications_final():
         return jsonify({"success": False, "message": "Could not load notifications."}), 500
 
 # MI AI OWNER NOTIFICATIONS FINAL - END
+
+
+# MI AI ACCOUNT CHAT V2 START
+
+def mi_account_chat_user():
+    token = mi_get_bearer_token()
+    user, error = mi_verify_firebase_id_token(token)
+    if error or not user:
+        return None, (jsonify({"success": False, "error": error or "Please sign in again."}), 401)
+    email = normalize_identity_email(user.get("email"))
+    if not email:
+        return None, (jsonify({"success": False, "error": "Your account has no email address."}), 400)
+    user["email"] = email
+    return user, None
+
+
+def mi_account_chat_db_error(exc):
+    text = str(exc or "")
+    app.logger.exception("Account chat database operation failed: %s", exc)
+    if "mi_direct_messages" in text or "schema cache" in text.lower() or "relation" in text.lower():
+        return jsonify({"success": False, "error": "Run supabase_direct_messages.sql once in the Supabase SQL Editor."}), 503
+    return jsonify({"success": False, "error": "The account chat service is temporarily unavailable."}), 500
+
+
+@app.route("/api/direct-messages", methods=["POST"])
+def mi_account_chat_send():
+    user, auth_error = mi_account_chat_user()
+    if auth_error:
+        return auth_error
+    if not supabase:
+        return jsonify({"success": False, "error": "Supabase is not configured."}), 503
+
+    data = request.get_json(silent=True) or {}
+    recipient = normalize_identity_email(data.get("to") or data.get("recipientEmail"))
+    message = str(data.get("message") or "").strip()
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", recipient):
+        return jsonify({"success": False, "error": "Enter a valid recipient email address."}), 400
+    if not message:
+        return jsonify({"success": False, "error": "Type a message before sending."}), 400
+    if len(message) > 5000:
+        return jsonify({"success": False, "error": "The message must be 5000 characters or fewer."}), 400
+
+    try:
+        found = supabase.table("users").select("id,email").eq("email", recipient).limit(1).execute()
+        if not (getattr(found, "data", None) or []):
+            return jsonify({"success": False, "error": "No MI AI account was found for that email."}), 404
+
+        row = {
+            "sender_uid": str(user.get("uid") or user.get("id") or ""),
+            "sender_email": user["email"],
+            "recipient_email": recipient,
+            "message": message,
+            "is_read": False,
+        }
+        result = supabase.table("mi_direct_messages").insert(row).execute()
+        saved = getattr(result, "data", None) or []
+        return jsonify({"success": True, "message": "Message sent.", "item": saved[0] if saved else row})
+    except Exception as exc:
+        return mi_account_chat_db_error(exc)
+
+
+@app.route("/api/direct-messages", methods=["GET"])
+def mi_account_chat_list():
+    user, auth_error = mi_account_chat_user()
+    if auth_error:
+        return auth_error
+    if not supabase:
+        return jsonify({"success": False, "error": "Supabase is not configured."}), 503
+    try:
+        result = (supabase.table("mi_direct_messages")
+                  .select("id,sender_email,recipient_email,message,is_read,created_at")
+                  .eq("recipient_email", user["email"])
+                  .order("created_at", desc=True)
+                  .limit(100)
+                  .execute())
+        items = getattr(result, "data", None) or []
+        unread = sum(1 for item in items if not item.get("is_read"))
+        return jsonify({"success": True, "items": items, "unread": unread})
+    except Exception as exc:
+        return mi_account_chat_db_error(exc)
+
+
+@app.route("/api/direct-messages/read", methods=["POST"])
+def mi_account_chat_mark_read():
+    user, auth_error = mi_account_chat_user()
+    if auth_error:
+        return auth_error
+    if not supabase:
+        return jsonify({"success": False, "error": "Supabase is not configured."}), 503
+    data = request.get_json(silent=True) or {}
+    ids = [str(v).strip() for v in (data.get("ids") or []) if str(v).strip()][:100]
+    try:
+        query = (supabase.table("mi_direct_messages")
+                 .update({"is_read": True})
+                 .eq("recipient_email", user["email"]))
+        if ids:
+            query = query.in_("id", ids)
+        else:
+            query = query.eq("is_read", False)
+        query.execute()
+        return jsonify({"success": True})
+    except Exception as exc:
+        return mi_account_chat_db_error(exc)
+
+# MI AI ACCOUNT CHAT V2 END
+
 
 if __name__=="__main__":
     app.run(
