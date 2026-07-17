@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -9660,7 +9660,7 @@ span:nth-child(3) {
     type="button"
     onclick="closeSettings()"
     aria-label="Close Settings">
-    âœ•
+    ✕
 </button>
 <h3 data-i18n="settings.title">Settings</h3>
 
@@ -9670,8 +9670,8 @@ span:nth-child(3) {
         data-mi-i18n-ignore="true"
         onchange="window.MIAI18N && window.MIAI18N.setLanguage(this.value)">
         <option value="en">English</option>
-        <option value="si">à·ƒà·’à¶‚à·„à¶½</option>
-        <option value="ta">à®¤à®®à®¿à®´à¯</option>
+        <option value="si">සිංහල</option>
+        <option value="ta">தமிழ்</option>
     </select>
 
 <label data-i18n="settings.theme">Theme</label>
@@ -9689,7 +9689,7 @@ span:nth-child(3) {
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
-      <button id="sendBtn" type="button" onclick="sendOrStop()">â†‘</button>
+      <button id="sendBtn" type="button" onclick="sendOrStop()">➤</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -9703,19 +9703,19 @@ span:nth-child(3) {
 <div id="menu">
 
 <div onclick="renameChat()">
-âœï¸ Rename
+✎ Rename
 </div>
 
 <div onclick="pinChat()" id="pinOption">
-ðŸ“Œ Pin
+📌 Pin
 </div>
 
 <div onclick="shareChat()">
-ðŸ“¤ Share
+🔗 Share
 </div>
 
 <div onclick="deleteChat()" style="color:red">
-ðŸ—‘ Delete
+🗑 Delete
 </div>
 
 </div>
@@ -9838,19 +9838,19 @@ function populateLanguageSelector() {
 
 function updateTranslatedUi() {
   const loginBtn = document.getElementById('loginBtn');
-  if (loginBtn) loginBtn.textContent = `ðŸ“¥ ${t('auth.login', 'Login')}`;
+  if (loginBtn) loginBtn.textContent = `🔑 ${t('auth.login', 'Login')}`;
 
   const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.textContent = `ðŸ“´ ${t('auth.logout', 'Logout')}`;
+  if (logoutBtn) logoutBtn.textContent = `🚪 ${t('auth.logout', 'Logout')}`;
 
   const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
-  if (newChatButton) newChatButton.innerHTML = `âž• ${t('sidebar.newChat', 'New Chat')}`;
+  if (newChatButton) newChatButton.innerHTML = `➕ ${t('sidebar.newChat', 'New Chat')}`;
 
   const settingsButton = document.getElementById('settingsBtn');
-  if (settingsButton) settingsButton.innerHTML = `âš™ ${t('sidebar.settings', 'Settings')}`;
+  if (settingsButton) settingsButton.innerHTML = `⚙ ${t('sidebar.settings', 'Settings')}`;
 
   const supportButton = document.getElementById('supportBtn');
-  if (supportButton) supportButton.innerHTML = `ðŸŽ§ ${t('sidebar.support', 'Customer Support')}`;
+  if (supportButton) supportButton.innerHTML = `📞 ${t('sidebar.support', 'Customer Support')}`;
 
   const mobileMenuClose = document.getElementById('mobileMenuClose');
   if (mobileMenuClose) mobileMenuClose.setAttribute('aria-label', t('nav.closeMenu', 'Close menu'));
@@ -9971,11 +9971,11 @@ function formatFileSize(bytes) {
 
 function getAttachmentDisplayIcon(file) {
   const type = (file && file.type) || '';
-  if (type.startsWith('image/')) return 'ðŸ–¼ï¸';
-  if (type.includes('pdf')) return 'ðŸ“•';
-  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return 'ðŸ“Š';
-  if (type.includes('presentation') || type.includes('powerpoint')) return 'ðŸ“½ï¸';
-  return 'ðŸ“„';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type.includes('pdf')) return '📄';
+  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return '📊';
+  if (type.includes('presentation') || type.includes('powerpoint')) return '📽️';
+  return '📎';
 }
 
 function renderPendingAttachmentPreview() {
@@ -9990,7 +9990,7 @@ function renderPendingAttachmentPreview() {
         <span style="font-size:16px;">${getAttachmentDisplayIcon(file)}</span>
         <div style="min-width:0;">
           <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.name}</div>
-          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} â€¢ ${formatFileSize(file.size)}</div>
+          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} • ${formatFileSize(file.size)}</div>
         </div>
       </div>
       <button type="button" onclick="removePendingAttachment(${index})" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
@@ -10275,7 +10275,7 @@ function showLoginPrompt(chatId) {
     box.style.color = '#f8fafc';
 
     box.innerHTML = `
-      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">${t('auth.loginPrompt.title', 'Login to unlock more')}</div>
       <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">${t('auth.loginPrompt.description', 'Enjoy these benefits when you sign in:')}</div>
       <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
@@ -10431,22 +10431,22 @@ function openProfilePanel() {
     box.style.color = '#f8fafc';
 
     box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:18px;font-weight:700;margin-bottom:14px;">Your profile</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <label style="font-size:13px;color:#cbd5e1;">Name</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>ðŸ›ï¸</span>
+          <span>👋</span>
           <input id="profileName" value="${(profile.name || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
         </div>
         <label style="font-size:13px;color:#cbd5e1;">Age</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>ðŸŽ‚</span>
+          <span>🎂</span>
           <input id="profileAge" value="${(profile.age || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
         </div>
         <label style="font-size:13px;color:#cbd5e1;">Email</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>ðŸ“§</span>
+          <span>📧</span>
           <input id="profileEmail" value="${(profile.email || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" readonly />
         </div>
       </div>
@@ -10475,7 +10475,7 @@ function confirmLogout() {
     const box = document.getElementById('profilePanel');
     if (!box) return;
     box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
         <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
@@ -10726,7 +10726,7 @@ function showSharedPrivacyGate(payload) {
 
     overlay.innerHTML = `
       <div style="width:min(92vw,480px);max-height:90vh;overflow:auto;position:relative;padding:24px 24px 84px;border-radius:24px;background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.14);box-shadow:0 24px 60px rgba(0,0,0,0.36);">
-        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
         <div style="font-size:22px;font-weight:800;margin-bottom:8px;">Shared chat privacy</div>
         <div style="font-size:13px;color:#cbd5e1;margin-bottom:16px;">This link follows the privacy rules selected by the owner. Review them below, then continue.</div>
         <div style="display:grid;gap:8px;margin-bottom:16px;">
@@ -10922,7 +10922,7 @@ function showApprovalRequestsPanel() {
   box.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:16px;font-weight:700;">Approval requests</div>
-      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
     </div>
     ${requests.length ? requests.map((req) => `
       <div style="margin-bottom:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
@@ -11562,8 +11562,8 @@ if (attachments.length > 0) {
     attachmentBox.style.marginBottom = '12px';
     attachmentBox.innerHTML = attachments.map((attachment) => `
       <div style="margin-bottom:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#f8fafc;">
-        <div style="font-size:13px;font-weight:700;">ðŸ“Ž ${attachment.file_name || 'Uploaded file'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} â€¢ ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
+        <div style="font-size:13px;font-weight:700;">📁 ${attachment.file_name || 'Uploaded file'}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} • ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
       </div>
     `).join('');
     chatBox.appendChild(attachmentBox);
@@ -11619,8 +11619,8 @@ const visibleChatTitle =
     ).trim();
 
 div.innerText =
-    (chats[id].pin ? "ðŸ“Œ " : "") +
-    "ðŸ’¬ " +
+    (chats[id].pin ? "📌 " : "") +
+    "💬 " +
     visibleChatTitle;
 
 div.onclick=()=>openChat(id);
@@ -11634,7 +11634,7 @@ selectedChat=id;
 
 
 document.getElementById("pinOption").innerHTML =
-chats[id].pin ? "âŒ Unpin" : "ðŸ“Œ Pin";
+chats[id].pin ? "✕ Unpin" : "📌 Pin";
 
 
 menu.style.display="block";
@@ -11974,7 +11974,7 @@ function createCopyButton(text) {
   button.type = 'button';
   button.className = 'aiCopyButton';
   button.title = 'Copy';
-  button.innerHTML = 'â§‰';
+  button.innerHTML = '📋';
   button.onclick = async (event) => {
     event.stopPropagation();
     await copyTextToClipboard(text || '');
@@ -12449,7 +12449,7 @@ async function send() {
   }
 
   if (uploadErrors.length) {
-    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' â€¢ ');
+    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' • ');
     setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
   }
 
@@ -12869,7 +12869,7 @@ async function save() {
 function setReplyControlState(isActive) {
     const sendButton = document.getElementById('sendBtn');
     if (sendButton) {
-        sendButton.innerHTML = isActive ? 'â¹' : 'â†‘';
+        sendButton.innerHTML = isActive ? '➜' : '⬆';
         sendButton.title = isActive ? 'Stop reply' : 'Send message';
     }
 }
@@ -12952,16 +12952,16 @@ box.style.boxShadow="0 0 25px #ff7a18";
 
 box.innerHTML=`
 
-<h3>ðŸŽ§ Customer Support</h3>
+<h3>🎧 Customer Support</h3>
 
-<p>ðŸ“§ Email</p>
+<p>📧 Email</p>
 
 <button onclick="openEmail()">
 REQUEST VIA EMAIL
 </button>
 
 
-<p>ðŸ’¬ WhatsApp</p>
+<p>💬 WhatsApp</p>
 
 <button onclick="openWhatsApp()">
 VIA WHATSAPP
@@ -12969,7 +12969,7 @@ VIA WHATSAPP
 
 
 <button onclick="this.parentElement.remove()">
-âŒ Close
+✕ Close
 </button>
 
 `;
@@ -13527,125 +13527,125 @@ document.addEventListener(
         },
 
         si: {
-            newChat: "à¶±à·€ à¶šà¶­à·à¶¶à·„",
-            settings: "à·ƒà·à¶šà·ƒà·”à¶¸à·Š",
-            customerSupport: "à¶´à·à¶»à·’à¶·à·à¶œà·’à¶š à·ƒà·„à·à¶º",
-            language: "à¶·à·à·‚à·à·€",
-            theme: "à¶­à·šà¶¸à·à·€",
-            themeColor: "à¶­à·šà¶¸à· à·€à¶»à·Šà¶«à¶º",
-            apply: "à¶ºà·œà¶¯à¶±à·Šà¶±",
-            fontSize: "à¶…à¶šà·”à¶»à·” à¶´à·Šâ€à¶»à¶¸à·à¶«à¶º",
-            rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
-            pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-            unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-            share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-            deleteText: "à¶¸à¶šà¶±à·Šà¶±",
-            cancel: "à¶…à·€à¶½à¶‚à¶œà·” à¶šà¶»à¶±à·Šà¶±",
-            saveChanges: "à·€à·™à¶±à·ƒà·Šà¶šà¶¸à·Š à·ƒà·”à¶»à¶šà·’à¶±à·Šà¶±",
-            yourProfile: "à¶”à¶¶à¶œà·š à¶´à·à¶­à·’à¶šà¶©",
-            name: "à¶±à¶¸",
-            age: "à·€à¶ºà·ƒ",
-            email: "à·€à·’à¶¯à·Šâ€à¶ºà·”à¶­à·Š à¶­à·à¶´à·‘à¶½",
-            password: "à¶¸à·”à¶»à¶´à¶¯à¶º",
-            confirmPassword: "à¶¸à·”à¶»à¶´à¶¯à¶º à¶­à·„à·€à·”à¶»à·” à¶šà¶»à¶±à·Šà¶±",
-            signIn: "à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
-            register: "à¶½à·’à¶ºà·à¶´à¶¯à·’à¶‚à¶ à·’ à·€à¶±à·Šà¶±",
-            createAccount: "à¶œà·’à¶«à·”à¶¸ à·ƒà·à¶¯à¶±à·Šà¶±",
-            forgotPassword: "à¶¸à·”à¶»à¶´à¶¯à¶º à¶…à¶¸à¶­à¶šà¶¯?",
-            logout: "à¶‰à·€à¶­à·Š à·€à¶±à·Šà¶±",
-            loginAction: "à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
-            loginUnlock: "à¶­à·€à¶­à·Š à¶´à·„à·ƒà·”à¶šà¶¸à·Š à¶½à¶¶à·à¶œà·à¶±à·“à¶¸à¶§ à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
-            benefits: "à¶´à·’à·€à·’à·ƒà·“à¶¸à·™à¶±à·Š à¶¸à·™à¶¸ à¶´à·„à·ƒà·”à¶šà¶¸à·Š à¶½à¶¶à·à¶œà¶±à·Šà¶±:",
-            saveChats: "à¶”à¶¶à¶œà·š à¶šà¶­à·à¶¶à·„ à·ƒà·”à¶»à¶šà·’à¶±à·Šà¶± à·ƒà·„ à¶±à·à·€à¶­ à¶½à¶¶à·à¶œà¶±à·Šà¶±",
-            syncChats: "à¶‹à¶´à·à¶‚à¶œ à¶…à¶­à¶» à¶šà¶­à·à¶¶à·„ à¶‰à¶­à·’à·„à·à·ƒà¶º à·ƒà¶¸à¶¸à·”à·„à·”à¶»à·Šà¶­ à¶šà¶»à¶±à·Šà¶±",
-            fasterReplies: "à·€à·šà¶œà·€à¶­à·Š à·ƒà·„ à¶”à¶¶à¶§ à¶œà·à·…à¶´à·™à¶± à¶´à·’à·…à·’à¶­à·”à¶»à·” à¶½à¶¶à·à¶œà¶±à·Šà¶±",
-            logoutQuestion: "à¶”à¶¶à¶§ à¶‰à·€à¶­à·Š à·€à·“à¶¸à¶§ à¶…à·€à·à·Šâ€à¶º à¶¶à·€ à¶­à·„à·€à·”à¶»à·”à¶¯?",
-            askPlaceholder: "MI AI à·€à·™à¶­à·’à¶±à·Š à¶…à·ƒà¶±à·Šà¶±...",
+            newChat: "New Chat",
+            settings: "Settings",
+            customerSupport: "Customer Support",
+            language: "Language",
+            theme: "Theme",
+            themeColor: "Theme Color",
+            apply: "Apply",
+            fontSize: "Font Size",
+            rename: "Rename",
+            pin: "Pin",
+            unpin: "Unpin",
+            share: "Share",
+            deleteText: "Delete",
+            cancel: "Cancel",
+            saveChanges: "Save changes",
+            yourProfile: "Your profile",
+            name: "Name",
+            age: "Age",
+            email: "Email",
+            password: "Password",
+            confirmPassword: "Password Verify",
+            signIn: "Log in",
+            register: "Register",
+            createAccount: "Create Account",
+            forgotPassword: "Forgot Password?",
+            logout: "Logout",
+            loginAction: "Log in",
+            loginUnlock: "Login to unlock more",
+            benefits: "Enjoy these benefits when you sign in:",
+            saveChats: "Save and restore your chats",
+            syncChats: "Sync your history across devices",
+            fasterReplies: "Get faster, more personal replies",
+            logoutQuestion: "Are you sure you want to logout?",
+            askPlaceholder: "Ask from MI AI...",
             mistakes:
-                "MI AI à·€à·à¶»à¶¯à·’ à¶šà·… à·„à·à¶š. à·€à·à¶¯à¶œà¶­à·Š à¶­à·œà¶»à¶­à·”à¶»à·” à¶´à¶»à·“à¶šà·Šà·‚à· à¶šà¶»à¶±à·Šà¶±.",
+                "MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
             creator:
-                "M.I.MUHAMMADH à·€à·’à·ƒà·’à¶±à·Š à¶±à·’à¶»à·Šà¶¸à·à¶«à¶º à¶šà¶» à¶¶à¶½à¶œà¶±à·Šà·€à¶± à¶½à¶¯à·“",
-            closeSettings: "à·ƒà·à¶šà·ƒà·”à¶¸à·Š à·€à·ƒà¶±à·Šà¶±",
-            closeMenu: "à¶¸à·™à¶±à·”à·€ à·€à·ƒà¶±à·Šà¶±",
-            openMenu: "à¶¸à·™à¶±à·”à·€ à·€à·’à·€à·˜à¶­ à¶šà¶»à¶±à·Šà¶±",
-            send: "à¶ºà·€à¶±à·Šà¶±",
-            stop: "à¶±à·€à¶­à·Šà·€à¶±à·Šà¶±",
-            loading: "à¶´à·–à¶»à¶«à¶º à·€à·™à¶¸à·’à¶±à·Š...",
-            pleaseWait: "à¶šà¶»à·”à¶«à·à¶šà¶» à¶»à·à¶³à·“ à·ƒà·’à¶§à·’à¶±à·Šà¶±...",
-            verify: "à¶­à·„à·€à·”à¶»à·” à¶šà¶»à¶±à·Šà¶±",
-            submit: "à¶ºà·œà¶¸à·” à¶šà¶»à¶±à·Šà¶±",
-            continueText: "à¶‰à¶¯à·’à¶»à·’à¶ºà¶§ à¶ºà¶±à·Šà¶±",
-            back: "à¶†à¶´à·ƒà·”",
-            next: "à¶Šà·…à¶Ÿ",
-            save: "à·ƒà·”à¶»à¶šà·’à¶±à·Šà¶±",
-            edit: "à·ƒà¶‚à·ƒà·Šà¶šà¶»à¶«à¶º à¶šà¶»à¶±à·Šà¶±",
-            close: "à·€à·ƒà¶±à·Šà¶±",
-            copied: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·!",
-            copy: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-            loginRequired: "à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶…à·€à·à·Šâ€à¶ºà¶ºà·’",
+                "CREATED AND POWERED BY M.I.MUHAMMADH",
+            closeSettings: "Close Settings",
+            closeMenu: "Close menu",
+            openMenu: "Open menu",
+            send: "Send",
+            stop: "Stop",
+            loading: "Loading...",
+            pleaseWait: "Please wait...",
+            verify: "Verify",
+            submit: "Submit",
+            continueText: "Continue",
+            back: "Back",
+            next: "Next",
+            save: "Save",
+            edit: "Edit",
+            close: "Close",
+            copied: "Copied!",
+            copy: "Copy",
+            loginRequired: "Login Required",
             loginRequiredMessage:
-                "à¶¸à·™à¶¸ à¶´à·„à·ƒà·”à¶šà¶¸ à¶·à·à·€à·’à¶­ à¶šà·’à¶»à·“à¶¸à¶§ à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±."
+                "Please log in to use this feature."
         },
 
         ta: {
-            newChat: "à®ªà¯à®¤à®¿à®¯ à®…à®°à®Ÿà¯à®Ÿà¯ˆ",
-            settings: "à®…à®®à¯ˆà®ªà¯à®ªà¯à®•à®³à¯",
-            customerSupport: "à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®†à®¤à®°à®µà¯",
-            language: "à®®à¯Šà®´à®¿",
-            theme: "à®¤à¯€à®®à¯",
-            themeColor: "à®¤à¯€à®®à¯ à®¨à®¿à®±à®®à¯",
-            apply: "à®ªà®¯à®©à¯à®ªà®Ÿà¯à®¤à¯à®¤à¯",
-            fontSize: "à®Žà®´à¯à®¤à¯à®¤à®³à®µà¯",
-            rename: "à®ªà¯†à®¯à®°à¯ˆ à®®à®¾à®±à¯à®±à¯",
-            pin: "à®ªà®¿à®©à¯ à®šà¯†à®¯à¯",
-            unpin: "à®ªà®¿à®©à¯à®©à¯ˆ à®¨à¯€à®•à¯à®•à¯",
-            share: "à®ªà®•à®¿à®°à¯",
-            deleteText: "à®¨à¯€à®•à¯à®•à¯",
-            cancel: "à®°à®¤à¯à®¤à¯ à®šà¯†à®¯à¯",
-            saveChanges: "à®®à®¾à®±à¯à®±à®™à¯à®•à®³à¯ˆà®šà¯ à®šà¯‡à®®à®¿",
-            yourProfile: "à®‰à®™à¯à®•à®³à¯ à®šà¯à®¯à®µà®¿à®µà®°à®®à¯",
-            name: "à®ªà¯†à®¯à®°à¯",
-            age: "à®µà®¯à®¤à¯",
-            email: "à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯",
-            password: "à®•à®Ÿà®µà¯à®šà¯à®šà¯Šà®²à¯",
-            confirmPassword: "à®•à®Ÿà®µà¯à®šà¯à®šà¯Šà®²à¯à®²à¯ˆ à®‰à®±à¯à®¤à®¿à®ªà¯à®ªà®Ÿà¯à®¤à¯à®¤à¯",
-            signIn: "à®‰à®³à¯à®¨à¯à®´à¯ˆà®¯",
-            register: "à®ªà®¤à®¿à®µà¯ à®šà¯†à®¯à¯à®•",
-            createAccount: "à®•à®£à®•à¯à®•à¯ˆ à®‰à®°à¯à®µà®¾à®•à¯à®•à¯",
-            forgotPassword: "à®•à®Ÿà®µà¯à®šà¯à®šà¯Šà®²à¯ à®®à®±à®¨à¯à®¤à¯à®µà®¿à®Ÿà¯à®Ÿà®¤à®¾?",
-            logout: "à®µà¯†à®³à®¿à®¯à¯‡à®±à¯",
-            loginAction: "à®‰à®³à¯à®¨à¯à®´à¯ˆà®¯",
-            loginUnlock: "à®®à¯‡à®²à¯à®®à¯ à®µà®šà®¤à®¿à®•à®³à¯ˆà®ªà¯ à®ªà¯†à®± à®‰à®³à¯à®¨à¯à®´à¯ˆà®¯à¯à®™à¯à®•à®³à¯",
-            benefits: "à®‰à®³à¯à®¨à¯à®´à¯ˆà®¨à¯à®¤à®¾à®²à¯ à®‡à®¨à¯à®¤ à®µà®šà®¤à®¿à®•à®³à¯ˆà®ªà¯ à®ªà¯†à®±à®²à®¾à®®à¯:",
-            saveChats: "à®‰à®™à¯à®•à®³à¯ à®…à®°à®Ÿà¯à®Ÿà¯ˆà®•à®³à¯ˆà®šà¯ à®šà¯‡à®®à®¿à®¤à¯à®¤à¯ à®®à¯€à®Ÿà¯à®Ÿà¯†à®Ÿà¯à®•à¯à®•à®µà¯à®®à¯",
-            syncChats: "à®šà®¾à®¤à®©à®™à¯à®•à®³à¯à®•à¯à®•à¯ à®‡à®Ÿà¯ˆà®¯à®¿à®²à¯ à®µà®°à®²à®¾à®±à¯à®±à¯ˆ à®’à®¤à¯à®¤à®¿à®šà¯ˆà®•à¯à®•à®µà¯à®®à¯",
-            fasterReplies: "à®µà¯‡à®•à®®à®¾à®© à®¤à®©à®¿à®ªà¯à®ªà®¯à®©à¯ à®ªà®¤à®¿à®²à¯à®•à®³à¯ˆà®ªà¯ à®ªà¯†à®±à®µà¯à®®à¯",
-            logoutQuestion: "à®¨à¯€à®™à¯à®•à®³à¯ à®µà¯†à®³à®¿à®¯à¯‡à®± à®µà®¿à®°à¯à®®à¯à®ªà¯à®•à®¿à®±à¯€à®°à¯à®•à®³à®¾?",
-            askPlaceholder: "MI AI-à®¯à®¿à®Ÿà®®à¯ à®•à¯‡à®³à¯à®™à¯à®•à®³à¯...",
+            newChat: "New Chat",
+            settings: "Settings",
+            customerSupport: "Customer Support",
+            language: "Language",
+            theme: "Theme",
+            themeColor: "Theme Color",
+            apply: "Apply",
+            fontSize: "Font Size",
+            rename: "Rename",
+            pin: "Pin",
+            unpin: "Unpin",
+            share: "Share",
+            deleteText: "Delete",
+            cancel: "Cancel",
+            saveChanges: "Save changes",
+            yourProfile: "Your profile",
+            name: "Name",
+            age: "Age",
+            email: "Email",
+            password: "Password",
+            confirmPassword: "Confirm Password",
+            signIn: "Log in",
+            register: "Register",
+            createAccount: "Create Account",
+            forgotPassword: "Forgot Password?",
+            logout: "Logout",
+            loginAction: "Log in",
+            loginUnlock: "Login to unlock more",
+            benefits: "Enjoy these benefits when you sign in:",
+            saveChats: "Save and restore your chats",
+            syncChats: "Sync your history across devices",
+            fasterReplies: "Get faster, more personal replies",
+            logoutQuestion: "Are you sure you want to logout?",
+            askPlaceholder: "Ask from MI AI...",
             mistakes:
-                "MI AI à®¤à®µà®±à¯à®•à®³à¯ à®šà¯†à®¯à¯à®¯à®²à®¾à®®à¯. à®®à¯à®•à¯à®•à®¿à®¯ à®¤à®•à®µà®²à¯à®•à®³à¯ˆà®šà¯ à®šà®°à®¿à®ªà®¾à®°à¯à®•à¯à®•à®µà¯à®®à¯.",
+                "MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
             creator:
-                "M.I.MUHAMMADH à®…à®µà®°à¯à®•à®³à®¾à®²à¯ à®‰à®°à¯à®µà®¾à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà¯ à®‡à®¯à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®•à®¿à®±à®¤à¯",
-            closeSettings: "à®…à®®à¯ˆà®ªà¯à®ªà¯à®•à®³à¯ˆ à®®à¯‚à®Ÿà¯",
-            closeMenu: "à®®à¯†à®©à¯à®µà¯ˆ à®®à¯‚à®Ÿà¯",
-            openMenu: "à®®à¯†à®©à¯à®µà¯ˆà®¤à¯ à®¤à®¿à®±",
-            send: "à®…à®©à¯à®ªà¯à®ªà¯",
-            stop: "à®¨à®¿à®±à¯à®¤à¯à®¤à¯",
-            loading: "à®à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®•à®¿à®±à®¤à¯...",
-            pleaseWait: "à®¤à®¯à®µà¯à®šà¯†à®¯à¯à®¤à¯ à®•à®¾à®¤à¯à®¤à®¿à®°à¯à®•à¯à®•à®µà¯à®®à¯...",
-            verify: "à®šà®°à®¿à®ªà®¾à®°à¯",
-            submit: "à®šà®®à®°à¯à®ªà¯à®ªà®¿",
-            continueText: "à®¤à¯Šà®Ÿà®°à®µà¯à®®à¯",
-            back: "à®ªà®¿à®©à¯à®šà¯†à®²à¯",
-            next: "à®…à®Ÿà¯à®¤à¯à®¤à¯",
-            save: "à®šà¯‡à®®à®¿",
-            edit: "à®¤à®¿à®°à¯à®¤à¯à®¤à¯",
-            close: "à®®à¯‚à®Ÿà¯",
-            copied: "à®¨à®•à®²à¯†à®Ÿà¯à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯!",
-            copy: "à®¨à®•à®²à¯†à®Ÿà¯",
-            loginRequired: "à®‰à®³à¯à®¨à¯à®´à¯ˆà®µà¯ à®¤à¯‡à®µà¯ˆ",
+                "CREATED AND POWERED BY M.I.MUHAMMADH",
+            closeSettings: "Close Settings",
+            closeMenu: "Close menu",
+            openMenu: "Open menu",
+            send: "Send",
+            stop: "Stop",
+            loading: "Loading...",
+            pleaseWait: "Please wait...",
+            verify: "Verify",
+            submit: "Submit",
+            continueText: "Continue",
+            back: "Back",
+            next: "Next",
+            save: "Save",
+            edit: "Edit",
+            close: "Close",
+            copied: "Copied!",
+            copy: "Copy",
+            loginRequired: "Login Required",
             loginRequiredMessage:
-                "à®‡à®¨à¯à®¤ à®µà®šà®¤à®¿à®¯à¯ˆà®ªà¯ à®ªà®¯à®©à¯à®ªà®Ÿà¯à®¤à¯à®¤ à®‰à®³à¯à®¨à¯à®´à¯ˆà®¯à®µà¯à®®à¯."
+                "Please log in to use this feature."
         }
     };
 
@@ -13915,14 +13915,14 @@ document.addEventListener(
         setStaticButton(
             "#sidebar button[onclick*='newChat']",
             "newChat",
-            "âž•",
+            "➜",
             language
         );
 
         setStaticButton(
             "#settingsBtn",
             "settings",
-            "âš™",
+            "✉",
             language
         );
 
@@ -13983,6 +13983,12 @@ document.addEventListener(
             });
     }
 
+    function normalizeLanguage(language) {
+        return language === "si" || language === "ta"
+            ? "en"
+            : language;
+    }
+
     function getLanguage() {
         const saved =
             localStorage.getItem(
@@ -13996,7 +14002,7 @@ document.addEventListener(
                 saved
             )
         ) {
-            return saved;
+            return normalizeLanguage(saved);
         }
 
         return "en";
@@ -14006,6 +14012,8 @@ document.addEventListener(
         language,
         savePreference
     ) {
+        language = normalizeLanguage(language);
+
         if (!translations[language]) {
             language = "en";
         }
@@ -14322,13 +14330,13 @@ document.addEventListener(
             },
 
             si: {
-                copy: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+                copy: "Copy",
+                rename: "Rename",
                 pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-                unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-                deleteText: "à¶¸à¶šà¶±à·Šà¶±",
-                copied: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·!"
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete",
+                copied: "Copied!"
             },
 
             ta: {
@@ -14476,7 +14484,7 @@ document.addEventListener(
             menu.appendChild(
                 menuButton(
                     "copy",
-                    "â§‰",
+                    "📋",
                     text("copy"),
                     false
                 )
@@ -14490,14 +14498,14 @@ document.addEventListener(
         menu.append(
             menuButton(
                 "rename",
-                "âœŽ",
+                "⚠",
                 text("rename"),
                 false
             ),
 
             menuButton(
                 "pin",
-                pinned ? "âŒ«" : "âŒ–",
+                pinned ? "📌" : "📍",
                 pinned
                     ? text("unpin")
                     : text("pin"),
@@ -14506,14 +14514,14 @@ document.addEventListener(
 
             menuButton(
                 "share",
-                "â†—",
+                "⋯",
                 text("share"),
                 false
             ),
 
             menuButton(
                 "delete",
-                "ðŸ—‘",
+                "🗑",
                 text("deleteText"),
                 true
             )
@@ -15058,11 +15066,11 @@ document.addEventListener(
             },
 
             si: {
-                rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+                rename: "Rename",
                 pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-                unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-                deleteText: "à¶¸à¶šà¶±à·Šà¶±"
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete"
             },
 
             ta: {
@@ -15188,14 +15196,14 @@ document.addEventListener(
                     menu.replaceChildren(
                         makeButton(
                             "rename",
-                            "âœŽ",
+                            "⚠",
                             label("rename"),
                             false
                         ),
 
                         makeButton(
                             "pin",
-                            pinned ? "âŒ«" : "âŒ–",
+                            pinned ? "📌" : "📍",
                             pinned
                                 ? label("unpin")
                                 : label("pin"),
@@ -15204,14 +15212,14 @@ document.addEventListener(
 
                         makeButton(
                             "share",
-                            "â†—",
+                            "⋯",
                             label("share"),
                             false
                         ),
 
                         makeButton(
                             "delete",
-                            "ðŸ—‘",
+                            "🗑",
                             label("deleteText"),
                             true
                         )
@@ -15578,11 +15586,11 @@ document.addEventListener(
         },
 
         si: {
-            language: "à¶·à·à·‚à·à·€",
-            theme: "à¶­à·šà¶¸à·à·€",
-            fontSize: "à¶…à¶šà·”à¶»à·” à¶´à·Šâ€à¶»à¶¸à·à¶«à¶º",
-            copy: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-            copied: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·!"
+            language: "Language",
+            theme: "Theme",
+            fontSize: "Font Size",
+            copy: "Copy",
+            copied: "Copied!"
         },
 
         ta: {
@@ -15817,7 +15825,7 @@ document.addEventListener(
             "true"
         );
 
-        arrow.textContent = "âŒ„";
+        arrow.textContent = "▾";
 
         button.append(
             left,
@@ -15991,7 +15999,7 @@ document.addEventListener(
         accordion.append(
             createSection(
                 "language",
-                "ðŸŒ",
+                "🌐",
                 word("language"),
                 languageControl,
                 panel
@@ -15999,7 +16007,7 @@ document.addEventListener(
 
             createSection(
                 "theme",
-                "ðŸŽ¨",
+                "🎨",
                 word("theme"),
                 themeControl,
                 panel
@@ -16229,16 +16237,16 @@ document.addEventListener(
                     return (
                         combined.includes("copy")
                         || combined.includes(
-                            "à¶´à·’à¶§à¶´à¶­à·Š"
+                            "copied"
                         )
                         || combined.includes(
-                            "à®¨à®•à®²à¯†à®Ÿà¯"
+                            "copy"
                         )
                         || combined.includes(
-                            "â§‰"
+                            "📋"
                         )
                         || combined.includes(
-                            "ðŸ“‹"
+                            "📤"
                         )
                     );
                 });
@@ -16253,7 +16261,7 @@ document.addEventListener(
                     "button";
 
                 copyButton.textContent =
-                    "â§‰";
+                    "📋";
 
                 aiBubble.appendChild(
                     copyButton
@@ -16319,12 +16327,12 @@ document.addEventListener(
                             copyButton.textContent;
 
                         copyButton.textContent =
-                            "âœ“";
+                            "✓";
 
                         setTimeout(
                             function () {
                                 copyButton.textContent =
-                                    oldText || "â§‰";
+                                    oldText || "📋";
                             },
                             1000
                         );
@@ -16651,7 +16659,7 @@ document.addEventListener(
             check.className =
                 "mi-ios-option-check";
 
-            check.textContent = "âœ“";
+            check.textContent = "✓";
 
             check.setAttribute(
                 "aria-hidden",
@@ -21739,7 +21747,7 @@ document.addEventListener(
     function words() {
         const all = {
             en: {
-                thinking: "Thinkingâ€¦",
+                thinking: "Thinking…",
                 copied: "Message copied",
                 saved: "Chat saved",
                 uploaded: "File uploaded",
@@ -21756,24 +21764,24 @@ document.addEventListener(
             },
 
             si: {
-                thinking: "à·ƒà·’à¶­à¶¸à·’à¶±à·Šâ€¦",
+                thinking: "à·ƒà·’à¶­à¶¸à·’à¶±à·Š…",
                 copied: "à¶´à¶«à·’à·€à·’à¶©à¶º à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·",
                 saved: "à¶šà¶­à·à¶¶à·„ à·ƒà·”à¶»à·à¶šà·’à¶«à·’",
                 uploaded: "à¶œà·œà¶±à·”à·€ upload à¶šà·…à·",
                 online: "à¶±à·à·€à¶­ online",
                 offline: "à¶”à¶¶ offline",
-                rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+                rename: "Rename",
                 pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-                unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-                deleteText: "à¶¸à¶šà¶±à·Šà¶±",
-                settings: "à·ƒà·à¶šà·ƒà·”à¶¸à·Š",
-                cancel: "à¶…à·€à¶½à¶‚à¶œà·” à¶šà¶»à¶±à·Šà¶±",
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete",
+                settings: "Settings",
+                cancel: "Cancel",
                 chatOptions: "à¶šà¶­à·à¶¶à·„à·š à·€à·’à¶šà¶½à·Šà¶´"
             },
 
             ta: {
-                thinking: "à®šà®¿à®¨à¯à®¤à®¿à®•à¯à®•à®¿à®±à®¤à¯â€¦",
+                thinking: "à®šà®¿à®¨à¯à®¤à®¿à®•à¯à®•à®¿à®±à®¤à¯…",
                 copied: "à®šà¯†à®¯à¯à®¤à®¿ à®¨à®•à®²à¯†à®Ÿà¯à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
                 saved: "à®…à®°à®Ÿà¯à®Ÿà¯ˆ à®šà¯‡à®®à®¿à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
                 uploaded: "à®•à¯‹à®ªà¯à®ªà¯ à®ªà®¤à®¿à®µà¯‡à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
@@ -21926,10 +21934,10 @@ document.addEventListener(
     function islandIcon(type) {
         const values = {
             thinking: "",
-            success: "âœ“",
-            copy: "â§‰",
-            save: "âœ“",
-            upload: "â†‘",
+            success: "✓",
+            copy: "📋",
+            save: "✓",
+            upload: "⬆",
             online: "â—",
             offline: "!",
             info: "i"
@@ -22242,7 +22250,7 @@ document.addEventListener(
                     "mi-ios-sheet-action-icon";
 
                 icon.textContent =
-                    action.icon || "â€¢";
+                    action.icon || "•";
 
                 const label =
                     document.createElement(
@@ -22429,7 +22437,7 @@ document.addEventListener(
             labels.chatOptions,
             [
                 {
-                    icon: "âœŽ",
+                    icon: "⚠",
                     label:
                         labels.rename,
                     run:
@@ -22442,8 +22450,8 @@ document.addEventListener(
                 {
                     icon:
                         pinned
-                            ? "âˆ’"
-                            : "âŒ–",
+                            ? "−"
+                            : "📍",
                     label:
                         pinned
                             ? labels.unpin
@@ -22456,7 +22464,7 @@ document.addEventListener(
                         }
                 },
                 {
-                    icon: "â†—",
+                    icon: "⋯",
                     label:
                         labels.share,
                     run:
@@ -22467,7 +22475,7 @@ document.addEventListener(
                         }
                 },
                 {
-                    icon: "âŒ«",
+                    icon: "📌",
                     label:
                         labels.deleteText,
                     danger: true,
@@ -23058,10 +23066,10 @@ document.addEventListener(
                     "à¶±à·à·€à¶­ à·ƒà·à¶¯à¶»à¶ºà·™à¶±à·Š à¶´à·’à·…à·’à¶œà¶±à·’à¶¸à·”!",
 
                 message:
-                    "MI AI à·€à·™à¶­ à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶œà·à¶± à·ƒà·Šà¶­à·”à¶­à·’à¶ºà·’. à¶”à¶¶à¶œà·š chats à·ƒà·„ settings à¶¯à·à¶±à·Š à·ƒà·–à¶¯à·à¶±à¶¸à·Š.",
+                    "MI AI à·€à·™à¶­ à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶œà·à¶± à·ƒà·Šà¶­à·”à¶­à·’à¶ºà·’. à¶”à¶¶à¶œà·š chats à·ƒà·„ settings à¶¯à·à¶±à·Š à·ƒà·–à¶¯à·Nameà·Š.",
 
                 continueText:
-                    "à¶‰à¶¯à·’à¶»à·’à¶ºà¶§ à¶ºà¶±à·Šà¶±"
+                    "Continue"
             },
 
             ta: {
@@ -24305,7 +24313,7 @@ document.addEventListener(
                         "background:rgba(255,255,255,.06);";
 
                     card.textContent =
-                        "ðŸ“Ž " +
+                        "📁 " +
                         (
                             attachment.file_name ||
                             attachment.name ||
@@ -24467,10 +24475,10 @@ document.addEventListener(
                 item.textContent =
                     (
                         chat?.pin
-                            ? "ðŸ“Œ "
+                            ? "📌 "
                             : ""
                     ) +
-                    "ðŸ’¬ " +
+                    "💬 " +
                     titleForChat(
                         chatId
                     );
@@ -24521,8 +24529,8 @@ document.addEventListener(
                         if (pinOption) {
                             pinOption.textContent =
                                 chat?.pin
-                                    ? "âŒ Unpin"
-                                    : "ðŸ“Œ Pin";
+                                    ? "✕ Unpin"
+                                    : "📌 Pin";
                         }
 
                         const contextMenu =
@@ -25597,23 +25605,23 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
                 searching: "Ã Â·Æ’Ã Â·Å“Ã Â¶ÂºÃ Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 sending: "Ã Â¶ÂºÃ Â·â‚¬Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 sent: "Ã Â¶Â´Ã Â¶Â«Ã Â·â€™Ã Â·â‚¬Ã Â·â€™Ã Â¶Â©Ã Â¶Âº Ã Â¶ÂºÃ Â·ÂÃ Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
-                copied: "Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                copied: "Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 saved: "Ã Â·Æ’Ã Â·â€Ã Â¶Â»Ã Â·ÂÃ Â¶Å¡Ã Â·â€Ã Â¶Â«Ã Â·Â",
                 loading: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â´Ã Â·â€“Ã Â¶Â»Ã Â¶Â«Ã Â¶Âº Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 loaded: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â´Ã Â·â€“Ã Â¶Â»Ã Â¶Â«Ã Â¶Âº Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
                 online: "Ã Â¶â€Ã Â¶Â±Ã Â·Å Ã Â¶Â½Ã Â¶ÂºÃ Â·â€™Ã Â¶Â±Ã Â·Å ",
-                offline: "Ã Â¶â€¦Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶Âº Ã Â¶Â±Ã Â·ÂÃ Â¶Â­",
+                offline: "Ã Â¶…Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶Âº Ã Â¶Â±Ã Â·ÂÃ Â¶Â­",
                 newChat: "Ã Â¶Â±Ã Â·â‚¬ Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡Ã Â¶Å¡Ã Â·Å ",
                 opened: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
-                renamed: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â±Ã Â¶Â¸ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                renamed: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â±Ã Â¶Â¸ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 deleted: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Ã Â¶Â¸Ã Â¶Å¡Ã Â·Â Ã Â¶Â¯Ã Â·ÂÃ Â¶Â¸Ã Â·Å Ã Â¶Â¸Ã Â·Â",
-                pinned: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Pin Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                unpinned: "Pin Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                uploaded: "Ã Â¶Å“Ã Â·Å“Ã Â¶Â±Ã Â·â€Ã Â·â‚¬ Ã Â¶â€¹Ã Â¶Â©Ã Â·â€Ã Â¶Å“Ã Â¶Â­ Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                pinned: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Pin Ã Â¶Å¡Ã Â·…Ã Â·Â",
+                unpinned: "Pin Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
+                uploaded: "Ã Â¶Å“Ã Â·Å“Ã Â¶Â±Ã Â·â€Ã Â·â‚¬ Ã Â¶â€¹Ã Â¶Â©Ã Â·â€Ã Â¶Å“Ã Â¶Â­ Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 sharing: "Link Ã Â¶â€˜Ã Â¶Å¡ Ã Â·Æ’Ã Â·ÂÃ Â¶Â¯Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 shared: "Link Ã Â¶â€˜Ã Â¶Å¡ Ã Â·Æ’Ã Â·â€˜Ã Â¶Â¯Ã Â·â€Ã Â·â‚¬Ã Â·Â",
-                settings: "Settings Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                theme: "Theme Ã Â¶â€˜Ã Â¶Å¡ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                settings: "Settings Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â¶Å¡Ã Â·…Ã Â·Â",
+                theme: "Theme Ã Â¶â€˜Ã Â¶Å¡ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 login: "Login Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 loggedIn: "Login Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
                 logout: "Logout Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
@@ -25621,28 +25629,28 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
             },
             ta: {
                 idle: "MI AI",
-                thinking: "Ã Â®Å¡Ã Â®Â¿Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                searching: "Ã Â®Â¤Ã Â¯â€¡Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                sending: "Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                sent: "Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿ Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                copied: "Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                saved: "Ã Â®Å¡Ã Â¯â€¡Ã Â®Â®Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                loading: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â©Ã Â¯ÂÃ Â®Â±Ã Â®Â©...",
-                loaded: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
+                thinking: "Ã Â®Å¡Ã Â®Â¿Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                searching: "Ã Â®Â¤Ã Â¯â€¡Ã Â®Å¸Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                sending: "Ã Â®…Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                sent: "Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿ Ã Â®…Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                copied: "Ã Â®Â¨Ã Â®•Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                saved: "Ã Â®Å¡Ã Â¯â€¡Ã Â®Â®Ã Â®Â¿Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                loading: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®•Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â©Ã Â¯ÂÃ Â®Â±Ã Â®Â©...",
+                loaded: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®•Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
                 online: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®Â¯Ã Â®Â¤Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®Â²Ã Â¯Â",
                 offline: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®Â¯Ã Â®Â®Ã Â¯Â Ã Â®â€¡Ã Â®Â²Ã Â¯ÂÃ Â®Â²Ã Â¯Ë†",
-                newChat: "Ã Â®ÂªÃ Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®Â¯ Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†",
-                opened: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                renamed: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Â Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                deleted: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                pinned: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¯Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                unpinned: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                uploaded: "Ã Â®â€¢Ã Â¯â€¹Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®ÂªÃ Â®Â¤Ã Â®Â¿Ã Â®ÂµÃ Â¯â€¡Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                sharing: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                shared: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                settings: "Ã Â®â€¦Ã Â®Â®Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
+                newChat: "Ã Â®ÂªÃ Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®Â¯ Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†",
+                opened: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                renamed: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Â Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                deleted: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                pinned: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¯Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                unpinned: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Â¨Ã Â¯â‚¬Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                uploaded: "Ã Â®•Ã Â¯â€¹Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®ÂªÃ Â®Â¤Ã Â®Â¿Ã Â®ÂµÃ Â¯â€¡Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                sharing: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                shared: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                settings: "Ã Â®…Ã Â®Â®Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®•Ã Â®Â³Ã Â¯Â Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
                 theme: "Ã Â®Â¤Ã Â¯â‚¬Ã Â®Â®Ã Â¯Â Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                login: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                login: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
                 loggedIn: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¤Ã Â¯Â",
                 logout: "Ã Â®ÂµÃ Â¯â€ Ã Â®Â³Ã Â®Â¿Ã Â®Â¯Ã Â¯â€¡Ã Â®Â±Ã Â®Â¿Ã Â®Â¯Ã Â®Â¤Ã Â¯Â",
                 error: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â´Ã Â¯Ë† Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â"
@@ -25673,7 +25681,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
         const icons = {
             info: "i",
             thinking: "Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢",
-            searching: "Ã¢Å’â€¢",
+            searching: "Ã¢Å’•",
             sending: "Ã¢â€ â€˜",
             success: "Ã¢Å“â€œ",
             copy: "Ã¢Â§â€°",
@@ -25819,7 +25827,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
                 id.includes("send") ||
                 value === "send" ||
                 value.includes("Ã Â¶ÂºÃ Â·â‚¬Ã Â¶Â±Ã Â·Å Ã Â¶Â±") ||
-                value.includes("Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â")
+                value.includes("Ã Â®…Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â")
             ) {
                 notify(w.sending, "sending", 1200);
             }
@@ -26577,6 +26585,752 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 /* MI AI SMOOTH BOOT GUARD - END */
 </script>
 
+
+<script>
+/* MI_AI_CHIEF_OWNER_PERMISSION_UI_START */
+(function () {
+    "use strict";
+
+    if (window.__miChiefOwnerPermissionUiInstalled) {
+        return;
+    }
+
+    window.__miChiefOwnerPermissionUiInstalled = true;
+
+    const state = {
+        uid: "",
+        tokenKey: "",
+        loaded: false,
+        loading: false,
+        isStaff: false,
+        isChiefOwner: false,
+        role: "",
+        roleLabel: "",
+        permissions: new Set(),
+        allowedPages: new Set()
+    };
+
+    window.miAdminAccess = state;
+
+    function findCurrentFirebaseUser() {
+        const candidates = [];
+
+        try {
+            if (window.auth && window.auth.currentUser) {
+                candidates.push(window.auth.currentUser);
+            }
+        } catch (_) {}
+
+        try {
+            if (
+                window.firebaseAuth &&
+                window.firebaseAuth.currentUser
+            ) {
+                candidates.push(window.firebaseAuth.currentUser);
+            }
+        } catch (_) {}
+
+        try {
+            if (
+                window.firebase &&
+                typeof window.firebase.auth === "function"
+            ) {
+                const legacyUser =
+                    window.firebase.auth().currentUser;
+
+                if (legacyUser) {
+                    candidates.push(legacyUser);
+                }
+            }
+        } catch (_) {}
+
+        try {
+            if (
+                window.miAuth &&
+                window.miAuth.currentUser
+            ) {
+                candidates.push(window.miAuth.currentUser);
+            }
+        } catch (_) {}
+
+        try {
+            if (
+                window.appAuth &&
+                window.appAuth.currentUser
+            ) {
+                candidates.push(window.appAuth.currentUser);
+            }
+        } catch (_) {}
+
+        try {
+            if (
+                window.currentUser &&
+                typeof window.currentUser.getIdToken ===
+                    "function"
+            ) {
+                candidates.push(window.currentUser);
+            }
+        } catch (_) {}
+
+        return candidates.find(function (user) {
+            return (
+                user &&
+                typeof user.getIdToken === "function"
+            );
+        }) || null;
+    }
+
+    function clearAdminState() {
+        state.uid = "";
+        state.tokenKey = "";
+        state.loaded = false;
+        state.loading = false;
+        state.isStaff = false;
+        state.isChiefOwner = false;
+        state.role = "";
+        state.roleLabel = "";
+        state.permissions = new Set();
+        state.allowedPages = new Set();
+
+        document.documentElement.classList.remove(
+            "mi-chief-owner-active"
+        );
+
+        document.querySelectorAll(
+            "[data-mi-chief-owner-control]"
+        ).forEach(function (element) {
+            element.remove();
+        });
+    }
+
+    function hasPermission(permission) {
+        return (
+            state.isChiefOwner ||
+            state.permissions.has(permission)
+        );
+    }
+
+    window.miHasPermission = hasPermission;
+
+    function showNotice(message, type) {
+        if (typeof window.showToast === "function") {
+            window.showToast(message, type || "info");
+            return;
+        }
+
+        if (
+            typeof window.showShareFeedback === "function"
+        ) {
+            window.showShareFeedback(message);
+            return;
+        }
+
+        console.log("[MI Admin]", message);
+    }
+
+    function createButton(label, permission, actionName) {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "mi-chief-owner-action";
+        button.textContent = label;
+        button.dataset.permission = permission || "";
+        button.dataset.action = actionName || "";
+        button.setAttribute(
+            "data-mi-chief-owner-control",
+            "true"
+        );
+
+        button.addEventListener("click", function () {
+            if (
+                permission &&
+                !hasPermission(permission)
+            ) {
+                showNotice(
+                    "You do not have permission for this action.",
+                    "error"
+                );
+                return;
+            }
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-chief-owner-action",
+                    {
+                        detail: {
+                            action: actionName,
+                            permission: permission
+                        }
+                    }
+                )
+            );
+
+            showNotice(
+                label + " opened.",
+                "success"
+            );
+        });
+
+        return button;
+    }
+
+    function findHeaderTarget() {
+        const selectors = [
+            "#topBar",
+            "#topbar",
+            ".top-bar",
+            ".topbar",
+            ".header-actions",
+            ".top-actions",
+            "header"
+        ];
+
+        for (const selector of selectors) {
+            const node =
+                document.querySelector(selector);
+
+            if (node) {
+                return node;
+            }
+        }
+
+        return document.body;
+    }
+
+    function ensureOwnerPanel() {
+        if (!state.isChiefOwner) {
+            return;
+        }
+
+        if (
+            document.getElementById(
+                "miChiefOwnerPanel"
+            )
+        ) {
+            return;
+        }
+
+        document.documentElement.classList.add(
+            "mi-chief-owner-active"
+        );
+
+        const headerTarget = findHeaderTarget();
+
+        const headerGroup =
+            document.createElement("div");
+
+        headerGroup.id = "miChiefOwnerHeaderControls";
+        headerGroup.className =
+            "mi-chief-owner-header-controls";
+
+        headerGroup.setAttribute(
+            "data-mi-chief-owner-control",
+            "true"
+        );
+
+        const dashboardButton = createButton(
+            "Admin Dashboard",
+            "system.view_status",
+            "admin-dashboard"
+        );
+
+        const requestsButton = createButton(
+            "Permission Requests",
+            "permissions.view",
+            "permission-requests"
+        );
+
+        const notificationsButton = createButton(
+            "Notifications",
+            "security.view_alerts",
+            "notifications"
+        );
+
+        const badge = document.createElement("button");
+        badge.type = "button";
+        badge.className = "mi-chief-owner-badge";
+        badge.textContent = "Chief Owner";
+        badge.setAttribute(
+            "data-mi-chief-owner-control",
+            "true"
+        );
+
+        headerGroup.append(
+            dashboardButton,
+            requestsButton,
+            notificationsButton,
+            badge
+        );
+
+        headerTarget.appendChild(headerGroup);
+
+        const panel = document.createElement("section");
+
+        panel.id = "miChiefOwnerPanel";
+        panel.className = "mi-chief-owner-panel";
+        panel.hidden = true;
+
+        panel.setAttribute(
+            "data-mi-chief-owner-control",
+            "true"
+        );
+
+        panel.innerHTML =
+            '<div class="mi-chief-owner-panel-card">' +
+            '<div class="mi-chief-owner-panel-head">' +
+            '<div>' +
+            '<strong>Chief Owner Controls</strong>' +
+            '<small>Secure backend verified access</small>' +
+            '</div>' +
+            '<button type="button" id="miChiefOwnerClose">×</button>' +
+            '</div>' +
+            '<div id="miChiefOwnerActionGrid" class="mi-chief-owner-action-grid"></div>' +
+            '</div>';
+
+        document.body.appendChild(panel);
+
+        const actionGrid =
+            panel.querySelector(
+                "#miChiefOwnerActionGrid"
+            );
+
+        const actions = [
+            [
+                "Staff Management",
+                "staff.view",
+                "staff-management"
+            ],
+            [
+                "Grant Role",
+                "roles.assign",
+                "grant-role"
+            ],
+            [
+                "Remove Role",
+                "roles.remove",
+                "remove-role"
+            ],
+            [
+                "Grant Permission",
+                "permissions.grant",
+                "grant-permission"
+            ],
+            [
+                "Revoke Permission",
+                "permissions.revoke",
+                "revoke-permission"
+            ],
+            [
+                "Pending Requests",
+                "permissions.view",
+                "pending-requests"
+            ],
+            [
+                "Approve Request",
+                "permissions.approve",
+                "approve-request"
+            ],
+            [
+                "Decline Request",
+                "permissions.reject",
+                "decline-request"
+            ],
+            [
+                "Roles",
+                "roles.view",
+                "roles"
+            ],
+            [
+                "Permission Center",
+                "permissions.view",
+                "permission-center"
+            ],
+            [
+                "Audit Logs",
+                "audit.view_all",
+                "audit-logs"
+            ],
+            [
+                "Security Center",
+                "security.view_alerts",
+                "security-center"
+            ],
+            [
+                "System Settings",
+                "system.manage_settings",
+                "system-settings"
+            ],
+            [
+                "Ownership Settings",
+                "ownership.view",
+                "ownership-settings"
+            ]
+        ];
+
+        actions.forEach(function (action) {
+            actionGrid.appendChild(
+                createButton(
+                    action[0],
+                    action[1],
+                    action[2]
+                )
+            );
+        });
+
+        function openPanel() {
+            panel.hidden = false;
+            requestAnimationFrame(function () {
+                panel.classList.add("open");
+            });
+        }
+
+        function closePanel() {
+            panel.classList.remove("open");
+
+            setTimeout(function () {
+                panel.hidden = true;
+            }, 180);
+        }
+
+        dashboardButton.addEventListener(
+            "click",
+            openPanel
+        );
+
+        badge.addEventListener(
+            "click",
+            openPanel
+        );
+
+        panel.querySelector(
+            "#miChiefOwnerClose"
+        ).addEventListener(
+            "click",
+            closePanel
+        );
+
+        panel.addEventListener(
+            "click",
+            function (event) {
+                if (event.target === panel) {
+                    closePanel();
+                }
+            }
+        );
+    }
+
+    async function loadAdminAccess(user) {
+        if (
+            !user ||
+            typeof user.getIdToken !== "function"
+        ) {
+            clearAdminState();
+            return;
+        }
+
+        if (state.loading) {
+            return;
+        }
+
+        const uid = String(user.uid || "");
+
+        if (
+            state.loaded &&
+            state.uid === uid &&
+            state.isChiefOwner
+        ) {
+            ensureOwnerPanel();
+            return;
+        }
+
+        state.loading = true;
+
+        try {
+            const token = await user.getIdToken(true);
+
+            const response = await fetch(
+                "/api/admin/me",
+                {
+                    method: "GET",
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token,
+                        "Accept":
+                            "application/json"
+                    },
+                    cache: "no-store",
+                    credentials: "same-origin"
+                }
+            );
+
+            const data = await response
+                .json()
+                .catch(function () {
+                    return {};
+                });
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Permission loading failed."
+                );
+            }
+
+            state.uid = uid;
+            state.loaded = true;
+            state.loading = false;
+            state.isStaff =
+                data.isStaff === true;
+            state.isChiefOwner =
+                data.isChiefOwner === true;
+            state.role =
+                String(data.role || "");
+            state.roleLabel =
+                String(data.roleLabel || "");
+            state.permissions = new Set(
+                Array.isArray(data.permissions)
+                    ? data.permissions
+                    : []
+            );
+            state.allowedPages = new Set(
+                Array.isArray(data.allowedPages)
+                    ? data.allowedPages
+                    : []
+            );
+
+            document.querySelectorAll(
+                "[data-mi-chief-owner-control]"
+            ).forEach(function (element) {
+                element.remove();
+            });
+
+            if (state.isChiefOwner) {
+                ensureOwnerPanel();
+
+                showNotice(
+                    "Chief Owner permissions loaded.",
+                    "success"
+                );
+            }
+        } catch (error) {
+            console.error(
+                "[MI Admin] Authorization error:",
+                error
+            );
+
+            clearAdminState();
+        } finally {
+            state.loading = false;
+        }
+    }
+
+    async function synchronizeAuthorization() {
+        const user = findCurrentFirebaseUser();
+
+        if (!user) {
+            if (
+                state.loaded ||
+                state.isChiefOwner ||
+                document.querySelector(
+                    "[data-mi-chief-owner-control]"
+                )
+            ) {
+                clearAdminState();
+            }
+
+            return;
+        }
+
+        await loadAdminAccess(user);
+    }
+
+    const style = document.createElement("style");
+
+    style.setAttribute(
+        "data-mi-chief-owner-control",
+        "true"
+    );
+
+    style.textContent = `
+        .mi-chief-owner-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            padding: 4px;
+            z-index: 9996;
+        }
+
+        .mi-chief-owner-action,
+        .mi-chief-owner-badge {
+            border: 1px solid rgba(255, 202, 40, .42);
+            background: rgba(25, 20, 5, .82);
+            color: #ffe7a0;
+            padding: 8px 11px;
+            border-radius: 10px;
+            cursor: pointer;
+            font: inherit;
+            white-space: nowrap;
+            transition:
+                transform .16s ease,
+                background .16s ease,
+                border-color .16s ease;
+        }
+
+        .mi-chief-owner-action:hover,
+        .mi-chief-owner-badge:hover {
+            transform: translateY(-1px);
+            background: rgba(55, 42, 8, .94);
+            border-color: rgba(255, 215, 90, .8);
+        }
+
+        .mi-chief-owner-badge {
+            font-weight: 700;
+            border-radius: 999px;
+        }
+
+        .mi-chief-owner-panel {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483000;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, .62);
+            opacity: 0;
+            transition: opacity .18s ease;
+        }
+
+        .mi-chief-owner-panel.open {
+            opacity: 1;
+        }
+
+        .mi-chief-owner-panel-card {
+            width: min(760px, 100%);
+            max-height: min(82vh, 760px);
+            overflow: auto;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 210, 70, .42);
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(24, 22, 17, .98),
+                    rgba(8, 10, 16, .98)
+                );
+            box-shadow:
+                0 30px 100px rgba(0, 0, 0, .6),
+                0 0 45px rgba(255, 195, 35, .12);
+            padding: 18px;
+            transform: translateY(12px) scale(.98);
+            transition: transform .18s ease;
+        }
+
+        .mi-chief-owner-panel.open
+        .mi-chief-owner-panel-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .mi-chief-owner-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .mi-chief-owner-panel-head strong {
+            display: block;
+            color: #ffe5a0;
+            font-size: 19px;
+        }
+
+        .mi-chief-owner-panel-head small {
+            display: block;
+            color: rgba(255, 255, 255, .56);
+            margin-top: 4px;
+        }
+
+        #miChiefOwnerClose {
+            width: 38px;
+            height: 38px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .08);
+            color: white;
+            cursor: pointer;
+            font-size: 22px;
+        }
+
+        .mi-chief-owner-action-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .mi-chief-owner-action-grid
+        .mi-chief-owner-action {
+            min-height: 48px;
+            text-align: left;
+            padding: 12px 14px;
+        }
+
+        @media (max-width: 720px) {
+            .mi-chief-owner-header-controls {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                max-width: calc(100vw - 20px);
+                overflow-x: auto;
+                border-radius: 14px;
+                background: rgba(4, 7, 12, .82);
+                backdrop-filter: blur(16px);
+            }
+
+            .mi-chief-owner-header-controls
+            .mi-chief-owner-action {
+                display: none;
+            }
+
+            .mi-chief-owner-action-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+
+    window.addEventListener(
+        "mi-auth-state-changed",
+        synchronizeAuthorization
+    );
+
+    window.addEventListener(
+        "storage",
+        synchronizeAuthorization
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        function () {
+            if (!document.hidden) {
+                synchronizeAuthorization();
+            }
+        }
+    );
+
+    setInterval(
+        synchronizeAuthorization,
+        1800
+    );
+
+    setTimeout(
+        synchronizeAuthorization,
+        300
+    );
+})();
+/* MI_AI_CHIEF_OWNER_PERMISSION_UI_END */
+</script>
 </body>
 </html>
 
