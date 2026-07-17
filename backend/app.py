@@ -5,6 +5,14 @@ import re
 import uuid
 import json
 import requests
+
+try:
+    import firebase_admin
+    from firebase_admin import auth as firebase_admin_auth
+except ImportError:
+    firebase_admin = None
+    firebase_admin_auth = None
+
 import ssl
 import traceback
 from datetime import datetime, timedelta
@@ -62,6 +70,63 @@ app.config.update(
 )
 CORS(app)
 
+
+MI_FIREBASE_AUTH_READY = False
+MI_FIREBASE_AUTH_ERROR = ""
+
+if firebase_admin is None or firebase_admin_auth is None:
+    MI_FIREBASE_AUTH_ERROR = "firebase-admin is not installed."
+else:
+    try:
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app()
+        MI_FIREBASE_AUTH_READY = True
+    except Exception as exc:
+        MI_FIREBASE_AUTH_ERROR = str(exc)
+        app.logger.exception("Firebase Admin initialization failed.")
+
+
+def mi_verify_firebase_id_token(token):
+    token = str(token or "").strip()
+    if not token:
+        return None, "Please sign in again."
+
+    if not MI_FIREBASE_AUTH_READY:
+        app.logger.error(
+            "Firebase authentication unavailable: %s",
+            MI_FIREBASE_AUTH_ERROR or "unknown initialization error",
+        )
+        return None, "Authentication service unavailable."
+
+    try:
+        decoded = firebase_admin_auth.verify_id_token(token, check_revoked=False)
+    except Exception as exc:
+        app.logger.warning("Firebase ID token rejected: %s", exc)
+        return None, "Please sign in again."
+
+    uid = str(decoded.get("uid") or decoded.get("sub") or "").strip()
+    email = str(decoded.get("email") or "").strip().lower()
+
+    if not uid:
+        return None, "Please sign in again."
+
+    return {
+        "id": uid,
+        "uid": uid,
+        "user_id": uid,
+        "email": email,
+        "email_verified": bool(decoded.get("email_verified")),
+        "provider": "firebase",
+        "claims": decoded,
+    }, None
+
+
+def mi_get_bearer_token():
+    authorization = str(request.headers.get("Authorization") or "").strip()
+    if not authorization.lower().startswith("bearer "):
+        return ""
+    return authorization.split(" ", 1)[1].strip()
+
 otp_storage = {}
 login_tokens = {}
 trusted_devices = {}
@@ -76,6 +141,21 @@ messages_store = {}
 OTP_EMAIL_ADDRESS = os.getenv("OTP_EMAIL_ADDRESS", "").strip()
 OTP_EMAIL_PASSWORD = os.getenv("OTP_EMAIL_PASSWORD", "").replace(" ", "").strip()
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+
+
+
+@app.route("/api/firebase-auth-health", methods=["GET"])
+def mi_firebase_auth_health():
+    return jsonify({
+        "success": bool(MI_FIREBASE_AUTH_READY),
+        "firebaseAdminInstalled": firebase_admin is not None,
+        "firebaseAuthReady": bool(MI_FIREBASE_AUTH_READY),
+        "initializationError": (
+            ""
+            if MI_FIREBASE_AUTH_READY
+            else (MI_FIREBASE_AUTH_ERROR or "Unknown Firebase initialization error.")
+        ),
+    }), (200 if MI_FIREBASE_AUTH_READY else 503)
 
 @app.route('/images/<path:filename>')
 def images(filename):
@@ -1919,45 +1999,20 @@ def mi_read_share_token(token):
         return None
 
 def mi_share_authenticated_user():
-    if supabase is None:
-        app.logger.error(
-            "Account service unavailable: %s",
-            supabase_initialization_error or "unknown initialization failure",
-        )
+    token = mi_get_bearer_token()
+    current_user, firebase_error = mi_verify_firebase_id_token(token)
+
+    if firebase_error or not current_user:
         return None, (
             jsonify({
                 "success": False,
-                "message": "Account service unavailable. The server dependency was not loaded.",
+                "message": firebase_error or "Please sign in again.",
             }),
-            503,
+            401,
         )
 
-    authorization = str(request.headers.get("Authorization") or "").strip()
-    if not authorization.lower().startswith("bearer "):
-        return None, (jsonify({"success": False, "message": "Login is required."}), 401)
+    return current_user, None
 
-    token = authorization.split(" ", 1)[1].strip()
-
-    try:
-        response = supabase.auth.get_user(token)
-        user = getattr(response, "user", None)
-        if user is None and isinstance(response, dict):
-            user = response.get("user")
-
-        user_id = getattr(user, "id", None)
-        email = getattr(user, "email", None)
-
-        if isinstance(user, dict):
-            user_id = user.get("id") or user_id
-            email = user.get("email") or email
-
-        if not user_id:
-            raise RuntimeError("Authenticated user ID missing.")
-
-        return {"id": str(user_id), "email": str(email or "").strip().lower()}, None
-    except Exception as exc:
-        app.logger.warning("Share authentication failed: %s", exc)
-        return None, (jsonify({"success": False, "message": "Please sign in again."}), 401)
 
 def mi_share_admin_user(user_id):
     response = supabase.auth.admin.get_user_by_id(str(user_id))

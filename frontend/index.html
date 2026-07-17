@@ -25711,5 +25711,144 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 /* MI AI OWNER NOTIFICATIONS FINAL JS - END */
 </script>
 
+
+
+<!-- MI AI FIREBASE SHARE AUTH BRIDGE START -->
+<script>
+(function () {
+    "use strict";
+
+    const nativeFetch = window.fetch.bind(window);
+    let currentFirebaseUser = null;
+    let authReadyResolve = null;
+    let authReadyPromise = new Promise(function (resolve) {
+        authReadyResolve = resolve;
+    });
+
+    function isProtectedMiApi(url) {
+        const value = String(url || "");
+        return (
+            value.includes("/api/share") ||
+            value.includes("/api/notifications") ||
+            value.includes("/api/owner-notifications") ||
+            value.includes("/api/shared-chat") ||
+            value.includes("/api/conversations") ||
+            value.includes("/api/messages")
+        );
+    }
+
+    async function waitForFirebaseUser() {
+        if (currentFirebaseUser) return currentFirebaseUser;
+
+        await Promise.race([
+            authReadyPromise,
+            new Promise(function (resolve) { setTimeout(resolve, 6000); })
+        ]);
+
+        return (
+            currentFirebaseUser ||
+            window.miFirebaseUser ||
+            (window.firebase && firebase.auth && firebase.auth().currentUser) ||
+            null
+        );
+    }
+
+    async function refreshFirebaseToken(forceRefresh) {
+        const firebaseUser = await waitForFirebaseUser();
+
+        if (!firebaseUser || typeof firebaseUser.getIdToken !== "function") {
+            localStorage.removeItem("mi_supabase_token");
+            return "";
+        }
+
+        const token = await firebaseUser.getIdToken(Boolean(forceRefresh));
+
+        localStorage.setItem("mi_supabase_token", token);
+        localStorage.setItem("mi_user_id", firebaseUser.uid || "");
+        localStorage.setItem(
+            "mi_user_email",
+            String(firebaseUser.email || "").toLowerCase()
+        );
+
+        window.miFirebaseUser = firebaseUser;
+        return token;
+    }
+
+    window.miGetFreshFirebaseToken = refreshFirebaseToken;
+
+    function connectAuthListener() {
+        if (!window.firebase || !firebase.auth || typeof firebase.auth !== "function") {
+            setTimeout(connectAuthListener, 150);
+            return;
+        }
+
+        firebase.auth().onAuthStateChanged(async function (firebaseUser) {
+            currentFirebaseUser = firebaseUser || null;
+            window.miFirebaseUser = firebaseUser || null;
+
+            if (authReadyResolve) {
+                authReadyResolve(firebaseUser || null);
+                authReadyResolve = null;
+            }
+
+            if (!firebaseUser) {
+                localStorage.removeItem("mi_supabase_token");
+                return;
+            }
+
+            try {
+                await refreshFirebaseToken(true);
+            }
+            catch (error) {
+                console.error("[MI AI] Firebase token refresh failed:", error);
+            }
+        });
+    }
+
+    window.fetch = async function (input, init) {
+        const requestUrl = typeof input === "string" ? input : (input && input.url) || "";
+
+        if (!isProtectedMiApi(requestUrl)) {
+            return nativeFetch(input, init);
+        }
+
+        const options = Object.assign({}, init || {});
+        const headers = new Headers(
+            options.headers ||
+            (typeof input !== "string" && input ? input.headers : undefined) ||
+            {}
+        );
+
+        let token = "";
+        try { token = await refreshFirebaseToken(false); }
+        catch (error) { console.warn("[MI AI] Normal token refresh failed:", error); }
+
+        if (token) {
+            headers.set("Authorization", "Bearer " + token);
+            options.headers = headers;
+        }
+
+        let response = await nativeFetch(input, options);
+
+        if (response.status === 401 && token) {
+            try {
+                token = await refreshFirebaseToken(true);
+                headers.set("Authorization", "Bearer " + token);
+                options.headers = headers;
+                response = await nativeFetch(input, options);
+            }
+            catch (error) {
+                console.error("[MI AI] Forced Firebase token refresh failed:", error);
+            }
+        }
+
+        return response;
+    };
+
+    connectAuthListener();
+})();
+</script>
+<!-- MI AI FIREBASE SHARE AUTH BRIDGE END -->
+
 </body>
 </html>
