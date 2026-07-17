@@ -27649,6 +27649,576 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 })();
 /* MI_VISIBLE_OWNER_PERMISSION_BUTTONS_END */
 </script>
+<!-- MI-AI-FULL-ICON-PATCH-START -->
+<style id="miFullIconStyles">
+    .mi-ui-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: 1.35em;
+        min-width: 1.35em;
+        height: 1.35em;
+        margin-right: 0.32em;
+        font-family:
+            "Segoe UI Emoji",
+            "Apple Color Emoji",
+            "Noto Color Emoji",
+            sans-serif;
+        font-size: 1em;
+        font-style: normal;
+        font-weight: normal;
+        line-height: 1;
+        vertical-align: middle;
+        text-rendering: optimizeLegibility;
+    }
+
+    .mi-action-icon-only .mi-ui-icon {
+        margin-right: 0;
+    }
+
+    .mi-icon-label {
+        display: inline-block;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+</style>
+
+<script id="miFullIconController">
+(function () {
+    "use strict";
+
+    /*
+     * HTML entities are used instead of direct emoji characters.
+     * This prevents UTF-8/mojibake problems such as ðŸ or ≡ƒ.
+     */
+    const ICONS = Object.freeze({
+        newChat: "&#10133;",                    // ➕
+        customerSupport: "&#127911;",          // 🎧
+        settings: "&#9881;&#65039;",           // ⚙️
+        login: "&#128233;",                    // 📩
+        logout: "&#128228;",                   // 📤
+        notifications: "&#128276;",            // 🔔
+        pin: "&#128204;",                      // 📌
+        delete: "&#128465;&#65039;",           // 🗑️
+        share: "&#128228;",                    // 📤
+        rename: "&#128394;&#65039;"            // 🖊️
+    });
+
+    let iconRepairRunning = false;
+    let iconRepairQueued = false;
+
+    function escapeHtml(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function getTranslation(key, fallback) {
+        try {
+            if (typeof window.t === "function") {
+                const translated = window.t(key, fallback);
+
+                if (
+                    typeof translated === "string" &&
+                    translated.trim().length > 0
+                ) {
+                    return translated.trim();
+                }
+            }
+        } catch (_) {
+            // Fall back to the supplied English text.
+        }
+
+        return fallback;
+    }
+
+    function iconMarkup(icon, label, showLabel) {
+        const safeLabel = escapeHtml(label);
+
+        if (showLabel === false) {
+            return (
+                '<span class="mi-ui-icon" aria-hidden="true">' +
+                icon +
+                "</span>"
+            );
+        }
+
+        return (
+            '<span class="mi-ui-icon" aria-hidden="true">' +
+            icon +
+            '</span><span class="mi-icon-label">' +
+            safeLabel +
+            "</span>"
+        );
+    }
+
+    function setButtonContent(element, icon, label, showLabel) {
+        if (!element) return;
+
+        const html = iconMarkup(icon, label, showLabel);
+
+        if (element.innerHTML !== html) {
+            element.innerHTML = html;
+        }
+
+        element.setAttribute("aria-label", label);
+        element.setAttribute("title", label);
+        element.dataset.miIconFixed = "true";
+
+        if (showLabel === false) {
+            element.classList.add("mi-action-icon-only");
+        } else {
+            element.classList.remove("mi-action-icon-only");
+        }
+    }
+
+    function findFirst(selectors) {
+        for (const selector of selectors) {
+            try {
+                const element = document.querySelector(selector);
+                if (element) return element;
+            } catch (_) {
+                // Ignore an unsupported selector.
+            }
+        }
+
+        return null;
+    }
+
+    function findAll(selectors) {
+        const elements = new Set();
+
+        selectors.forEach(function (selector) {
+            try {
+                document.querySelectorAll(selector).forEach(function (element) {
+                    elements.add(element);
+                });
+            } catch (_) {
+                // Ignore an unsupported selector.
+            }
+        });
+
+        return Array.from(elements);
+    }
+
+    function elementSearchText(element) {
+        if (!element) return "";
+
+        return [
+            element.id || "",
+            element.className || "",
+            element.getAttribute("title") || "",
+            element.getAttribute("aria-label") || "",
+            element.getAttribute("data-action") || "",
+            element.getAttribute("onclick") || "",
+            element.textContent || ""
+        ]
+            .join(" ")
+            .toLowerCase();
+    }
+
+    function isMatchingAction(element, words) {
+        const searchText = elementSearchText(element);
+
+        return words.some(function (word) {
+            return searchText.includes(word.toLowerCase());
+        });
+    }
+
+    function fixMainNavigationButtons() {
+        const newChatButton = findFirst([
+            "#newChatBtn",
+            "#new-chat-btn",
+            "#newChatButton",
+            "[data-action='new-chat']",
+            "[data-action='newChat']",
+            "button[onclick*='newChat']",
+            "button[onclick*='createNewChat']",
+            "button[onclick*='startNewChat']"
+        ]);
+
+        setButtonContent(
+            newChatButton,
+            ICONS.newChat,
+            getTranslation("sidebar.newChat", "New Chat"),
+            true
+        );
+
+        const customerSupportButton = findFirst([
+            "#supportBtn",
+            "#customerSupportBtn",
+            "#customer-support-btn",
+            "[data-action='customer-support']",
+            "[data-action='customerSupport']",
+            "button[onclick*='customerSupport']",
+            "button[onclick*='openCustomerSupport']"
+        ]);
+
+        setButtonContent(
+            customerSupportButton,
+            ICONS.customerSupport,
+            getTranslation("sidebar.support", "Customer Support"),
+            true
+        );
+
+        const settingsButton = findFirst([
+            "#settingsBtn",
+            "#settingBtn",
+            "#settingsButton",
+            "#openSettingsBtn",
+            "[data-action='settings']",
+            "[data-action='open-settings']",
+            "button[onclick*='openSettings']",
+            "button[onclick*='showSettings']",
+            "button[onclick*='toggleSettings']"
+        ]);
+
+        setButtonContent(
+            settingsButton,
+            ICONS.settings,
+            getTranslation("sidebar.settings", "Settings"),
+            true
+        );
+    }
+
+    function fixAuthenticationButtons() {
+        const loginButton = findFirst([
+            "#loginBtn",
+            "#loginButton",
+            "#authLoginBtn",
+            "[data-action='login']",
+            "button[onclick*='openLogin']",
+            "button[onclick*='showLogin']"
+        ]);
+
+        setButtonContent(
+            loginButton,
+            ICONS.login,
+            getTranslation("auth.login", "Login"),
+            true
+        );
+
+        const logoutButton = findFirst([
+            "#logoutBtn",
+            "#logoutButton",
+            "#authLogoutBtn",
+            "[data-action='logout']",
+            "button[onclick*='logout']",
+            "button[onclick*='signOut']"
+        ]);
+
+        setButtonContent(
+            logoutButton,
+            ICONS.logout,
+            getTranslation("auth.logout", "Logout"),
+            true
+        );
+    }
+
+    function fixNotificationButtons() {
+        const notificationButtons = findAll([
+            "#notificationBtn",
+            "#notificationsBtn",
+            "#bellBtn",
+            "#notificationButton",
+            "[data-action='notifications']",
+            "[data-action='notification']",
+            "button[onclick*='notification']",
+            "button[onclick*='Notification']"
+        ]);
+
+        notificationButtons.forEach(function (button) {
+            const currentText = (button.textContent || "").trim();
+            const iconOnly = currentText.length === 0 || currentText.length <= 3;
+
+            setButtonContent(
+                button,
+                ICONS.notifications,
+                getTranslation(
+                    "notifications.title",
+                    "Notifications"
+                ),
+                !iconOnly
+            );
+        });
+    }
+
+    function fixConversationActionButtons() {
+        const possibleButtons = findAll([
+            "button",
+            "[role='button']",
+            ".chat-action",
+            ".conversation-action",
+            ".message-action",
+            ".menu-item",
+            ".dropdown-item",
+            ".context-menu-item"
+        ]);
+
+        possibleButtons.forEach(function (button) {
+            if (
+                button.matches(
+                    "#newChatBtn, #new-chat-btn, #supportBtn, " +
+                    "#customerSupportBtn, #settingsBtn, #loginBtn, " +
+                    "#logoutBtn, #notificationBtn, #notificationsBtn, #bellBtn"
+                )
+            ) {
+                return;
+            }
+
+            const currentText = (button.textContent || "").trim();
+            const iconOnly =
+                currentText.length === 0 ||
+                button.classList.contains("icon-btn") ||
+                button.classList.contains("icon-button") ||
+                button.classList.contains("action-icon");
+
+            if (
+                isMatchingAction(button, [
+                    "rename",
+                    "edit-name",
+                    "rename-chat",
+                    "rename conversation"
+                ])
+            ) {
+                setButtonContent(
+                    button,
+                    ICONS.rename,
+                    getTranslation("chat.rename", "Rename"),
+                    !iconOnly
+                );
+
+                return;
+            }
+
+            if (
+                isMatchingAction(button, [
+                    "delete",
+                    "remove-chat",
+                    "delete-chat",
+                    "trash"
+                ])
+            ) {
+                setButtonContent(
+                    button,
+                    ICONS.delete,
+                    getTranslation("chat.delete", "Delete"),
+                    !iconOnly
+                );
+
+                return;
+            }
+
+            if (
+                isMatchingAction(button, [
+                    "pin-chat",
+                    "unpin-chat",
+                    "pin conversation",
+                    "unpin conversation",
+                    "thumbtack"
+                ])
+            ) {
+                const isUnpin = elementSearchText(button).includes("unpin");
+                const pinLabel = isUnpin ? "Unpin" : "Pin";
+
+                setButtonContent(
+                    button,
+                    ICONS.pin,
+                    getTranslation(
+                        isUnpin ? "chat.unpin" : "chat.pin",
+                        pinLabel
+                    ),
+                    !iconOnly
+                );
+
+                return;
+            }
+
+            if (
+                isMatchingAction(button, [
+                    "share-chat",
+                    "share conversation",
+                    "generate-link",
+                    "create-link",
+                    "sharebutton"
+                ])
+            ) {
+                setButtonContent(
+                    button,
+                    ICONS.share,
+                    getTranslation("chat.share", "Share"),
+                    !iconOnly
+                );
+            }
+        });
+    }
+
+    function fixCustomerSupportHeadings() {
+        document
+            .querySelectorAll("h1, h2, h3, h4, .modal-title")
+            .forEach(function (heading) {
+                const text = (heading.textContent || "").trim();
+
+                if (/customer\s+support$/i.test(text)) {
+                    const label = getTranslation(
+                        "sidebar.support",
+                        "Customer Support"
+                    );
+
+                    const desired = iconMarkup(
+                        ICONS.customerSupport,
+                        label,
+                        true
+                    );
+
+                    if (heading.innerHTML !== desired) {
+                        heading.innerHTML = desired;
+                    }
+                }
+            });
+    }
+
+    function removeVisibleMojibakeFromKnownButtons() {
+        const knownButtons = [
+            findFirst([
+                "#newChatBtn",
+                "#new-chat-btn",
+                "#newChatButton"
+            ]),
+            findFirst([
+                "#supportBtn",
+                "#customerSupportBtn"
+            ]),
+            findFirst([
+                "#settingsBtn",
+                "#settingBtn"
+            ]),
+            findFirst([
+                "#loginBtn",
+                "#loginButton"
+            ]),
+            findFirst([
+                "#logoutBtn",
+                "#logoutButton"
+            ])
+        ];
+
+        knownButtons.forEach(function (button) {
+            if (!button) return;
+
+            const text = button.textContent || "";
+
+            if (
+                /ðŸ|≡ƒ|Ã|â€|âœ|ï»¿/.test(text) &&
+                button.dataset.miIconFixed !== "true"
+            ) {
+                button.textContent = text
+                    .replace(/ðŸ\S*/g, "")
+                    .replace(/≡ƒ\S*/g, "")
+                    .replace(/Ã\S*/g, "")
+                    .trim();
+            }
+        });
+    }
+
+    function repairAllIcons() {
+        if (iconRepairRunning) return;
+
+        iconRepairRunning = true;
+        iconRepairQueued = false;
+
+        try {
+            removeVisibleMojibakeFromKnownButtons();
+            fixMainNavigationButtons();
+            fixAuthenticationButtons();
+            fixNotificationButtons();
+            fixConversationActionButtons();
+            fixCustomerSupportHeadings();
+        } finally {
+            iconRepairRunning = false;
+        }
+    }
+
+    function scheduleIconRepair() {
+        if (iconRepairQueued) return;
+
+        iconRepairQueued = true;
+
+        window.requestAnimationFrame(function () {
+            repairAllIcons();
+        });
+    }
+
+    function startIconSystem() {
+        repairAllIcons();
+
+        if (!document.body) return;
+
+        const observer = new MutationObserver(function (mutations) {
+            const shouldRepair = mutations.some(function (mutation) {
+                return (
+                    mutation.type === "childList" ||
+                    mutation.type === "characterData" ||
+                    (
+                        mutation.type === "attributes" &&
+                        [
+                            "class",
+                            "title",
+                            "aria-label",
+                            "data-action"
+                        ].includes(mutation.attributeName)
+                    )
+                );
+            });
+
+            if (shouldRepair) {
+                scheduleIconRepair();
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: [
+                "class",
+                "title",
+                "aria-label",
+                "data-action"
+            ]
+        });
+
+        window.setTimeout(repairAllIcons, 250);
+        window.setTimeout(repairAllIcons, 1000);
+        window.setTimeout(repairAllIcons, 2500);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startIconSystem,
+            { once: true }
+        );
+    } else {
+        startIconSystem();
+    }
+
+    window.addEventListener("load", repairAllIcons);
+    window.addEventListener("languagechange", scheduleIconRepair);
+    window.addEventListener("storage", scheduleIconRepair);
+
+    window.miRepairAllIcons = repairAllIcons;
+})();
+</script>
+<!-- MI-AI-FULL-ICON-PATCH-END -->
 </body>
 </html>
 
