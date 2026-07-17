@@ -2499,4 +2499,292 @@ def _mi_web_photo_search():
     }), 200
 # === MI AI WEB PHOTO SEARCH END ===
 
+# MI_AI_CHIEF_OWNER_PERMISSION_BRIDGE_START
+# Server-authoritative Chief Owner and staff authorization bridge.
+# Never trust role or permissions submitted by frontend code.
 
+MI_AI_CHIEF_OWNER_EMAIL = os.getenv(
+    "CHIEF_OWNER_EMAIL",
+    "teamofchatbot.miai@gmail.com",
+).strip().lower()
+
+MI_AI_CHIEF_OWNER_UID = os.getenv(
+    "CHIEF_OWNER_UID",
+    "",
+).strip()
+
+MI_AI_ALL_PERMISSIONS = (
+    "users.view",
+    "users.search",
+    "users.edit",
+    "users.suspend",
+    "users.block",
+    "users.unblock",
+    "users.delete",
+    "users.restore",
+    "users.force_logout",
+    "users.view_sessions",
+    "users.revoke_sessions",
+
+    "chats.view_reported",
+    "chats.view_all",
+    "chats.search",
+    "chats.moderate",
+    "chats.delete_content",
+
+    "messages.view_reported",
+    "messages.view_all",
+
+    "staff.view",
+    "staff.create",
+    "staff.edit",
+    "staff.suspend",
+    "staff.remove",
+    "staff.promote",
+    "staff.demote",
+
+    "roles.view",
+    "roles.assign",
+    "roles.remove",
+    "roles.create_template",
+    "roles.edit_template",
+
+    "permissions.view",
+    "permissions.request",
+    "permissions.approve",
+    "permissions.reject",
+    "permissions.grant",
+    "permissions.revoke",
+
+    "support.view",
+    "support.assign",
+    "support.reply",
+    "support.close",
+    "support.escalate",
+
+    "moderation.view",
+    "moderation.warn",
+    "moderation.restrict",
+    "moderation.suspend",
+    "moderation.remove_content",
+
+    "analytics.view_basic",
+    "analytics.view_advanced",
+    "analytics.export",
+
+    "audit.view_own",
+    "audit.view_department",
+    "audit.view_all",
+    "audit.export",
+
+    "ai.view",
+    "ai.manage_models",
+    "ai.manage_prompts",
+    "ai.manage_limits",
+
+    "api.view_status",
+    "api.manage_configuration",
+    "api.rotate_credentials",
+
+    "system.view_status",
+    "system.manage_settings",
+    "system.manage_features",
+    "system.maintenance_mode",
+    "system.manage_branding",
+    "system.manage_announcements",
+    "system.backup",
+    "system.restore",
+
+    "security.view_alerts",
+    "security.manage_sessions",
+    "security.manage_devices",
+    "security.block_device",
+    "security.manage_ip_rules",
+
+    "ownership.view",
+    "ownership.transfer",
+)
+
+MI_AI_CHIEF_OWNER_PAGES = (
+    "dashboard",
+    "users",
+    "user-profiles",
+    "chats",
+    "conversation-viewer",
+    "messages",
+    "staff-management",
+    "roles",
+    "permission-center",
+    "access-requests",
+    "reports",
+    "moderation",
+    "customer-support",
+    "analytics",
+    "system-status",
+    "ai-management",
+    "model-settings",
+    "api-management",
+    "security-center",
+    "login-sessions",
+    "devices",
+    "audit-logs",
+    "activity-history",
+    "notifications",
+    "announcements",
+    "content-management",
+    "settings",
+    "admin-profile",
+    "backup-and-restore",
+    "deleted-items",
+    "blocked-users",
+    "suspended-users",
+    "error-logs",
+    "feature-controls",
+    "maintenance-mode",
+    "permission-templates",
+    "ownership-settings",
+)
+
+
+def mi_ai_normalize_email(value):
+    return str(value or "").strip().lower()
+
+
+def mi_ai_extract_bearer_token():
+    header = str(request.headers.get("Authorization") or "").strip()
+
+    if not header.lower().startswith("bearer "):
+        return ""
+
+    return header[7:].strip()
+
+
+def mi_ai_verify_firebase_token():
+    token = mi_ai_extract_bearer_token()
+
+    if not token:
+        return None, ("Authentication token is required.", 401)
+
+    try:
+        from firebase_admin import auth as firebase_auth
+        decoded = firebase_auth.verify_id_token(
+            token,
+            check_revoked=True,
+        )
+    except Exception:
+        return None, ("Invalid or expired authentication token.", 401)
+
+    uid = str(decoded.get("uid") or decoded.get("sub") or "").strip()
+    email = mi_ai_normalize_email(decoded.get("email"))
+    email_verified = bool(decoded.get("email_verified", False))
+
+    if not uid or not email:
+        return None, ("Authenticated account identity is incomplete.", 401)
+
+    return {
+        "uid": uid,
+        "email": email,
+        "email_verified": email_verified,
+        "token": decoded,
+    }, None
+
+
+def mi_ai_is_chief_owner(identity):
+    if not identity:
+        return False
+
+    if identity["email"] != MI_AI_CHIEF_OWNER_EMAIL:
+        return False
+
+    if MI_AI_CHIEF_OWNER_UID:
+        return identity["uid"] == MI_AI_CHIEF_OWNER_UID
+
+    return True
+
+
+def mi_ai_safe_admin_response(identity):
+    chief_owner = mi_ai_is_chief_owner(identity)
+
+    if chief_owner:
+        return {
+            "authenticated": True,
+            "isStaff": True,
+            "isChiefOwner": True,
+            "role": "chief_owner",
+            "roleLabel": "Chief Owner",
+            "accountStatus": "active",
+            "uid": identity["uid"],
+            "email": identity["email"],
+            "permissions": list(MI_AI_ALL_PERMISSIONS),
+            "allowedPages": list(MI_AI_CHIEF_OWNER_PAGES),
+        }
+
+    return {
+        "authenticated": True,
+        "isStaff": False,
+        "isChiefOwner": False,
+        "role": "normal_user",
+        "roleLabel": "Normal User",
+        "accountStatus": "active",
+        "uid": identity["uid"],
+        "email": identity["email"],
+        "permissions": [],
+        "allowedPages": [],
+    }
+
+
+@app.route("/api/admin/me", methods=["GET", "OPTIONS"])
+def mi_ai_admin_me():
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    identity, error = mi_ai_verify_firebase_token()
+
+    if error:
+        message, status = error
+        return jsonify({
+            "authenticated": False,
+            "isStaff": False,
+            "isChiefOwner": False,
+            "permissions": [],
+            "allowedPages": [],
+            "message": message,
+        }), status
+
+    response = mi_ai_safe_admin_response(identity)
+    return jsonify(response), 200
+
+
+@app.route("/api/admin/permission-check", methods=["POST"])
+def mi_ai_admin_permission_check():
+    identity, error = mi_ai_verify_firebase_token()
+
+    if error:
+        message, status = error
+        return jsonify({
+            "allowed": False,
+            "message": message,
+        }), status
+
+    payload = request.get_json(silent=True) or {}
+    requested_permission = str(
+        payload.get("permission") or ""
+    ).strip()
+
+    if not requested_permission:
+        return jsonify({
+            "allowed": False,
+            "message": "Permission name is required.",
+        }), 400
+
+    if not mi_ai_is_chief_owner(identity):
+        return jsonify({
+            "allowed": False,
+            "message": "Access denied.",
+        }), 403
+
+    return jsonify({
+        "allowed": requested_permission in MI_AI_ALL_PERMISSIONS,
+        "permission": requested_permission,
+    }), 200
+# MI_AI_CHIEF_OWNER_PERMISSION_BRIDGE_END
