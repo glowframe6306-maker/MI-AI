@@ -9577,6 +9577,282 @@ span:nth-child(3) {
 
 
 </style>
+<!-- MI AI MOBILE LARGE NOTCH START -->
+<style id="mi-mobile-large-notch-style">
+@media (max-width: 768px) {
+    :root {
+        --mi-mobile-notch-width: min(42vw, 180px);
+        --mi-mobile-notch-height: 30px;
+        --mi-mobile-safe-top: 42px;
+    }
+
+    html {
+        font-size: 18px !important;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    body {
+        min-width: 320px;
+        overflow-x: hidden !important;
+        padding-top: 0 !important;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        top: max(8px, env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+        width: var(--mi-mobile-notch-width);
+        height: var(--mi-mobile-notch-height);
+        background: #000;
+        border-radius: 0 0 18px 18px;
+        z-index: 2147483646;
+        pointer-events: none;
+        box-shadow: 0 1px 0 rgba(255,255,255,.08);
+    }
+
+    body::after {
+        content: "";
+        position: fixed;
+        top: max(13px, calc(env(safe-area-inset-top) + 5px));
+        left: 50%;
+        transform: translateX(-50%);
+        width: 42px;
+        height: 5px;
+        border-radius: 999px;
+        background: #151515;
+        z-index: 2147483647;
+        pointer-events: none;
+    }
+
+    header,
+    .header,
+    #header,
+    .topbar,
+    .top-bar,
+    .app-header,
+    .chat-header,
+    nav,
+    .navbar {
+        min-height: 64px !important;
+        padding-top: calc(var(--mi-mobile-safe-top) + env(safe-area-inset-top)) !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        box-sizing: border-box !important;
+    }
+
+    header > *,
+    .header > *,
+    #header > *,
+    .topbar > *,
+    .top-bar > *,
+    .app-header > *,
+    .chat-header > *,
+    nav > *,
+    .navbar > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    main,
+    .main,
+    #main,
+    .app-main,
+    .chat-container,
+    .content,
+    .main-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    button,
+    .button,
+    [role="button"],
+    input,
+    textarea,
+    select {
+        min-height: 48px !important;
+        font-size: 17px !important;
+        border-radius: 14px !important;
+    }
+
+    button,
+    .button,
+    [role="button"] {
+        padding: 11px 15px !important;
+    }
+
+    input,
+    textarea,
+    select {
+        padding: 12px 14px !important;
+    }
+
+    textarea {
+        min-height: 52px !important;
+        max-height: 180px !important;
+        line-height: 1.45 !important;
+    }
+
+    .message,
+    .chat-message,
+    .user-message,
+    .assistant-message,
+    .message-bubble,
+    [class*="message-bubble"] {
+        max-width: 92% !important;
+        font-size: 17px !important;
+        line-height: 1.55 !important;
+        padding: 13px 15px !important;
+        border-radius: 18px !important;
+        word-break: break-word !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    .sidebar,
+    #sidebar,
+    aside,
+    .side-panel,
+    .drawer {
+        width: min(88vw, 360px) !important;
+        max-width: 88vw !important;
+    }
+
+    .sidebar *,
+    #sidebar *,
+    aside *,
+    .side-panel *,
+    .drawer * {
+        font-size: 16px;
+    }
+
+    .modal,
+    .dialog,
+    .popup,
+    [role="dialog"] {
+        width: calc(100vw - 24px) !important;
+        max-width: 520px !important;
+        max-height: calc(100vh - 36px) !important;
+        border-radius: 22px !important;
+        box-sizing: border-box !important;
+    }
+
+    .settings-panel,
+    .share-panel,
+    .bottom-sheet,
+    .sheet {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    h1 { font-size: 1.55rem !important; }
+    h2 { font-size: 1.35rem !important; }
+    h3 { font-size: 1.18rem !important; }
+
+    .icon,
+    svg,
+    .material-icons,
+    [class*="icon"] {
+        max-width: 30px;
+        max-height: 30px;
+    }
+
+    .composer,
+    .input-container,
+    .chat-input-container,
+    .message-input-container {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+        box-sizing: border-box !important;
+    }
+}
+
+@media (max-width: 390px) {
+    html {
+        font-size: 17px !important;
+    }
+
+    :root {
+        --mi-mobile-notch-width: 44vw;
+        --mi-mobile-notch-height: 28px;
+        --mi-mobile-safe-top: 40px;
+    }
+
+    .message,
+    .chat-message,
+    .user-message,
+    .assistant-message,
+    .message-bubble {
+        max-width: 95% !important;
+    }
+}
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    if (window.__miMobileLargeNotchV1) return;
+    window.__miMobileLargeNotchV1 = true;
+
+    function ensureViewport() {
+        let viewport = document.querySelector('meta[name="viewport"]');
+
+        if (!viewport) {
+            viewport = document.createElement("meta");
+            viewport.name = "viewport";
+            document.head.appendChild(viewport);
+        }
+
+        viewport.content =
+            "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover";
+    }
+
+    function markHeader() {
+        const selectors = [
+            "header",
+            ".header",
+            "#header",
+            ".topbar",
+            ".top-bar",
+            ".app-header",
+            ".chat-header",
+            "nav",
+            ".navbar"
+        ];
+
+        const header = document.querySelector(selectors.join(","));
+        if (header) {
+            header.setAttribute("data-mi-notch-safe-header", "true");
+        }
+    }
+
+    function start() {
+        ensureViewport();
+        markHeader();
+
+        const observer = new MutationObserver(function () {
+            markHeader();
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, { once: true });
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- MI AI MOBILE LARGE NOTCH END -->
 </head>
 
 <body>
