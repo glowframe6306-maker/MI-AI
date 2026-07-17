@@ -8486,25 +8486,28 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
 /* MI AI WELCOME ANIMATION V10 CSS - START */
 
 /*
-  The existing V9 welcome element remains the source
-  of the Welcome design. V10 adds motion and exit states.
+  MI AI Premium Welcome Animation
+  Zoom + glow + glass + floating particles + shine.
+  Existing Welcome V10 JavaScript remains unchanged.
 */
 
 #miWelcomeV9 {
-    position:
-        relative;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
 
-    overflow:
-        hidden;
+    width: min(94%, 820px);
+    min-height: 370px;
 
-    isolation:
-        isolate;
+    margin: auto;
+    padding: 42px 28px;
 
-    opacity:
-        1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    visibility:
-        visible;
+    opacity: 1;
+    visibility: visible;
 
     transform:
         translateY(0)
@@ -8514,190 +8517,546 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
         blur(0);
 
     transition:
-        opacity 360ms ease,
-        transform 430ms
-            cubic-bezier(.16, 1, .3, 1),
-        filter 360ms ease,
-        visibility 360ms ease;
+        opacity 380ms ease,
+        transform 460ms cubic-bezier(.16, 1, .3, 1),
+        filter 380ms ease,
+        visibility 380ms ease;
 
     animation:
-        miWelcomeV10Entrance
-        650ms
+        miWelcomePremiumEntrance
+        850ms
         cubic-bezier(.16, 1, .3, 1)
         both;
 }
 
+/* Large glowing aura */
 #miWelcomeV9::before {
-    content:
-        "";
+    content: "";
 
-    position:
-        absolute;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: -3;
 
-    top:
-        50%;
+    width: min(82vw, 720px);
+    height: min(82vw, 720px);
 
-    left:
-        50%;
-
-    z-index:
-        -2;
-
-    width:
-        min(72vw, 760px);
-
-    height:
-        min(72vw, 760px);
-
-    border-radius:
-        50%;
+    border-radius: 50%;
 
     background:
         radial-gradient(
             circle,
-            rgba(77, 142, 255, 0.22)
-                0%,
-            rgba(166, 105, 255, 0.15)
-                34%,
-            rgba(58, 218, 255, 0.08)
-                54%,
-            rgba(0, 0, 0, 0)
-                72%
+            rgba(65, 145, 255, 0.34) 0%,
+            rgba(135, 91, 255, 0.24) 28%,
+            rgba(44, 211, 255, 0.14) 48%,
+            rgba(255, 92, 190, 0.08) 61%,
+            transparent 74%
         );
+
+    filter:
+        blur(4px);
 
     transform:
         translate(-50%, -50%)
-        scale(0.88);
+        scale(0.82);
 
     animation:
-        miWelcomeV10Aura
-        5.6s ease-in-out
+        miWelcomePremiumAura
+        5.8s
+        ease-in-out
         infinite;
 }
 
+/* Rotating light ring */
 #miWelcomeV9::after {
+    content: "";
+
+    position: absolute;
+    inset: 5% 8%;
+    z-index: -2;
+
+    border-radius: 50%;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.14);
+
+    background:
+        conic-gradient(
+            from 0deg,
+            transparent 0deg,
+            rgba(78, 165, 255, 0.26) 55deg,
+            transparent 120deg,
+            rgba(185, 114, 255, 0.22) 190deg,
+            transparent 250deg,
+            rgba(64, 224, 255, 0.20) 320deg,
+            transparent 360deg
+        );
+
+    filter:
+        blur(1px);
+
+    opacity:
+        0.78;
+
+    animation:
+        miWelcomePremiumRing
+        11s
+        linear
+        infinite;
+}
+
+/* Main glass card */
+#miWelcomeV9Card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    width:
+        min(92vw, 660px);
+
+    padding:
+        36px 34px 30px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.30);
+
+    border-radius:
+        34px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.19),
+            rgba(255, 255, 255, 0.07)
+        );
+
+    -webkit-backdrop-filter:
+        blur(30px)
+        saturate(185%);
+
+    backdrop-filter:
+        blur(30px)
+        saturate(185%);
+
+    box-shadow:
+        inset 0 1px 0
+            rgba(255, 255, 255, 0.34),
+        inset 0 -1px 0
+            rgba(255, 255, 255, 0.06),
+        0 26px 70px
+            rgba(0, 0, 0, 0.38),
+        0 0 48px
+            rgba(82, 139, 255, 0.15);
+
+    transform:
+        translateZ(0)
+        scale(0.96);
+
+    animation:
+        miWelcomePremiumZoom
+        4.8s
+        cubic-bezier(.45, 0, .55, 1)
+        infinite;
+}
+
+/* Glass highlight */
+#miWelcomeV9Card::before {
+    content: "";
+
+    position: absolute;
+    top: 1px;
+    left: 5%;
+    right: 5%;
+    height: 48%;
+
+    border-radius:
+        inherit;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.30),
+            rgba(255, 255, 255, 0.03)
+        );
+
+    opacity:
+        0.70;
+
+    pointer-events:
+        none;
+}
+
+/* Moving shine */
+#miWelcomeV9Card::after {
+    content: "";
+
+    position: absolute;
+    top: -60%;
+    left: -45%;
+
+    width: 34%;
+    height: 220%;
+
+    transform:
+        rotate(24deg);
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.42),
+            transparent
+        );
+
+    filter:
+        blur(2px);
+
+    opacity:
+        0;
+
+    pointer-events:
+        none;
+
+    animation:
+        miWelcomePremiumShine
+        5.5s
+        ease-in-out
+        infinite;
+}
+
+/* Main text group */
+#miWelcomeV9 .mi-v9-welcome-main {
+    position:
+        relative;
+
+    z-index:
+        2;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    text-align:
+        center;
+}
+
+/* WELCOME TO */
+#miWelcomeV9 .mi-v9-welcome-to {
+    margin-bottom:
+        4px;
+
+    font-size:
+        clamp(15px, 2vw, 22px);
+
+    font-weight:
+        650;
+
+    letter-spacing:
+        0.28em;
+
+    color:
+        rgba(255, 255, 255, 0.76);
+
+    text-shadow:
+        0 0 18px
+        rgba(132, 186, 255, 0.35);
+
+    animation:
+        miWelcomePremiumSmallText
+        3.2s
+        ease-in-out
+        infinite;
+}
+
+/* MI AI glass-gradient text */
+#miWelcomeV9 .mi-v9-welcome-name {
+    position:
+        relative;
+
+    display:
+        inline-block;
+
+    margin:
+        2px 0 10px;
+
+    font-size:
+        clamp(46px, 9vw, 98px);
+
+    font-weight:
+        850;
+
+    line-height:
+        1;
+
+    letter-spacing:
+        0.055em;
+
+    color:
+        transparent;
+
+    background:
+        linear-gradient(
+            100deg,
+            #ffffff 0%,
+            #bde3ff 18%,
+            #73b8ff 36%,
+            #d3b6ff 54%,
+            #ffffff 68%,
+            #6fe8ff 84%,
+            #ffffff 100%
+        );
+
+    background-size:
+        260% 100%;
+
+    -webkit-background-clip:
+        text;
+
+    background-clip:
+        text;
+
+    -webkit-text-fill-color:
+        transparent;
+
+    filter:
+        drop-shadow(
+            0 0 18px
+            rgba(91, 159, 255, 0.44)
+        );
+
+    animation:
+        miWelcomePremiumTextGradient
+            5.2s linear infinite,
+        miWelcomePremiumNameGlow
+            3.4s ease-in-out infinite;
+}
+
+/* Extra glossy text reflection */
+#miWelcomeV9 .mi-v9-welcome-name::after {
     content:
-        "";
+        attr(data-text);
 
     position:
         absolute;
 
     inset:
-        11% 15%;
+        0;
 
-    z-index:
-        -1;
-
-    border-radius:
-        45%;
+    color:
+        transparent;
 
     background:
         linear-gradient(
-            120deg,
-            rgba(66, 153, 255, 0.10),
-            rgba(184, 119, 255, 0.08),
-            rgba(58, 225, 213, 0.08)
+            180deg,
+            rgba(255, 255, 255, 0.78),
+            rgba(255, 255, 255, 0.05) 55%,
+            transparent 70%
         );
 
-    filter:
-        blur(55px);
+    -webkit-background-clip:
+        text;
+
+    background-clip:
+        text;
+
+    -webkit-text-fill-color:
+        transparent;
 
     opacity:
-        0.7;
+        0.45;
 
-    transform:
-        rotate(-4deg);
-
-    animation:
-        miWelcomeV10GlowMove
-        7s ease-in-out
-        infinite alternate;
+    pointer-events:
+        none;
 }
 
-#miWelcomeV9Card {
+/* Subtitle */
+#miWelcomeV9 .mi-v9-welcome-subtitle {
+    margin-top:
+        7px;
+
+    font-size:
+        clamp(12px, 1.8vw, 16px);
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        0.12em;
+
+    color:
+        rgba(255, 255, 255, 0.60);
+
+    text-shadow:
+        0 0 16px
+        rgba(126, 184, 255, 0.30);
+
+    animation:
+        miWelcomePremiumSubtitle
+        3.7s
+        ease-in-out
+        infinite;
+}
+
+/* Floating dots container */
+#miWelcomeV9 .mi-v9-welcome-dots {
     position:
         relative;
 
-    transform:
-        translateY(0);
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    gap:
+        12px;
+
+    margin-top:
+        23px;
+
+    height:
+        18px;
 
     animation:
-        miWelcomeV10CardFloat
-        4.5s ease-in-out
+        miWelcomePremiumDotsContainer
+        3.8s
+        ease-in-out
+        infinite;
+}
+
+/* Individual glowing dots */
+#miWelcomeV9 .mi-v9-welcome-dots span {
+    display:
+        block;
+
+    width:
+        8px;
+
+    height:
+        8px;
+
+    border-radius:
+        50%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #8bcaff
+        );
+
+    box-shadow:
+        0 0 8px
+            rgba(115, 186, 255, 0.85),
+        0 0 18px
+            rgba(125, 125, 255, 0.55);
+
+    animation:
+        miWelcomePremiumDot
+        1.55s
+        ease-in-out
         infinite;
 }
 
 #miWelcomeV9
-.mi-v9-welcome-main {
-    transform:
-        translateY(0);
+.mi-v9-welcome-dots
+span:nth-child(2) {
+    animation-delay:
+        180ms;
 
-    animation:
-        miWelcomeV10TopFloat
-        4.2s ease-in-out
-        infinite;
-
-    background-size:
-        210% 100%;
-
-    animation-name:
-        miWelcomeV10TopFloat,
-        miWelcomeV10Gradient;
-
-    animation-duration:
-        4.2s,
-        6s;
-
-    animation-timing-function:
-        ease-in-out,
-        linear;
-
-    animation-iteration-count:
-        infinite,
-        infinite;
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #c49cff
+        );
 }
 
 #miWelcomeV9
-.mi-v9-welcome-to {
+.mi-v9-welcome-dots
+span:nth-child(3) {
+    animation-delay:
+        360ms;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #73efff
+        );
+}
+
+/* Invisible particle field generated from shadows */
+#miWelcomeV9Card
+.mi-v9-welcome-main::before {
+    content: "";
+
+    position:
+        absolute;
+
+    width:
+        5px;
+
+    height:
+        5px;
+
+    left:
+        50%;
+
+    top:
+        50%;
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(255, 255, 255, 0.72);
+
+    box-shadow:
+        -245px -105px 0
+            rgba(99, 190, 255, 0.52),
+        -188px 102px 0
+            rgba(177, 124, 255, 0.44),
+        -126px -138px 0
+            rgba(255, 255, 255, 0.36),
+        -64px 132px 0
+            rgba(82, 220, 255, 0.42),
+        82px -130px 0
+            rgba(255, 255, 255, 0.36),
+        145px 116px 0
+            rgba(112, 176, 255, 0.44),
+        204px -84px 0
+            rgba(198, 136, 255, 0.42),
+        252px 82px 0
+            rgba(67, 226, 255, 0.38);
+
+    opacity:
+        0.55;
+
+    pointer-events:
+        none;
+
     animation:
-        miWelcomeV10ToPulse
-        3.6s ease-in-out
+        miWelcomePremiumParticles
+        7s
+        ease-in-out
         infinite;
 }
 
-#miWelcomeV9
-.mi-v9-welcome-name {
-    background-size:
-        220% 100%;
-
-    animation:
-        miWelcomeV10NameFloat
-            4.7s ease-in-out
-            infinite,
-        miWelcomeV10Gradient
-            6.5s linear
-            infinite,
-        miWelcomeV10NameGlow
-            3.2s ease-in-out
-            infinite;
-}
-
-#miWelcomeV9
-.mi-v9-welcome-subtitle {
-    animation:
-        miWelcomeV10Subtitle
-        4s ease-in-out
-        infinite;
-}
-
-#miWelcomeV9
-.mi-v9-welcome-dots {
-    animation:
-        miWelcomeV10DotsFloat
-        3.1s ease-in-out
-        infinite;
-}
-
+/* Fade state from existing V10 JavaScript */
 #miWelcomeV9.mi-welcome-v10-leaving {
     opacity:
         0 !important;
@@ -8706,26 +9065,16 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
         hidden !important;
 
     transform:
-        translateY(-24px)
-        scale(1.055)
+        translateY(-22px)
+        scale(1.05)
         !important;
 
     filter:
-        blur(13px)
+        blur(9px)
         !important;
 
     pointer-events:
-        none !important;
-}
-
-#miWelcomeV9.mi-welcome-v10-leaving
-#miWelcomeV9Card {
-    animation:
-        none !important;
-
-    transform:
-        translateY(-12px)
-        scale(1.025);
+        none;
 }
 
 #miWelcomeV9.mi-welcome-v10-hidden {
@@ -8733,147 +9082,210 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
         none !important;
 }
 
-/*
-  While the welcome is leaving, reserve no permanent
-  overlay above the first message.
-*/
-#chat.mi-welcome-v10-message-start {
-    scroll-behavior:
-        smooth;
-}
-
+/* First user message animation */
 #chat.mi-welcome-v10-message-start
-.me:first-of-type,
-#chat.mi-welcome-v10-message-start
-.user:first-of-type,
-#chat.mi-welcome-v10-message-start
-.user-message:first-of-type {
+.me:first-of-type {
     animation:
-        miWelcomeV10FirstMessage
+        miWelcomePremiumFirstMessage
         420ms
         cubic-bezier(.16, 1, .3, 1)
         both;
 }
 
-@keyframes miWelcomeV10Entrance {
-    from {
+/* Entrance */
+@keyframes miWelcomePremiumEntrance {
+    0% {
         opacity:
             0;
 
         transform:
-            translateY(18px)
-            scale(0.955);
+            translateY(28px)
+            scale(0.88);
 
         filter:
-            blur(9px);
+            blur(12px);
     }
 
-    to {
+    65% {
+        opacity:
+            1;
+
+        transform:
+            translateY(-3px)
+            scale(1.025);
+
+        filter:
+            blur(0);
+    }
+
+    100% {
         opacity:
             1;
 
         transform:
             translateY(0)
             scale(1);
-
-        filter:
-            blur(0);
     }
 }
 
-@keyframes miWelcomeV10Aura {
-    0%,
-    100% {
-        opacity:
-            0.55;
-
-        transform:
-            translate(-50%, -50%)
-            scale(0.86);
-    }
-
-    50% {
-        opacity:
-            0.95;
-
-        transform:
-            translate(-50%, -50%)
-            scale(1.07);
-    }
-}
-
-@keyframes miWelcomeV10GlowMove {
-    from {
-        opacity:
-            0.44;
-
-        transform:
-            translate3d(-4%, 3%, 0)
-            rotate(-5deg)
-            scale(0.96);
-    }
-
-    to {
-        opacity:
-            0.82;
-
-        transform:
-            translate3d(5%, -3%, 0)
-            rotate(5deg)
-            scale(1.06);
-    }
-}
-
-@keyframes miWelcomeV10CardFloat {
-    0%,
-    100% {
-        transform:
-            translateY(0);
-    }
-
-    50% {
-        transform:
-            translateY(-9px);
-    }
-}
-
-@keyframes miWelcomeV10TopFloat {
+/* Main zoom in and out */
+@keyframes miWelcomePremiumZoom {
     0%,
     100% {
         transform:
             translateY(0)
-            scale(1);
+            scale(0.955);
+
+        box-shadow:
+            inset 0 1px 0
+                rgba(255, 255, 255, 0.30),
+            0 22px 60px
+                rgba(0, 0, 0, 0.34),
+            0 0 35px
+                rgba(74, 139, 255, 0.11);
     }
 
     50% {
         transform:
             translateY(-5px)
-            scale(1.008);
+            scale(1.035);
+
+        box-shadow:
+            inset 0 1px 0
+                rgba(255, 255, 255, 0.44),
+            0 34px 90px
+                rgba(0, 0, 0, 0.46),
+            0 0 62px
+                rgba(91, 140, 255, 0.26);
     }
 }
 
-@keyframes miWelcomeV10NameFloat {
+/* Aura breathing */
+@keyframes miWelcomePremiumAura {
     0%,
     100% {
+        opacity:
+            0.58;
+
         transform:
-            translateY(0)
-            scale(1);
+            translate(-50%, -50%)
+            scale(0.80);
+    }
+
+    50% {
+        opacity:
+            1;
+
+        transform:
+            translate(-50%, -50%)
+            scale(1.06);
+    }
+}
+
+/* Rotating glow ring */
+@keyframes miWelcomePremiumRing {
+    from {
+        transform:
+            rotate(0deg)
+            scale(0.94);
     }
 
     50% {
         transform:
-            translateY(5px)
-            scale(1.018);
+            rotate(180deg)
+            scale(1.03);
+    }
+
+    to {
+        transform:
+            rotate(360deg)
+            scale(0.94);
     }
 }
 
-@keyframes miWelcomeV10ToPulse {
+/* Moving card shine */
+@keyframes miWelcomePremiumShine {
+    0%,
+    16% {
+        left:
+            -48%;
+
+        opacity:
+            0;
+    }
+
+    28% {
+        opacity:
+            0.85;
+    }
+
+    50% {
+        left:
+            120%;
+
+        opacity:
+            0;
+    }
+
+    100% {
+        left:
+            120%;
+
+        opacity:
+            0;
+    }
+}
+
+/* Gradient text motion */
+@keyframes miWelcomePremiumTextGradient {
+    from {
+        background-position:
+            0% 50%;
+    }
+
+    to {
+        background-position:
+            260% 50%;
+    }
+}
+
+/* Main text glow */
+@keyframes miWelcomePremiumNameGlow {
+    0%,
+    100% {
+        filter:
+            drop-shadow(
+                0 0 17px
+                rgba(74, 150, 255, 0.35)
+            )
+            drop-shadow(
+                0 0 32px
+                rgba(157, 106, 255, 0.15)
+            );
+    }
+
+    50% {
+        filter:
+            drop-shadow(
+                0 0 28px
+                rgba(97, 183, 255, 0.68)
+            )
+            drop-shadow(
+                0 0 48px
+                rgba(179, 114, 255, 0.40)
+            );
+    }
+}
+
+/* Welcome to pulse */
+@keyframes miWelcomePremiumSmallText {
     0%,
     100% {
         opacity:
-            0.70;
+            0.62;
 
         transform:
+            translateY(0)
             scale(0.98);
     }
 
@@ -8882,61 +9294,33 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
             1;
 
         transform:
+            translateY(-2px)
             scale(1.025);
     }
 }
 
-@keyframes miWelcomeV10NameGlow {
-    0%,
-    100% {
-        filter:
-            drop-shadow(
-                0 0 24px
-                rgba(95, 151, 255, 0.25)
-            );
-    }
-
-    50% {
-        filter:
-            drop-shadow(
-                0 0 43px
-                rgba(163, 125, 255, 0.49)
-            );
-    }
-}
-
-@keyframes miWelcomeV10Gradient {
-    from {
-        background-position:
-            0% 50%;
-    }
-
-    to {
-        background-position:
-            210% 50%;
-    }
-}
-
-@keyframes miWelcomeV10Subtitle {
+/* Subtitle breathing */
+@keyframes miWelcomePremiumSubtitle {
     0%,
     100% {
         opacity:
-            0.43;
+            0.46;
 
         letter-spacing:
-            0.08em;
+            0.10em;
     }
 
     50% {
         opacity:
-            0.68;
+            0.78;
 
         letter-spacing:
-            0.105em;
+            0.14em;
     }
 }
 
-@keyframes miWelcomeV10DotsFloat {
+/* Floating dot row */
+@keyframes miWelcomePremiumDotsContainer {
     0%,
     100% {
         transform:
@@ -8945,18 +9329,65 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
 
     50% {
         transform:
-            translateY(4px);
+            translateY(6px);
     }
 }
 
-@keyframes miWelcomeV10FirstMessage {
+/* Dots bouncing */
+@keyframes miWelcomePremiumDot {
+    0%,
+    100% {
+        opacity:
+            0.34;
+
+        transform:
+            translateY(3px)
+            scale(0.72);
+    }
+
+    50% {
+        opacity:
+            1;
+
+        transform:
+            translateY(-6px)
+            scale(1.30);
+    }
+}
+
+/* Particle float */
+@keyframes miWelcomePremiumParticles {
+    0%,
+    100% {
+        opacity:
+            0.28;
+
+        transform:
+            translate(-50%, -50%)
+            rotate(0deg)
+            scale(0.82);
+    }
+
+    50% {
+        opacity:
+            0.72;
+
+        transform:
+            translate(-50%, -54%)
+            rotate(10deg)
+            scale(1.08);
+    }
+}
+
+/* First message */
+@keyframes miWelcomePremiumFirstMessage {
     from {
         opacity:
             0;
 
         transform:
-            translateY(15px)
-            scale(0.94);
+            translateY(16px)
+            scale(0.93);
     }
 
     to {
@@ -8969,16 +9400,59 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
     }
 }
 
-@media (
-    max-width:
-    700px
-) {
+/* Mobile */
+@media (max-width: 700px) {
+    #miWelcomeV9 {
+        width:
+            100%;
+
+        min-height:
+            330px;
+
+        padding:
+            28px 12px 118px;
+    }
+
+    #miWelcomeV9Card {
+        width:
+            min(94vw, 560px);
+
+        padding:
+            30px 18px 26px;
+
+        border-radius:
+            28px;
+    }
+
     #miWelcomeV9::before {
         width:
-            105vw;
+            112vw;
 
         height:
-            105vw;
+            112vw;
+    }
+
+    #miWelcomeV9::after {
+        inset:
+            7% 3%;
+    }
+
+    #miWelcomeV9
+    .mi-v9-welcome-name {
+        letter-spacing:
+            0.035em;
+    }
+
+    #miWelcomeV9
+    .mi-v9-welcome-to {
+        letter-spacing:
+            0.20em;
+    }
+
+    #miWelcomeV9
+    .mi-v9-welcome-subtitle {
+        letter-spacing:
+            0.075em;
     }
 
     #miWelcomeV9.mi-welcome-v10-leaving {
@@ -8989,16 +9463,45 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
     }
 }
 
-@media (
-    prefers-reduced-motion:
-    reduce
-) {
+/* Very small phones */
+@media (max-width: 420px) {
+    #miWelcomeV9 {
+        padding-left:
+            8px;
+
+        padding-right:
+            8px;
+    }
+
+    #miWelcomeV9Card {
+        padding:
+            27px 14px 24px;
+    }
+
+    #miWelcomeV9
+    .mi-v9-welcome-name {
+        font-size:
+            clamp(40px, 16vw, 66px);
+    }
+
+    #miWelcomeV9Card
+    .mi-v9-welcome-main::before {
+        opacity:
+            0.34;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
     #miWelcomeV9,
     #miWelcomeV9::before,
     #miWelcomeV9::after,
     #miWelcomeV9Card,
+    #miWelcomeV9Card::after,
     #miWelcomeV9
     .mi-v9-welcome-main,
+    #miWelcomeV9
+    .mi-v9-welcome-main::before,
     #miWelcomeV9
     .mi-v9-welcome-to,
     #miWelcomeV9
@@ -9006,7 +9509,9 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
     #miWelcomeV9
     .mi-v9-welcome-subtitle,
     #miWelcomeV9
-    .mi-v9-welcome-dots {
+    .mi-v9-welcome-dots,
+    #miWelcomeV9
+    .mi-v9-welcome-dots span {
         animation:
             none !important;
     }
