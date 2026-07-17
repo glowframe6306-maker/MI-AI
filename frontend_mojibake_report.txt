@@ -1,0 +1,696 @@
+LINE 11622
+ORIG '📌 '
+DECODE ERROR
+
+LINE 11623
+ORIG '💬 '
+DECODE ERROR
+
+LINE 11637
+ORIG '✕ Unpin'
+DECODE ERROR
+
+LINE 11637
+ORIG '📌 Pin'
+DECODE ERROR
+
+LINE 13918
+ORIG '➜'
+DECODE ERROR
+
+LINE 13925
+ORIG '✉'
+DECODE ERROR
+
+LINE 13932
+ORIG 'ðŸŽ§'
+DECODE ERROR
+
+LINE 14335
+ORIG 'à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±'
+DECODE ERROR
+
+LINE 14343
+ORIG 'à®¨à®•à®²à¯†à®Ÿà¯\x81'
+DECODE ERROR
+
+LINE 14344
+ORIG 'à®ªà¯†à®¯à®°à¯ˆ à®®à®¾à®±à¯\x8dà®±à¯\x81'
+DECODE ERROR
+
+LINE 14345
+ORIG 'à®ªà®¿à®©à¯\x8d à®šà¯†à®¯à¯\x8d'
+DECODE ERROR
+
+LINE 14346
+ORIG 'à®ªà®¿à®©à¯\x8dà®©à¯ˆ à®¨à¯€à®•à¯\x8dà®•à¯\x81'
+DECODE ERROR
+
+LINE 14347
+ORIG 'à®ªà®•à®¿à®°à¯\x8d'
+DECODE ERROR
+
+LINE 14348
+ORIG 'à®¨à¯€à®•à¯\x8dà®•à¯\x81'
+DECODE ERROR
+
+LINE 14349
+ORIG 'à®¨à®•à®²à¯†à®Ÿà¯\x81à®•à¯\x8dà®•à®ªà¯\x8dà®ªà®Ÿà¯\x8dà®Ÿà®¤à¯\x81!'
+DECODE ERROR
+
+LINE 14487
+ORIG '📋'
+DECODE ERROR
+
+LINE 14501
+ORIG '⚠'
+DECODE ERROR
+
+LINE 14508
+ORIG '📌'
+DECODE ERROR
+
+LINE 14508
+ORIG '📍'
+DECODE ERROR
+
+LINE 14517
+ORIG '⋯'
+DECODE ERROR
+
+LINE 14524
+ORIG '🗑'
+DECODE ERROR
+
+LINE 15070
+ORIG 'à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±'
+DECODE ERROR
+
+LINE 15077
+ORIG 'à®ªà¯†à®¯à®°à¯ˆ à®®à®¾à®±à¯\x8dà®±à¯\x81'
+DECODE ERROR
+
+LINE 15078
+ORIG 'à®ªà®¿à®©à¯\x8d à®šà¯†à®¯à¯\x8d'
+DECODE ERROR
+
+LINE 15079
+ORIG 'à®ªà®¿à®©à¯\x8dà®©à¯ˆ à®¨à¯€à®•à¯\x8dà®•à¯\x81'
+DECODE ERROR
+
+LINE 15080
+ORIG 'à®ªà®•à®¿à®°à¯\x8d'
+DECODE ERROR
+
+LINE 15081
+ORIG 'à®¨à¯€à®•à¯\x8dà®•à¯\x81'
+DECODE ERROR
+
+LINE 15199
+ORIG '⚠'
+DECODE ERROR
+
+LINE 15206
+ORIG '📌'
+DECODE ERROR
+
+LINE 15206
+ORIG '📍'
+DECODE ERROR
+
+LINE 15215
+ORIG '⋯'
+DECODE ERROR
+
+LINE 15222
+ORIG '🗑'
+DECODE ERROR
+
+LINE 15597
+ORIG 'à®®à¯Šà®´à®¿'
+DECODE ERROR
+
+LINE 15598
+ORIG 'à®¤à¯€à®®à¯\x8d'
+DECODE ERROR
+
+LINE 15599
+ORIG 'à®Žà®´à¯\x81à®¤à¯\x8dà®¤à®³à®µà¯\x81'
+DECODE ERROR
+
+LINE 15600
+ORIG 'à®¨à®•à®²à¯†à®Ÿà¯\x81'
+DECODE ERROR
+
+LINE 15601
+ORIG 'à®¨à®•à®²à¯†à®Ÿà¯\x81à®•à¯\x8dà®•à®ªà¯\x8dà®ªà®Ÿà¯\x8dà®Ÿà®¤à¯\x81!'
+DECODE ERROR
+
+LINE 15653
+ORIG 'à¶·à·\x8fà·‚à·\x8f'
+DECODE ERROR
+
+LINE 15654
+ORIG 'à®®à¯Šà®´à®¿'
+DECODE ERROR
+
+LINE 15708
+ORIG 'à¶…à¶šà·”à¶»à·”'
+DECODE ERROR
+
+LINE 15709
+ORIG 'à®Žà®´à¯\x81à®¤à¯\x8dà®¤'
+DECODE ERROR
+
+LINE 15828
+ORIG '▾'
+DECODE ERROR
+
+LINE 16002
+ORIG '🌐'
+DECODE ERROR
+
+LINE 16010
+ORIG '🎨'
+DECODE ERROR
+
+LINE 16246
+ORIG '📋'
+DECODE ERROR
+
+LINE 16249
+ORIG '📤'
+DECODE ERROR
+
+LINE 16264
+ORIG '📋'
+DECODE ERROR
+
+LINE 16330
+ORIG '✓'
+DECODE ERROR
+
+LINE 16335
+ORIG '📋'
+DECODE ERROR
+
+LINE 16662
+ORIG '✓'
+DECODE ERROR
+
+LINE 20130
+ORIG 'Shared conversation â€” only this chat is available'
+DECODE ERROR
+
+LINE 20133
+ORIG 'à¶¶à·™à¶¯à·\x8fà¶œà¶\xadà·Š à¶šà¶\xadà·\x8fà¶¶à·„ â€” à¶¸à·™à¶¸ chat à¶‘à¶š à¶´à¶¸à¶«à¶šà·Š à¶´à·™à¶±à·Šà·€à¶ºà·’'
+DECODE ERROR
+
+LINE 20136
+ORIG 'à®ªà®•à®¿à®°à®ªà¯\x8dà®ªà®Ÿà¯\x8dà®Ÿ à®‰à®°à¯ˆà®¯à®¾à®Ÿà®²à¯\x8d â€” à®‡à®¨à¯\x8dà®¤ à®…à®°à®Ÿà¯\x8dà®Ÿà¯ˆ à®®à®Ÿà¯\x8dà®Ÿà¯\x81à®®à¯\x8d à®•à®¿à®Ÿà¯ˆà®•à¯\x8dà®•à¯\x81à®®à¯\x8d'
+DECODE ERROR
+
+LINE 21750
+ORIG 'Thinking…'
+DECODE ERROR
+
+LINE 21767
+ORIG 'à·ƒà·’à¶\xadà¶¸à·’à¶±à·Š…'
+DECODE ERROR
+
+LINE 21768
+ORIG 'à¶´à¶«à·’à·€à·’à¶©à¶º à¶´à·’à¶§à¶´à¶\xadà·Š à¶šà·…à·\x8f'
+DECODE ERROR
+
+LINE 21769
+ORIG 'à¶šà¶\xadà·\x8fà¶¶à·„ à·ƒà·”à¶»à·\x90à¶šà·’à¶«à·’'
+DECODE ERROR
+
+LINE 21770
+ORIG 'à¶œà·œà¶±à·”à·€ upload à¶šà·…à·\x8f'
+DECODE ERROR
+
+LINE 21771
+ORIG 'à¶±à·\x90à·€à¶\xad online'
+DECODE ERROR
+
+LINE 21772
+ORIG 'à¶”à¶¶ offline'
+DECODE ERROR
+
+LINE 21774
+ORIG 'à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±'
+DECODE ERROR
+
+LINE 21780
+ORIG 'à¶šà¶\xadà·\x8fà¶¶à·„à·š à·€à·’à¶šà¶½à·Šà¶´'
+DECODE ERROR
+
+LINE 21784
+ORIG 'à®šà®¿à®¨à¯\x8dà®¤à®¿à®•à¯\x8dà®•à®¿à®±à®¤à¯\x81…'
+DECODE ERROR
+
+LINE 21785
+ORIG 'à®šà¯†à®¯à¯\x8dà®¤à®¿ à®¨à®•à®²à¯†à®Ÿà¯\x81à®•à¯\x8dà®•à®ªà¯\x8dà®ªà®Ÿà¯\x8dà®Ÿà®¤à¯\x81'
+DECODE ERROR
+
+LINE 21786
+ORIG 'à®…à®°à®Ÿà¯\x8dà®Ÿà¯ˆ à®šà¯‡à®®à®¿à®•à¯\x8dà®•à®ªà¯\x8dà®ªà®Ÿà¯\x8dà®Ÿà®¤à¯\x81'
+DECODE ERROR
+
+LINE 21787
+ORIG 'à®•à¯‹à®ªà¯\x8dà®ªà¯\x81 à®ªà®¤à®¿à®µà¯‡à®±à¯\x8dà®±à®ªà¯\x8dà®ªà®Ÿà¯\x8dà®Ÿà®¤à¯\x81'
+DECODE ERROR
+
+LINE 21788
+ORIG 'à®®à¯€à®£à¯\x8dà®Ÿà¯\x81à®®à¯\x8d à®†à®©à¯\x8dà®²à¯ˆà®©à¯\x8d'
+DECODE ERROR
+
+LINE 21789
+ORIG 'à®¨à¯€à®™à¯\x8dà®•à®³à¯\x8d à®†à®ƒà®ªà¯\x8dà®²à¯ˆà®©à®¿à®²à¯\x8d à®‰à®³à¯\x8dà®³à¯€à®°à¯\x8dà®•à®³à¯\x8d'
+DECODE ERROR
+
+LINE 21790
+ORIG 'à®ªà¯†à®¯à®°à¯ˆ à®®à®¾à®±à¯\x8dà®±à¯\x81'
+DECODE ERROR
+
+LINE 21791
+ORIG 'à®ªà®¿à®©à¯\x8d à®šà¯†à®¯à¯\x8d'
+DECODE ERROR
+
+LINE 21792
+ORIG 'à®ªà®¿à®©à¯\x8dà®©à¯ˆ à®¨à¯€à®•à¯\x8dà®•à¯\x81'
+DECODE ERROR
+
+LINE 21793
+ORIG 'à®ªà®•à®¿à®°à¯\x8d'
+DECODE ERROR
+
+LINE 21794
+ORIG 'à®¨à¯€à®•à¯\x8dà®•à¯\x81'
+DECODE ERROR
+
+LINE 21795
+ORIG 'à®…à®®à¯ˆà®ªà¯\x8dà®ªà¯\x81à®•à®³à¯\x8d'
+DECODE ERROR
+
+LINE 21796
+ORIG 'à®°à®¤à¯\x8dà®¤à¯\x81'
+DECODE 'ரத்து'
+
+LINE 21797
+ORIG 'à®…à®°à®Ÿà¯\x8dà®Ÿà¯ˆ à®µà®¿à®°à¯\x81à®ªà¯\x8dà®ªà®™à¯\x8dà®•à®³à¯\x8d'
+DECODE ERROR
+
+LINE 21937
+ORIG '✓'
+DECODE ERROR
+
+LINE 21938
+ORIG '📋'
+DECODE ERROR
+
+LINE 21939
+ORIG '✓'
+DECODE ERROR
+
+LINE 21940
+ORIG '⬆'
+DECODE ERROR
+
+LINE 21941
+ORIG 'â—\x8f'
+DECODE ERROR
+
+LINE 22253
+ORIG '•'
+DECODE ERROR
+
+LINE 22440
+ORIG '⚠'
+DECODE ERROR
+
+LINE 22453
+ORIG '−'
+DECODE ERROR
+
+LINE 22454
+ORIG '📍'
+DECODE ERROR
+
+LINE 22467
+ORIG '⋯'
+DECODE ERROR
+
+LINE 22478
+ORIG '📌'
+DECODE ERROR
+
+LINE 23066
+ORIG 'à¶±à·\x90à·€à¶\xad à·ƒà·\x8fà¶¯à¶»à¶ºà·™à¶±à·Š à¶´à·’à·…à·’à¶œà¶±à·’à¶¸à·”!'
+DECODE ERROR
+
+LINE 23069
+ORIG 'MI AI à·€à·™à¶\xad à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶œà·\x90à¶± à·ƒà·Šà¶\xadà·”à¶\xadà·’à¶ºà·’. à¶”à¶¶à¶œà·š chats à·ƒà·„ settings à¶¯à·\x90à¶±à·Š à·ƒà·–à¶¯à·\x8fNameà·Š.'
+DECODE ERROR
+
+LINE 23077
+ORIG 'à®®à¯€à®£à¯\x8dà®Ÿà¯\x81à®®à¯\x8d à®µà®°à®µà¯‡à®±à¯\x8dà®•à®¿à®±à¯‹à®®à¯\x8d!'
+DECODE ERROR
+
+LINE 23080
+ORIG 'MI AI-à®²à¯\x8d à®‰à®³à¯\x8dà®¨à¯\x81à®´à¯ˆà®¨à¯\x8dà®¤à®¤à®±à¯\x8dà®•à¯\x81 à®¨à®©à¯\x8dà®±à®¿. à®‰à®™à¯\x8dà®•à®³à¯\x8d à®…à®°à®Ÿà¯\x8dà®Ÿà¯ˆà®•à®³à¯\x81à®®à¯\x8d à®…à®®à¯ˆà®ªà¯\x8dà®ªà¯\x81à®•à®³à¯\x81à®®à¯\x8d à®¤à®¯à®¾à®°à®¾à®• à®‰à®³à¯\x8dà®³à®©.'
+DECODE ERROR
+
+LINE 23083
+ORIG 'à®¤à¯Šà®Ÿà®°à®µà¯\x81à®®à¯\x8d'
+DECODE ERROR
+
+LINE 24316
+ORIG '📁 '
+DECODE ERROR
+
+LINE 24478
+ORIG '📌 '
+DECODE ERROR
+
+LINE 24481
+ORIG '💬 '
+DECODE ERROR
+
+LINE 24532
+ORIG '✕ Unpin'
+DECODE ERROR
+
+LINE 24533
+ORIG '📌 Pin'
+DECODE ERROR
+
+LINE 25162
+ORIG 'Ã¢â€\xa0â€”'
+DECODE ERROR
+
+LINE 25604
+ORIG 'Ã\xa0Â·Æ’Ã\xa0Â·â€™Ã\xa0Â¶Â\xadÃ\xa0Â¶Â¸Ã\xa0Â·â€™Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0...'
+DECODE ERROR
+
+LINE 25605
+ORIG 'Ã\xa0Â·Æ’Ã\xa0Â·Å“Ã\xa0Â¶ÂºÃ\xa0Â¶Â¸Ã\xa0Â·â€™Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0...'
+DECODE ERROR
+
+LINE 25606
+ORIG 'Ã\xa0Â¶ÂºÃ\xa0Â·â‚¬Ã\xa0Â¶Â¸Ã\xa0Â·â€™Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0...'
+DECODE ERROR
+
+LINE 25607
+ORIG 'Ã\xa0Â¶Â´Ã\xa0Â¶Â«Ã\xa0Â·â€™Ã\xa0Â·â‚¬Ã\xa0Â·â€™Ã\xa0Â¶Â©Ã\xa0Â¶Âº Ã\xa0Â¶ÂºÃ\xa0Â·Â\x90Ã\xa0Â·â‚¬Ã\xa0Â·â€\x9dÃ\xa0Â¶Â«Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25608
+ORIG 'Ã\xa0Â¶Â´Ã\xa0Â·â€™Ã\xa0Â¶Â§Ã\xa0Â¶Â´Ã\xa0Â¶Â\xadÃ\xa0Â·Å\xa0 Ã\xa0Â¶Å¡Ã\xa0Â·…Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25609
+ORIG 'Ã\xa0Â·Æ’Ã\xa0Â·â€\x9dÃ\xa0Â¶Â»Ã\xa0Â·Â\x90Ã\xa0Â¶Å¡Ã\xa0Â·â€\x9dÃ\xa0Â¶Â«Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25610
+ORIG 'Ã\xa0Â¶Â\xa0Ã\xa0Â·Â\x90Ã\xa0Â¶Â§Ã\xa0Â·Å\xa0 Ã\xa0Â¶Â´Ã\xa0Â·â€“Ã\xa0Â¶Â»Ã\xa0Â¶Â«Ã\xa0Â¶Âº Ã\xa0Â·â‚¬Ã\xa0Â·â„¢Ã\xa0Â¶Â¸Ã\xa0Â·â€™Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0...'
+DECODE ERROR
+
+LINE 25611
+ORIG 'Ã\xa0Â¶Â\xa0Ã\xa0Â·Â\x90Ã\xa0Â¶Â§Ã\xa0Â·Å\xa0 Ã\xa0Â¶Â´Ã\xa0Â·â€“Ã\xa0Â¶Â»Ã\xa0Â¶Â«Ã\xa0Â¶Âº Ã\xa0Â·â‚¬Ã\xa0Â·â€\x9dÃ\xa0Â¶Â«Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25612
+ORIG 'Ã\xa0Â¶â€\x9dÃ\xa0Â¶Â±Ã\xa0Â·Å\xa0Ã\xa0Â¶Â½Ã\xa0Â¶ÂºÃ\xa0Â·â€™Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0'
+DECODE ERROR
+
+LINE 25613
+ORIG 'Ã\xa0Â¶…Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0Ã\xa0Â¶Â\xadÃ\xa0Â¶Â»Ã\xa0Â·Å\xa0Ã\xa0Â¶Â¢Ã\xa0Â·Â\x8fÃ\xa0Â¶Â½Ã\xa0Â¶Âº Ã\xa0Â¶Â±Ã\xa0Â·Â\x90Ã\xa0Â¶Â\xad'
+DECODE ERROR
+
+LINE 25614
+ORIG 'Ã\xa0Â¶Â±Ã\xa0Â·â‚¬ Ã\xa0Â¶Â\xa0Ã\xa0Â·Â\x90Ã\xa0Â¶Â§Ã\xa0Â·Å\xa0 Ã\xa0Â¶â€˜Ã\xa0Â¶Å¡Ã\xa0Â¶Å¡Ã\xa0Â·Å\xa0'
+DECODE ERROR
+
+LINE 25615
+ORIG 'Ã\xa0Â¶Â\xa0Ã\xa0Â·Â\x90Ã\xa0Â¶Â§Ã\xa0Â·Å\xa0 Ã\xa0Â¶â€˜Ã\xa0Â¶Å¡ Ã\xa0Â·â‚¬Ã\xa0Â·â€™Ã\xa0Â·â‚¬Ã\xa0Â·ËœÃ\xa0Â¶Â\xad Ã\xa0Â·â‚¬Ã\xa0Â·â€\x9dÃ\xa0Â¶Â«Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25616
+ORIG 'Ã\xa0Â¶Â\xa0Ã\xa0Â·Â\x90Ã\xa0Â¶Â§Ã\xa0Â·Å\xa0 Ã\xa0Â¶Â±Ã\xa0Â¶Â¸ Ã\xa0Â·â‚¬Ã\xa0Â·â„¢Ã\xa0Â¶Â±Ã\xa0Â·Æ’Ã\xa0Â·Å\xa0 Ã\xa0Â¶Å¡Ã\xa0Â·…Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25617
+ORIG 'Ã\xa0Â¶Â\xa0Ã\xa0Â·Â\x90Ã\xa0Â¶Â§Ã\xa0Â·Å\xa0 Ã\xa0Â¶â€˜Ã\xa0Â¶Å¡ Ã\xa0Â¶Â¸Ã\xa0Â¶Å¡Ã\xa0Â·Â\x8f Ã\xa0Â¶Â¯Ã\xa0Â·Â\x90Ã\xa0Â¶Â¸Ã\xa0Â·Å\xa0Ã\xa0Â¶Â¸Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25618
+ORIG 'Ã\xa0Â¶Â\xa0Ã\xa0Â·Â\x90Ã\xa0Â¶Â§Ã\xa0Â·Å\xa0 Ã\xa0Â¶â€˜Ã\xa0Â¶Å¡ Pin Ã\xa0Â¶Å¡Ã\xa0Â·…Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25619
+ORIG 'Pin Ã\xa0Â¶â€°Ã\xa0Â·â‚¬Ã\xa0Â¶Â\xadÃ\xa0Â·Å\xa0 Ã\xa0Â¶Å¡Ã\xa0Â·…Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25620
+ORIG 'Ã\xa0Â¶Å“Ã\xa0Â·Å“Ã\xa0Â¶Â±Ã\xa0Â·â€\x9dÃ\xa0Â·â‚¬ Ã\xa0Â¶â€¹Ã\xa0Â¶Â©Ã\xa0Â·â€\x9dÃ\xa0Â¶Å“Ã\xa0Â¶Â\xad Ã\xa0Â¶Å¡Ã\xa0Â·…Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25621
+ORIG 'Link Ã\xa0Â¶â€˜Ã\xa0Â¶Å¡ Ã\xa0Â·Æ’Ã\xa0Â·Â\x8fÃ\xa0Â¶Â¯Ã\xa0Â¶Â¸Ã\xa0Â·â€™Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0...'
+DECODE ERROR
+
+LINE 25622
+ORIG 'Link Ã\xa0Â¶â€˜Ã\xa0Â¶Å¡ Ã\xa0Â·Æ’Ã\xa0Â·â€˜Ã\xa0Â¶Â¯Ã\xa0Â·â€\x9dÃ\xa0Â·â‚¬Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25623
+ORIG 'Settings Ã\xa0Â·â‚¬Ã\xa0Â·â€™Ã\xa0Â·â‚¬Ã\xa0Â·ËœÃ\xa0Â¶Â\xad Ã\xa0Â¶Å¡Ã\xa0Â·…Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25624
+ORIG 'Theme Ã\xa0Â¶â€˜Ã\xa0Â¶Å¡ Ã\xa0Â·â‚¬Ã\xa0Â·â„¢Ã\xa0Â¶Â±Ã\xa0Â·Æ’Ã\xa0Â·Å\xa0 Ã\xa0Â¶Å¡Ã\xa0Â·…Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25625
+ORIG 'Login Ã\xa0Â·â‚¬Ã\xa0Â·â„¢Ã\xa0Â¶Â¸Ã\xa0Â·â€™Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0...'
+DECODE ERROR
+
+LINE 25626
+ORIG 'Login Ã\xa0Â·â‚¬Ã\xa0Â·â€\x9dÃ\xa0Â¶Â«Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25627
+ORIG 'Logout Ã\xa0Â·â‚¬Ã\xa0Â·â€\x9dÃ\xa0Â¶Â«Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25628
+ORIG 'Ã\xa0Â¶Â¯Ã\xa0Â·Â\x9dÃ\xa0Â·â€šÃ\xa0Â¶ÂºÃ\xa0Â¶Å¡Ã\xa0Â·Å\xa0 Ã\xa0Â¶â€¡Ã\xa0Â¶Â\xadÃ\xa0Â·â€™Ã\xa0Â·â‚¬Ã\xa0Â·â€\x9dÃ\xa0Â¶Â«Ã\xa0Â·Â\x8f'
+DECODE ERROR
+
+LINE 25632
+ORIG 'Ã\xa0Â®Å¡Ã\xa0Â®Â¿Ã\xa0Â®Â¨Ã\xa0Â¯Â\x8dÃ\xa0Â®Â¤Ã\xa0Â®Â¿Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®Â¿Ã\xa0Â®Â±Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81...'
+DECODE ERROR
+
+LINE 25633
+ORIG 'Ã\xa0Â®Â¤Ã\xa0Â¯â€¡Ã\xa0Â®Å¸Ã\xa0Â¯Â\x81Ã\xa0Â®•Ã\xa0Â®Â¿Ã\xa0Â®Â±Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81...'
+DECODE ERROR
+
+LINE 25634
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â©Ã\xa0Â¯Â\x81Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â¯Â\x81Ã\xa0Â®•Ã\xa0Â®Â¿Ã\xa0Â®Â±Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81...'
+DECODE ERROR
+
+LINE 25635
+ORIG 'Ã\xa0Â®Å¡Ã\xa0Â¯â€\xa0Ã\xa0Â®Â¯Ã\xa0Â¯Â\x8dÃ\xa0Â®Â¤Ã\xa0Â®Â¿ Ã\xa0Â®…Ã\xa0Â®Â©Ã\xa0Â¯Â\x81Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25636
+ORIG 'Ã\xa0Â®Â¨Ã\xa0Â®•Ã\xa0Â®Â²Ã\xa0Â¯â€\xa0Ã\xa0Â®Å¸Ã\xa0Â¯Â\x81Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25637
+ORIG 'Ã\xa0Â®Å¡Ã\xa0Â¯â€¡Ã\xa0Â®Â®Ã\xa0Â®Â¿Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25638
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â°Ã\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â¯Ë†Ã\xa0Â®•Ã\xa0Â®Â³Ã\xa0Â¯Â\x8d Ã\xa0Â®Â\x8fÃ\xa0Â®Â±Ã\xa0Â¯Â\x8dÃ\xa0Â®Â±Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x81Ã\xa0Â®•Ã\xa0Â®Â¿Ã\xa0Â®Â©Ã\xa0Â¯Â\x8dÃ\xa0Â®Â±Ã\xa0Â®Â©...'
+DECODE ERROR
+
+LINE 25639
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â°Ã\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â¯Ë†Ã\xa0Â®•Ã\xa0Â®Â³Ã\xa0Â¯Â\x8d Ã\xa0Â®Â\x8fÃ\xa0Â®Â±Ã\xa0Â¯Â\x8dÃ\xa0Â®Â±Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â©'
+DECODE ERROR
+
+LINE 25640
+ORIG 'Ã\xa0Â®â€¡Ã\xa0Â®Â£Ã\xa0Â¯Ë†Ã\xa0Â®Â¯Ã\xa0Â®Â¤Ã\xa0Â¯Â\x8dÃ\xa0Â®Â¤Ã\xa0Â®Â¿Ã\xa0Â®Â²Ã\xa0Â¯Â\x8d'
+DECODE ERROR
+
+LINE 25641
+ORIG 'Ã\xa0Â®â€¡Ã\xa0Â®Â£Ã\xa0Â¯Ë†Ã\xa0Â®Â¯Ã\xa0Â®Â®Ã\xa0Â¯Â\x8d Ã\xa0Â®â€¡Ã\xa0Â®Â²Ã\xa0Â¯Â\x8dÃ\xa0Â®Â²Ã\xa0Â¯Ë†'
+DECODE ERROR
+
+LINE 25642
+ORIG 'Ã\xa0Â®ÂªÃ\xa0Â¯Â\x81Ã\xa0Â®Â¤Ã\xa0Â®Â¿Ã\xa0Â®Â¯ Ã\xa0Â®…Ã\xa0Â®Â°Ã\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â¯Ë†'
+DECODE ERROR
+
+LINE 25643
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â°Ã\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â¯Ë† Ã\xa0Â®Â¤Ã\xa0Â®Â¿Ã\xa0Â®Â±Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25644
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â°Ã\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â¯Ë† Ã\xa0Â®ÂªÃ\xa0Â¯â€\xa0Ã\xa0Â®Â¯Ã\xa0Â®Â°Ã\xa0Â¯Â\x8d Ã\xa0Â®Â®Ã\xa0Â®Â¾Ã\xa0Â®Â±Ã\xa0Â¯Â\x8dÃ\xa0Â®Â±Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25645
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â°Ã\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â¯Ë† Ã\xa0Â®Â¨Ã\xa0Â¯â‚¬Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25646
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â°Ã\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â¯Ë† Ã\xa0Â®ÂªÃ\xa0Â®Â¿Ã\xa0Â®Â©Ã\xa0Â¯Â\x8d Ã\xa0Â®Å¡Ã\xa0Â¯â€\xa0Ã\xa0Â®Â¯Ã\xa0Â¯Â\x8dÃ\xa0Â®Â¯Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25647
+ORIG 'Ã\xa0Â®ÂªÃ\xa0Â®Â¿Ã\xa0Â®Â©Ã\xa0Â¯Â\x8d Ã\xa0Â®Â¨Ã\xa0Â¯â‚¬Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25648
+ORIG 'Ã\xa0Â®•Ã\xa0Â¯â€¹Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â¯Â\x81 Ã\xa0Â®ÂªÃ\xa0Â®Â¤Ã\xa0Â®Â¿Ã\xa0Â®ÂµÃ\xa0Â¯â€¡Ã\xa0Â®Â±Ã\xa0Â¯Â\x8dÃ\xa0Â®Â±Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25649
+ORIG 'Ã\xa0Â®â€¡Ã\xa0Â®Â£Ã\xa0Â¯Ë†Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â¯Â\x81 Ã\xa0Â®â€°Ã\xa0Â®Â°Ã\xa0Â¯Â\x81Ã\xa0Â®ÂµÃ\xa0Â®Â¾Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x81Ã\xa0Â®•Ã\xa0Â®Â¿Ã\xa0Â®Â±Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81...'
+DECODE ERROR
+
+LINE 25650
+ORIG 'Ã\xa0Â®â€¡Ã\xa0Â®Â£Ã\xa0Â¯Ë†Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â¯Â\x81 Ã\xa0Â®â€°Ã\xa0Â®Â°Ã\xa0Â¯Â\x81Ã\xa0Â®ÂµÃ\xa0Â®Â¾Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25651
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â®Ã\xa0Â¯Ë†Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â¯Â\x81Ã\xa0Â®•Ã\xa0Â®Â³Ã\xa0Â¯Â\x8d Ã\xa0Â®Â¤Ã\xa0Â®Â¿Ã\xa0Â®Â±Ã\xa0Â®•Ã\xa0Â¯Â\x8dÃ\xa0Â®•Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â©'
+DECODE ERROR
+
+LINE 25652
+ORIG 'Ã\xa0Â®Â¤Ã\xa0Â¯â‚¬Ã\xa0Â®Â®Ã\xa0Â¯Â\x8d Ã\xa0Â®Â®Ã\xa0Â®Â¾Ã\xa0Â®Â±Ã\xa0Â¯Â\x8dÃ\xa0Â®Â±Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25653
+ORIG 'Ã\xa0Â®â€°Ã\xa0Â®Â³Ã\xa0Â¯Â\x8dÃ\xa0Â®Â¨Ã\xa0Â¯Â\x81Ã\xa0Â®Â´Ã\xa0Â¯Ë†Ã\xa0Â®•Ã\xa0Â®Â¿Ã\xa0Â®Â±Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81...'
+DECODE ERROR
+
+LINE 25654
+ORIG 'Ã\xa0Â®â€°Ã\xa0Â®Â³Ã\xa0Â¯Â\x8dÃ\xa0Â®Â¨Ã\xa0Â¯Â\x81Ã\xa0Â®Â´Ã\xa0Â¯Ë†Ã\xa0Â®Â¨Ã\xa0Â¯Â\x8dÃ\xa0Â®Â¤Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25655
+ORIG 'Ã\xa0Â®ÂµÃ\xa0Â¯â€\xa0Ã\xa0Â®Â³Ã\xa0Â®Â¿Ã\xa0Â®Â¯Ã\xa0Â¯â€¡Ã\xa0Â®Â±Ã\xa0Â®Â¿Ã\xa0Â®Â¯Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25656
+ORIG 'Ã\xa0Â®ÂªÃ\xa0Â®Â¿Ã\xa0Â®Â´Ã\xa0Â¯Ë† Ã\xa0Â®Â\x8fÃ\xa0Â®Â±Ã\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â®Å¸Ã\xa0Â¯Â\x8dÃ\xa0Â®Å¸Ã\xa0Â®Â¤Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25683
+ORIG 'Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢'
+DECODE ERROR
+
+LINE 25684
+ORIG 'Ã¢Å’•'
+DECODE ERROR
+
+LINE 25685
+ORIG 'Ã¢â€\xa0â€˜'
+DECODE ERROR
+
+LINE 25686
+ORIG 'Ã¢Å“â€œ'
+DECODE ERROR
+
+LINE 25687
+ORIG 'Ã¢Â§â€°'
+DECODE ERROR
+
+LINE 25688
+ORIG 'Ã¢Å“â€œ'
+DECODE ERROR
+
+LINE 25689
+ORIG 'Ã¢â€\xa0â€˜'
+DECODE ERROR
+
+LINE 25690
+ORIG 'Ã¢â€\xa0â€”'
+DECODE ERROR
+
+LINE 25691
+ORIG 'Ã¢Å¡â„¢'
+DECODE ERROR
+
+LINE 25692
+ORIG 'Ã¢â€\xa0â€™'
+DECODE ERROR
+
+LINE 25693
+ORIG 'Ã¢â€\xa0Â\x90'
+DECODE ERROR
+
+LINE 25694
+ORIG 'Ã¢â€”Â\x8f'
+DECODE ERROR
+
+LINE 25821
+ORIG 'Ã\xa0Â·Æ’Ã\xa0Â·Å“Ã\xa0Â¶Âº'
+DECODE ERROR
+
+LINE 25822
+ORIG 'Ã\xa0Â®Â¤Ã\xa0Â¯â€¡Ã\xa0Â®Å¸Ã\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 25829
+ORIG 'Ã\xa0Â¶ÂºÃ\xa0Â·â‚¬Ã\xa0Â¶Â±Ã\xa0Â·Å\xa0Ã\xa0Â¶Â±'
+DECODE ERROR
+
+LINE 25830
+ORIG 'Ã\xa0Â®…Ã\xa0Â®Â©Ã\xa0Â¯Â\x81Ã\xa0Â®ÂªÃ\xa0Â¯Â\x8dÃ\xa0Â®ÂªÃ\xa0Â¯Â\x81'
+DECODE ERROR
+
+LINE 26081
+ORIG 'ෆොටෝ'
+DECODE ERROR
+
+LINE 26081
+ORIG 'පින්තූර'
+DECODE ERROR
+
+LINE 26081
+ORIG 'පින්තූරයක්'
+DECODE ERROR
+
+LINE 26083
+ORIG 'படம்'
+DECODE ERROR
+
+LINE 26083
+ORIG 'புகைப்படம்'
+DECODE ERROR
+
+LINE 26088
+ORIG 'පෙන්න'
+DECODE ERROR
+
+LINE 26088
+ORIG 'එවන්න'
+DECODE ERROR
+
+LINE 26088
+ORIG 'හොය'
+DECODE ERROR
+
+LINE 26088
+ORIG 'දෙන්න'
+DECODE ERROR
+
+LINE 26088
+ORIG 'ඕන'
+DECODE ERROR
+
