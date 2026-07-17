@@ -26689,6 +26689,412 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 })();
 </script>
 <!-- === MI AI WEB PHOTO SEARCH END === -->
+
+
+<!-- MI AI CLICKABLE LINKS FINAL START -->
+
+<style>
+.miClickableLink {
+    color: #64b5f6 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    cursor: pointer !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(100, 181, 246, 0.25);
+}
+
+.miClickableLink:hover {
+    opacity: 0.85;
+}
+
+.miClickableLink:active {
+    opacity: 0.65;
+}
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    const processedSelector = [
+        "#chat .me",
+        "#chat .ai",
+        "#chat .aiMessageBody",
+        "#chat .aiWritingCard",
+        "#chat .message",
+        "#chat .message-content"
+    ].join(",");
+
+    function escapeHtml(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function safeUrl(rawValue) {
+        let value = String(rawValue || "").trim();
+
+        if (/^www\./i.test(value)) {
+            value = "https://" + value;
+        }
+
+        try {
+            const parsed = new URL(value);
+
+            if (
+                parsed.protocol !== "http:" &&
+                parsed.protocol !== "https:" &&
+                parsed.protocol !== "ftp:"
+            ) {
+                return "";
+            }
+
+            return parsed.href;
+        }
+        catch (error) {
+            return "";
+        }
+    }
+
+    function normalPhone(rawValue) {
+        let phone = String(rawValue || "")
+            .replace(/[^\d+]/g, "");
+
+        if (phone.startsWith("00")) {
+            phone = "+" + phone.slice(2);
+        }
+
+        if (/^0\d{9}$/.test(phone)) {
+            phone = "+94" + phone.slice(1);
+        }
+
+        return phone;
+    }
+
+    function createToken(store, htmlValue) {
+        const token =
+            "MI_CLICKABLE_TOKEN_" +
+            store.length +
+            "_" +
+            Math.random().toString(36).slice(2) +
+            "_END";
+
+        store.push({
+            token: token,
+            html: htmlValue
+        });
+
+        return token;
+    }
+
+    function makeClickable(inputText) {
+        let value = String(inputText == null ? "" : inputText);
+
+        if (!value) {
+            return "";
+        }
+
+        const stored = [];
+
+        /*
+          Markdown links:
+          [Google](https://google.com)
+        */
+        value = value.replace(
+            /\[([^\]\r\n]+)\]\(((?:https?|ftp):\/\/[^\s)]+)\)/gi,
+            function (match, label, rawUrl) {
+                const url = safeUrl(rawUrl);
+
+                if (!url) {
+                    return match;
+                }
+
+                return createToken(
+                    stored,
+                    '<a class="miClickableLink" href="' +
+                    escapeHtml(url) +
+                    '" target="_blank" rel="noopener noreferrer">' +
+                    escapeHtml(label) +
+                    "</a>"
+                );
+            }
+        );
+
+        /*
+          Email addresses.
+        */
+        value = value.replace(
+            /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+            function (email) {
+                const cleanEmail = String(email)
+                    .replace(/[\r\n]/g, "");
+
+                return createToken(
+                    stored,
+                    '<a class="miClickableLink" href="mailto:' +
+                    escapeHtml(cleanEmail) +
+                    '">' +
+                    escapeHtml(cleanEmail) +
+                    "</a>"
+                );
+            }
+        );
+
+        /*
+          Website URLs.
+        */
+        value = value.replace(
+            /\b(?:(?:https?|ftp):\/\/|www\.)[^\s<>"']+/gi,
+            function (rawMatch) {
+                let visibleUrl = rawMatch;
+                let ending = "";
+
+                while (
+                    visibleUrl.length &&
+                    /[.,;:!?'"\)\]\}]$/.test(visibleUrl)
+                ) {
+                    ending = visibleUrl.slice(-1) + ending;
+                    visibleUrl = visibleUrl.slice(0, -1);
+                }
+
+                const url = safeUrl(visibleUrl);
+
+                if (!url) {
+                    return rawMatch;
+                }
+
+                return (
+                    createToken(
+                        stored,
+                        '<a class="miClickableLink" href="' +
+                        escapeHtml(url) +
+                        '" target="_blank" rel="noopener noreferrer">' +
+                        escapeHtml(visibleUrl) +
+                        "</a>"
+                    ) +
+                    ending
+                );
+            }
+        );
+
+        /*
+          Phone numbers.
+        */
+        value = value.replace(
+            /(^|[^\w@])((?:\+|00)?\d[\d\s().-]{7,}\d)(?![\w@])/g,
+            function (match, prefix, rawNumber) {
+                const digits = rawNumber.replace(/\D/g, "");
+
+                if (
+                    digits.length < 9 ||
+                    digits.length > 15
+                ) {
+                    return match;
+                }
+
+                const phone = normalPhone(rawNumber);
+
+                if (!/^\+?\d{9,15}$/.test(phone)) {
+                    return match;
+                }
+
+                return (
+                    prefix +
+                    createToken(
+                        stored,
+                        '<a class="miClickableLink" href="tel:' +
+                        escapeHtml(phone) +
+                        '">' +
+                        escapeHtml(rawNumber) +
+                        "</a>"
+                    )
+                );
+            }
+        );
+
+        value = escapeHtml(value)
+            .replace(/\r\n|\r|\n/g, "<br>");
+
+        stored.forEach(function (item) {
+            value = value
+                .split(escapeHtml(item.token))
+                .join(item.html);
+        });
+
+        return value;
+    }
+
+    window.miMakeClickable = makeClickable;
+
+    /*
+      Override an existing linkifyText function if the project has one.
+    */
+    window.linkifyText = makeClickable;
+
+    try {
+        linkifyText = makeClickable;
+    }
+    catch (error) {
+        console.warn("[MI AI] linkifyText override warning", error);
+    }
+
+    function containsClickableText(text) {
+        return (
+            /(?:https?:\/\/|ftp:\/\/|www\.)/i.test(text) ||
+            /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(text) ||
+            /(?:^|[^\w@])(?:\+|00)?\d[\d\s().-]{7,}\d(?![\w@])/i.test(text)
+        );
+    }
+
+    function upgradeElement(element) {
+        if (!element) {
+            return;
+        }
+
+        if (
+            element.matches(
+                "a, button, input, textarea, select, option"
+            )
+        ) {
+            return;
+        }
+
+        if (
+            element.querySelector(
+                "button, input, textarea, select, video, audio, iframe"
+            )
+        ) {
+            return;
+        }
+
+        if (
+            element.classList.contains("ai") &&
+            element.querySelector(
+                ".aiMessageBody, .aiWritingCard, .message-content"
+            )
+        ) {
+            return;
+        }
+
+        const originalText = String(
+            element.dataset.finalText ||
+            element.textContent ||
+            ""
+        );
+
+        if (!containsClickableText(originalText)) {
+            return;
+        }
+
+        const output = makeClickable(originalText);
+
+        if (output) {
+            element.innerHTML = output;
+            element.dataset.finalText = originalText;
+            element.dataset.miClickableDone = "true";
+        }
+    }
+
+    function upgradeChat(root) {
+        const parent = root || document;
+
+        parent
+            .querySelectorAll(processedSelector)
+            .forEach(upgradeElement);
+    }
+
+    function startClickableFeature() {
+        upgradeChat(document);
+
+        const chat = document.getElementById("chat");
+
+        if (!chat) {
+            setTimeout(startClickableFeature, 500);
+            return;
+        }
+
+        let scheduled = false;
+
+        const observer = new MutationObserver(function () {
+            if (scheduled) {
+                return;
+            }
+
+            scheduled = true;
+
+            requestAnimationFrame(function () {
+                scheduled = false;
+                upgradeChat(chat);
+            });
+        });
+
+        observer.observe(chat, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+
+        setTimeout(function () {
+            upgradeChat(document);
+        }, 500);
+
+        setTimeout(function () {
+            upgradeChat(document);
+        }, 1500);
+
+        setTimeout(function () {
+            upgradeChat(document);
+        }, 3000);
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const link = event.target.closest("a.miClickableLink");
+
+            if (!link) {
+                return;
+            }
+
+            const href = String(
+                link.getAttribute("href") || ""
+            );
+
+            if (
+                !/^(https?:|ftp:|mailto:|tel:)/i.test(href)
+            ) {
+                event.preventDefault();
+                return;
+            }
+
+            event.stopPropagation();
+        },
+        false
+    );
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startClickableFeature,
+            { once: true }
+        );
+    }
+    else {
+        startClickableFeature();
+    }
+
+    console.log("[MI AI] Clickable links feature active.");
+})();
+</script>
+
+<!-- MI AI CLICKABLE LINKS FINAL END -->
+
+
 </body>
 </html>
 
