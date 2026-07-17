@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -9660,7 +9660,7 @@ span:nth-child(3) {
     type="button"
     onclick="closeSettings()"
     aria-label="Close Settings">
-    âœ•
+    ✕
 </button>
 <h3 data-i18n="settings.title">Settings</h3>
 
@@ -9689,7 +9689,7 @@ span:nth-child(3) {
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
-      <button id="sendBtn" type="button" onclick="sendOrStop()">â†‘</button>
+      <button id="sendBtn" type="button" onclick="sendOrStop()">➤</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -9703,19 +9703,19 @@ span:nth-child(3) {
 <div id="menu">
 
 <div onclick="renameChat()">
-âœï¸ Rename
+✎ Rename
 </div>
 
 <div onclick="pinChat()" id="pinOption">
-ðŸ“Œ Pin
+📌 Pin
 </div>
 
 <div onclick="shareChat()">
-ðŸ“¤ Share
+🔗 Share
 </div>
 
 <div onclick="deleteChat()" style="color:red">
-ðŸ—‘ Delete
+🗑 Delete
 </div>
 
 </div>
@@ -9838,19 +9838,19 @@ function populateLanguageSelector() {
 
 function updateTranslatedUi() {
   const loginBtn = document.getElementById('loginBtn');
-  if (loginBtn) loginBtn.textContent = `ðŸ“¥ ${t('auth.login', 'Login')}`;
+  if (loginBtn) loginBtn.textContent = `🔑 ${t('auth.login', 'Login')}`;
 
   const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.textContent = `ðŸ“´ ${t('auth.logout', 'Logout')}`;
+  if (logoutBtn) logoutBtn.textContent = `🚪 ${t('auth.logout', 'Logout')}`;
 
   const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
-  if (newChatButton) newChatButton.innerHTML = `âž• ${t('sidebar.newChat', 'New Chat')}`;
+  if (newChatButton) newChatButton.innerHTML = `➕ ${t('sidebar.newChat', 'New Chat')}`;
 
   const settingsButton = document.getElementById('settingsBtn');
-  if (settingsButton) settingsButton.innerHTML = `âš™ ${t('sidebar.settings', 'Settings')}`;
+  if (settingsButton) settingsButton.innerHTML = `⚙ ${t('sidebar.settings', 'Settings')}`;
 
   const supportButton = document.getElementById('supportBtn');
-  if (supportButton) supportButton.innerHTML = `ðŸŽ§ ${t('sidebar.support', 'Customer Support')}`;
+  if (supportButton) supportButton.innerHTML = `📞 ${t('sidebar.support', 'Customer Support')}`;
 
   const mobileMenuClose = document.getElementById('mobileMenuClose');
   if (mobileMenuClose) mobileMenuClose.setAttribute('aria-label', t('nav.closeMenu', 'Close menu'));
@@ -9971,11 +9971,11 @@ function formatFileSize(bytes) {
 
 function getAttachmentDisplayIcon(file) {
   const type = (file && file.type) || '';
-  if (type.startsWith('image/')) return 'ðŸ–¼ï¸';
-  if (type.includes('pdf')) return 'ðŸ“•';
-  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return 'ðŸ“Š';
-  if (type.includes('presentation') || type.includes('powerpoint')) return 'ðŸ“½ï¸';
-  return 'ðŸ“„';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type.includes('pdf')) return '📄';
+  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return '📊';
+  if (type.includes('presentation') || type.includes('powerpoint')) return '📽️';
+  return '📎';
 }
 
 function renderPendingAttachmentPreview() {
@@ -9990,7 +9990,7 @@ function renderPendingAttachmentPreview() {
         <span style="font-size:16px;">${getAttachmentDisplayIcon(file)}</span>
         <div style="min-width:0;">
           <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.name}</div>
-          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} â€¢ ${formatFileSize(file.size)}</div>
+          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} • ${formatFileSize(file.size)}</div>
         </div>
       </div>
       <button type="button" onclick="removePendingAttachment(${index})" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
@@ -10275,7 +10275,7 @@ function showLoginPrompt(chatId) {
     box.style.color = '#f8fafc';
 
     box.innerHTML = `
-      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">${t('auth.loginPrompt.title', 'Login to unlock more')}</div>
       <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">${t('auth.loginPrompt.description', 'Enjoy these benefits when you sign in:')}</div>
       <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
@@ -10431,22 +10431,22 @@ function openProfilePanel() {
     box.style.color = '#f8fafc';
 
     box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:18px;font-weight:700;margin-bottom:14px;">Your profile</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <label style="font-size:13px;color:#cbd5e1;">Name</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>ðŸ›ï¸</span>
+          <span>👋</span>
           <input id="profileName" value="${(profile.name || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
         </div>
         <label style="font-size:13px;color:#cbd5e1;">Age</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>ðŸŽ‚</span>
+          <span>🎂</span>
           <input id="profileAge" value="${(profile.age || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
         </div>
         <label style="font-size:13px;color:#cbd5e1;">Email</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>ðŸ“§</span>
+          <span>📧</span>
           <input id="profileEmail" value="${(profile.email || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" readonly />
         </div>
       </div>
@@ -10475,7 +10475,7 @@ function confirmLogout() {
     const box = document.getElementById('profilePanel');
     if (!box) return;
     box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
         <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
@@ -10726,7 +10726,7 @@ function showSharedPrivacyGate(payload) {
 
     overlay.innerHTML = `
       <div style="width:min(92vw,480px);max-height:90vh;overflow:auto;position:relative;padding:24px 24px 84px;border-radius:24px;background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.14);box-shadow:0 24px 60px rgba(0,0,0,0.36);">
-        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
         <div style="font-size:22px;font-weight:800;margin-bottom:8px;">Shared chat privacy</div>
         <div style="font-size:13px;color:#cbd5e1;margin-bottom:16px;">This link follows the privacy rules selected by the owner. Review them below, then continue.</div>
         <div style="display:grid;gap:8px;margin-bottom:16px;">
@@ -10922,7 +10922,7 @@ function showApprovalRequestsPanel() {
   box.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:16px;font-weight:700;">Approval requests</div>
-      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">âœ•</button>
+      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
     </div>
     ${requests.length ? requests.map((req) => `
       <div style="margin-bottom:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
@@ -11562,8 +11562,8 @@ if (attachments.length > 0) {
     attachmentBox.style.marginBottom = '12px';
     attachmentBox.innerHTML = attachments.map((attachment) => `
       <div style="margin-bottom:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#f8fafc;">
-        <div style="font-size:13px;font-weight:700;">ðŸ“Ž ${attachment.file_name || 'Uploaded file'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} â€¢ ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
+        <div style="font-size:13px;font-weight:700;">📁 ${attachment.file_name || 'Uploaded file'}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} • ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
       </div>
     `).join('');
     chatBox.appendChild(attachmentBox);
@@ -11619,8 +11619,8 @@ const visibleChatTitle =
     ).trim();
 
 div.innerText =
-    (chats[id].pin ? "ðŸ“Œ " : "") +
-    "ðŸ’¬ " +
+    (chats[id].pin ? "📌 " : "") +
+    "💬 " +
     visibleChatTitle;
 
 div.onclick=()=>openChat(id);
@@ -11634,7 +11634,7 @@ selectedChat=id;
 
 
 document.getElementById("pinOption").innerHTML =
-chats[id].pin ? "âŒ Unpin" : "ðŸ“Œ Pin";
+chats[id].pin ? "✕ Unpin" : "📌 Pin";
 
 
 menu.style.display="block";
@@ -11974,7 +11974,7 @@ function createCopyButton(text) {
   button.type = 'button';
   button.className = 'aiCopyButton';
   button.title = 'Copy';
-  button.innerHTML = 'â§‰';
+  button.innerHTML = '📋';
   button.onclick = async (event) => {
     event.stopPropagation();
     await copyTextToClipboard(text || '');
@@ -12449,7 +12449,7 @@ async function send() {
   }
 
   if (uploadErrors.length) {
-    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' â€¢ ');
+    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' • ');
     setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
   }
 
@@ -12869,7 +12869,7 @@ async function save() {
 function setReplyControlState(isActive) {
     const sendButton = document.getElementById('sendBtn');
     if (sendButton) {
-        sendButton.innerHTML = isActive ? 'â¹' : 'â†‘';
+        sendButton.innerHTML = isActive ? '➜' : '⬆';
         sendButton.title = isActive ? 'Stop reply' : 'Send message';
     }
 }
@@ -12954,14 +12954,14 @@ box.innerHTML=`
 
 <h3>ðŸŽ§ Customer Support</h3>
 
-<p>ðŸ“§ Email</p>
+<p>📧 Email</p>
 
 <button onclick="openEmail()">
 REQUEST VIA EMAIL
 </button>
 
 
-<p>ðŸ’¬ WhatsApp</p>
+<p>💬 WhatsApp</p>
 
 <button onclick="openWhatsApp()">
 VIA WHATSAPP
@@ -12969,7 +12969,7 @@ VIA WHATSAPP
 
 
 <button onclick="this.parentElement.remove()">
-âŒ Close
+✕ Close
 </button>
 
 `;
@@ -13527,64 +13527,64 @@ document.addEventListener(
         },
 
         si: {
-            newChat: "à¶±à·€ à¶šà¶­à·à¶¶à·„",
-            settings: "à·ƒà·à¶šà·ƒà·”à¶¸à·Š",
-            customerSupport: "à¶´à·à¶»à·’à¶·à·à¶œà·’à¶š à·ƒà·„à·à¶º",
-            language: "à¶·à·à·‚à·à·€",
-            theme: "à¶­à·šà¶¸à·à·€",
+            newChat: "New Chat",
+            settings: "Settings",
+            customerSupport: "Customer Support",
+            language: "Language",
+            theme: "Theme",
             themeColor: "à¶­à·šà¶¸à· à·€à¶»à·Šà¶«à¶º",
             apply: "à¶ºà·œà¶¯à¶±à·Šà¶±",
-            fontSize: "à¶…à¶šà·”à¶»à·” à¶´à·Šâ€à¶»à¶¸à·à¶«à¶º",
-            rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+            fontSize: "Font Size",
+            rename: "Rename",
             pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-            unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-            share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-            deleteText: "à¶¸à¶šà¶±à·Šà¶±",
-            cancel: "à¶…à·€à¶½à¶‚à¶œà·” à¶šà¶»à¶±à·Šà¶±",
-            saveChanges: "à·€à·™à¶±à·ƒà·Šà¶šà¶¸à·Š à·ƒà·”à¶»à¶šà·’à¶±à·Šà¶±",
-            yourProfile: "à¶”à¶¶à¶œà·š à¶´à·à¶­à·’à¶šà¶©",
-            name: "à¶±à¶¸",
-            age: "à·€à¶ºà·ƒ",
-            email: "à·€à·’à¶¯à·Šâ€à¶ºà·”à¶­à·Š à¶­à·à¶´à·‘à¶½",
-            password: "à¶¸à·”à¶»à¶´à¶¯à¶º",
-            confirmPassword: "à¶¸à·”à¶»à¶´à¶¯à¶º à¶­à·„à·€à·”à¶»à·” à¶šà¶»à¶±à·Šà¶±",
-            signIn: "à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
-            register: "à¶½à·’à¶ºà·à¶´à¶¯à·’à¶‚à¶ à·’ à·€à¶±à·Šà¶±",
-            createAccount: "à¶œà·’à¶«à·”à¶¸ à·ƒà·à¶¯à¶±à·Šà¶±",
-            forgotPassword: "à¶¸à·”à¶»à¶´à¶¯à¶º à¶…à¶¸à¶­à¶šà¶¯?",
-            logout: "à¶‰à·€à¶­à·Š à·€à¶±à·Šà¶±",
-            loginAction: "à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
-            loginUnlock: "à¶­à·€à¶­à·Š à¶´à·„à·ƒà·”à¶šà¶¸à·Š à¶½à¶¶à·à¶œà·à¶±à·“à¶¸à¶§ à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
-            benefits: "à¶´à·’à·€à·’à·ƒà·“à¶¸à·™à¶±à·Š à¶¸à·™à¶¸ à¶´à·„à·ƒà·”à¶šà¶¸à·Š à¶½à¶¶à·à¶œà¶±à·Šà¶±:",
-            saveChats: "à¶”à¶¶à¶œà·š à¶šà¶­à·à¶¶à·„ à·ƒà·”à¶»à¶šà·’à¶±à·Šà¶± à·ƒà·„ à¶±à·à·€à¶­ à¶½à¶¶à·à¶œà¶±à·Šà¶±",
-            syncChats: "à¶‹à¶´à·à¶‚à¶œ à¶…à¶­à¶» à¶šà¶­à·à¶¶à·„ à¶‰à¶­à·’à·„à·à·ƒà¶º à·ƒà¶¸à¶¸à·”à·„à·”à¶»à·Šà¶­ à¶šà¶»à¶±à·Šà¶±",
-            fasterReplies: "à·€à·šà¶œà·€à¶­à·Š à·ƒà·„ à¶”à¶¶à¶§ à¶œà·à·…à¶´à·™à¶± à¶´à·’à·…à·’à¶­à·”à¶»à·” à¶½à¶¶à·à¶œà¶±à·Šà¶±",
-            logoutQuestion: "à¶”à¶¶à¶§ à¶‰à·€à¶­à·Š à·€à·“à¶¸à¶§ à¶…à·€à·à·Šâ€à¶º à¶¶à·€ à¶­à·„à·€à·”à¶»à·”à¶¯?",
-            askPlaceholder: "MI AI à·€à·™à¶­à·’à¶±à·Š à¶…à·ƒà¶±à·Šà¶±...",
+            unpin: "Unpin",
+            share: "Share",
+            deleteText: "Delete",
+            cancel: "Cancel",
+            saveChanges: "Save changes",
+            yourProfile: "Your profile",
+            name: "Name",
+            age: "Age",
+            email: "Email",
+            password: "Password",
+            confirmPassword: "Password Verify",
+            signIn: "Log in",
+            register: "Register",
+            createAccount: "Create Account",
+            forgotPassword: "Password à¶…à¶¸à¶­à¶šà¶¯?",
+            logout: "Logout",
+            loginAction: "Log in",
+            loginUnlock: "à¶­à·€à¶­à·Š à¶´à·„à·ƒà·”à¶šà¶¸à·Š à¶½à¶¶à·à¶œà·à¶±à·“à¶¸à¶§ Log in",
+            benefits: "Enjoy these benefits when you sign in:",
+            saveChats: "Save and restore your chats",
+            syncChats: "Sync your history across devices",
+            fasterReplies: "Get faster, more personal replies",
+            logoutQuestion: "Are you sure you want to logout?",
+            askPlaceholder: "Ask from MI AI...",
             mistakes:
                 "MI AI à·€à·à¶»à¶¯à·’ à¶šà·… à·„à·à¶š. à·€à·à¶¯à¶œà¶­à·Š à¶­à·œà¶»à¶­à·”à¶»à·” à¶´à¶»à·“à¶šà·Šà·‚à· à¶šà¶»à¶±à·Šà¶±.",
             creator:
                 "M.I.MUHAMMADH à·€à·’à·ƒà·’à¶±à·Š à¶±à·’à¶»à·Šà¶¸à·à¶«à¶º à¶šà¶» à¶¶à¶½à¶œà¶±à·Šà·€à¶± à¶½à¶¯à·“",
-            closeSettings: "à·ƒà·à¶šà·ƒà·”à¶¸à·Š à·€à·ƒà¶±à·Šà¶±",
-            closeMenu: "à¶¸à·™à¶±à·”à·€ à·€à·ƒà¶±à·Šà¶±",
+            closeSettings: "Settings Close",
+            closeMenu: "à¶¸à·™à¶±à·”à·€ Close",
             openMenu: "à¶¸à·™à¶±à·”à·€ à·€à·’à·€à·˜à¶­ à¶šà¶»à¶±à·Šà¶±",
             send: "à¶ºà·€à¶±à·Šà¶±",
-            stop: "à¶±à·€à¶­à·Šà·€à¶±à·Šà¶±",
-            loading: "à¶´à·–à¶»à¶«à¶º à·€à·™à¶¸à·’à¶±à·Š...",
+            stop: "Stop",
+            loading: "Loading...",
             pleaseWait: "à¶šà¶»à·”à¶«à·à¶šà¶» à¶»à·à¶³à·“ à·ƒà·’à¶§à·’à¶±à·Šà¶±...",
-            verify: "à¶­à·„à·€à·”à¶»à·” à¶šà¶»à¶±à·Šà¶±",
-            submit: "à¶ºà·œà¶¸à·” à¶šà¶»à¶±à·Šà¶±",
-            continueText: "à¶‰à¶¯à·’à¶»à·’à¶ºà¶§ à¶ºà¶±à·Šà¶±",
-            back: "à¶†à¶´à·ƒà·”",
-            next: "à¶Šà·…à¶Ÿ",
-            save: "à·ƒà·”à¶»à¶šà·’à¶±à·Šà¶±",
-            edit: "à·ƒà¶‚à·ƒà·Šà¶šà¶»à¶«à¶º à¶šà¶»à¶±à·Šà¶±",
-            close: "à·€à·ƒà¶±à·Šà¶±",
-            copied: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·!",
-            copy: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-            loginRequired: "à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶…à·€à·à·Šâ€à¶ºà¶ºà·’",
+            verify: "Verify",
+            submit: "Submit",
+            continueText: "Continue",
+            back: "Back",
+            next: "Next",
+            save: "Save",
+            edit: "Edit",
+            close: "Close",
+            copied: "Copied!",
+            copy: "Copy",
+            loginRequired: "Login Required",
             loginRequiredMessage:
-                "à¶¸à·™à¶¸ à¶´à·„à·ƒà·”à¶šà¶¸ à¶·à·à·€à·’à¶­ à¶šà·’à¶»à·“à¶¸à¶§ à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±."
+                "à¶¸à·™à¶¸ à¶´à·„à·ƒà·”à¶šà¶¸ à¶·à·à·€à·’à¶­ à¶šà·’à¶»à·“à¶¸à¶§ Log in."
         },
 
         ta: {
@@ -13915,14 +13915,14 @@ document.addEventListener(
         setStaticButton(
             "#sidebar button[onclick*='newChat']",
             "newChat",
-            "âž•",
+            "➜",
             language
         );
 
         setStaticButton(
             "#settingsBtn",
             "settings",
-            "âš™",
+            "✉",
             language
         );
 
@@ -13983,6 +13983,12 @@ document.addEventListener(
             });
     }
 
+    function normalizeLanguage(language) {
+        return language === "si" || language === "ta"
+            ? "en"
+            : language;
+    }
+
     function getLanguage() {
         const saved =
             localStorage.getItem(
@@ -13996,7 +14002,7 @@ document.addEventListener(
                 saved
             )
         ) {
-            return saved;
+            return normalizeLanguage(saved);
         }
 
         return "en";
@@ -14006,6 +14012,8 @@ document.addEventListener(
         language,
         savePreference
     ) {
+        language = normalizeLanguage(language);
+
         if (!translations[language]) {
             language = "en";
         }
@@ -14322,13 +14330,13 @@ document.addEventListener(
             },
 
             si: {
-                copy: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+                copy: "Copy",
+                rename: "Rename",
                 pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-                unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-                deleteText: "à¶¸à¶šà¶±à·Šà¶±",
-                copied: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·!"
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete",
+                copied: "Copied!"
             },
 
             ta: {
@@ -14476,7 +14484,7 @@ document.addEventListener(
             menu.appendChild(
                 menuButton(
                     "copy",
-                    "â§‰",
+                    "📋",
                     text("copy"),
                     false
                 )
@@ -14490,14 +14498,14 @@ document.addEventListener(
         menu.append(
             menuButton(
                 "rename",
-                "âœŽ",
+                "⚠",
                 text("rename"),
                 false
             ),
 
             menuButton(
                 "pin",
-                pinned ? "âŒ«" : "âŒ–",
+                pinned ? "📌" : "📍",
                 pinned
                     ? text("unpin")
                     : text("pin"),
@@ -14506,14 +14514,14 @@ document.addEventListener(
 
             menuButton(
                 "share",
-                "â†—",
+                "⋯",
                 text("share"),
                 false
             ),
 
             menuButton(
                 "delete",
-                "ðŸ—‘",
+                "🗑",
                 text("deleteText"),
                 true
             )
@@ -15058,11 +15066,11 @@ document.addEventListener(
             },
 
             si: {
-                rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+                rename: "Rename",
                 pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-                unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-                deleteText: "à¶¸à¶šà¶±à·Šà¶±"
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete"
             },
 
             ta: {
@@ -15188,14 +15196,14 @@ document.addEventListener(
                     menu.replaceChildren(
                         makeButton(
                             "rename",
-                            "âœŽ",
+                            "⚠",
                             label("rename"),
                             false
                         ),
 
                         makeButton(
                             "pin",
-                            pinned ? "âŒ«" : "âŒ–",
+                            pinned ? "📌" : "📍",
                             pinned
                                 ? label("unpin")
                                 : label("pin"),
@@ -15204,14 +15212,14 @@ document.addEventListener(
 
                         makeButton(
                             "share",
-                            "â†—",
+                            "⋯",
                             label("share"),
                             false
                         ),
 
                         makeButton(
                             "delete",
-                            "ðŸ—‘",
+                            "🗑",
                             label("deleteText"),
                             true
                         )
@@ -15578,11 +15586,11 @@ document.addEventListener(
         },
 
         si: {
-            language: "à¶·à·à·‚à·à·€",
-            theme: "à¶­à·šà¶¸à·à·€",
-            fontSize: "à¶…à¶šà·”à¶»à·” à¶´à·Šâ€à¶»à¶¸à·à¶«à¶º",
-            copy: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-            copied: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·!"
+            language: "Language",
+            theme: "Theme",
+            fontSize: "Font Size",
+            copy: "Copy",
+            copied: "Copied!"
         },
 
         ta: {
@@ -15991,7 +15999,7 @@ document.addEventListener(
         accordion.append(
             createSection(
                 "language",
-                "ðŸŒ",
+                "🌐",
                 word("language"),
                 languageControl,
                 panel
@@ -15999,7 +16007,7 @@ document.addEventListener(
 
             createSection(
                 "theme",
-                "ðŸŽ¨",
+                "🎨",
                 word("theme"),
                 themeControl,
                 panel
@@ -16235,10 +16243,10 @@ document.addEventListener(
                             "à®¨à®•à®²à¯†à®Ÿà¯"
                         )
                         || combined.includes(
-                            "â§‰"
+                            "📋"
                         )
                         || combined.includes(
-                            "ðŸ“‹"
+                            "📤"
                         )
                     );
                 });
@@ -16253,7 +16261,7 @@ document.addEventListener(
                     "button";
 
                 copyButton.textContent =
-                    "â§‰";
+                    "📋";
 
                 aiBubble.appendChild(
                     copyButton
@@ -16319,12 +16327,12 @@ document.addEventListener(
                             copyButton.textContent;
 
                         copyButton.textContent =
-                            "âœ“";
+                            "✓";
 
                         setTimeout(
                             function () {
                                 copyButton.textContent =
-                                    oldText || "â§‰";
+                                    oldText || "📋";
                             },
                             1000
                         );
@@ -16651,7 +16659,7 @@ document.addEventListener(
             check.className =
                 "mi-ios-option-check";
 
-            check.textContent = "âœ“";
+            check.textContent = "✓";
 
             check.setAttribute(
                 "aria-hidden",
@@ -21739,7 +21747,7 @@ document.addEventListener(
     function words() {
         const all = {
             en: {
-                thinking: "Thinkingâ€¦",
+                thinking: "Thinking…",
                 copied: "Message copied",
                 saved: "Chat saved",
                 uploaded: "File uploaded",
@@ -21756,24 +21764,24 @@ document.addEventListener(
             },
 
             si: {
-                thinking: "à·ƒà·’à¶­à¶¸à·’à¶±à·Šâ€¦",
+                thinking: "à·ƒà·’à¶­à¶¸à·’à¶±à·Š…",
                 copied: "à¶´à¶«à·’à·€à·’à¶©à¶º à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·",
                 saved: "à¶šà¶­à·à¶¶à·„ à·ƒà·”à¶»à·à¶šà·’à¶«à·’",
                 uploaded: "à¶œà·œà¶±à·”à·€ upload à¶šà·…à·",
                 online: "à¶±à·à·€à¶­ online",
                 offline: "à¶”à¶¶ offline",
-                rename: "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+                rename: "Rename",
                 pin: "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
-                unpin: "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
-                share: "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
-                deleteText: "à¶¸à¶šà¶±à·Šà¶±",
-                settings: "à·ƒà·à¶šà·ƒà·”à¶¸à·Š",
-                cancel: "à¶…à·€à¶½à¶‚à¶œà·” à¶šà¶»à¶±à·Šà¶±",
+                unpin: "Unpin",
+                share: "Share",
+                deleteText: "Delete",
+                settings: "Settings",
+                cancel: "Cancel",
                 chatOptions: "à¶šà¶­à·à¶¶à·„à·š à·€à·’à¶šà¶½à·Šà¶´"
             },
 
             ta: {
-                thinking: "à®šà®¿à®¨à¯à®¤à®¿à®•à¯à®•à®¿à®±à®¤à¯â€¦",
+                thinking: "à®šà®¿à®¨à¯à®¤à®¿à®•à¯à®•à®¿à®±à®¤à¯…",
                 copied: "à®šà¯†à®¯à¯à®¤à®¿ à®¨à®•à®²à¯†à®Ÿà¯à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
                 saved: "à®…à®°à®Ÿà¯à®Ÿà¯ˆ à®šà¯‡à®®à®¿à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
                 uploaded: "à®•à¯‹à®ªà¯à®ªà¯ à®ªà®¤à®¿à®µà¯‡à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
@@ -21926,10 +21934,10 @@ document.addEventListener(
     function islandIcon(type) {
         const values = {
             thinking: "",
-            success: "âœ“",
-            copy: "â§‰",
-            save: "âœ“",
-            upload: "â†‘",
+            success: "✓",
+            copy: "📋",
+            save: "✓",
+            upload: "⬆",
             online: "â—",
             offline: "!",
             info: "i"
@@ -22242,7 +22250,7 @@ document.addEventListener(
                     "mi-ios-sheet-action-icon";
 
                 icon.textContent =
-                    action.icon || "â€¢";
+                    action.icon || "•";
 
                 const label =
                     document.createElement(
@@ -22429,7 +22437,7 @@ document.addEventListener(
             labels.chatOptions,
             [
                 {
-                    icon: "âœŽ",
+                    icon: "⚠",
                     label:
                         labels.rename,
                     run:
@@ -22442,8 +22450,8 @@ document.addEventListener(
                 {
                     icon:
                         pinned
-                            ? "âˆ’"
-                            : "âŒ–",
+                            ? "−"
+                            : "📍",
                     label:
                         pinned
                             ? labels.unpin
@@ -22456,7 +22464,7 @@ document.addEventListener(
                         }
                 },
                 {
-                    icon: "â†—",
+                    icon: "⋯",
                     label:
                         labels.share,
                     run:
@@ -22467,7 +22475,7 @@ document.addEventListener(
                         }
                 },
                 {
-                    icon: "âŒ«",
+                    icon: "📌",
                     label:
                         labels.deleteText,
                     danger: true,
@@ -23058,10 +23066,10 @@ document.addEventListener(
                     "à¶±à·à·€à¶­ à·ƒà·à¶¯à¶»à¶ºà·™à¶±à·Š à¶´à·’à·…à·’à¶œà¶±à·’à¶¸à·”!",
 
                 message:
-                    "MI AI à·€à·™à¶­ à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶œà·à¶± à·ƒà·Šà¶­à·”à¶­à·’à¶ºà·’. à¶”à¶¶à¶œà·š chats à·ƒà·„ settings à¶¯à·à¶±à·Š à·ƒà·–à¶¯à·à¶±à¶¸à·Š.",
+                    "MI AI à·€à·™à¶­ à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶œà·à¶± à·ƒà·Šà¶­à·”à¶­à·’à¶ºà·’. à¶”à¶¶à¶œà·š chats à·ƒà·„ settings à¶¯à·à¶±à·Š à·ƒà·–à¶¯à·Nameà·Š.",
 
                 continueText:
-                    "à¶‰à¶¯à·’à¶»à·’à¶ºà¶§ à¶ºà¶±à·Šà¶±"
+                    "Continue"
             },
 
             ta: {
@@ -24305,7 +24313,7 @@ document.addEventListener(
                         "background:rgba(255,255,255,.06);";
 
                     card.textContent =
-                        "ðŸ“Ž " +
+                        "📁 " +
                         (
                             attachment.file_name ||
                             attachment.name ||
@@ -24467,10 +24475,10 @@ document.addEventListener(
                 item.textContent =
                     (
                         chat?.pin
-                            ? "ðŸ“Œ "
+                            ? "📌 "
                             : ""
                     ) +
-                    "ðŸ’¬ " +
+                    "💬 " +
                     titleForChat(
                         chatId
                     );
@@ -24521,8 +24529,8 @@ document.addEventListener(
                         if (pinOption) {
                             pinOption.textContent =
                                 chat?.pin
-                                    ? "âŒ Unpin"
-                                    : "ðŸ“Œ Pin";
+                                    ? "✕ Unpin"
+                                    : "📌 Pin";
                         }
 
                         const contextMenu =
@@ -25597,23 +25605,23 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
                 searching: "Ã Â·Æ’Ã Â·Å“Ã Â¶ÂºÃ Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 sending: "Ã Â¶ÂºÃ Â·â‚¬Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 sent: "Ã Â¶Â´Ã Â¶Â«Ã Â·â€™Ã Â·â‚¬Ã Â·â€™Ã Â¶Â©Ã Â¶Âº Ã Â¶ÂºÃ Â·ÂÃ Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
-                copied: "Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                copied: "Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 saved: "Ã Â·Æ’Ã Â·â€Ã Â¶Â»Ã Â·ÂÃ Â¶Å¡Ã Â·â€Ã Â¶Â«Ã Â·Â",
                 loading: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â´Ã Â·â€“Ã Â¶Â»Ã Â¶Â«Ã Â¶Âº Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 loaded: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â´Ã Â·â€“Ã Â¶Â»Ã Â¶Â«Ã Â¶Âº Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
                 online: "Ã Â¶â€Ã Â¶Â±Ã Â·Å Ã Â¶Â½Ã Â¶ÂºÃ Â·â€™Ã Â¶Â±Ã Â·Å ",
-                offline: "Ã Â¶â€¦Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶Âº Ã Â¶Â±Ã Â·ÂÃ Â¶Â­",
+                offline: "Ã Â¶…Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶Âº Ã Â¶Â±Ã Â·ÂÃ Â¶Â­",
                 newChat: "Ã Â¶Â±Ã Â·â‚¬ Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡Ã Â¶Å¡Ã Â·Å ",
                 opened: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
-                renamed: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â±Ã Â¶Â¸ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                renamed: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶Â±Ã Â¶Â¸ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 deleted: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Ã Â¶Â¸Ã Â¶Å¡Ã Â·Â Ã Â¶Â¯Ã Â·ÂÃ Â¶Â¸Ã Â·Å Ã Â¶Â¸Ã Â·Â",
-                pinned: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Pin Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                unpinned: "Pin Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                uploaded: "Ã Â¶Å“Ã Â·Å“Ã Â¶Â±Ã Â·â€Ã Â·â‚¬ Ã Â¶â€¹Ã Â¶Â©Ã Â·â€Ã Â¶Å“Ã Â¶Â­ Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                pinned: "Ã Â¶Â Ã Â·ÂÃ Â¶Â§Ã Â·Å  Ã Â¶â€˜Ã Â¶Å¡ Pin Ã Â¶Å¡Ã Â·…Ã Â·Â",
+                unpinned: "Pin Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
+                uploaded: "Ã Â¶Å“Ã Â·Å“Ã Â¶Â±Ã Â·â€Ã Â·â‚¬ Ã Â¶â€¹Ã Â¶Â©Ã Â·â€Ã Â¶Å“Ã Â¶Â­ Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 sharing: "Link Ã Â¶â€˜Ã Â¶Å¡ Ã Â·Æ’Ã Â·ÂÃ Â¶Â¯Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 shared: "Link Ã Â¶â€˜Ã Â¶Å¡ Ã Â·Æ’Ã Â·â€˜Ã Â¶Â¯Ã Â·â€Ã Â·â‚¬Ã Â·Â",
-                settings: "Settings Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                theme: "Theme Ã Â¶â€˜Ã Â¶Å¡ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
+                settings: "Settings Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â¶Å¡Ã Â·…Ã Â·Â",
+                theme: "Theme Ã Â¶â€˜Ã Â¶Å¡ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â·…Ã Â·Â",
                 login: "Login Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
                 loggedIn: "Login Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
                 logout: "Logout Ã Â·â‚¬Ã Â·â€Ã Â¶Â«Ã Â·Â",
@@ -25621,28 +25629,28 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
             },
             ta: {
                 idle: "MI AI",
-                thinking: "Ã Â®Å¡Ã Â®Â¿Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                searching: "Ã Â®Â¤Ã Â¯â€¡Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                sending: "Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                sent: "Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿ Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                copied: "Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                saved: "Ã Â®Å¡Ã Â¯â€¡Ã Â®Â®Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                loading: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â©Ã Â¯ÂÃ Â®Â±Ã Â®Â©...",
-                loaded: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
+                thinking: "Ã Â®Å¡Ã Â®Â¿Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                searching: "Ã Â®Â¤Ã Â¯â€¡Ã Â®Å¸Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                sending: "Ã Â®…Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                sent: "Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿ Ã Â®…Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                copied: "Ã Â®Â¨Ã Â®•Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                saved: "Ã Â®Å¡Ã Â¯â€¡Ã Â®Â®Ã Â®Â¿Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                loading: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®•Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â©Ã Â¯ÂÃ Â®Â±Ã Â®Â©...",
+                loaded: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®•Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
                 online: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®Â¯Ã Â®Â¤Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®Â²Ã Â¯Â",
                 offline: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®Â¯Ã Â®Â®Ã Â¯Â Ã Â®â€¡Ã Â®Â²Ã Â¯ÂÃ Â®Â²Ã Â¯Ë†",
-                newChat: "Ã Â®ÂªÃ Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®Â¯ Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†",
-                opened: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                renamed: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Â Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                deleted: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                pinned: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¯Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                unpinned: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                uploaded: "Ã Â®â€¢Ã Â¯â€¹Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®ÂªÃ Â®Â¤Ã Â®Â¿Ã Â®ÂµÃ Â¯â€¡Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                sharing: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                shared: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                settings: "Ã Â®â€¦Ã Â®Â®Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
+                newChat: "Ã Â®ÂªÃ Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®Â¯ Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†",
+                opened: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                renamed: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Â Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                deleted: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                pinned: "Ã Â®…Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¯Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                unpinned: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Â¨Ã Â¯â‚¬Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                uploaded: "Ã Â®•Ã Â¯â€¹Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®ÂªÃ Â®Â¤Ã Â®Â¿Ã Â®ÂµÃ Â¯â€¡Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                sharing: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                shared: "Ã Â®â€¡Ã Â®Â£Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
+                settings: "Ã Â®…Ã Â®Â®Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®•Ã Â®Â³Ã Â¯Â Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®•Ã Â¯ÂÃ Â®•Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
                 theme: "Ã Â®Â¤Ã Â¯â‚¬Ã Â®Â®Ã Â¯Â Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                login: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
+                login: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®•Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
                 loggedIn: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¤Ã Â¯Â",
                 logout: "Ã Â®ÂµÃ Â¯â€ Ã Â®Â³Ã Â®Â¿Ã Â®Â¯Ã Â¯â€¡Ã Â®Â±Ã Â®Â¿Ã Â®Â¯Ã Â®Â¤Ã Â¯Â",
                 error: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â´Ã Â¯Ë† Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â"
@@ -25673,7 +25681,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
         const icons = {
             info: "i",
             thinking: "Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢",
-            searching: "Ã¢Å’â€¢",
+            searching: "Ã¢Å’•",
             sending: "Ã¢â€ â€˜",
             success: "Ã¢Å“â€œ",
             copy: "Ã¢Â§â€°",
@@ -25819,7 +25827,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
                 id.includes("send") ||
                 value === "send" ||
                 value.includes("Ã Â¶ÂºÃ Â·â‚¬Ã Â¶Â±Ã Â·Å Ã Â¶Â±") ||
-                value.includes("Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â")
+                value.includes("Ã Â®…Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â")
             ) {
                 notify(w.sending, "sending", 1200);
             }

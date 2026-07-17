@@ -1,6 +1,43 @@
-﻿from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response, Response, stream_with_context
-from flask_cors import CORS
+
 import os
+# ---------------------------------------------------------------------------
+# MI AI authoritative Chief Owner configuration
+# ---------------------------------------------------------------------------
+CHIEF_OWNER_EMAIL = os.getenv(
+    "CHIEF_OWNER_EMAIL",
+    "teamofchatbot.miai@gmail.com",
+).strip().lower()
+
+# Set CHIEF_OWNER_UID in the production environment after confirming the
+# Firebase UID belonging to the permanent Chief Owner account.
+CHIEF_OWNER_UID = os.getenv("CHIEF_OWNER_UID", "").strip()
+
+
+def normalize_identity_email(value):
+    """Return a normalized email without trusting frontend role information."""
+    return str(value or "").strip().lower()
+
+
+def is_configured_chief_owner(email, uid=None):
+    """
+    Validate the permanent Chief Owner identity from server configuration.
+
+    When CHIEF_OWNER_UID is configured, both the verified token email and UID
+    must match. Frontend-provided roles or permissions are never authoritative.
+    """
+    normalized_email = normalize_identity_email(email)
+
+    if not normalized_email or normalized_email != CHIEF_OWNER_EMAIL:
+        return False
+
+    if CHIEF_OWNER_UID:
+        return bool(uid) and str(uid).strip() == CHIEF_OWNER_UID
+
+    return True
+
+
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response, Response, stream_with_context
+from flask_cors import CORS
 import re
 import uuid
 import json
@@ -1500,6 +1537,10 @@ def messages():
 @app.route("/chat", methods=["POST"])
 def chat():
     return _handle_chat_request()
+
+
+@app.route("/api/assistant-info", methods=["GET"])
+@app.route("/assistant-info", methods=["GET"])
 def assistant_info():
     return jsonify({
         "name": "MI AI",
