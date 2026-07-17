@@ -9,3 +9,5 @@ google-genai>=1.0.0
 
 supabase>=2.4.0
 firebase-admin>=6.5.0
+
+requests>=2.31.0
