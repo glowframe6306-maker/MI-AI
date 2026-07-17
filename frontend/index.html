@@ -28182,6 +28182,317 @@ window.miOpenAccountChat=openPanel;
 })();
 </script>
 <!-- MI AI ACCOUNT CHAT V2 END -->
+<!-- MI AI THREE LANGUAGE UI START -->
+<script>
+(function () {
+    "use strict";
+
+    if (window.__miThreeLanguageUiV3) return;
+    window.__miThreeLanguageUiV3 = true;
+
+    const STORAGE_KEY = "mi_ui_language";
+    const ALLOWED = new Set(["en", "si", "ta"]);
+
+    const dictionary = {
+        en: {
+            "New Chat": "New Chat",
+            "Customer Support": "Customer Support",
+            "Customer Service": "Customer Service",
+            "Settings": "Settings",
+            "Login": "Login",
+            "Logout": "Logout",
+            "Language": "Language",
+            "Theme": "Theme",
+            "Font Size": "Font Size",
+            "Share": "Share",
+            "Create a link": "Create a link",
+            "Generate link": "Generate link",
+            "Cancel": "Cancel",
+            "Copy": "Copy",
+            "Copied": "Copied",
+            "Rename": "Rename",
+            "Pin": "Pin",
+            "Unpin": "Unpin",
+            "Delete": "Delete",
+            "Close": "Close",
+            "Save": "Save",
+            "Send": "Send",
+            "Stop": "Stop",
+            "Search": "Search",
+            "View only": "View only",
+            "Can edit": "Can edit",
+            "Login Required": "Login Required",
+            "Please login": "Please login",
+            "Email": "Email",
+            "Password": "Password",
+            "Forgot password?": "Forgot password?",
+            "Create account": "Create account",
+            "Sign in": "Sign in",
+            "Sign up": "Sign up",
+            "Ask MI AI...": "Ask MI AI...",
+            "Ask from MI AI...": "Ask MI AI...",
+            "No chats yet": "No chats yet",
+            "Today": "Today",
+            "Yesterday": "Yesterday"
+        },
+        si: {
+            "New Chat": "à¶±à·€ à·ƒà¶‚à·€à·à¶¯à¶ºà¶šà·Š",
+            "Customer Support": "à¶´à·à¶»à·’à¶·à·à¶œà·’à¶š à·ƒà·„à·à¶º",
+            "Customer Service": "à¶´à·à¶»à·’à¶·à·à¶œà·’à¶š à·ƒà·šà·€à·à·€",
+            "Settings": "à·ƒà·à¶šà·ƒà·”à¶¸à·Š",
+            "Login": "à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
+            "Logout": "à¶´à·’à¶§à·€à¶±à·Šà¶±",
+            "Language": "à¶·à·à·‚à·à·€",
+            "Theme": "à¶­à·šà¶¸à·à·€",
+            "Font Size": "à¶…à¶šà·”à¶»à·” à¶´à·Šâ€à¶»à¶¸à·à¶«à¶º",
+            "Share": "à¶¶à·™à¶¯à·à¶œà¶±à·Šà¶±",
+            "Create a link": "à·ƒà¶¶à·à¶³à·’à¶ºà¶šà·Š à·ƒà·à¶¯à¶±à·Šà¶±",
+            "Generate link": "à·ƒà¶¶à·à¶³à·’à¶º à·ƒà·à¶¯à¶±à·Šà¶±",
+            "Cancel": "à¶…à·€à¶½à¶‚à¶œà·” à¶šà¶»à¶±à·Šà¶±",
+            "Copy": "à¶´à·’à¶§à¶´à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
+            "Copied": "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·",
+            "Rename": "à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà¶»à¶±à·Šà¶±",
+            "Pin": "à¶‰à·„à·…à¶§ à¶…à¶¸à·”à¶«à¶±à·Šà¶±",
+            "Unpin": "à¶…à¶¸à·”à¶«à·“à¶¸ à¶‰à·€à¶­à·Š à¶šà¶»à¶±à·Šà¶±",
+            "Delete": "à¶¸à¶šà¶±à·Šà¶±",
+            "Close": "à·€à·ƒà¶±à·Šà¶±",
+            "Save": "à·ƒà·”à¶»à¶šà·’à¶±à·Šà¶±",
+            "Send": "à¶ºà·€à¶±à·Šà¶±",
+            "Stop": "à¶±à·€à¶­à·Šà·€à¶±à·Šà¶±",
+            "Search": "à·ƒà·œà¶ºà¶±à·Šà¶±",
+            "View only": "à¶¶à·à¶½à·“à¶¸à¶§ à¶´à¶¸à¶«à·’",
+            "Can edit": "à·ƒà¶‚à·ƒà·Šà¶šà¶»à¶«à¶º à¶šà·… à·„à·à¶š",
+            "Login Required": "à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶…à·€à·à·Šâ€à¶ºà¶ºà·’",
+            "Please login": "à¶šà¶»à·”à¶«à·à¶šà¶» à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
+            "Email": "à·€à·’à¶¯à·Šâ€à¶ºà·”à¶­à·Š à¶­à·à¶´à·‘à¶½",
+            "Password": "à¶¸à·”à¶»à¶´à¶¯à¶º",
+            "Forgot password?": "à¶¸à·”à¶»à¶´à¶¯à¶º à¶…à¶¸à¶­à¶šà¶¯?",
+            "Create account": "à¶œà·’à¶«à·”à¶¸à¶šà·Š à·ƒà·à¶¯à¶±à·Šà¶±",
+            "Sign in": "à¶´à·’à·€à·’à·ƒà·™à¶±à·Šà¶±",
+            "Sign up": "à¶½à·’à¶ºà·à¶´à¶¯à·’à¶‚à¶ à·’ à·€à¶±à·Šà¶±",
+            "Ask MI AI...": "MI AI à·€à·™à¶­à·’à¶±à·Š à¶…à·ƒà¶±à·Šà¶±...",
+            "Ask from MI AI...": "MI AI à·€à·™à¶­à·’à¶±à·Š à¶…à·ƒà¶±à·Šà¶±...",
+            "No chats yet": "à¶­à·€à¶¸ à·ƒà¶‚à·€à·à¶¯ à¶±à·à¶­",
+            "Today": "à¶…à¶¯",
+            "Yesterday": "à¶Šà¶ºà·š"
+        },
+        ta: {
+            "New Chat": "à®ªà¯à®¤à®¿à®¯ à®‰à®°à¯ˆà®¯à®¾à®Ÿà®²à¯",
+            "Customer Support": "à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®†à®¤à®°à®µà¯",
+            "Customer Service": "à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®šà¯‡à®µà¯ˆ",
+            "Settings": "à®…à®®à¯ˆà®ªà¯à®ªà¯à®•à®³à¯",
+            "Login": "à®‰à®³à¯à®¨à¯à®´à¯ˆà®¯à®µà¯à®®à¯",
+            "Logout": "à®µà¯†à®³à®¿à®¯à¯‡à®±à¯",
+            "Language": "à®®à¯Šà®´à®¿",
+            "Theme": "à®¤à¯€à®®à¯",
+            "Font Size": "à®Žà®´à¯à®¤à¯à®¤à®³à®µà¯",
+            "Share": "à®ªà®•à®¿à®°à¯",
+            "Create a link": "à®‡à®£à¯ˆà®ªà¯à®ªà¯ˆ à®‰à®°à¯à®µà®¾à®•à¯à®•à¯",
+            "Generate link": "à®‡à®£à¯ˆà®ªà¯à®ªà¯ˆ à®‰à®°à¯à®µà®¾à®•à¯à®•à¯",
+            "Cancel": "à®°à®¤à¯à®¤à¯ à®šà¯†à®¯à¯",
+            "Copy": "à®¨à®•à®²à¯†à®Ÿà¯",
+            "Copied": "à®¨à®•à®²à¯†à®Ÿà¯à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+            "Rename": "à®ªà¯†à®¯à®°à¯ˆ à®®à®¾à®±à¯à®±à¯",
+            "Pin": "à®®à¯‡à®²à¯‡ à®ªà¯Šà®°à¯à®¤à¯à®¤à¯",
+            "Unpin": "à®ªà¯Šà®°à¯à®¤à¯à®¤à®²à¯ˆ à®¨à¯€à®•à¯à®•à¯",
+            "Delete": "à®¨à¯€à®•à¯à®•à¯",
+            "Close": "à®®à¯‚à®Ÿà¯",
+            "Save": "à®šà¯‡à®®à®¿",
+            "Send": "à®…à®©à¯à®ªà¯à®ªà¯",
+            "Stop": "à®¨à®¿à®±à¯à®¤à¯à®¤à¯",
+            "Search": "à®¤à¯‡à®Ÿà¯",
+            "View only": "à®ªà®¾à®°à¯à®•à¯à®• à®®à®Ÿà¯à®Ÿà¯à®®à¯",
+            "Can edit": "à®¤à®¿à®°à¯à®¤à¯à®¤à®²à®¾à®®à¯",
+            "Login Required": "à®‰à®³à¯à®¨à¯à®´à¯ˆà®µà¯ à®¤à¯‡à®µà¯ˆ",
+            "Please login": "à®¤à®¯à®µà¯à®šà¯†à®¯à¯à®¤à¯ à®‰à®³à¯à®¨à¯à®´à¯ˆà®¯à®µà¯à®®à¯",
+            "Email": "à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯",
+            "Password": "à®•à®Ÿà®µà¯à®šà¯à®šà¯Šà®²à¯",
+            "Forgot password?": "à®•à®Ÿà®µà¯à®šà¯à®šà¯Šà®²à¯ à®®à®±à®¨à¯à®¤à¯à®µà®¿à®Ÿà¯à®Ÿà®¤à®¾?",
+            "Create account": "à®•à®£à®•à¯à®•à¯ˆ à®‰à®°à¯à®µà®¾à®•à¯à®•à¯",
+            "Sign in": "à®‰à®³à¯à®¨à¯à®´à¯ˆ",
+            "Sign up": "à®ªà®¤à®¿à®µà¯ à®šà¯†à®¯à¯",
+            "Ask MI AI...": "MI AI-à®¯à®¿à®Ÿà®®à¯ à®•à¯‡à®³à¯à®™à¯à®•à®³à¯...",
+            "Ask from MI AI...": "MI AI-à®¯à®¿à®Ÿà®®à¯ à®•à¯‡à®³à¯à®™à¯à®•à®³à¯...",
+            "No chats yet": "à®‡à®©à¯à®©à¯à®®à¯ à®‰à®°à¯ˆà®¯à®¾à®Ÿà®²à¯à®•à®³à¯ à®‡à®²à¯à®²à¯ˆ",
+            "Today": "à®‡à®©à¯à®±à¯",
+            "Yesterday": "à®¨à¯‡à®±à¯à®±à¯"
+        }
+    };
+
+    const reverse = {};
+    Object.keys(dictionary).forEach(function (lang) {
+        Object.entries(dictionary[lang]).forEach(function (entry) {
+            const english = entry[0];
+            const translated = entry[1];
+            reverse[translated] = english;
+        });
+    });
+
+    function normalizeLanguage(value) {
+        const raw = String(value || "").trim().toLowerCase();
+        if (raw === "sinhala" || raw === "sin" || raw.startsWith("si")) return "si";
+        if (raw === "tamil" || raw.startsWith("ta")) return "ta";
+        return "en";
+    }
+
+    function currentLanguage() {
+        const selector = document.getElementById("languageSelect") ||
+            document.querySelector("select[name='language']") ||
+            document.querySelector("[data-language-select]");
+
+        const selected = selector ? selector.value : "";
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return normalizeLanguage(selected || stored || "en");
+    }
+
+    function englishSource(value) {
+        const text = String(value || "").replace(/\s+/g, " ").trim();
+        return reverse[text] || text;
+    }
+
+    function translated(value, lang) {
+        const source = englishSource(value);
+        return (dictionary[lang] && dictionary[lang][source]) || value;
+    }
+
+    function preserveIcon(original, replacement) {
+        const match = String(original || "").match(/^(\s*[^\p{L}\p{N}]*)(.*)$/u);
+        const prefix = match ? match[1] : "";
+        return prefix + replacement;
+    }
+
+    function skip(element) {
+        return !element ||
+            element.closest(
+                "#chat, .chat, .messages, .message, .user-message, .assistant-message," +
+                "script, style, code, pre, svg, noscript, [data-mi-no-translate='true'], .mi-no-translate"
+            );
+    }
+
+    function translateElementText(element, lang) {
+        if (skip(element)) return;
+
+        Array.from(element.childNodes).forEach(function (node) {
+            if (node.nodeType !== Node.TEXT_NODE) return;
+
+            const raw = node.nodeValue || "";
+            const clean = raw.replace(/\s+/g, " ").trim();
+            if (!clean) return;
+
+            if (!node.__miEnglishText) {
+                node.__miEnglishText = englishSource(clean);
+            }
+
+            const result = dictionary[lang][node.__miEnglishText];
+            if (!result) return;
+
+            const leading = raw.match(/^\s*/)?.[0] || "";
+            const trailing = raw.match(/\s*$/)?.[0] || "";
+            node.nodeValue = leading + preserveIcon(clean, result) + trailing;
+        });
+    }
+
+    function translateAttributes(element, lang) {
+        if (skip(element)) return;
+
+        ["placeholder", "title", "aria-label", "value"].forEach(function (attribute) {
+            if (!element.hasAttribute(attribute)) return;
+
+            if (attribute === "value") {
+                const type = String(element.type || "").toLowerCase();
+                if (!["button", "submit", "reset"].includes(type)) return;
+            }
+
+            const raw = element.getAttribute(attribute);
+            if (!raw) return;
+
+            const dataName = "miEnglish" + attribute.replace(/(^|-)([a-z])/g, function (_, __, c) {
+                return c.toUpperCase();
+            });
+
+            if (!element.dataset[dataName]) {
+                element.dataset[dataName] = englishSource(raw);
+            }
+
+            const source = element.dataset[dataName];
+            const result = dictionary[lang][source];
+            if (result) element.setAttribute(attribute, result);
+        });
+    }
+
+    function applyLanguage(lang) {
+        lang = normalizeLanguage(lang);
+        localStorage.setItem(STORAGE_KEY, lang);
+
+        document.documentElement.lang = lang;
+        document.documentElement.dir = "ltr";
+
+        document.querySelectorAll("body *").forEach(function (element) {
+            translateElementText(element, lang);
+            translateAttributes(element, lang);
+        });
+
+        const selector = document.getElementById("languageSelect") ||
+            document.querySelector("select[name='language']") ||
+            document.querySelector("[data-language-select]");
+
+        if (selector && normalizeLanguage(selector.value) !== lang) {
+            const matching = Array.from(selector.options || []).find(function (option) {
+                return normalizeLanguage(option.value || option.textContent) === lang;
+            });
+            if (matching) selector.value = matching.value;
+        }
+
+        window.dispatchEvent(new CustomEvent("mi-language-applied", {
+            detail: { language: lang }
+        }));
+    }
+
+    function installSelectorListener() {
+        const selector = document.getElementById("languageSelect") ||
+            document.querySelector("select[name='language']") ||
+            document.querySelector("[data-language-select]");
+
+        if (!selector || selector.__miLanguageListener) return;
+        selector.__miLanguageListener = true;
+
+        selector.addEventListener("change", function () {
+            applyLanguage(normalizeLanguage(selector.value || selector.selectedOptions?.[0]?.textContent));
+        });
+    }
+
+    let scheduled = false;
+    const observer = new MutationObserver(function () {
+        if (scheduled) return;
+        scheduled = true;
+
+        requestAnimationFrame(function () {
+            scheduled = false;
+            installSelectorListener();
+            applyLanguage(currentLanguage());
+        });
+    });
+
+    function start() {
+        installSelectorListener();
+        applyLanguage(currentLanguage());
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    window.miApplyLanguage = applyLanguage;
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, { once: true });
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- MI AI THREE LANGUAGE UI END -->
 </body>
 </html>
 
