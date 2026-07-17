@@ -25852,5 +25852,707 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 
 
 
+
+<style>
+/* MI AI GOLD IDLE DYNAMIC ISLAND V2 CSS - START */
+
+#miDynamicIsland {
+    position: fixed !important;
+    top: max(10px, env(safe-area-inset-top, 0px)) !important;
+    left: 50% !important;
+    z-index: 2147483646 !important;
+
+    width: 132px !important;
+    min-width: 132px !important;
+    max-width: min(340px, calc(100vw - 24px)) !important;
+    min-height: 40px !important;
+
+    padding: 7px 14px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    border-radius: 999px !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06), transparent 48%),
+        #000000 !important;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        0 12px 38px rgba(0,0,0,0.52) !important;
+
+    -webkit-backdrop-filter: blur(28px) saturate(170%) !important;
+    backdrop-filter: blur(28px) saturate(170%) !important;
+
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+
+    transform: translateX(-50%) translateY(0) scale(1) !important;
+
+    transition:
+        width 260ms cubic-bezier(.2,.8,.2,1),
+        min-height 260ms cubic-bezier(.2,.8,.2,1),
+        transform 220ms ease,
+        box-shadow 220ms ease !important;
+}
+
+#miDynamicIsland.mi-status-open {
+    width: min(320px, calc(100vw - 24px)) !important;
+    min-height: 48px !important;
+}
+
+#miDynamicIslandIcon {
+    width: 24px !important;
+    height: 24px !important;
+    flex: 0 0 24px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 50% !important;
+    background: rgba(255,255,255,0.08) !important;
+    color: #ffffff !important;
+
+    font-size: 12px !important;
+    font-weight: 900 !important;
+}
+
+#miDynamicIslandText {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 760 !important;
+    letter-spacing: 0.02em !important;
+}
+
+#miDynamicIsland.mi-idle-gold #miDynamicIslandIcon {
+    display: none !important;
+}
+
+#miDynamicIsland.mi-idle-gold #miDynamicIslandText {
+    display: inline-block !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.16em !important;
+
+    color: transparent !important;
+    background:
+        linear-gradient(
+            90deg,
+            #8a5a00 0%,
+            #f2c14e 18%,
+            #fff1a8 38%,
+            #d49a18 58%,
+            #fff6c8 78%,
+            #a66a00 100%
+        ) !important;
+
+    background-size: 220% 100% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+
+    text-shadow:
+        0 0 8px rgba(255,196,64,0.28),
+        0 0 18px rgba(255,170,0,0.18) !important;
+
+    animation:
+        miGoldSweep 2.8s linear infinite,
+        miGoldFloat 2.4s ease-in-out infinite,
+        miGoldGlow 1.8s ease-in-out infinite alternate !important;
+}
+
+#miDynamicIsland.mi-idle-gold::before,
+#miDynamicIsland.mi-idle-gold::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    border-radius: 999px;
+}
+
+#miDynamicIsland.mi-idle-gold::before {
+    inset: 1px;
+    background:
+        linear-gradient(
+            110deg,
+            transparent 0%,
+            rgba(255,215,96,0.00) 30%,
+            rgba(255,230,150,0.15) 48%,
+            rgba(255,215,96,0.00) 66%,
+            transparent 100%
+        );
+    background-size: 240% 100%;
+    animation: miIslandShine 3.4s linear infinite;
+}
+
+#miDynamicIsland.mi-idle-gold::after {
+    left: 18%;
+    right: 18%;
+    bottom: 4px;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,196,64,0.45),
+        transparent
+    );
+    animation: miGoldLine 2.1s ease-in-out infinite;
+}
+
+#miDynamicIsland.mi-status-open #miDynamicIslandText {
+    color: #ffffff !important;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    text-shadow: none !important;
+    animation: none !important;
+    letter-spacing: 0.02em !important;
+    font-size: 12px !important;
+}
+
+#miDynamicIsland.mi-thinking #miDynamicIslandIcon,
+#miDynamicIsland.mi-searching #miDynamicIslandIcon {
+    animation: miStatusPulse 1s ease-in-out infinite;
+}
+
+@keyframes miGoldSweep {
+    from { background-position: 220% 0; }
+    to   { background-position: -220% 0; }
+}
+
+@keyframes miGoldFloat {
+    0%,100% { transform: translateY(0) scale(1); }
+    50%     { transform: translateY(-1px) scale(1.035); }
+}
+
+@keyframes miGoldGlow {
+    from {
+        filter: drop-shadow(0 0 2px rgba(255,190,45,0.35));
+        opacity: 0.86;
+    }
+
+    to {
+        filter: drop-shadow(0 0 7px rgba(255,220,105,0.72));
+        opacity: 1;
+    }
+}
+
+@keyframes miIslandShine {
+    from { background-position: 240% 0; }
+    to   { background-position: -240% 0; }
+}
+
+@keyframes miGoldLine {
+    0%,100% {
+        opacity: 0.15;
+        transform: scaleX(0.55);
+    }
+
+    50% {
+        opacity: 0.85;
+        transform: scaleX(1);
+    }
+}
+
+@keyframes miStatusPulse {
+    0%,100% {
+        opacity: 0.40;
+        transform: scale(0.84);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 600px) {
+    #miDynamicIsland {
+        top: max(7px, env(safe-area-inset-top, 0px)) !important;
+        max-width: calc(100vw - 18px) !important;
+    }
+
+    #miDynamicIsland.mi-status-open {
+        width: min(300px, calc(100vw - 18px)) !important;
+    }
+}
+
+/* MI AI GOLD IDLE DYNAMIC ISLAND V2 CSS - END */
+</style>
+<script>
+/* MI AI GOLD IDLE DYNAMIC ISLAND V2 JS - START */
+
+(function () {
+    "use strict";
+
+    let restoreTimer = null;
+    let lastMessage = "";
+    let lastShownAt = 0;
+
+    function currentLanguage() {
+        return String(
+            document.getElementById("languageSelect")?.value ||
+            localStorage.getItem("mi_ui_language") ||
+            "en"
+        ).toLowerCase();
+    }
+
+    function labels() {
+        const all = {
+            en: {
+                idle: "MI AI",
+                thinking: "Thinking...",
+                searching: "Searching...",
+                sending: "Sending...",
+                sent: "Message sent",
+                copied: "Copied",
+                saved: "Saved",
+                loading: "Loading chats...",
+                loaded: "Chats loaded",
+                online: "Online",
+                offline: "Offline",
+                newChat: "New chat",
+                opened: "Chat opened",
+                renamed: "Chat renamed",
+                deleted: "Chat deleted",
+                pinned: "Chat pinned",
+                unpinned: "Chat unpinned",
+                uploaded: "File uploaded",
+                sharing: "Creating link...",
+                shared: "Link created",
+                settings: "Settings opened",
+                theme: "Theme updated",
+                login: "Signing in...",
+                loggedIn: "Signed in",
+                logout: "Signed out",
+                error: "Something went wrong"
+            },
+            si: {
+                idle: "MI AI",
+                thinking: "à·ƒà·’à¶­à¶¸à·’à¶±à·Š...",
+                searching: "à·ƒà·œà¶ºà¶¸à·’à¶±à·Š...",
+                sending: "à¶ºà·€à¶¸à·’à¶±à·Š...",
+                sent: "à¶´à¶«à·’à·€à·’à¶©à¶º à¶ºà·à·€à·”à¶«à·",
+                copied: "à¶´à·’à¶§à¶´à¶­à·Š à¶šà·…à·",
+                saved: "à·ƒà·”à¶»à·à¶šà·”à¶«à·",
+                loading: "à¶ à·à¶§à·Š à¶´à·–à¶»à¶«à¶º à·€à·™à¶¸à·’à¶±à·Š...",
+                loaded: "à¶ à·à¶§à·Š à¶´à·–à¶»à¶«à¶º à·€à·”à¶«à·",
+                online: "à¶”à¶±à·Šà¶½à¶ºà·’à¶±à·Š",
+                offline: "à¶…à¶±à·Šà¶­à¶»à·Šà¶¢à·à¶½à¶º à¶±à·à¶­",
+                newChat: "à¶±à·€ à¶ à·à¶§à·Š à¶‘à¶šà¶šà·Š",
+                opened: "à¶ à·à¶§à·Š à¶‘à¶š à·€à·’à·€à·˜à¶­ à·€à·”à¶«à·",
+                renamed: "à¶ à·à¶§à·Š à¶±à¶¸ à·€à·™à¶±à·ƒà·Š à¶šà·…à·",
+                deleted: "à¶ à·à¶§à·Š à¶‘à¶š à¶¸à¶šà· à¶¯à·à¶¸à·Šà¶¸à·",
+                pinned: "à¶ à·à¶§à·Š à¶‘à¶š Pin à¶šà·…à·",
+                unpinned: "Pin à¶‰à·€à¶­à·Š à¶šà·…à·",
+                uploaded: "à¶œà·œà¶±à·”à·€ à¶‹à¶©à·”à¶œà¶­ à¶šà·…à·",
+                sharing: "Link à¶‘à¶š à·ƒà·à¶¯à¶¸à·’à¶±à·Š...",
+                shared: "Link à¶‘à¶š à·ƒà·‘à¶¯à·”à·€à·",
+                settings: "Settings à·€à·’à·€à·˜à¶­ à¶šà·…à·",
+                theme: "Theme à¶‘à¶š à·€à·™à¶±à·ƒà·Š à¶šà·…à·",
+                login: "Login à·€à·™à¶¸à·’à¶±à·Š...",
+                loggedIn: "Login à·€à·”à¶«à·",
+                logout: "Logout à·€à·”à¶«à·",
+                error: "à¶¯à·à·‚à¶ºà¶šà·Š à¶‡à¶­à·’à·€à·”à¶«à·"
+            },
+            ta: {
+                idle: "MI AI",
+                thinking: "à®šà®¿à®¨à¯à®¤à®¿à®•à¯à®•à®¿à®±à®¤à¯...",
+                searching: "à®¤à¯‡à®Ÿà¯à®•à®¿à®±à®¤à¯...",
+                sending: "à®…à®©à¯à®ªà¯à®ªà¯à®•à®¿à®±à®¤à¯...",
+                sent: "à®šà¯†à®¯à¯à®¤à®¿ à®…à®©à¯à®ªà¯à®ªà®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                copied: "à®¨à®•à®²à¯†à®Ÿà¯à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                saved: "à®šà¯‡à®®à®¿à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                loading: "à®…à®°à®Ÿà¯à®Ÿà¯ˆà®•à®³à¯ à®à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®•à®¿à®©à¯à®±à®©...",
+                loaded: "à®…à®°à®Ÿà¯à®Ÿà¯ˆà®•à®³à¯ à®à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®Ÿà®©",
+                online: "à®‡à®£à¯ˆà®¯à®¤à¯à®¤à®¿à®²à¯",
+                offline: "à®‡à®£à¯ˆà®¯à®®à¯ à®‡à®²à¯à®²à¯ˆ",
+                newChat: "à®ªà¯à®¤à®¿à®¯ à®…à®°à®Ÿà¯à®Ÿà¯ˆ",
+                opened: "à®…à®°à®Ÿà¯à®Ÿà¯ˆ à®¤à®¿à®±à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                renamed: "à®…à®°à®Ÿà¯à®Ÿà¯ˆ à®ªà¯†à®¯à®°à¯ à®®à®¾à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                deleted: "à®…à®°à®Ÿà¯à®Ÿà¯ˆ à®¨à¯€à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                pinned: "à®…à®°à®Ÿà¯à®Ÿà¯ˆ à®ªà®¿à®©à¯ à®šà¯†à®¯à¯à®¯à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                unpinned: "à®ªà®¿à®©à¯ à®¨à¯€à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                uploaded: "à®•à¯‹à®ªà¯à®ªà¯ à®ªà®¤à®¿à®µà¯‡à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                sharing: "à®‡à®£à¯ˆà®ªà¯à®ªà¯ à®‰à®°à¯à®µà®¾à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®•à®¿à®±à®¤à¯...",
+                shared: "à®‡à®£à¯ˆà®ªà¯à®ªà¯ à®‰à®°à¯à®µà®¾à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                settings: "à®…à®®à¯ˆà®ªà¯à®ªà¯à®•à®³à¯ à®¤à®¿à®±à®•à¯à®•à®ªà¯à®ªà®Ÿà¯à®Ÿà®©",
+                theme: "à®¤à¯€à®®à¯ à®®à®¾à®±à¯à®±à®ªà¯à®ªà®Ÿà¯à®Ÿà®¤à¯",
+                login: "à®‰à®³à¯à®¨à¯à®´à¯ˆà®•à®¿à®±à®¤à¯...",
+                loggedIn: "à®‰à®³à¯à®¨à¯à®´à¯ˆà®¨à¯à®¤à®¤à¯",
+                logout: "à®µà¯†à®³à®¿à®¯à¯‡à®±à®¿à®¯à®¤à¯",
+                error: "à®ªà®¿à®´à¯ˆ à®à®±à¯à®ªà®Ÿà¯à®Ÿà®¤à¯"
+            }
+        };
+
+        return all[currentLanguage()] || all.en;
+    }
+
+    function ensureIsland() {
+        let island = document.getElementById("miDynamicIsland");
+
+        if (!island) {
+            island = document.createElement("div");
+            island.id = "miDynamicIsland";
+            island.setAttribute("role", "status");
+            island.setAttribute("aria-live", "polite");
+            island.innerHTML =
+                '<span id="miDynamicIslandIcon"></span>' +
+                '<span id="miDynamicIslandText"></span>';
+            document.body.appendChild(island);
+        }
+
+        return island;
+    }
+
+    function iconFor(type) {
+        const icons = {
+            info: "i",
+            thinking: "â€¢â€¢â€¢",
+            searching: "âŒ•",
+            sending: "â†‘",
+            success: "âœ“",
+            copy: "â§‰",
+            save: "âœ“",
+            upload: "â†‘",
+            share: "â†—",
+            settings: "âš™",
+            login: "â†’",
+            logout: "â†",
+            online: "â—",
+            offline: "!",
+            error: "!"
+        };
+
+        return icons[type] || icons.info;
+    }
+
+    function idle() {
+        clearTimeout(restoreTimer);
+
+        const island = ensureIsland();
+        const text = island.querySelector("#miDynamicIslandText");
+        const icon = island.querySelector("#miDynamicIslandIcon");
+
+        if (!navigator.onLine) {
+            show(labels().offline, {
+                type: "offline",
+                persistent: true
+            });
+            return;
+        }
+
+        if (text) text.textContent = labels().idle;
+        if (icon) icon.textContent = "";
+
+        island.classList.remove(
+            "mi-status-open",
+            "mi-thinking",
+            "mi-searching"
+        );
+
+        island.classList.add("mi-idle-gold");
+    }
+
+    function show(message, options) {
+        const settings = options || {};
+        const type = settings.type || "info";
+        const duration = Number(settings.duration ?? 1700);
+        const persistent = Boolean(settings.persistent);
+
+        const cleaned = String(message || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 60);
+
+        if (!cleaned) {
+            idle();
+            return;
+        }
+
+        const now = Date.now();
+
+        if (
+            cleaned === lastMessage &&
+            now - lastShownAt < 400
+        ) {
+            return;
+        }
+
+        lastMessage = cleaned;
+        lastShownAt = now;
+
+        clearTimeout(restoreTimer);
+
+        const island = ensureIsland();
+        const text = island.querySelector("#miDynamicIslandText");
+        const icon = island.querySelector("#miDynamicIslandIcon");
+
+        island.classList.remove(
+            "mi-idle-gold",
+            "mi-thinking",
+            "mi-searching"
+        );
+
+        island.classList.add("mi-status-open");
+
+        if (type === "thinking") {
+            island.classList.add("mi-thinking");
+        }
+
+        if (type === "searching") {
+            island.classList.add("mi-searching");
+        }
+
+        if (text) text.textContent = cleaned;
+        if (icon) icon.textContent = iconFor(type);
+
+        if (!persistent) {
+            restoreTimer = setTimeout(
+                idle,
+                Math.max(700, duration)
+            );
+        }
+    }
+
+    function notify(message, type, duration) {
+        show(message, {
+            type: type || "info",
+            duration: duration || 1600
+        });
+    }
+
+    function elementText(element) {
+        return String(
+            element?.getAttribute?.("aria-label") ||
+            element?.getAttribute?.("title") ||
+            element?.textContent ||
+            ""
+        ).replace(/\s+/g, " ").trim().toLowerCase();
+    }
+
+    function monitorClicks() {
+        document.addEventListener("click", function (event) {
+            const target = event.target.closest(
+                "button, [role='button'], .chatItem, .chat-item, a"
+            );
+
+            if (!target) return;
+
+            const id = String(target.id || "").toLowerCase();
+            const value = elementText(target);
+            const w = labels();
+
+            if (
+                id.includes("search") ||
+                value.includes("search") ||
+                value.includes("à·ƒà·œà¶º") ||
+                value.includes("à®¤à¯‡à®Ÿà¯")
+            ) {
+                notify(w.searching, "searching", 1900);
+            }
+            else if (
+                id.includes("send") ||
+                value === "send" ||
+                value.includes("à¶ºà·€à¶±à·Šà¶±") ||
+                value.includes("à®…à®©à¯à®ªà¯à®ªà¯")
+            ) {
+                notify(w.sending, "sending", 1200);
+            }
+            else if (
+                id.includes("newchat") ||
+                value.includes("new chat")
+            ) {
+                notify(w.newChat, "success", 1400);
+            }
+            else if (
+                id.includes("copy") ||
+                value.includes("copy")
+            ) {
+                notify(w.copied, "copy", 1300);
+            }
+            else if (
+                id.includes("share") ||
+                value.includes("generate link") ||
+                value.includes("create a link")
+            ) {
+                notify(w.sharing, "share", 1800);
+            }
+            else if (
+                id.includes("settings") ||
+                value.includes("settings")
+            ) {
+                notify(w.settings, "settings", 1400);
+            }
+            else if (
+                id.includes("login") ||
+                value === "login" ||
+                value.includes("sign in")
+            ) {
+                notify(w.login, "login", 1600);
+            }
+            else if (
+                id.includes("logout") ||
+                value.includes("logout") ||
+                value.includes("sign out")
+            ) {
+                notify(w.logout, "logout", 1500);
+            }
+            else if (
+                target.matches(".chatItem, .chat-item")
+            ) {
+                notify(w.opened, "info", 1200);
+            }
+        }, true);
+    }
+
+    function monitorFilesAndTheme() {
+        document.addEventListener("change", function (event) {
+            const input = event.target;
+
+            if (
+                input &&
+                input.matches('input[type="file"]') &&
+                input.files &&
+                input.files.length
+            ) {
+                notify(labels().uploaded, "upload", 1700);
+            }
+
+            if (
+                input &&
+                (
+                    input.id === "themeColor" ||
+                    input.id === "themeColorPicker" ||
+                    input.type === "color"
+                )
+            ) {
+                notify(labels().theme, "settings", 1300);
+            }
+        }, true);
+    }
+
+    function monitorNetwork() {
+        window.addEventListener("online", function () {
+            notify(labels().online, "online", 1300);
+        });
+
+        window.addEventListener("offline", function () {
+            show(labels().offline, {
+                type: "offline",
+                persistent: true
+            });
+        });
+    }
+
+    function monitorCustomEvents() {
+        const events = [
+            ["mi-login-success", "loggedIn", "success"],
+            ["mi-chat-saved", "saved", "save"],
+            ["mi-chat-renamed", "renamed", "success"],
+            ["mi-chat-deleted", "deleted", "success"],
+            ["mi-chat-pinned", "pinned", "success"],
+            ["mi-chat-unpinned", "unpinned", "success"],
+            ["mi-share-created", "shared", "share"],
+            ["mi-chats-loading", "loading", "thinking"],
+            ["mi-chats-loaded", "loaded", "success"],
+            ["mi-message-sent", "sent", "success"],
+            ["mi-ai-thinking", "thinking", "thinking"],
+            ["mi-ai-searching", "searching", "searching"],
+            ["mi-error", "error", "error"]
+        ];
+
+        events.forEach(function (item) {
+            window.addEventListener(item[0], function () {
+                notify(labels()[item[1]], item[2], 1700);
+            });
+        });
+    }
+
+    function attachToExistingIslandApi() {
+        const install = function () {
+            if (!window.MIIOS) return false;
+
+            if (!window.MIIOS.__goldIslandV2) {
+                window.MIIOS.island = function (message, options) {
+                    const opts = options || {};
+                    show(message, opts);
+                };
+
+                window.MIIOS.hideIsland = idle;
+                window.MIIOS.__goldIslandV2 = true;
+            }
+
+            return true;
+        };
+
+        if (install()) return;
+
+        let attempts = 0;
+
+        const timer = setInterval(function () {
+            attempts += 1;
+
+            if (install() || attempts >= 80) {
+                clearInterval(timer);
+            }
+        }, 150);
+    }
+
+    function start() {
+        ensureIsland();
+        idle();
+
+        attachToExistingIslandApi();
+        monitorClicks();
+        monitorFilesAndTheme();
+        monitorNetwork();
+        monitorCustomEvents();
+
+        window.MIGoldDynamicIsland = {
+            show: show,
+            idle: idle,
+            thinking: function () {
+                show(labels().thinking, {
+                    type: "thinking",
+                    persistent: true
+                });
+            },
+            searching: function () {
+                show(labels().searching, {
+                    type: "searching",
+                    persistent: true
+                });
+            },
+            done: idle
+        };
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    }
+    else {
+        start();
+    }
+})();
+
+/* MI AI GOLD IDLE DYNAMIC ISLAND V2 JS - END */
+</script>
 </body>
 </html>
