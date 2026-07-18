@@ -46,9 +46,11 @@ import requests
 try:
     import firebase_admin
     from firebase_admin import auth as firebase_admin_auth
+    from firebase_admin import credentials as firebase_admin_credentials
 except ImportError:
     firebase_admin = None
     firebase_admin_auth = None
+    firebase_admin_credentials = None
 
 import ssl
 import traceback
@@ -110,17 +112,103 @@ CORS(app)
 
 MI_FIREBASE_AUTH_READY = False
 MI_FIREBASE_AUTH_ERROR = ""
+MI_FIREBASE_PROJECT_ID = (
+    os.getenv("FIREBASE_PROJECT_ID")
+    or os.getenv("GOOGLE_CLOUD_PROJECT")
+    or "mi-ai-99e6a"
+).strip()
 
-if firebase_admin is None or firebase_admin_auth is None:
+
+def mi_load_firebase_credential():
+    raw_json = str(
+        os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+        or ""
+    ).strip()
+
+    if raw_json:
+        try:
+            service_account = json.loads(raw_json)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                "FIREBASE_SERVICE_ACCOUNT_JSON is invalid JSON."
+            ) from exc
+
+        credential_project = str(
+            service_account.get("project_id") or ""
+        ).strip()
+
+        if credential_project != MI_FIREBASE_PROJECT_ID:
+            raise RuntimeError(
+                "Firebase credential project mismatch: "
+                f"{credential_project or 'missing'} != "
+                f"{MI_FIREBASE_PROJECT_ID}"
+            )
+
+        return firebase_admin_credentials.Certificate(
+            service_account
+        )
+
+    credentials_path = str(
+        os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        or ""
+    ).strip()
+
+    if credentials_path:
+        if not os.path.isfile(credentials_path):
+            raise RuntimeError(
+                "GOOGLE_APPLICATION_CREDENTIALS file was not found."
+            )
+
+        return firebase_admin_credentials.Certificate(
+            credentials_path
+        )
+
+    raise RuntimeError(
+        "Firebase Admin credentials are not configured. "
+        "Set FIREBASE_SERVICE_ACCOUNT_JSON."
+    )
+
+
+if (
+    firebase_admin is None
+    or firebase_admin_auth is None
+    or firebase_admin_credentials is None
+):
     MI_FIREBASE_AUTH_ERROR = "firebase-admin is not installed."
 else:
     try:
         if not firebase_admin._apps:
-            firebase_admin.initialize_app()
+            firebase_credential = mi_load_firebase_credential()
+
+            firebase_admin.initialize_app(
+                firebase_credential,
+                {
+                    "projectId": MI_FIREBASE_PROJECT_ID
+                }
+            )
+
+        active_app = firebase_admin.get_app()
+        active_project = str(
+            active_app.project_id or ""
+        ).strip()
+
+        if active_project != MI_FIREBASE_PROJECT_ID:
+            raise RuntimeError(
+                "Firebase Admin initialized with wrong project: "
+                f"{active_project or 'unknown'}"
+            )
+
         MI_FIREBASE_AUTH_READY = True
+
+        app.logger.info(
+            "Firebase Admin ready for project %s.",
+            MI_FIREBASE_PROJECT_ID,
+        )
     except Exception as exc:
         MI_FIREBASE_AUTH_ERROR = str(exc)
-        app.logger.exception("Firebase Admin initialization failed.")
+        app.logger.exception(
+            "Firebase Admin initialization failed."
+        )
 
 
 def mi_verify_firebase_id_token(token):
@@ -136,7 +224,11 @@ def mi_verify_firebase_id_token(token):
         return None, "Authentication service unavailable."
 
     try:
-        decoded = firebase_admin_auth.verify_id_token(token, check_revoked=False)
+        decoded = firebase_admin_auth.verify_id_token(
+            token,
+            app=firebase_admin.get_app(),
+            check_revoked=False,
+        )
     except Exception as exc:
         app.logger.warning("Firebase ID token rejected: %s", exc)
         return None, "Please sign in again."
