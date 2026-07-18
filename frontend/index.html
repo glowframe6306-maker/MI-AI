@@ -29918,6 +29918,399 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 })();
 </script>
 <!-- MI AI CHIEF OWNER BUTTON RESCUE END -->
+
+<script>
+/* MI AI SEND STOP CONTROL V1 START */
+(function () {
+    "use strict";
+
+    var originalFetch = window.fetch.bind(window);
+    var activeControllers = new Set();
+    var activeChatRequests = 0;
+    var isStopping = false;
+
+    var SEND_TEXT = "Send";
+    var STOP_TEXT = "Stop";
+
+    var sendButtonSelectors = [
+        "#sendBtn",
+        "#send-btn",
+        "#sendButton",
+        "#send-button",
+        "#messageSendButton",
+        "#message-send-button",
+        "#chatSendButton",
+        "#chat-send-button",
+        "button[data-send]",
+        "button[data-action='send']",
+        ".send-button",
+        ".send-btn",
+        ".chat-send-button",
+        ".message-send-button",
+        "form button[type='submit']"
+    ];
+
+    function findSendButtons() {
+        var buttons = [];
+        var seen = new Set();
+
+        sendButtonSelectors.forEach(function (selector) {
+            try {
+                document
+                    .querySelectorAll(selector)
+                    .forEach(function (button) {
+                        if (
+                            button &&
+                            button.tagName === "BUTTON" &&
+                            !seen.has(button)
+                        ) {
+                            seen.add(button);
+                            buttons.push(button);
+                        }
+                    });
+            } catch (error) {}
+        });
+
+        return buttons;
+    }
+
+    function rememberOriginalButton(button) {
+        if (!button.dataset.miSendStopOriginalHtml) {
+            button.dataset.miSendStopOriginalHtml =
+                button.innerHTML;
+        }
+
+        if (!button.dataset.miSendStopOriginalTitle) {
+            button.dataset.miSendStopOriginalTitle =
+                button.getAttribute("title") || "";
+        }
+
+        if (!button.dataset.miSendStopOriginalAria) {
+            button.dataset.miSendStopOriginalAria =
+                button.getAttribute("aria-label") || "";
+        }
+    }
+
+    function createStopIcon() {
+        return (
+            '<span class="mi-stop-icon" ' +
+            'aria-hidden="true" ' +
+            'style="' +
+            'display:inline-block;' +
+            'width:12px;' +
+            'height:12px;' +
+            'border-radius:2px;' +
+            'background:currentColor;' +
+            'vertical-align:middle;' +
+            '"></span>'
+        );
+    }
+
+    function setButtonToStop(button) {
+        rememberOriginalButton(button);
+
+        button.dataset.miGenerating = "true";
+        button.dataset.miStopButton = "true";
+        button.classList.add("mi-stop-active");
+
+        button.removeAttribute("disabled");
+        button.setAttribute("type", "button");
+        button.setAttribute("title", STOP_TEXT);
+        button.setAttribute("aria-label", STOP_TEXT);
+
+        button.innerHTML = createStopIcon();
+
+        if (!button.dataset.miStopListenerAdded) {
+            button.addEventListener(
+                "click",
+                function (event) {
+                    if (
+                        button.dataset.miGenerating !== "true"
+                    ) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+
+                    stopActiveReply();
+                },
+                true
+            );
+
+            button.dataset.miStopListenerAdded = "true";
+        }
+    }
+
+    function restoreSendButton(button) {
+        rememberOriginalButton(button);
+
+        button.dataset.miGenerating = "false";
+        button.dataset.miStopButton = "false";
+        button.classList.remove("mi-stop-active");
+
+        var originalHtml =
+            button.dataset.miSendStopOriginalHtml;
+
+        if (originalHtml) {
+            button.innerHTML = originalHtml;
+        } else {
+            button.textContent = SEND_TEXT;
+        }
+
+        var originalTitle =
+            button.dataset.miSendStopOriginalTitle;
+
+        var originalAria =
+            button.dataset.miSendStopOriginalAria;
+
+        if (originalTitle) {
+            button.setAttribute(
+                "title",
+                originalTitle
+            );
+        } else {
+            button.removeAttribute("title");
+        }
+
+        if (originalAria) {
+            button.setAttribute(
+                "aria-label",
+                originalAria
+            );
+        } else {
+            button.setAttribute(
+                "aria-label",
+                SEND_TEXT
+            );
+        }
+
+        button.setAttribute("type", "submit");
+        button.removeAttribute("disabled");
+    }
+
+    function updateSendButtons() {
+        var generating = activeChatRequests > 0;
+
+        findSendButtons().forEach(function (button) {
+            if (generating) {
+                setButtonToStop(button);
+            } else {
+                restoreSendButton(button);
+            }
+        });
+
+        document.documentElement.classList.toggle(
+            "mi-ai-generating",
+            generating
+        );
+
+        if (document.body) {
+            document.body.classList.toggle(
+                "mi-ai-generating",
+                generating
+            );
+        }
+
+        window.miAIIsGenerating = generating;
+    }
+
+    function isChatRequest(input) {
+        var url = "";
+
+        try {
+            if (typeof input === "string") {
+                url = input;
+            } else if (
+                input &&
+                typeof input.url === "string"
+            ) {
+                url = input.url;
+            }
+        } catch (error) {}
+
+        url = String(url || "").toLowerCase();
+
+        return (
+            url.indexOf("/api/chat") !== -1 ||
+            url.indexOf("/api/live-assist") !== -1 ||
+            url.indexOf("/api/generate") !== -1 ||
+            url.indexOf("/chat/completions") !== -1
+        );
+    }
+
+    function mergeAbortSignals(controller, existingSignal) {
+        if (!existingSignal) {
+            return controller.signal;
+        }
+
+        if (existingSignal.aborted) {
+            controller.abort();
+            return controller.signal;
+        }
+
+        try {
+            existingSignal.addEventListener(
+                "abort",
+                function () {
+                    controller.abort();
+                },
+                { once: true }
+            );
+        } catch (error) {}
+
+        return controller.signal;
+    }
+
+    function stopActiveReply() {
+        if (isStopping) {
+            return;
+        }
+
+        isStopping = true;
+
+        activeControllers.forEach(function (controller) {
+            try {
+                controller.abort();
+            } catch (error) {}
+        });
+
+        activeControllers.clear();
+        activeChatRequests = 0;
+
+        updateSendButtons();
+
+        window.dispatchEvent(
+            new CustomEvent("mi-ai-reply-stopped")
+        );
+
+        console.log(
+            "[MI AI] Active reply generation stopped."
+        );
+
+        setTimeout(function () {
+            isStopping = false;
+        }, 250);
+    }
+
+    window.miStopActiveReply = stopActiveReply;
+
+    window.fetch = function (input, init) {
+        if (!isChatRequest(input)) {
+            return originalFetch(input, init);
+        }
+
+        var controller = new AbortController();
+        var requestInit = Object.assign({}, init || {});
+
+        requestInit.signal = mergeAbortSignals(
+            controller,
+            requestInit.signal
+        );
+
+        activeControllers.add(controller);
+        activeChatRequests += 1;
+        updateSendButtons();
+
+        window.dispatchEvent(
+            new CustomEvent("mi-ai-reply-started")
+        );
+
+        return originalFetch(input, requestInit)
+            .finally(function () {
+                activeControllers.delete(controller);
+
+                activeChatRequests = Math.max(
+                    0,
+                    activeChatRequests - 1
+                );
+
+                updateSendButtons();
+
+                if (activeChatRequests === 0) {
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            "mi-ai-reply-finished"
+                        )
+                    );
+                }
+            });
+    };
+
+    window.addEventListener(
+        "mi-ai-generation-start",
+        function () {
+            activeChatRequests += 1;
+            updateSendButtons();
+        }
+    );
+
+    window.addEventListener(
+        "mi-ai-generation-end",
+        function () {
+            activeChatRequests = Math.max(
+                0,
+                activeChatRequests - 1
+            );
+
+            updateSendButtons();
+        }
+    );
+
+    window.addEventListener(
+        "mi-ai-generation-error",
+        function () {
+            activeChatRequests = 0;
+            activeControllers.clear();
+            updateSendButtons();
+        }
+    );
+
+    function observeNewButtons() {
+        if (!window.MutationObserver) {
+            return;
+        }
+
+        var observer = new MutationObserver(function () {
+            updateSendButtons();
+        });
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+    }
+
+    function initialize() {
+        findSendButtons().forEach(function (button) {
+            rememberOriginalButton(button);
+        });
+
+        updateSendButtons();
+        observeNewButtons();
+
+        console.log(
+            "[MI AI] Send/Stop button control ready."
+        );
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            { once: true }
+        );
+    } else {
+        initialize();
+    }
+})();
+/* MI AI SEND STOP CONTROL V1 END */
+</script>
+
 </body>
 </html>
 
