@@ -29127,6 +29127,7 @@ function ensurePanel(){
     return d;
 }
 
+
 function render(){const rows=document.getElementById('miAccountChatRows');if(!rows)return;if(!items.length){rows.innerHTML='<div class="mi-account-chat-empty">No received messages yet.</div>';return}rows.innerHTML=items.map(x=>'<article class="mi-account-chat-message '+(!x.is_read?'mi-unread':'')+'"><strong>Sender: '+esc(x.sender_email||'Unknown')+'</strong><p>'+esc(x.message||'')+'</p><time>'+esc(x.created_at?new Date(x.created_at).toLocaleString():'')+'</time></article>').join('')}
 async function load(showError){if(loading||!user())return;loading=true;try{const r=await fetch(api,{headers:await headers(false),cache:'no-store'});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||j.message||'Could not load messages.');items=Array.isArray(j.items)?j.items:[];unread=Number(j.unread||0);updateBadge();render();if(document.getElementById('miAccountChatBackdrop')?.classList.contains('mi-open')&&unread>0)await markRead()}catch(e){if(showError)notify(e.message,true)}finally{loading=false}}
 async function markRead(){const ids=items.filter(x=>!x.is_read&&x.id).map(x=>x.id);if(!ids.length)return;try{const r=await fetch(api+'/read',{method:'POST',headers:await headers(true),body:JSON.stringify({ids})});if(r.ok){items.forEach(x=>{if(ids.includes(x.id))x.is_read=true});unread=0;updateBadge();render()}}catch(e){}}
