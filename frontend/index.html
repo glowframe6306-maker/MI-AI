@@ -6132,8 +6132,6 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 <!-- MI AI FIREBASE AUTH START -->
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
 (function () {
@@ -30847,242 +30845,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 <!-- MI AI OWNER LOADING FIX END -->
 
 
-<!-- MI_AI_LOADING_FAILSAFE_V1 START -->
-<style id="mi-ai-loading-failsafe-style">
-    html,
-    body {
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
 
-    html.mi-loading-recovered,
-    html.mi-loading-recovered body,
-    body.mi-loading-recovered {
-        overflow: auto;
-        pointer-events: auto !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-
-    html.mi-loading-recovered .loading-screen,
-    html.mi-loading-recovered .loading-overlay,
-    html.mi-loading-recovered .loader-overlay,
-    html.mi-loading-recovered .app-loader,
-    html.mi-loading-recovered .page-loader,
-    html.mi-loading-recovered .splash-loader,
-    html.mi-loading-recovered #loadingScreen,
-    html.mi-loading-recovered #loading-screen,
-    html.mi-loading-recovered #appLoader,
-    html.mi-loading-recovered #app-loader,
-    html.mi-loading-recovered [data-loading-overlay="true"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-    }
-</style>
-
-<script id="mi-ai-loading-failsafe-script">
-(function () {
-    "use strict";
-
-    if (window.__MI_AI_LOADING_FAILSAFE_INSTALLED__) {
-        return;
-    }
-
-    window.__MI_AI_LOADING_FAILSAFE_INSTALLED__ = true;
-
-    var recoveryCompleted = false;
-    var recoveryTimer = null;
-
-    function safelyRun(callback) {
-        try {
-            callback();
-        } catch (error) {
-            console.warn("[MI AI] Loading recovery warning:", error);
-        }
-    }
-
-    function hideKnownLoadingElements() {
-        var selectors = [
-            "#loadingScreen",
-            "#loading-screen",
-            "#appLoader",
-            "#app-loader",
-            "#pageLoader",
-            "#page-loader",
-            ".loading-screen",
-            ".loading-overlay",
-            ".loader-overlay",
-            ".app-loader",
-            ".page-loader",
-            ".splash-loader",
-            "[data-loading-overlay='true']"
-        ];
-
-        document.querySelectorAll(selectors.join(",")).forEach(function (element) {
-            safelyRun(function () {
-                element.style.setProperty("display", "none", "important");
-                element.style.setProperty("visibility", "hidden", "important");
-                element.style.setProperty("opacity", "0", "important");
-                element.style.setProperty("pointer-events", "none", "important");
-
-                element.setAttribute("aria-hidden", "true");
-
-                if (
-                    element.id === "loadingScreen" ||
-                    element.id === "loading-screen" ||
-                    element.id === "appLoader" ||
-                    element.id === "app-loader"
-                ) {
-                    element.remove();
-                }
-            });
-        });
-    }
-
-    function removeLoadingClasses(element) {
-        if (!element || !element.classList) {
-            return;
-        }
-
-        [
-            "loading",
-            "is-loading",
-            "app-loading",
-            "page-loading",
-            "initializing",
-            "is-initializing",
-            "auth-loading",
-            "firebase-loading",
-            "no-interaction"
-        ].forEach(function (className) {
-            element.classList.remove(className);
-        });
-    }
-
-    function restoreMainInterface() {
-        safelyRun(function () {
-            document.documentElement.classList.add("mi-loading-recovered");
-            removeLoadingClasses(document.documentElement);
-
-            if (document.body) {
-                document.body.classList.add("mi-loading-recovered");
-                removeLoadingClasses(document.body);
-
-                document.body.style.setProperty("visibility", "visible", "important");
-                document.body.style.setProperty("opacity", "1", "important");
-                document.body.style.setProperty("pointer-events", "auto", "important");
-            }
-        });
-
-        hideKnownLoadingElements();
-
-        safelyRun(function () {
-            var appCandidates = document.querySelectorAll(
-                "#app, #root, #mainApp, #main-app, .app, .app-container, main"
-            );
-
-            appCandidates.forEach(function (element) {
-                element.style.setProperty("visibility", "visible", "important");
-                element.style.setProperty("opacity", "1", "important");
-                element.style.setProperty("pointer-events", "auto", "important");
-                removeLoadingClasses(element);
-            });
-        });
-
-        safelyRun(function () {
-            document.querySelectorAll(
-                "textarea, input[type='text'], button, [role='button']"
-            ).forEach(function (element) {
-                if (
-                    element.matches("[data-requires-auth='true']") ||
-                    element.getAttribute("aria-disabled") === "true"
-                ) {
-                    return;
-                }
-
-                if (
-                    element.disabled &&
-                    (
-                        element.tagName === "TEXTAREA" ||
-                        element.matches("input[type='text']")
-                    )
-                ) {
-                    element.disabled = false;
-                }
-            });
-        });
-
-        safelyRun(function () {
-            window.dispatchEvent(
-                new CustomEvent("mi-ai-interface-recovered", {
-                    detail: {
-                        source: "loading-failsafe",
-                        timestamp: Date.now()
-                    }
-                })
-            );
-        });
-
-        recoveryCompleted = true;
-        console.info("[MI AI] Interface loading recovery completed.");
-    }
-
-    function scheduleRecovery(delay) {
-        if (recoveryTimer) {
-            clearTimeout(recoveryTimer);
-        }
-
-        recoveryTimer = setTimeout(function () {
-            if (!recoveryCompleted) {
-                restoreMainInterface();
-            }
-        }, delay);
-    }
-
-    window.miRecoverInterface = restoreMainInterface;
-
-    window.addEventListener("error", function (event) {
-        console.error(
-            "[MI AI] Startup JavaScript error:",
-            event.error || event.message
-        );
-
-        scheduleRecovery(100);
-    });
-
-    window.addEventListener("unhandledrejection", function (event) {
-        console.error(
-            "[MI AI] Startup promise error:",
-            event.reason
-        );
-
-        scheduleRecovery(100);
-    });
-
-    document.addEventListener("DOMContentLoaded", function () {
-        scheduleRecovery(3500);
-    }, { once: true });
-
-    window.addEventListener("load", function () {
-        scheduleRecovery(1200);
-    }, { once: true });
-
-    if (document.readyState === "interactive") {
-        scheduleRecovery(2500);
-    } else if (document.readyState === "complete") {
-        scheduleRecovery(500);
-    } else {
-        scheduleRecovery(5000);
-    }
-
-    setTimeout(function () {
-        restoreMainInterface();
-    }, 8000);
-})();
-</script>
-<!-- MI_AI_LOADING_FAILSAFE_V1 END -->
 
 <script>
 /* MI AI ACCOUNT ACTION NOTICE V1 START */
@@ -31718,6 +31481,433 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 })();
 /* MI AI ACCOUNT ACTION NOTICE V1 END */
 </script>
+
+
+
+<!-- MI_AI_STARTUP_RECOVERY_V3 START -->
+<style id="mi-ai-startup-recovery-v3-style">
+html,
+body,
+#main,
+#chat,
+#chatList,
+#inputBox {
+    visibility: visible !important;
+}
+
+html,
+body,
+#main {
+    opacity: 1 !important;
+}
+
+body.mi-app-booting #chat,
+body.mi-app-booting #chatList,
+body.mi-smooth-loading #chat,
+body.mi-smooth-loading #chatList {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+#loadingScreen,
+#loading-screen,
+#appLoader,
+#app-loader,
+#pageLoader,
+#page-loader,
+.loading-screen,
+.loading-overlay,
+.loader-overlay,
+.app-loader,
+.page-loader,
+.splash-loader,
+[data-loading-overlay="true"] {
+    pointer-events: none;
+}
+
+html.mi-startup-ready #loadingScreen,
+html.mi-startup-ready #loading-screen,
+html.mi-startup-ready #appLoader,
+html.mi-startup-ready #app-loader,
+html.mi-startup-ready #pageLoader,
+html.mi-startup-ready #page-loader,
+html.mi-startup-ready .loading-screen,
+html.mi-startup-ready .loading-overlay,
+html.mi-startup-ready .loader-overlay,
+html.mi-startup-ready .app-loader,
+html.mi-startup-ready .page-loader,
+html.mi-startup-ready .splash-loader,
+html.mi-startup-ready [data-loading-overlay="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+</style>
+
+<script id="mi-ai-startup-recovery-v3-script">
+(function () {
+    "use strict";
+
+    if (window.__MI_AI_STARTUP_RECOVERY_V3__) {
+        return;
+    }
+
+    window.__MI_AI_STARTUP_RECOVERY_V3__ = true;
+
+    var STARTUP_TIMEOUT_MS = 8000;
+    var startupReleased = false;
+
+    var STARTUP_API_PATHS = [
+        "/api/admin/me",
+        "/api/chief-owner/me",
+        "/api/chief-owner/health",
+        "/api/chief-owner/rbac-options",
+        "/api/direct-messages",
+        "/api/notifications",
+        "/api/conversations",
+        "/api/account-settings",
+        "/api/user-settings",
+        "/api/firebase-auth-health"
+    ];
+
+    function safeRun(callback) {
+        try {
+            callback();
+        } catch (error) {
+            console.warn(
+                "[MI AI] Startup recovery warning:",
+                error
+            );
+        }
+    }
+
+    function isStartupRequest(input, init) {
+        var method = String(
+            (init && init.method) ||
+            (input && input.method) ||
+            "GET"
+        ).toUpperCase();
+
+        if (method !== "GET") {
+            return false;
+        }
+
+        var url = "";
+
+        try {
+            url = typeof input === "string"
+                ? input
+                : String((input && input.url) || "");
+        } catch (_) {
+            return false;
+        }
+
+        return STARTUP_API_PATHS.some(function (path) {
+            return url.indexOf(path) !== -1;
+        });
+    }
+
+    function mergeSignals(controller, originalSignal) {
+        if (!originalSignal) {
+            return controller.signal;
+        }
+
+        if (originalSignal.aborted) {
+            controller.abort();
+            return controller.signal;
+        }
+
+        originalSignal.addEventListener(
+            "abort",
+            function () {
+                controller.abort();
+            },
+            { once: true }
+        );
+
+        return controller.signal;
+    }
+
+    /*
+       Add timeout only around initial GET requests.
+       Chat POST/stream requests are not modified.
+    */
+    safeRun(function () {
+        var previousFetch = window.fetch.bind(window);
+
+        window.fetch = function (input, init) {
+            if (!isStartupRequest(input, init)) {
+                return previousFetch(input, init);
+            }
+
+            var controller = new AbortController();
+            var options = Object.assign({}, init || {});
+
+            options.signal = mergeSignals(
+                controller,
+                options.signal
+            );
+
+            var timer = window.setTimeout(
+                function () {
+                    controller.abort();
+                },
+                STARTUP_TIMEOUT_MS
+            );
+
+            return previousFetch(input, options)
+                .finally(function () {
+                    window.clearTimeout(timer);
+                });
+        };
+    });
+
+    function hideLoadingElements() {
+        var selectors = [
+            "#loadingScreen",
+            "#loading-screen",
+            "#appLoader",
+            "#app-loader",
+            "#pageLoader",
+            "#page-loader",
+            ".loading-screen",
+            ".loading-overlay",
+            ".loader-overlay",
+            ".app-loader",
+            ".page-loader",
+            ".splash-loader",
+            "[data-loading-overlay='true']"
+        ];
+
+        document
+            .querySelectorAll(selectors.join(","))
+            .forEach(function (element) {
+                safeRun(function () {
+                    element.style.setProperty(
+                        "display",
+                        "none",
+                        "important"
+                    );
+
+                    element.style.setProperty(
+                        "visibility",
+                        "hidden",
+                        "important"
+                    );
+
+                    element.style.setProperty(
+                        "opacity",
+                        "0",
+                        "important"
+                    );
+
+                    element.style.setProperty(
+                        "pointer-events",
+                        "none",
+                        "important"
+                    );
+
+                    element.setAttribute(
+                        "aria-hidden",
+                        "true"
+                    );
+                });
+            });
+    }
+
+    function releaseStartup(reason) {
+        if (startupReleased) {
+            hideLoadingElements();
+            return;
+        }
+
+        startupReleased = true;
+
+        safeRun(function () {
+            document.documentElement.classList.add(
+                "mi-startup-ready"
+            );
+
+            document.documentElement.classList.remove(
+                "mi-app-booting",
+                "mi-smooth-loading",
+                "loading",
+                "is-loading",
+                "app-loading",
+                "initializing"
+            );
+
+            if (document.body) {
+                document.body.classList.remove(
+                    "mi-app-booting",
+                    "mi-smooth-loading",
+                    "loading",
+                    "is-loading",
+                    "app-loading",
+                    "page-loading",
+                    "initializing",
+                    "auth-loading",
+                    "firebase-loading",
+                    "no-interaction"
+                );
+
+                document.body.style.setProperty(
+                    "visibility",
+                    "visible",
+                    "important"
+                );
+
+                document.body.style.setProperty(
+                    "opacity",
+                    "1",
+                    "important"
+                );
+
+                document.body.style.setProperty(
+                    "pointer-events",
+                    "auto",
+                    "important"
+                );
+            }
+        });
+
+        hideLoadingElements();
+
+        safeRun(function () {
+            [
+                "#main",
+                "#chat",
+                "#chatList",
+                "#inputBox",
+                "#sidebar"
+            ].forEach(function (selector) {
+                var element =
+                    document.querySelector(selector);
+
+                if (!element) {
+                    return;
+                }
+
+                element.style.setProperty(
+                    "visibility",
+                    "visible",
+                    "important"
+                );
+
+                element.style.setProperty(
+                    "opacity",
+                    "1",
+                    "important"
+                );
+
+                element.style.setProperty(
+                    "pointer-events",
+                    "auto",
+                    "important"
+                );
+            });
+        });
+
+        safeRun(function () {
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-ai-startup-released",
+                    {
+                        detail: {
+                            reason: reason || "startup",
+                            timestamp: Date.now()
+                        }
+                    }
+                )
+            );
+        });
+
+        console.info(
+            "[MI AI] Startup released:",
+            reason || "startup"
+        );
+    }
+
+    window.miReleaseStartup = releaseStartup;
+
+    window.addEventListener(
+        "error",
+        function (event) {
+            console.error(
+                "[MI AI] Startup JavaScript error:",
+                event.error || event.message
+            );
+
+            releaseStartup("javascript-error");
+        }
+    );
+
+    window.addEventListener(
+        "unhandledrejection",
+        function (event) {
+            console.error(
+                "[MI AI] Startup promise error:",
+                event.reason
+            );
+
+            releaseStartup("promise-error");
+        }
+    );
+
+    [
+        "mi-firebase-ready",
+        "mi-firebase-error",
+        "mi-firebase-auth-changed",
+        "mi-admin-access-loaded"
+    ].forEach(function (eventName) {
+        window.addEventListener(
+            eventName,
+            function () {
+                releaseStartup(eventName);
+            },
+            { once: true }
+        );
+    });
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+                /*
+                   Render immediately. Account data may continue
+                   loading without blocking the application shell.
+                */
+                releaseStartup("dom-ready");
+            },
+            { once: true }
+        );
+    } else {
+        releaseStartup("document-already-ready");
+    }
+
+    window.addEventListener(
+        "load",
+        function () {
+            releaseStartup("window-load");
+        },
+        { once: true }
+    );
+
+    /*
+       Absolute safety release in case an external SDK,
+       event listener or API never resolves.
+    */
+    window.setTimeout(
+        function () {
+            releaseStartup("absolute-timeout");
+        },
+        1200
+    );
+})();
+</script>
+<!-- MI_AI_STARTUP_RECOVERY_V3 END -->
 
 </body>
 </html>

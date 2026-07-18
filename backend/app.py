@@ -2963,16 +2963,6 @@ def _mi_owner_register_routes():
 
 _mi_owner_register_routes()
 # MI AI CHIEF OWNER RESTORE V1 END
-
-
-if __name__=="__main__":
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=False
-    )
-
-
 # === MI AI WEB PHOTO SEARCH START ===
 import re as _mi_photo_re
 from urllib.parse import quote_plus as _mi_photo_quote_plus
@@ -3438,3 +3428,13 @@ def mi_ai_admin_permission_check():
         "permission": requested_permission,
     }), 200
 # MI_AI_CHIEF_OWNER_PERMISSION_BRIDGE_END
+
+
+# MI AI SERVER ENTRYPOINT - KEEP AT END OF FILE
+if __name__ == "__main__":
+    app.run(
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "5000")),
+        debug=False,
+    )
+
