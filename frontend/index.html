@@ -29813,6 +29813,111 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 })();
 </script>
 <!-- MI AI FINAL CHIEF OWNER UI END -->
+<!-- MI AI CHIEF OWNER BUTTON RESCUE START -->
+<style>
+#miFinalOwnerBtn,
+#miChiefOwnerPermissionButton {
+    width: 100% !important;
+    margin: 12px 0 0 !important;
+    padding: 12px 14px !important;
+    display: none;
+    color: #f7d769 !important;
+    border: 1px solid rgba(247,215,105,.55) !important;
+    font-weight: 800 !important;
+}
+</style>
+<script>
+(function () {
+    "use strict";
+
+    const CHIEF_OWNER_EMAIL = "teamofchatbot.miai@gmail.com";
+
+    function authObject() {
+        try {
+            if (window.miFirebaseAuth) return window.miFirebaseAuth;
+            if (window.firebase && typeof firebase.auth === "function") {
+                return firebase.auth();
+            }
+        } catch (_) {}
+        return null;
+    }
+
+    function currentUser() {
+        const auth = authObject();
+        return (auth && auth.currentUser) ||
+            window.miFirebaseUser ||
+            window.currentFirebaseUser ||
+            null;
+    }
+
+    function ownerButton() {
+        return document.getElementById("miFinalOwnerBtn") ||
+            document.getElementById("miChiefOwnerPermissionButton");
+    }
+
+    function putButtonInsideSettings() {
+        const panel = document.getElementById("settingsPanel");
+        const button = ownerButton();
+        if (!panel || !button) return null;
+        if (button.parentElement !== panel) panel.appendChild(button);
+        button.textContent = "ðŸ‘‘ Chief Owner Permissions";
+        return button;
+    }
+
+    async function backendOwner(user) {
+        if (!user || typeof user.getIdToken !== "function") return false;
+        try {
+            const response = await fetch("/api/admin/me", {
+                headers: { Authorization: "Bearer " + await user.getIdToken(true) },
+                cache: "no-store"
+            });
+            const data = await response.json().catch(function () { return {}; });
+            return Boolean(response.ok && (
+                data.isChiefOwner === true ||
+                data.is_chief_owner === true ||
+                data.role === "chief_owner" ||
+                data.role === "Chief Owner"
+            ));
+        } catch (_) {
+            return false;
+        }
+    }
+
+    async function repair() {
+        const button = putButtonInsideSettings();
+        if (!button) return;
+
+        const user = currentUser();
+        if (!user) {
+            button.style.display = "none";
+            return;
+        }
+
+        const email = String(user.email || "").trim().toLowerCase();
+        const emailMatch = email === CHIEF_OWNER_EMAIL;
+        const backendMatch = await backendOwner(user);
+
+        button.style.display = (emailMatch || backendMatch) ? "block" : "none";
+    }
+
+    function schedule() {
+        [0, 250, 700, 1400, 2500].forEach(function (delay) {
+            setTimeout(repair, delay);
+        });
+    }
+
+    new MutationObserver(function () {
+        putButtonInsideSettings();
+    }).observe(document.documentElement, { childList: true, subtree: true });
+
+    document.addEventListener("DOMContentLoaded", schedule);
+    window.addEventListener("mi-firebase-ready", schedule);
+    window.addEventListener("mi-admin-access-loaded", schedule);
+    window.addEventListener("focus", repair);
+    schedule();
+})();
+</script>
+<!-- MI AI CHIEF OWNER BUTTON RESCUE END -->
 </body>
 </html>
 
