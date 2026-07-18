@@ -1,4 +1,11 @@
 
+# MI AI CHIEF OWNER CONTROL IMPORT
+try:
+    from backend.chief_owner_control import register_chief_owner_control
+except ImportError:
+    from chief_owner_control import register_chief_owner_control
+
+
 import os
 # ---------------------------------------------------------------------------
 # MI AI authoritative Chief Owner configuration
@@ -2755,6 +2762,8 @@ def mi_account_chat_mark_read():
 
 # MI AI ACCOUNT CHAT V2 END
 
+# MI AI CHIEF OWNER CONTROL REGISTRATION
+register_chief_owner_control(app)
 
 if __name__=="__main__":
     app.run(

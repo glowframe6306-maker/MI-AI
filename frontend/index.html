@@ -29544,6 +29544,1080 @@ window.fetch=function(input,init){
 /* MI AI ACCOUNT ISOLATION V2 END */
 </script>
 
+<!-- MI AI CHIEF OWNER CONTROL CENTER START -->
+<style>
+#miChiefOwnerPermissionButton {
+    display: none;
+    width: 100%;
+    margin: 8px 0;
+    padding: 13px 14px;
+    border: 1px solid rgba(245, 202, 74, .45);
+    border-radius: 14px;
+    background: rgba(20, 20, 22, .96);
+    color: #f5ca4a;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+}
+
+#miChiefOwnerOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    padding: 18px;
+    background: rgba(0, 0, 0, .72);
+    backdrop-filter: blur(14px);
+}
+
+#miChiefOwnerOverlay.open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#miChiefOwnerPanel {
+    width: min(1180px, 100%);
+    height: min(92vh, 900px);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    border: 1px solid rgba(245, 202, 74, .35);
+    border-radius: 24px;
+    background: #111318;
+    color: white;
+}
+
+.mi-owner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+.mi-owner-header h2 {
+    margin: 0;
+    color: #f5ca4a;
+}
+
+.mi-owner-close {
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 12px;
+    background: #292d36;
+    color: white;
+    cursor: pointer;
+}
+
+.mi-owner-layout {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    min-height: 0;
+}
+
+.mi-owner-nav {
+    padding: 12px;
+    overflow: auto;
+    border-right: 1px solid rgba(255,255,255,.08);
+}
+
+.mi-owner-nav button {
+    width: 100%;
+    padding: 11px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #d6d9e0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mi-owner-nav button.active,
+.mi-owner-nav button:hover {
+    background: rgba(245, 202, 74, .13);
+    color: #f5ca4a;
+}
+
+.mi-owner-content {
+    padding: 18px;
+    overflow: auto;
+}
+
+.mi-owner-page {
+    display: none;
+}
+
+.mi-owner-page.active {
+    display: block;
+}
+
+.mi-owner-form {
+    display: grid;
+    gap: 10px;
+    max-width: 800px;
+}
+
+.mi-owner-form input,
+.mi-owner-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px;
+    border: 1px solid #343944;
+    border-radius: 11px;
+    background: #0c0e12;
+    color: white;
+}
+
+.mi-owner-form textarea {
+    min-height: 85px;
+    resize: vertical;
+}
+
+.mi-owner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mi-owner-actions button {
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #2a2f39;
+    color: white;
+    cursor: pointer;
+}
+
+.mi-owner-actions button.danger {
+    background: #8e2733;
+}
+
+.mi-owner-actions button.safe {
+    background: #1e6d51;
+}
+
+.mi-owner-status {
+    margin: 0 0 14px;
+    padding: 11px;
+    border-radius: 11px;
+    background: #20242c;
+}
+
+.mi-owner-table-wrap {
+    margin-top: 14px;
+    overflow: auto;
+}
+
+.mi-owner-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.mi-owner-table th,
+.mi-owner-table td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    text-align: left;
+    vertical-align: top;
+}
+
+.mi-owner-options {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(185px, 1fr));
+    gap: 9px;
+}
+
+.mi-owner-option {
+    padding: 11px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 11px;
+    background: #191c22;
+}
+
+@media (max-width: 760px) {
+    #miChiefOwnerOverlay {
+        padding: 0;
+    }
+
+    #miChiefOwnerPanel {
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .mi-owner-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .mi-owner-nav {
+        display: flex;
+        overflow: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .mi-owner-nav button {
+        width: auto;
+        white-space: nowrap;
+    }
+}
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    const API = "/api/chief-owner";
+
+    function byId(id) {
+        return document.getElementById(id);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "").replace(
+            /[&<>"']/g,
+            function (character) {
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[character];
+            }
+        );
+    }
+
+    async function getToken() {
+        const auth =
+            window.miFirebaseAuth ||
+            (
+                window.firebase &&
+                firebase.auth
+                    ? firebase.auth()
+                    : null
+            );
+
+        const account =
+            (auth && auth.currentUser) ||
+            window.miFirebaseUser ||
+            window.currentFirebaseUser;
+
+        if (
+            !account ||
+            typeof account.getIdToken !== "function"
+        ) {
+            throw new Error(
+                "Please login again."
+            );
+        }
+
+        return account.getIdToken(true);
+    }
+
+    async function ownerRequest(path, options) {
+        const settings = Object.assign(
+            {},
+            options || {}
+        );
+
+        const headers = new Headers(
+            settings.headers || {}
+        );
+
+        headers.set(
+            "Authorization",
+            "Bearer " + await getToken()
+        );
+
+        headers.set(
+            "Content-Type",
+            "application/json"
+        );
+
+        settings.headers = headers;
+
+        const response = await fetch(
+            API + path,
+            settings
+        );
+
+        const result = await response
+            .json()
+            .catch(function () {
+                return {};
+            });
+
+        if (!response.ok) {
+            throw new Error(
+                result.message ||
+                "Request failed."
+            );
+        }
+
+        return result;
+    }
+
+    function showStatus(message, isError) {
+        const element = byId(
+            "miOwnerStatus"
+        );
+
+        if (!element) {
+            return;
+        }
+
+        element.textContent = message;
+
+        element.style.color =
+            isError
+                ? "#ff9ca7"
+                : "#bff5d7";
+    }
+
+    function makeButton() {
+        if (
+            byId(
+                "miChiefOwnerPermissionButton"
+            )
+        ) {
+            return;
+        }
+
+        const button =
+            document.createElement("button");
+
+        button.id =
+            "miChiefOwnerPermissionButton";
+
+        button.type = "button";
+
+        button.textContent =
+            "👑 Chief Owner Permissions";
+
+        button.addEventListener(
+            "click",
+            openOwnerPanel
+        );
+
+        const candidates = Array.from(
+            document.querySelectorAll(
+                "button, a, [role='button']"
+            )
+        );
+
+        const settingsButton =
+            candidates.find(function (item) {
+                const text = String(
+                    item.textContent || ""
+                ).trim();
+
+                return /^(settings|setting)$/i
+                    .test(text);
+            });
+
+        if (
+            settingsButton &&
+            settingsButton.parentElement
+        ) {
+            settingsButton.insertAdjacentElement(
+                "afterend",
+                button
+            );
+        }
+        else {
+            document.body.appendChild(
+                button
+            );
+        }
+    }
+
+    function makePanel() {
+        if (byId("miChiefOwnerOverlay")) {
+            return;
+        }
+
+        const overlay =
+            document.createElement("div");
+
+        overlay.id =
+            "miChiefOwnerOverlay";
+
+        overlay.innerHTML = `
+<section id="miChiefOwnerPanel" role="dialog" aria-modal="true">
+    <header class="mi-owner-header">
+        <div>
+            <h2>Chief Owner Permissions</h2>
+            <small>Backend verified secure administration</small>
+        </div>
+        <button id="miOwnerClose" class="mi-owner-close">✕</button>
+    </header>
+
+    <div class="mi-owner-layout">
+        <nav id="miOwnerNav" class="mi-owner-nav">
+            <button class="active" data-page="users">Users</button>
+            <button data-page="chats">Chats</button>
+            <button data-page="staff">Staff & Roles</button>
+            <button data-page="permissions">Permissions</button>
+            <button data-page="security">Security</button>
+            <button data-page="audit">Audit Logs</button>
+            <button data-page="all">All Options</button>
+        </nav>
+
+        <main class="mi-owner-content">
+            <div id="miOwnerStatus" class="mi-owner-status">
+                Ready.
+            </div>
+
+            <section class="mi-owner-page active" data-page="users">
+                <h3>User Management</h3>
+
+                <div class="mi-owner-form">
+                    <input id="miOwnerUserEmail" type="email"
+                           placeholder="Enter user email">
+
+                    <textarea id="miOwnerUserReason"
+                              placeholder="Required action reason"></textarea>
+
+                    <div class="mi-owner-actions">
+                        <button data-user-action="search">
+                            Search / View
+                        </button>
+
+                        <button class="danger" data-user-action="block">
+                            Block
+                        </button>
+
+                        <button class="safe" data-user-action="unblock">
+                            Unblock
+                        </button>
+
+                        <button class="danger" data-user-action="suspend">
+                            Suspend
+                        </button>
+
+                        <button class="safe" data-user-action="restore">
+                            Restore
+                        </button>
+
+                        <button class="danger" data-user-action="disable">
+                            Disable
+                        </button>
+
+                        <button class="safe" data-user-action="enable">
+                            Enable
+                        </button>
+
+                        <button data-user-action="force_logout">
+                            Force Logout
+                        </button>
+
+                        <button class="danger" data-user-action="delete">
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+
+                <div id="miOwnerUserResults"></div>
+            </section>
+
+            <section class="mi-owner-page" data-page="chats">
+                <h3>Chats and Messages</h3>
+
+                <div class="mi-owner-form">
+                    <input id="miOwnerChatEmail" type="email"
+                           placeholder="Enter user email">
+
+                    <textarea id="miOwnerChatReason"
+                              placeholder="Required privacy/access reason"></textarea>
+
+                    <div class="mi-owner-actions">
+                        <button id="miOwnerViewChats">
+                            View User Chats
+                        </button>
+                    </div>
+                </div>
+
+                <div id="miOwnerChatResults"></div>
+            </section>
+
+            <section class="mi-owner-page" data-page="staff">
+                <h3>Staff and Role Management</h3>
+                <div id="miOwnerStaffOptions" class="mi-owner-options"></div>
+            </section>
+
+            <section class="mi-owner-page" data-page="permissions">
+                <h3>Permission Center</h3>
+                <div id="miOwnerPermissionOptions" class="mi-owner-options"></div>
+            </section>
+
+            <section class="mi-owner-page" data-page="security">
+                <h3>Security Center</h3>
+                <div id="miOwnerSecurityOptions" class="mi-owner-options"></div>
+            </section>
+
+            <section class="mi-owner-page" data-page="audit">
+                <h3>Immutable Audit Logs</h3>
+                <div class="mi-owner-actions">
+                    <button id="miOwnerLoadAudit">
+                        Load Audit Logs
+                    </button>
+                </div>
+                <div id="miOwnerAuditResults"></div>
+            </section>
+
+            <section class="mi-owner-page" data-page="all">
+                <h3>All Chief Owner Options</h3>
+                <div id="miOwnerAllOptions" class="mi-owner-options"></div>
+            </section>
+        </main>
+    </div>
+</section>`;
+
+        document.body.appendChild(
+            overlay
+        );
+
+        byId("miOwnerClose").onclick =
+            function () {
+                overlay.classList.remove(
+                    "open"
+                );
+            };
+
+        overlay.onclick =
+            function (event) {
+                if (event.target === overlay) {
+                    overlay.classList.remove(
+                        "open"
+                    );
+                }
+            };
+
+        byId("miOwnerNav").onclick =
+            function (event) {
+                const button =
+                    event.target.closest(
+                        "button[data-page]"
+                    );
+
+                if (!button) {
+                    return;
+                }
+
+                document
+                    .querySelectorAll(
+                        "#miOwnerNav button"
+                    )
+                    .forEach(function (item) {
+                        item.classList.toggle(
+                            "active",
+                            item === button
+                        );
+                    });
+
+                document
+                    .querySelectorAll(
+                        ".mi-owner-page"
+                    )
+                    .forEach(function (page) {
+                        page.classList.toggle(
+                            "active",
+                            page.dataset.page ===
+                                button.dataset.page
+                        );
+                    });
+            };
+
+        document
+            .querySelectorAll(
+                "[data-user-action]"
+            )
+            .forEach(function (button) {
+                button.onclick =
+                    function () {
+                        userAction(
+                            button.dataset
+                                .userAction
+                        );
+                    };
+            });
+
+        byId("miOwnerViewChats").onclick =
+            loadChats;
+
+        byId("miOwnerLoadAudit").onclick =
+            loadAudit;
+
+        renderStaticOptions();
+    }
+
+    function cards(items) {
+        return items.map(function (item) {
+            return (
+                '<div class="mi-owner-option">' +
+                escapeHtml(item) +
+                "</div>"
+            );
+        }).join("");
+    }
+
+    function renderStaticOptions() {
+        byId("miOwnerStaffOptions")
+            .innerHTML = cards([
+                "Staff Management",
+                "Create Staff",
+                "Remove Staff",
+                "Promote Staff",
+                "Demote Staff",
+                "Suspend Staff",
+                "Restore Staff",
+                "Assign Roles",
+                "Remove Roles",
+                "Sub Owner",
+                "Chief Director",
+                "Sub Director",
+                "Chief Manager",
+                "Sub Manager",
+                "Chief Developer",
+                "Sub Developer",
+                "Admin",
+                "Support Agent",
+                "Moderator"
+            ]);
+
+        byId("miOwnerPermissionOptions")
+            .innerHTML = cards([
+                "Pending Requests",
+                "Approved Requests",
+                "Rejected Requests",
+                "Cancelled Requests",
+                "Expired Requests",
+                "Revoked Requests",
+                "My Requests",
+                "All Requests",
+                "Grant Permission",
+                "Revoke Permission",
+                "Permission Templates"
+            ]);
+
+        byId("miOwnerSecurityOptions")
+            .innerHTML = cards([
+                "Failed Login Attempts",
+                "Suspicious Logins",
+                "Login Sessions",
+                "Devices",
+                "Blocked Devices",
+                "Security Alerts",
+                "Account Lockouts",
+                "Unauthorized Admin Attempts",
+                "Rate Limit Violations",
+                "API Misuse Alerts"
+            ]);
+    }
+
+    async function openOwnerPanel() {
+        makePanel();
+
+        byId("miChiefOwnerOverlay")
+            .classList.add("open");
+
+        try {
+            const result =
+                await ownerRequest(
+                    "/options"
+                );
+
+            byId("miOwnerAllOptions")
+                .innerHTML =
+                    cards(result.pages || []);
+
+            showStatus(
+                "Chief Owner access verified.",
+                false
+            );
+        }
+        catch (error) {
+            showStatus(
+                error.message,
+                true
+            );
+        }
+    }
+
+    function createTable(rows, actionType) {
+        if (!rows.length) {
+            return (
+                '<div class="mi-owner-status">' +
+                "No records found." +
+                "</div>"
+            );
+        }
+
+        if (actionType === "chats") {
+            return `
+<div class="mi-owner-table-wrap">
+<table class="mi-owner-table">
+<thead>
+<tr>
+<th>Title</th>
+<th>Chat ID</th>
+<th>Collection</th>
+<th>Messages</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+${rows.map(function (row) {
+    return `
+<tr>
+<td>${escapeHtml(row.title)}</td>
+<td>${escapeHtml(row.id)}</td>
+<td>${escapeHtml(row.collection)}</td>
+<td>${escapeHtml(row.messageCount)}</td>
+<td>
+<button
+    class="mi-owner-delete-chat"
+    data-id="${escapeHtml(row.id)}"
+    data-collection="${escapeHtml(row.collection)}">
+Delete Chat
+</button>
+</td>
+</tr>`;
+}).join("")}
+</tbody>
+</table>
+</div>`;
+        }
+
+        const keys = Object.keys(
+            rows[0]
+        ).slice(0, 10);
+
+        return `
+<div class="mi-owner-table-wrap">
+<table class="mi-owner-table">
+<thead>
+<tr>
+${keys.map(function (key) {
+    return "<th>" +
+        escapeHtml(key) +
+        "</th>";
+}).join("")}
+</tr>
+</thead>
+<tbody>
+${rows.map(function (row) {
+    return "<tr>" +
+        keys.map(function (key) {
+            const value =
+                typeof row[key] === "object"
+                    ? JSON.stringify(row[key])
+                    : row[key];
+
+            return "<td>" +
+                escapeHtml(value) +
+                "</td>";
+        }).join("") +
+        "</tr>";
+}).join("")}
+</tbody>
+</table>
+</div>`;
+    }
+
+    async function userAction(action) {
+        const email =
+            byId("miOwnerUserEmail")
+                .value
+                .trim();
+
+        const reason =
+            byId("miOwnerUserReason")
+                .value
+                .trim();
+
+        try {
+            if (action === "search") {
+                const result =
+                    await ownerRequest(
+                        "/users?email=" +
+                        encodeURIComponent(
+                            email
+                        )
+                    );
+
+                byId("miOwnerUserResults")
+                    .innerHTML =
+                        createTable(
+                            result.users || []
+                        );
+
+                showStatus(
+                    "User search completed.",
+                    false
+                );
+
+                return;
+            }
+
+            if (!email || !reason) {
+                throw new Error(
+                    "Email and written reason are required."
+                );
+            }
+
+            if (
+                [
+                    "block",
+                    "suspend",
+                    "disable",
+                    "delete"
+                ].includes(action)
+            ) {
+                const confirmed = confirm(
+                    "Confirm " +
+                    action.replace("_", " ") +
+                    " for " +
+                    email +
+                    "?"
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+            const result =
+                await ownerRequest(
+                    "/users/action",
+                    {
+                        method: "POST",
+                        body: JSON.stringify({
+                            email: email,
+                            action: action,
+                            reason: reason
+                        })
+                    }
+                );
+
+            showStatus(
+                result.message,
+                false
+            );
+
+            await userAction("search");
+        }
+        catch (error) {
+            showStatus(
+                error.message,
+                true
+            );
+        }
+    }
+
+    async function loadChats() {
+        const email =
+            byId("miOwnerChatEmail")
+                .value
+                .trim();
+
+        const reason =
+            byId("miOwnerChatReason")
+                .value
+                .trim();
+
+        try {
+            if (!email || !reason) {
+                throw new Error(
+                    "Email and chat access reason are required."
+                );
+            }
+
+            const result =
+                await ownerRequest(
+                    "/chats?email=" +
+                    encodeURIComponent(email) +
+                    "&reason=" +
+                    encodeURIComponent(reason)
+                );
+
+            byId("miOwnerChatResults")
+                .innerHTML =
+                    createTable(
+                        result.chats || [],
+                        "chats"
+                    );
+
+            document
+                .querySelectorAll(
+                    ".mi-owner-delete-chat"
+                )
+                .forEach(function (button) {
+                    button.onclick =
+                        function () {
+                            deleteChat(
+                                button.dataset.id,
+                                button.dataset.collection
+                            );
+                        };
+                });
+
+            showStatus(
+                "Chats loaded. Access was recorded in the audit log.",
+                false
+            );
+        }
+        catch (error) {
+            showStatus(
+                error.message,
+                true
+            );
+        }
+    }
+
+    async function deleteChat(
+        chatId,
+        collection
+    ) {
+        const email =
+            byId("miOwnerChatEmail")
+                .value
+                .trim();
+
+        const reason =
+            byId("miOwnerChatReason")
+                .value
+                .trim();
+
+        if (
+            !confirm(
+                "Delete this chat and its connected messages?"
+            )
+        ) {
+            return;
+        }
+
+        try {
+            const result =
+                await ownerRequest(
+                    "/chats/delete",
+                    {
+                        method: "POST",
+                        body: JSON.stringify({
+                            email: email,
+                            chatId: chatId,
+                            collection: collection,
+                            reason: reason
+                        })
+                    }
+                );
+
+            showStatus(
+                result.message,
+                false
+            );
+
+            await loadChats();
+        }
+        catch (error) {
+            showStatus(
+                error.message,
+                true
+            );
+        }
+    }
+
+    async function loadAudit() {
+        try {
+            const result =
+                await ownerRequest(
+                    "/audit-logs"
+                );
+
+            byId("miOwnerAuditResults")
+                .innerHTML =
+                    createTable(
+                        result.logs || []
+                    );
+
+            showStatus(
+                "Audit logs loaded.",
+                false
+            );
+        }
+        catch (error) {
+            showStatus(
+                error.message,
+                true
+            );
+        }
+    }
+
+    async function updateVisibility() {
+        makeButton();
+
+        const button =
+            byId(
+                "miChiefOwnerPermissionButton"
+            );
+
+        try {
+            const response = await fetch(
+                "/api/admin/me",
+                {
+                    headers: {
+                        Authorization:
+                            "Bearer " +
+                            await getToken()
+                    }
+                }
+            );
+
+            const result =
+                await response.json();
+
+            button.style.display =
+                response.ok &&
+                result &&
+                result.isChiefOwner
+                    ? "block"
+                    : "none";
+        }
+        catch (error) {
+            button.style.display = "none";
+        }
+    }
+
+    window.addEventListener(
+        "mi-firebase-ready",
+        function () {
+            setTimeout(
+                updateVisibility,
+                300
+            );
+        }
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            setTimeout(
+                updateVisibility,
+                900
+            );
+        }
+    );
+
+    setTimeout(
+        updateVisibility,
+        2500
+    );
+})();
+</script>
+<!-- MI AI CHIEF OWNER CONTROL CENTER END -->
 </body>
 </html>
 

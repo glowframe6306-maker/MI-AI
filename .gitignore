@@ -10,3 +10,10 @@ __pycache__/
 .env*
 *.py[cod]
 .pytest_cache/
+.env.local
+serviceAccountKey.json
+*serviceAccount*.json
+safe-backup-*/
+.claude/
+CLAUDE.md
+MI-AI-ONE-TIME-CHAT-PURGE-RESULT.json
