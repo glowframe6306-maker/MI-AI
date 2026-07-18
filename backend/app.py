@@ -273,6 +273,260 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUP
 
 
 
+# MI AI ACCOUNT ISOLATION V2 START
+
+from functools import wraps
+from flask import g
+
+
+MI_PRIVATE_ACCOUNT_PATHS = (
+    "/api/conversations",
+    "/api/messages",
+    "/api/account-settings",
+    "/api/user-settings",
+    "/api/direct-messages",
+)
+
+
+def mi_get_verified_account():
+    """
+    Return the account identity only from a verified Firebase ID token.
+
+    Browser supplied email, user_id, owner_id and session_id values are
+    never trusted as ownership information.
+    """
+
+    cached_account = getattr(
+        g,
+        "mi_verified_account",
+        None,
+    )
+
+    if cached_account:
+        return cached_account, None
+
+    try:
+        token = mi_get_bearer_token()
+    except Exception:
+        token = ""
+
+    if not token:
+        return None, "Authentication token is required."
+
+    try:
+        verified_user, verification_error = (
+            mi_verify_firebase_id_token(token)
+        )
+    except Exception as error:
+        return None, str(error)
+
+    if verification_error or not verified_user:
+        return (
+            None,
+            verification_error
+            or "Invalid or expired authentication token.",
+        )
+
+    uid = str(
+        verified_user.get("uid")
+        or verified_user.get("user_id")
+        or verified_user.get("id")
+        or ""
+    ).strip()
+
+    email = str(
+        verified_user.get("email")
+        or ""
+    ).strip().lower()
+
+    if not uid:
+        return None, "Firebase UID is missing."
+
+    account = {
+        "uid": uid,
+        "id": uid,
+        "user_id": uid,
+        "owner_id": uid,
+        "account_id": uid,
+        "session_id": uid,
+        "email": email,
+        "user_email": email,
+    }
+
+    g.mi_verified_account = account
+
+    return account, None
+
+
+def mi_current_account_uid():
+    account, error = mi_get_verified_account()
+
+    if error or not account:
+        return ""
+
+    return str(account["uid"])
+
+
+def mi_current_account_email():
+    account, error = mi_get_verified_account()
+
+    if error or not account:
+        return ""
+
+    return str(
+        account.get("email")
+        or ""
+    )
+
+
+def mi_require_verified_account(function):
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        account, error = mi_get_verified_account()
+
+        if error or not account:
+            return jsonify({
+                "success": False,
+                "message": (
+                    error
+                    or "Please sign in again."
+                ),
+            }), 401
+
+        return function(*args, **kwargs)
+
+    return wrapped
+
+
+def mi_force_verified_owner(data=None):
+    """
+    Replace ownership fields with the verified Firebase UID.
+    """
+
+    output = dict(data or {})
+
+    uid = mi_current_account_uid()
+    email = mi_current_account_email()
+
+    if not uid:
+        return output
+
+    output["user_id"] = uid
+    output["owner_id"] = uid
+    output["account_id"] = uid
+    output["session_id"] = uid
+
+    if email:
+        output["email"] = email
+        output["user_email"] = email
+
+    return output
+
+
+def mi_filter_account_query(query, column="user_id"):
+    """
+    Apply ownership protection to a Supabase/PostgREST query.
+
+    Example:
+        query = mi_filter_account_query(
+            supabase.table("conversations").select("*")
+        )
+    """
+
+    uid = mi_current_account_uid()
+
+    if not uid:
+        raise PermissionError(
+            "Authentication required."
+        )
+
+    return query.eq(
+        str(column),
+        uid,
+    )
+
+
+def mi_conversation_belongs_to_account(
+    conversation_id,
+):
+    """
+    Check that a conversation belongs to the currently authenticated UID.
+    """
+
+    uid = mi_current_account_uid()
+
+    if not uid or not conversation_id:
+        return False
+
+    try:
+        result = (
+            supabase
+            .table("conversations")
+            .select("id")
+            .eq("id", str(conversation_id))
+            .eq("user_id", uid)
+            .limit(1)
+            .execute()
+        )
+
+        rows = getattr(
+            result,
+            "data",
+            None,
+        ) or []
+
+        return bool(rows)
+
+    except Exception:
+        return False
+
+
+@app.before_request
+def mi_account_isolation_firewall():
+    """
+    Protect all private account routes before their route handlers execute.
+    """
+
+    request_path = str(
+        request.path
+        or "/"
+    ).rstrip("/")
+
+    if not request_path:
+        request_path = "/"
+
+    is_private_path = any(
+        request_path == private_path
+        or request_path.startswith(
+            private_path + "/"
+        )
+        for private_path
+        in MI_PRIVATE_ACCOUNT_PATHS
+    )
+
+    if not is_private_path:
+        return None
+
+    if request.method == "OPTIONS":
+        return None
+
+    account, error = mi_get_verified_account()
+
+    if error or not account:
+        return jsonify({
+            "success": False,
+            "message": (
+                error
+                or "Please sign in again."
+            ),
+        }), 401
+
+    return None
+
+
+# MI AI ACCOUNT ISOLATION V2 END
+
+
 @app.route("/api/firebase-auth-health", methods=["GET"])
 def mi_firebase_auth_health():
     return jsonify({
