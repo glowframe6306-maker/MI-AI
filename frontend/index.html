@@ -6119,6 +6119,15 @@ body.mi-app-booting #chatList {
 }
 /* MI AI SMOOTH PERFORMANCE FIX - END */
 
+
+/* MI AI CHAT SMOOTH V3 CSS - START */
+#chat,#chatList,.messages,.chat-messages{contain:layout style}
+#chat>*,#chatList>*,.messages>*,.chat-messages>*{content-visibility:auto;contain-intrinsic-size:auto 72px}
+html{scroll-behavior:auto!important}
+body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-events:none}
+#chat,#chatList{transition:opacity 120ms ease}
+/* MI AI CHAT SMOOTH V3 CSS - END */
+
 </style>
 
 <!-- MI AI FIREBASE AUTH START -->
@@ -25390,7 +25399,7 @@ document.addEventListener(
 
         await Promise.race([
             authReadyPromise,
-            new Promise(function (resolve) { setTimeout(resolve, 6000); })
+            new Promise(function (resolve) { setTimeout(resolve, 1200); })
         ]);
 
         return (
@@ -28769,6 +28778,37 @@ window.miOpenAccountChat=openPanel;
 })();
 </script>
 <!-- MI AI THREE LANGUAGE UI END -->
+
+<script>
+/* MI AI CHAT SMOOTH V3 JS - START */
+(function(){
+"use strict";
+document.body.classList.add("mi-smooth-loading");
+let released=false;
+function release(){if(released)return;released=true;requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove("mi-smooth-loading")})})}
+window.addEventListener("load",release,{once:true});
+window.addEventListener("mi-firebase-ready",function(){setTimeout(release,50)},{once:true});
+window.addEventListener("mi-firebase-auth-changed",function(){setTimeout(release,50)},{once:true});
+setTimeout(release,1400);
+
+const nativeFetch=window.fetch.bind(window);
+const activeGets=new Map();
+window.fetch=function(input,init){
+ const options=init||{};
+ const method=String(options.method||"GET").toUpperCase();
+ const url=typeof input==="string"?input:String((input&&input.url)||"");
+ const dedupe=method==="GET"&&(url.includes("/api/conversations")||url.includes("/api/messages")||url.includes("/api/direct-messages")||url.includes("/api/notifications")||url.includes("/api/admin/me"));
+ if(!dedupe)return nativeFetch(input,init);
+ const key=method+":"+url;
+ if(activeGets.has(key))return activeGets.get(key).then(function(r){return r.clone()});
+ const req=nativeFetch(input,init).finally(function(){activeGets.delete(key)});
+ activeGets.set(key,req);
+ return req.then(function(r){return r.clone()});
+};
+})();
+/* MI AI CHAT SMOOTH V3 JS - END */
+</script>
+
 </body>
 </html>
 

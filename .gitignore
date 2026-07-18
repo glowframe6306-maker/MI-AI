@@ -6,3 +6,7 @@ tmp_*.py
 *.bak
 __pycache__/
 *.pyc
+.vercel
+.env*
+*.py[cod]
+.pytest_cache/
