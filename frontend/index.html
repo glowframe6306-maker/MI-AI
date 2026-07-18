@@ -28809,6 +28809,289 @@ window.fetch=function(input,init){
 /* MI AI CHAT SMOOTH V3 JS - END */
 </script>
 
+
+<script>
+/* MI AI STRICT ACCOUNT ISOLATION V1 START */
+(function () {
+    "use strict";
+
+    const ACCOUNT_PREFIX = "mi_account_cache_v2:";
+    const GUEST_KEY = "mi_guest_single_chat_v2";
+    let restoreVersion = 0;
+    let saveTimer = 0;
+
+    function auth() {
+        try { return window.firebase.auth(); } catch (error) { return null; }
+    }
+
+    function currentUser() {
+        return auth()?.currentUser || null;
+    }
+
+    function uid() {
+        return String(currentUser()?.uid || "");
+    }
+
+    function accountKey(user) {
+        return ACCOUNT_PREFIX + String(user?.uid || "");
+    }
+
+    function db() {
+        try { return window.firebase.firestore(); } catch (error) { return null; }
+    }
+
+    function captureSettings() {
+        const root = getComputedStyle(document.documentElement);
+        return {
+            theme: localStorage.getItem("theme") || localStorage.getItem("mi_theme") || "",
+            themeColor: localStorage.getItem("themeColor") || localStorage.getItem("mi_theme_color") || root.getPropertyValue("--main").trim() || "",
+            fontSize: Number(localStorage.getItem("fontSize") || localStorage.getItem("mi_font_size") || 15),
+            language: localStorage.getItem("mi_ui_language") || document.documentElement.lang || "en"
+        };
+    }
+
+    function captureChats() {
+        const source = window.chats || window.chatHistory || window.savedChats || {};
+        if (!source || typeof source !== "object") return {};
+        return JSON.parse(JSON.stringify(source));
+    }
+
+    function clearVisibleData() {
+        try {
+            if (window.chats && typeof window.chats === "object") {
+                Object.keys(window.chats).forEach(function (key) { delete window.chats[key]; });
+            }
+            if (window.chatHistory && typeof window.chatHistory === "object") {
+                Object.keys(window.chatHistory).forEach(function (key) { delete window.chatHistory[key]; });
+            }
+            const chat = document.getElementById("chat");
+            const list = document.getElementById("chatList");
+            if (chat) chat.innerHTML = "";
+            if (list) list.innerHTML = "";
+        } catch (error) {
+            console.warn("[Account Isolation] UI clear skipped", error);
+        }
+    }
+
+    async function deleteCollection(collectionRef) {
+        const snapshot = await collectionRef.get();
+        let batch = db().batch();
+        let count = 0;
+        for (const doc of snapshot.docs) {
+            batch.delete(doc.ref);
+            count += 1;
+            if (count >= 400) {
+                await batch.commit();
+                batch = db().batch();
+                count = 0;
+            }
+        }
+        if (count > 0) await batch.commit();
+    }
+
+    async function saveExactSnapshot(reason) {
+        const user = currentUser();
+        const store = db();
+        if (!user || !store) return false;
+
+        const expectedUid = user.uid;
+        const chats = captureChats();
+        const settings = captureSettings();
+        const userRef = store.collection("users").doc(expectedUid);
+        const existing = await userRef.collection("chats").get();
+        const validIds = new Set();
+
+        Object.keys(chats).forEach(function (chatId) {
+            const raw = chats[chatId];
+            const messages = Array.isArray(raw) ? raw : (Array.isArray(raw?.messages) ? raw.messages : []);
+            if (messages.length > 0) validIds.add(String(chatId));
+        });
+
+        for (const doc of existing.docs) {
+            if (currentUser()?.uid !== expectedUid) throw new Error("Account changed during save");
+            if (!validIds.has(doc.id)) {
+                await deleteCollection(doc.ref.collection("messages"));
+                await doc.ref.delete();
+            }
+        }
+
+        for (const chatId of validIds) {
+            if (currentUser()?.uid !== expectedUid) throw new Error("Account changed during save");
+            const raw = chats[chatId];
+            const messages = Array.isArray(raw) ? raw : raw.messages;
+            const chatRef = userRef.collection("chats").doc(chatId);
+
+            await chatRef.set({
+                ownerUid: expectedUid,
+                title: String(raw.title || raw.name || chatId),
+                pin: Boolean(raw.pin || raw.pinned),
+                messageCount: messages.length,
+                updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            await deleteCollection(chatRef.collection("messages"));
+
+            let batch = store.batch();
+            let count = 0;
+            messages.forEach(function (message, index) {
+                const id = String(message.id || message.messageId || ("message-" + String(index).padStart(6, "0")));
+                const text = String(message.text ?? message.content ?? message.message ?? "");
+                const role = String(message.role || message.sender || (message.className === "ai" ? "ai" : "user"));
+                batch.set(chatRef.collection("messages").doc(id), {
+                    ownerUid: expectedUid,
+                    role: role === "ai" || role === "assistant" ? "ai" : "user",
+                    text: text,
+                    content: text,
+                    order: index,
+                    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count += 1;
+            });
+            if (count > 0) await batch.commit();
+        }
+
+        await userRef.set({
+            uid: expectedUid,
+            email: String(user.email || "").toLowerCase(),
+            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        await userRef.collection("settings").doc("general").set({
+            ownerUid: expectedUid,
+            settings: settings,
+            theme: settings.theme,
+            themeColor: settings.themeColor,
+            fontSize: settings.fontSize,
+            language: settings.language,
+            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        localStorage.setItem(accountKey(user), JSON.stringify({
+            uid: expectedUid,
+            email: String(user.email || "").toLowerCase(),
+            chats: chats,
+            settings: settings,
+            savedAt: Date.now(),
+            reason: reason || "auto"
+        }));
+
+        return true;
+    }
+
+    async function restoreExactSnapshot(user) {
+        const version = ++restoreVersion;
+        const store = db();
+        if (!user || !store) return null;
+
+        const expectedUid = user.uid;
+        const userRef = store.collection("users").doc(expectedUid);
+        const settingsDoc = await userRef.collection("settings").doc("general").get();
+        const settingsData = settingsDoc.exists ? settingsDoc.data() : {};
+        const settings = settingsData.settings || settingsData || {};
+        const chatsSnapshot = await userRef.collection("chats").get();
+        const chats = {};
+
+        for (const chatDoc of chatsSnapshot.docs) {
+            if (version !== restoreVersion || currentUser()?.uid !== expectedUid) {
+                throw new Error("Account changed during restore");
+            }
+            const meta = chatDoc.data() || {};
+            if (meta.ownerUid && meta.ownerUid !== expectedUid) continue;
+            const messageSnapshot = await chatDoc.ref.collection("messages").orderBy("order", "asc").get().catch(function () {
+                return chatDoc.ref.collection("messages").get();
+            });
+            const messages = messageSnapshot.docs.map(function (doc, index) {
+                const data = doc.data() || {};
+                if (data.ownerUid && data.ownerUid !== expectedUid) return null;
+                return {
+                    id: doc.id,
+                    role: data.role === "ai" ? "ai" : "me",
+                    sender: data.role === "ai" ? "ai" : "user",
+                    text: String(data.text ?? data.content ?? ""),
+                    content: String(data.content ?? data.text ?? ""),
+                    order: Number.isFinite(Number(data.order)) ? Number(data.order) : index
+                };
+            }).filter(Boolean);
+            if (messages.length === 0) continue;
+            chats[chatDoc.id] = messages;
+            chats[chatDoc.id].title = String(meta.title || chatDoc.id);
+            chats[chatDoc.id].pin = Boolean(meta.pin || meta.pinned);
+            chats[chatDoc.id].pinned = Boolean(meta.pin || meta.pinned);
+            chats[chatDoc.id].messageCount = messages.length;
+        }
+
+        if (version !== restoreVersion || currentUser()?.uid !== expectedUid) {
+            throw new Error("Account changed during restore");
+        }
+
+        localStorage.setItem(accountKey(user), JSON.stringify({
+            uid: expectedUid,
+            email: String(user.email || "").toLowerCase(),
+            chats: chats,
+            settings: settings,
+            restoredAt: Date.now()
+        }));
+
+        window.dispatchEvent(new CustomEvent("mi-account-data-restored", {
+            detail: { uid: expectedUid, email: user.email || "", chats: chats, settings: settings }
+        }));
+
+        console.log("[Account Isolation] Exact account restored", expectedUid, Object.keys(chats).length);
+        return { uid: expectedUid, chats: chats, settings: settings };
+    }
+
+    function scheduleSave(reason) {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(function () {
+            saveExactSnapshot(reason).catch(function (error) {
+                console.error("[Account Isolation] Save failed", error);
+            });
+        }, 700);
+    }
+
+    window.addEventListener("mi-chat-saved", function () { scheduleSave("chat-saved"); });
+    window.addEventListener("mi-message-saved", function () { scheduleSave("message-saved"); });
+    window.addEventListener("mi-settings-changed", function () { scheduleSave("settings-changed"); });
+    window.addEventListener("pagehide", function () { saveExactSnapshot("pagehide").catch(function () {}); });
+
+    document.addEventListener("click", function (event) {
+        const target = event.target?.closest?.("button,[role='button']");
+        const text = String(target?.textContent || target?.getAttribute?.("aria-label") || "").toLowerCase();
+        if (/send|save|rename|pin|delete|theme|language|font/.test(text)) scheduleSave("ui-action");
+    }, true);
+
+    const authInstance = auth();
+    if (authInstance) {
+        authInstance.onAuthStateChanged(async function (user) {
+            restoreVersion += 1;
+            clearVisibleData();
+            if (!user) {
+                window.__miStrictAccountUid = "";
+                window.__miStrictAccountEmail = "";
+                if (!localStorage.getItem(GUEST_KEY)) {
+                    localStorage.setItem(GUEST_KEY, JSON.stringify({ chats: {}, activeChatId: null }));
+                }
+                return;
+            }
+            window.__miStrictAccountUid = user.uid;
+            window.__miStrictAccountEmail = String(user.email || "").toLowerCase();
+            await restoreExactSnapshot(user).catch(function (error) {
+                console.error("[Account Isolation] Restore failed", error);
+            });
+        });
+    }
+
+    window.MIAccountIsolation = {
+        saveNow: saveExactSnapshot,
+        restoreNow: function () { return restoreExactSnapshot(currentUser()); },
+        currentUid: uid,
+        accountKey: accountKey,
+        guestKey: GUEST_KEY
+    };
+})();
+/* MI AI STRICT ACCOUNT ISOLATION V1 END */
+</script>
+
 </body>
 </html>
 
