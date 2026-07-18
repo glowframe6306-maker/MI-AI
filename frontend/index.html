@@ -797,6 +797,7 @@ body.force-mobile-layout #settingsPanel {
   top:76px;
 }
 
+
 /* MI AI IPHONE GLASS BUTTONS - START */
 
 :root {
@@ -2908,6 +2909,7 @@ body.settings-modal-open {
 
 /* MI AI CENTERED SETTINGS - END */
 
+
 /* MI AI LANGUAGE THEME GLASS - START */
 
 :root {
@@ -3260,6 +3262,7 @@ body,
 }
 
 /* MI AI LANGUAGE THEME GLASS - END */
+
 
 /* MI AI COPY BUTTON BELOW REPLY - START */
 
@@ -4743,6 +4746,7 @@ body.mi-keyboard-visible .composer {
     display: none !important;
 }
 
+
 /* =========================================================
    AI COPY BUTTON BELOW REPLY
    ========================================================= */
@@ -4879,6 +4883,7 @@ body.mi-keyboard-visible .composer {
 #chat > .ai > .mi-ai-functional-copy::after {
     display: none !important;
 }
+
 
 /* =========================================================
    LARGER AND MORE COMFORTABLE PHONE DISPLAY
@@ -5207,6 +5212,8 @@ body.mi-keyboard-visible .composer {
 }
 
 /* MI AI SETTINGS ACCORDION COPY MOBILE - END */
+
+
 
 /* MI AI IOS SELECT AND ICON SYSTEM - START */
 
@@ -6112,6 +6119,7 @@ body.mi-app-booting #chatList {
 }
 /* MI AI SMOOTH PERFORMANCE FIX - END */
 
+
 /* MI AI CHAT SMOOTH V3 CSS - START */
 #chat,#chatList,.messages,.chat-messages{contain:layout style}
 #chat>*,#chatList>*,.messages>*,.chat-messages>*{content-visibility:auto;contain-intrinsic-size:auto 72px}
@@ -6598,6 +6606,8 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 <!-- MI AI FIREBASE AUTH END -->
 
+
+
 <style>
 /* MI AI SHARED CHAT ISOLATION V1 - START */
 
@@ -6967,6 +6977,7 @@ body.mi-share-password-locked .composer {
 
 <style>
 
+
 /* MI AI IOS SAFE BUNDLE CSS - START */
 
 /* =========================================================
@@ -7120,6 +7131,7 @@ body.mi-share-password-locked .composer {
     }
 }
 
+
 /* =========================================================
    IOS TOASTS
    ========================================================= */
@@ -7262,6 +7274,7 @@ body.mi-share-password-locked .composer {
     }
 }
 
+
 /* =========================================================
    BUTTON HAPTIC / SPRING ANIMATION
    ========================================================= */
@@ -7318,6 +7331,7 @@ button,
             scale(1);
     }
 }
+
 
 /* =========================================================
    IOS BOTTOM SHEET
@@ -7582,6 +7596,7 @@ button,
     font-weight: 800 !important;
 }
 
+
 /* =========================================================
    MOBILE
    ========================================================= */
@@ -7628,6 +7643,7 @@ button,
     }
 }
 
+
 /* =========================================================
    ACCESSIBILITY
    ========================================================= */
@@ -7650,6 +7666,8 @@ button,
 }
 
 /* MI AI IOS SAFE BUNDLE CSS - END */
+
+
 
 /* MI AI LOGIN SUCCESS POPUP CSS - START */
 
@@ -8118,6 +8136,17 @@ button,
 
 /* MI AI LOGIN SUCCESS POPUP CSS - END */
 
+
+
+
+
+
+
+
+
+
+
+
 /* MI AI CLEAN CHAT ENGINE V9 CSS - START */
 
 #chat {
@@ -8491,6 +8520,7 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
 }
 
 /* MI AI CLEAN CHAT ENGINE V9 CSS - END */
+
 
 /* MI AI WELCOME ANIMATION V10 CSS - START */
 
@@ -9542,6 +9572,19 @@ span:nth-child(3) {
 
 /* MI AI WELCOME ANIMATION V10 CSS - END */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 </style>
 <!-- MI AI MOBILE LARGE NOTCH START -->
 <style id="mi-mobile-large-notch-style">
@@ -9819,6 +9862,236 @@ span:nth-child(3) {
 })();
 </script>
 <!-- MI AI MOBILE LARGE NOTCH END -->
+
+
+
+
+
+
+
+<script>
+/* MI AI SAFE CHAT ONLY CLEAR V4 START */
+(function () {
+    "use strict";
+
+    var PURGE_VERSION =
+        "mi_ai_safe_chat_only_clear_20260718_v4";
+
+    var DONE_KEY =
+        "__mi_ai_safe_chat_clear_done__:" + PURGE_VERSION;
+
+    function isChatKey(key) {
+        var lower = String(key || "").toLowerCase();
+
+        var chatWords = [
+            "chat",
+            "message",
+            "conversation",
+            "history",
+            "thread",
+            "saved_chats",
+            "savedchats",
+            "chatlist",
+            "chat_list",
+            "recent_chats",
+            "recentchats",
+            "current_chat",
+            "currentchat",
+            "active_chat",
+            "activechat",
+            "guest_chat",
+            "guestchat"
+        ];
+
+        return chatWords.some(function (word) {
+            return lower.indexOf(word) !== -1;
+        });
+    }
+
+    function isProtectedSettingKey(key) {
+        var lower = String(key || "").toLowerCase();
+
+        var protectedWords = [
+            "firebase:authuser:",
+            "firebase-heartbeat",
+            "firebase-installations",
+            "auth",
+            "token",
+            "login",
+            "session_user",
+            "current_user",
+            "theme",
+            "font",
+            "language",
+            "locale",
+            "setting",
+            "appearance",
+            "accent",
+            "color",
+            "background",
+            "wallpaper",
+            "notification",
+            "sound",
+            "voice",
+            "accessibility",
+            "translation",
+            "profile",
+            "role",
+            "permission"
+        ];
+
+        return protectedWords.some(function (word) {
+            return lower.indexOf(word) !== -1;
+        });
+    }
+
+    function clearChatLocalStorageOnly() {
+        var keys = [];
+
+        for (var index = 0; index < localStorage.length; index += 1) {
+            var key = localStorage.key(index);
+
+            if (key) {
+                keys.push(key);
+            }
+        }
+
+        keys.forEach(function (key) {
+            if (
+                isChatKey(key) &&
+                !isProtectedSettingKey(key)
+            ) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (error) {}
+            }
+        });
+
+        try {
+            localStorage.setItem(DONE_KEY, "done");
+        } catch (error) {}
+    }
+
+    function clearChatSessionStorageOnly() {
+        try {
+            var keys = [];
+
+            for (
+                var index = 0;
+                index < sessionStorage.length;
+                index += 1
+            ) {
+                var key = sessionStorage.key(index);
+
+                if (key) {
+                    keys.push(key);
+                }
+            }
+
+            keys.forEach(function (key) {
+                if (
+                    isChatKey(key) &&
+                    !isProtectedSettingKey(key)
+                ) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+        } catch (error) {}
+    }
+
+    function clearChatIndexedDBOnly() {
+        try {
+            if (
+                !window.indexedDB ||
+                typeof indexedDB.databases !== "function"
+            ) {
+                return;
+            }
+
+            indexedDB.databases()
+                .then(function (databases) {
+                    (databases || []).forEach(function (database) {
+                        var name = String(
+                            database &&
+                            database.name ||
+                            ""
+                        );
+
+                        var lower = name.toLowerCase();
+
+                        var isChatDatabase =
+                            lower.indexOf("chat") !== -1 ||
+                            lower.indexOf("message") !== -1 ||
+                            lower.indexOf("conversation") !== -1;
+
+                        var isProtectedDatabase =
+                            lower.indexOf("firebase") !== -1 ||
+                            lower.indexOf("auth") !== -1 ||
+                            lower.indexOf("setting") !== -1;
+
+                        if (
+                            isChatDatabase &&
+                            !isProtectedDatabase
+                        ) {
+                            try {
+                                indexedDB.deleteDatabase(name);
+                            } catch (error) {}
+                        }
+                    });
+                })
+                .catch(function () {});
+        } catch (error) {}
+    }
+
+    function clearVisibleChatElements() {
+        var selectors = [
+            "#chat",
+            "#chatList",
+            "#chat-list",
+            "#savedChats",
+            "#saved-chats",
+            ".chat-list",
+            ".saved-chats",
+            "[data-chat-list]"
+        ];
+
+        selectors.forEach(function (selector) {
+            try {
+                document
+                    .querySelectorAll(selector)
+                    .forEach(function (element) {
+                        element.innerHTML = "";
+                    });
+            } catch (error) {}
+        });
+    }
+
+    if (localStorage.getItem(DONE_KEY) !== "done") {
+        clearChatLocalStorageOnly();
+        clearChatSessionStorageOnly();
+        clearChatIndexedDBOnly();
+
+        console.log(
+            "[MI AI] Old chats cleared; settings preserved."
+        );
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+                clearVisibleChatElements();
+                setTimeout(clearVisibleChatElements, 500);
+            },
+            { once: true }
+        );
+    } else {
+        clearVisibleChatElements();
+        setTimeout(clearVisibleChatElements, 500);
+    }
+})();
+/* MI AI SAFE CHAT ONLY CLEAR V4 END */
+</script>
 
 </head>
 
@@ -11817,6 +12090,7 @@ if(ids.length > 9){
     chatList.style.maxHeight='none';
 }
 
+
 ids.sort((a,b)=>{
 
 if(chats[a].pin && !chats[b].pin) return -1;
@@ -11853,8 +12127,10 @@ e.preventDefault();
 
 selectedChat=id;
 
+
 document.getElementById("pinOption").innerHTML =
 chats[id].pin ? "✕ Unpin" : "📌 Pin";
+
 
 menu.style.display="block";
 menu.style.left=e.pageX+"px";
@@ -12007,6 +12283,9 @@ renderList();
 menu.style.display="none";
 
 }
+
+
+
 
 let shareOverlayCloseAllowed = false;
 
@@ -12210,6 +12489,7 @@ function appendAiMessage(container, text) {
   container.appendChild(wrap);
   return wrap;
 }
+
 
 async function copyTextToClipboard(text) {
   try {
@@ -13154,6 +13434,7 @@ box.style.width="280px";
 box.style.textAlign="center";
 box.style.boxShadow="0 0 25px #ff7a18";
 
+
 box.innerHTML=`
 
 <h3>🎧 Customer Support</h3>
@@ -13164,11 +13445,13 @@ box.innerHTML=`
 REQUEST VIA EMAIL
 </button>
 
+
 <p>💬 WhatsApp</p>
 
 <button onclick="openWhatsApp()">
 VIA WHATSAPP
 </button>
+
 
 <button onclick="this.parentElement.remove()">
 ✕ Close
@@ -13180,6 +13463,8 @@ document.body.appendChild(box);
 
 }
 
+
+
 /* EMAIL */
 
 function openEmail(){
@@ -13190,6 +13475,8 @@ window.open(
 );
 
 }
+
+
 
 /* WHATSAPP */
 
@@ -13654,6 +13941,7 @@ document.addEventListener(
 
 /* MI AI CENTERED SETTINGS JS - END */
 </script>
+
 
 <script>
 /* MI AI UI TRANSLATION SYSTEM - START */
@@ -14462,6 +14750,7 @@ document.addEventListener(
 
 /* MI AI UI TRANSLATION SYSTEM - END */
 </script>
+
 
 <script>
 /* MI AI CHAT MORE MENU JS - START */
@@ -15479,6 +15768,8 @@ document.addEventListener(
 
 /* MI AI FOUR CHAT OPTIONS FIX - END */
 </script>
+
+
 
 <script>
 /* MI AI MOBILE COMFORT JS - START */
@@ -16645,6 +16936,8 @@ document.addEventListener(
 /* MI AI SETTINGS ACCORDION COPY MOBILE JS - END */
 </script>
 
+
+
 <script>
 /* MI AI IOS SELECT AND ICON SYSTEM JS - START */
 
@@ -17438,6 +17731,12 @@ document.addEventListener(
 /* MI AI IOS SELECT AND ICON SYSTEM JS - END */
 </script>
 
+
+
+
+
+
+
 <script>
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - START */
 
@@ -17872,6 +18171,27 @@ document.addEventListener(
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - END */
 </script>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 /* MI AI SAFE UI UNBLOCK - START */
 (function () {
@@ -18015,6 +18335,8 @@ document.addEventListener(
 })();
 /* MI AI SAFE UI UNBLOCK - END */
 </script>
+
+
 
 <script>
 /* MI AI SAFE ACCOUNT CHAT RESTORE V4 - START */
@@ -19499,6 +19821,8 @@ document.addEventListener(
 
 /* MI AI LIVE SEARCH AND DEVICE TIME V1 - END */
 </script>
+
+
 
 <script>
 /* MI AI SHARE DROPDOWN FIX V7 - START */
@@ -21850,6 +22174,30 @@ document.addEventListener(
 /* MI AI MANDATORY SHARE PASSWORD JS V1 - END */
 </script>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
 /* MI AI IOS SAFE BUNDLE JS - START */
 
@@ -23160,6 +23508,8 @@ document.addEventListener(
 /* MI AI IOS SAFE BUNDLE JS - END */
 </script>
 
+
+
 <script>
 /* MI AI LOGIN SUCCESS POPUP JS - START */
 
@@ -23527,6 +23877,17 @@ document.addEventListener(
 
 /* MI AI LOGIN SUCCESS POPUP JS - END */
 </script>
+
+
+
+
+
+
+
+
+
+
+
 
 <script>
 /* MI AI CLEAN CHAT ENGINE V9 JS - START */
@@ -25219,9 +25580,25 @@ document.addEventListener(
 /* MI AI CLEAN CHAT ENGINE V9 JS - END */
 </script>
 
+
 <script>
 
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- MI AI FIREBASE SHARE AUTH BRIDGE START -->
 <script>
@@ -25360,6 +25737,9 @@ document.addEventListener(
 })();
 </script>
 <!-- MI AI FIREBASE SHARE AUTH BRIDGE END -->
+
+
+
 
 <style>
 /* MI AI GOLD IDLE DYNAMIC ISLAND V2 CSS - START */
@@ -26198,6 +26578,7 @@ document.addEventListener(
 </script>
 <!-- === MI AI WEB PHOTO SEARCH END === -->
 
+
 <!-- MI AI CLICKABLE LINKS FINAL START -->
 
 <style>
@@ -26601,6 +26982,8 @@ document.addEventListener(
 
 <!-- MI AI CLICKABLE LINKS FINAL END -->
 
+
+
 <script>
 /* MI AI SMOOTH BOOT GUARD - START */
 (function () {
@@ -26629,6 +27012,7 @@ document.addEventListener(
 })();
 /* MI AI SMOOTH BOOT GUARD - END */
 </script>
+
 
 <script>
 /* MI_AI_CHIEF_OWNER_PERMISSION_UI_START */
@@ -28656,6 +29040,10 @@ window.fetch=function(input,init){
 /* MI AI CHAT SMOOTH V3 JS - END */
 </script>
 
+
+
+
+
 <script>
 /* MI AI STRICT ACCOUNT ISOLATION V1 START */
 (function () {
@@ -28937,6 +29325,8 @@ window.fetch=function(input,init){
 })();
 /* MI AI STRICT ACCOUNT ISOLATION V1 END */
 </script>
+
+
 
 <script>
 /* MI AI ACCOUNT ISOLATION V2 START */
@@ -30461,4 +30851,5 @@ ${rows.map(function (row) {
 <!-- MI AI CHIEF OWNER CONTROL CENTER END -->
 </body>
 </html>
+
 
