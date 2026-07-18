@@ -30311,6 +30311,374 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 /* MI AI SEND STOP CONTROL V1 END */
 </script>
 
+
+<!-- MI AI OWNER LOADING FIX START -->
+<script>
+(function () {
+    "use strict";
+
+    const OWNER_EMAIL = "teamofchatbot.miai@gmail.com";
+    const FALLBACK_ROLES = [
+        "sub_owner",
+        "chief_director",
+        "sub_director",
+        "chief_manager",
+        "sub_manager",
+        "chief_developer",
+        "sub_developer",
+        "admin",
+        "support_agent",
+        "moderator"
+    ];
+
+    const FALLBACK_PERMISSIONS = [
+        "users.view",
+        "users.search",
+        "users.edit",
+        "users.suspend",
+        "users.block",
+        "users.unblock",
+        "users.delete",
+        "users.restore",
+        "users.force_logout",
+        "chats.view_reported",
+        "chats.view_all",
+        "chats.search",
+        "chats.moderate",
+        "chats.delete_content",
+        "messages.view_reported",
+        "messages.view_all",
+        "staff.view",
+        "staff.create",
+        "staff.edit",
+        "staff.suspend",
+        "staff.remove",
+        "staff.promote",
+        "staff.demote",
+        "roles.view",
+        "roles.assign",
+        "roles.remove",
+        "roles.create_template",
+        "roles.edit_template",
+        "permissions.view",
+        "permissions.request",
+        "permissions.approve",
+        "permissions.reject",
+        "permissions.grant",
+        "permissions.revoke",
+        "support.view",
+        "support.assign",
+        "support.reply",
+        "support.close",
+        "support.escalate",
+        "moderation.view",
+        "moderation.warn",
+        "moderation.restrict",
+        "moderation.suspend",
+        "moderation.remove_content",
+        "analytics.view_basic",
+        "analytics.view_advanced",
+        "analytics.export",
+        "audit.view_own",
+        "audit.view_department",
+        "audit.view_all",
+        "audit.export",
+        "ai.view",
+        "ai.manage_models",
+        "ai.manage_prompts",
+        "ai.manage_limits",
+        "api.view_status",
+        "api.manage_configuration",
+        "api.rotate_credentials",
+        "system.view_status",
+        "system.manage_settings",
+        "system.manage_features",
+        "system.maintenance_mode",
+        "system.manage_branding",
+        "system.manage_announcements",
+        "system.backup",
+        "system.restore",
+        "security.view_alerts",
+        "security.manage_sessions",
+        "security.manage_devices",
+        "security.block_device",
+        "security.manage_ip_rules",
+        "ownership.view",
+        "ownership.transfer"
+    ];
+
+    function currentUser() {
+        try {
+            if (window.firebase && typeof firebase.auth === "function") {
+                return firebase.auth().currentUser;
+            }
+        } catch (_) {}
+
+        return (
+            window.currentFirebaseUser ||
+            window.miFirebaseUser ||
+            null
+        );
+    }
+
+    async function token() {
+        const user = currentUser();
+
+        if (!user || typeof user.getIdToken !== "function") {
+            throw new Error("Please login again.");
+        }
+
+        return user.getIdToken(false);
+    }
+
+    async function requestJson(url, options, timeoutMs) {
+        const controller = new AbortController();
+        const timeout = setTimeout(function () {
+            controller.abort();
+        }, timeoutMs || 10000);
+
+        try {
+            const headers = new Headers(
+                (options && options.headers) || {}
+            );
+
+            headers.set(
+                "Authorization",
+                "Bearer " + await token()
+            );
+
+            headers.set(
+                "Content-Type",
+                "application/json"
+            );
+
+            const response = await fetch(
+                url,
+                Object.assign({}, options || {}, {
+                    headers: headers,
+                    signal: controller.signal,
+                    cache: "no-store"
+                })
+            );
+
+            const data = await response
+                .json()
+                .catch(function () {
+                    return {};
+                });
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Request failed: " + response.status
+                );
+            }
+
+            return data;
+        }
+        finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    function ownerButton() {
+        return (
+            document.getElementById("miFinalOwnerBtn") ||
+            document.getElementById("miChiefOwnerPermissionButton") ||
+            document.querySelector("[data-mi-chief-owner-control]")
+        );
+    }
+
+    function ownerOverlay() {
+        return (
+            document.getElementById("miFinalOwnerOverlay") ||
+            document.getElementById("miOwnerOverlay") ||
+            document.getElementById("miChiefOwnerOverlay")
+        );
+    }
+
+    function showOwnerOverlayImmediately() {
+        const overlay = ownerOverlay();
+
+        if (!overlay) {
+            return false;
+        }
+
+        overlay.classList.add("open");
+        overlay.hidden = false;
+        overlay.style.display = "flex";
+
+        const status =
+            document.getElementById("miFOStatus") ||
+            document.getElementById("miOwnerStatus");
+
+        if (status) {
+            status.textContent =
+                "Chief Owner panel opened. Loading latest roles...";
+        }
+
+        return true;
+    }
+
+    function applyFallbackMetadata() {
+        if (!window.miOwnerFallbackMetadata) {
+            window.miOwnerFallbackMetadata = {
+                roles: FALLBACK_ROLES.slice(),
+                permissions: FALLBACK_PERMISSIONS.slice()
+            };
+        }
+
+        const roleSelect =
+            document.getElementById("fsRole") ||
+            document.getElementById("miStaffRole");
+
+        if (roleSelect && roleSelect.options.length === 0) {
+            roleSelect.innerHTML = FALLBACK_ROLES.map(function (role) {
+                return (
+                    '<option value="' + role + '">' +
+                    role.replaceAll("_", " ") +
+                    "</option>"
+                );
+            }).join("");
+        }
+
+        const permissionSelect =
+            document.getElementById("fpPerm") ||
+            document.getElementById("miPermissionSelect");
+
+        if (
+            permissionSelect &&
+            permissionSelect.options.length === 0
+        ) {
+            permissionSelect.innerHTML =
+                FALLBACK_PERMISSIONS.map(function (permission) {
+                    return (
+                        '<option value="' + permission + '">' +
+                        permission +
+                        "</option>"
+                    );
+                }).join("");
+        }
+    }
+
+    async function refreshMetadataWithoutBlocking() {
+        applyFallbackMetadata();
+
+        try {
+            const data = await requestJson(
+                "/api/chief-owner/rbac-options",
+                {},
+                8000
+            );
+
+            window.miOwnerFallbackMetadata = {
+                roles: Array.isArray(data.roles)
+                    ? data.roles
+                    : FALLBACK_ROLES.slice(),
+                permissions: Array.isArray(data.permissions)
+                    ? data.permissions
+                    : FALLBACK_PERMISSIONS.slice()
+            };
+
+            const status =
+                document.getElementById("miFOStatus") ||
+                document.getElementById("miOwnerStatus");
+
+            if (status) {
+                status.textContent =
+                    "Chief Owner access verified.";
+            }
+        }
+        catch (error) {
+            console.error(
+                "[MI Chief Owner] Metadata load failed:",
+                error
+            );
+
+            const status =
+                document.getElementById("miFOStatus") ||
+                document.getElementById("miOwnerStatus");
+
+            if (status) {
+                status.textContent =
+                    "Panel opened with built-in roles. Backend metadata did not load.";
+            }
+        }
+    }
+
+    function attachRescueClick() {
+        const button = ownerButton();
+
+        if (!button || button.dataset.miLoadingRescue === "1") {
+            return;
+        }
+
+        button.dataset.miLoadingRescue = "1";
+
+        button.addEventListener(
+            "click",
+            function () {
+                setTimeout(function () {
+                    if (showOwnerOverlayImmediately()) {
+                        refreshMetadataWithoutBlocking();
+                    }
+                }, 0);
+            },
+            true
+        );
+    }
+
+    function forceOwnerButtonVisible() {
+        const user = currentUser();
+        const button = ownerButton();
+
+        if (!user || !button) {
+            return;
+        }
+
+        const email = String(user.email || "")
+            .trim()
+            .toLowerCase();
+
+        if (email === OWNER_EMAIL) {
+            button.style.display = "block";
+        }
+
+        attachRescueClick();
+    }
+
+    const observer = new MutationObserver(function () {
+        forceOwnerButtonVisible();
+        applyFallbackMetadata();
+    });
+
+    observer.observe(
+        document.documentElement,
+        {
+            childList: true,
+            subtree: true
+        }
+    );
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            [200, 700, 1500, 3000].forEach(function (delay) {
+                setTimeout(forceOwnerButtonVisible, delay);
+            });
+        }
+    );
+
+    window.addEventListener(
+        "mi-admin-access-loaded",
+        forceOwnerButtonVisible
+    );
+
+    setTimeout(forceOwnerButtonVisible, 1000);
+})();
+</script>
+<!-- MI AI OWNER LOADING FIX END -->
+
 </body>
 </html>
 
