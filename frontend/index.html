@@ -31771,6 +31771,85 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
 
 
+
+<!-- MI_AI_BROWSER_LOADING_WATCHDOG_START -->
+<script>
+(function () {
+    'use strict';
+
+    let miDocumentLoadingStopped = false;
+
+    function miFinishBrowserLoading() {
+        if (miDocumentLoadingStopped) {
+            return;
+        }
+
+        miDocumentLoadingStopped = true;
+
+        try {
+            document.documentElement.classList.remove(
+                'mi-app-booting',
+                'mi-smooth-loading',
+                'loading'
+            );
+
+            if (document.body) {
+                document.body.classList.remove(
+                    'mi-app-booting',
+                    'mi-smooth-loading',
+                    'loading'
+                );
+
+                document.body.removeAttribute('aria-busy');
+            }
+        } catch (error) {
+            console.warn('[MI AI] Loading-class cleanup failed:', error);
+        }
+
+        try {
+            window.stop();
+        } catch (error) {
+            console.warn('[MI AI] window.stop failed:', error);
+        }
+
+        try {
+            window.dispatchEvent(
+                new CustomEvent('mi-ai-browser-loading-finished')
+            );
+        } catch (error) {
+            // CustomEvent is optional.
+        }
+
+        console.info('[MI AI] Browser loading watchdog completed.');
+    }
+
+    function miScheduleFinish() {
+        window.setTimeout(miFinishBrowserLoading, 3500);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener(
+            'DOMContentLoaded',
+            miScheduleFinish,
+            { once: true }
+        );
+    } else {
+        miScheduleFinish();
+    }
+
+    window.addEventListener(
+        'load',
+        function () {
+            window.setTimeout(miFinishBrowserLoading, 300);
+        },
+        { once: true }
+    );
+
+    // Final fallback if a third-party resource never completes.
+    window.setTimeout(miFinishBrowserLoading, 10000);
+})();
+</script>
+<!-- MI_AI_BROWSER_LOADING_WATCHDOG_END -->
 </body>
 </html>
 
