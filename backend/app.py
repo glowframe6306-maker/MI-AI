@@ -2765,6 +2765,206 @@ def mi_account_chat_mark_read():
 # MI AI CHIEF OWNER CONTROL REGISTRATION
 register_chief_owner_control(app)
 
+
+# MI AI CHIEF OWNER RESTORE V1 START
+import os as _mi_owner_os
+from functools import wraps as _mi_owner_wraps
+
+MI_CHIEF_OWNER_EMAIL = (
+    _mi_owner_os.getenv("CHIEF_OWNER_EMAIL")
+    or _mi_owner_os.getenv("MI_CHIEF_OWNER_EMAIL")
+    or "teamofchatbot.miai@gmail.com"
+).strip().lower()
+
+MI_CHIEF_OWNER_PERMISSIONS = {
+    "viewAdminPanel": True,
+    "viewChiefOwnerPanel": True,
+    "viewRoleRequests": True,
+    "approveRoleRequests": True,
+    "declineRoleRequests": True,
+    "assignRoles": True,
+    "removeRoles": True,
+    "manageSubOwners": True,
+    "manageAdmins": True,
+    "manageUsers": True,
+    "manageDirectMessages": True,
+    "viewSystemStatus": True,
+    "manageSystemSettings": True,
+    "viewAllNotifications": True,
+    "sendOwnerMessages": True,
+    "accessAllFeatures": True,
+}
+
+
+def _mi_owner_json(payload, status=200):
+    try:
+        from flask import jsonify
+        return jsonify(payload), status
+    except Exception:
+        return payload, status
+
+
+def _mi_owner_get_bearer_token():
+    try:
+        from flask import request
+
+        authorization = str(
+            request.headers.get("Authorization") or ""
+        ).strip()
+
+        if not authorization.lower().startswith("bearer "):
+            return ""
+
+        return authorization.split(" ", 1)[1].strip()
+    except Exception:
+        return ""
+
+
+def _mi_owner_verify_token():
+    token = _mi_owner_get_bearer_token()
+
+    if not token:
+        return None, "Missing Firebase authentication token."
+
+    try:
+        from firebase_admin import auth as firebase_auth
+
+        decoded = firebase_auth.verify_id_token(
+            token,
+            check_revoked=False,
+        )
+
+        return decoded, None
+
+    except Exception as error:
+        return None, (
+            "Invalid or expired authentication token: "
+            + str(error)
+        )
+
+
+def _mi_owner_normalize_email(value):
+    return str(value or "").strip().lower()
+
+
+def _mi_owner_access_from_token(decoded):
+    decoded = decoded or {}
+
+    email = _mi_owner_normalize_email(
+        decoded.get("email")
+    )
+
+    email_verified = bool(
+        decoded.get("email_verified", False)
+    )
+
+    is_chief_owner = bool(
+        email
+        and email == MI_CHIEF_OWNER_EMAIL
+    )
+
+    role = "chief_owner" if is_chief_owner else "user"
+
+    permissions = (
+        dict(MI_CHIEF_OWNER_PERMISSIONS)
+        if is_chief_owner
+        else {}
+    )
+
+    return {
+        "authenticated": True,
+        "uid": str(decoded.get("uid") or ""),
+        "email": email,
+        "emailVerified": email_verified,
+        "role": role,
+        "isChiefOwner": is_chief_owner,
+        "isOwner": is_chief_owner,
+        "isAdmin": is_chief_owner,
+        "permissions": permissions,
+    }
+
+
+def _mi_owner_register_routes():
+    try:
+        flask_app = globals().get("app")
+
+        if flask_app is None:
+            return
+
+        endpoint_names = {
+            str(rule.endpoint)
+            for rule in flask_app.url_map.iter_rules()
+        }
+
+        if "mi_chief_owner_me_v1" not in endpoint_names:
+
+            @flask_app.route(
+                "/api/chief-owner/me",
+                methods=["GET", "OPTIONS"],
+                endpoint="mi_chief_owner_me_v1",
+            )
+            def mi_chief_owner_me_v1():
+                try:
+                    from flask import request
+
+                    if request.method == "OPTIONS":
+                        return _mi_owner_json(
+                            {"ok": True},
+                            200,
+                        )
+                except Exception:
+                    pass
+
+                decoded, error = _mi_owner_verify_token()
+
+                if error:
+                    return _mi_owner_json(
+                        {
+                            "authenticated": False,
+                            "isChiefOwner": False,
+                            "role": "guest",
+                            "permissions": {},
+                            "error": error,
+                        },
+                        401,
+                    )
+
+                access = _mi_owner_access_from_token(decoded)
+
+                return _mi_owner_json(access, 200)
+
+        if "mi_chief_owner_health_v1" not in endpoint_names:
+
+            @flask_app.route(
+                "/api/chief-owner/health",
+                methods=["GET"],
+                endpoint="mi_chief_owner_health_v1",
+            )
+            def mi_chief_owner_health_v1():
+                return _mi_owner_json(
+                    {
+                        "ok": True,
+                        "configured": bool(
+                            MI_CHIEF_OWNER_EMAIL
+                        ),
+                        "permissions": sorted(
+                            MI_CHIEF_OWNER_PERMISSIONS.keys()
+                        ),
+                    },
+                    200,
+                )
+
+    except Exception as error:
+        print(
+            "[MI Chief Owner] Route registration failed:",
+            error,
+        )
+
+
+_mi_owner_register_routes()
+# MI AI CHIEF OWNER RESTORE V1 END
+
+
 if __name__=="__main__":
     app.run(
         host="0.0.0.0",
