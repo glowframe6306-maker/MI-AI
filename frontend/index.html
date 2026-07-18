@@ -9862,6 +9862,98 @@ span:nth-child(3) {
 })();
 </script>
 <!-- MI AI MOBILE LARGE NOTCH END -->
+
+<script>
+/* MI AI ONE TIME LOCAL CHAT PURGE V1 START */
+(function () {
+    "use strict";
+
+    var PURGE_VERSION = "mi_ai_global_local_chat_purge_20260718_v1";
+    var DONE_KEY = "__mi_ai_completed_purge__:" + PURGE_VERSION;
+
+    if (localStorage.getItem(DONE_KEY) === "done") {
+        return;
+    }
+
+    try {
+        var keysToDelete = [];
+
+        for (var i = 0; i < localStorage.length; i += 1) {
+            var key = localStorage.key(i);
+            if (!key) continue;
+
+            var lower = key.toLowerCase();
+
+            var isChatData =
+                lower.includes("chat") ||
+                lower.includes("message") ||
+                lower.includes("conversation") ||
+                lower.includes("history") ||
+                lower.includes("savedchats") ||
+                lower.includes("mi_account_cache") ||
+                lower.includes("mi_guest");
+
+            var isSafeSetting =
+                lower.includes("theme") ||
+                lower.includes("font") ||
+                lower.includes("language") ||
+                lower.includes("setting") ||
+                lower.includes("auth") ||
+                lower.includes("firebase") ||
+                lower.includes("token") ||
+                lower.includes("user");
+
+            if (isChatData && !isSafeSetting) {
+                keysToDelete.push(key);
+            }
+        }
+
+        keysToDelete.forEach(function (key) {
+            localStorage.removeItem(key);
+        });
+
+        try {
+            sessionStorage.clear();
+        } catch (error) {}
+
+        try {
+            if (window.indexedDB && indexedDB.databases) {
+                indexedDB.databases().then(function (databases) {
+                    (databases || []).forEach(function (db) {
+                        var name = String(db && db.name || "").toLowerCase();
+                        if (
+                            name.includes("chat") ||
+                            name.includes("message") ||
+                            name.includes("conversation") ||
+                            name.includes("mi-ai") ||
+                            name.includes("mi_ai")
+                        ) {
+                            indexedDB.deleteDatabase(db.name);
+                        }
+                    });
+                }).catch(function () {});
+            }
+        } catch (error) {}
+
+        localStorage.setItem(DONE_KEY, "done");
+        window.__miChatPurgeCompleted = true;
+
+        window.addEventListener("DOMContentLoaded", function () {
+            var chat = document.getElementById("chat");
+            var list = document.getElementById("chatList");
+
+            if (chat) chat.innerHTML = "";
+            if (list) list.innerHTML = "";
+        }, { once: true });
+
+        console.log("[MI AI] One-time local chat purge completed.");
+    } catch (error) {
+        console.error("[MI AI] One-time local chat purge failed:", error);
+    }
+})();
+/* MI AI ONE TIME LOCAL CHAT PURGE V1 END */
+</script>
+
 </head>
 
 <body>
