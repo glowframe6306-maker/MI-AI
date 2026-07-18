@@ -6362,6 +6362,222 @@ select[data-mi-ios-ready="true"] {
 </script>
 
 <!-- MI AI FIREBASE AUTH END -->
+
+<script>
+/* MI AI FORCE CLEAR ALL CHATS V3 START */
+(function () {
+    "use strict";
+
+    var PURGE_VERSION =
+        "mi_ai_force_clear_all_chats_messages_20260718_v3";
+
+    var DONE_KEY =
+        "__mi_ai_chat_purge_completed__:" + PURGE_VERSION;
+
+    function isFirebaseAuthKey(key) {
+        var lower = String(key || "").toLowerCase();
+
+        return (
+            lower.indexOf("firebase:authuser:") === 0 ||
+            lower.indexOf("firebase:previous_websocket_failure") === 0 ||
+            lower.indexOf("firebase-heartbeat") !== -1 ||
+            lower.indexOf("firebase-installations") !== -1
+        );
+    }
+
+    function isAllowedSettingKey(key) {
+        var lower = String(key || "").toLowerCase();
+
+        return (
+            lower.indexOf("theme") !== -1 ||
+            lower.indexOf("font_size") !== -1 ||
+            lower.indexOf("fontsize") !== -1 ||
+            lower.indexOf("font-size") !== -1 ||
+            lower.indexOf("language") !== -1 ||
+            lower.indexOf("locale") !== -1 ||
+            lower.indexOf("accent") !== -1 ||
+            lower.indexOf("color") !== -1 ||
+            lower.indexOf("appearance") !== -1 ||
+            lower.indexOf("setting") !== -1
+        );
+    }
+
+    function clearLocalStorageChats() {
+        var preserved = {};
+        var keys = [];
+
+        for (var index = 0; index < localStorage.length; index += 1) {
+            var key = localStorage.key(index);
+
+            if (key) {
+                keys.push(key);
+            }
+        }
+
+        keys.forEach(function (key) {
+            if (
+                isFirebaseAuthKey(key) ||
+                isAllowedSettingKey(key)
+            ) {
+                try {
+                    preserved[key] = localStorage.getItem(key);
+                } catch (error) {}
+            }
+        });
+
+        localStorage.clear();
+
+        Object.keys(preserved).forEach(function (key) {
+            try {
+                localStorage.setItem(key, preserved[key]);
+            } catch (error) {}
+        });
+
+        localStorage.setItem(DONE_KEY, "done");
+    }
+
+    function clearSessionStorageChats() {
+        try {
+            sessionStorage.clear();
+        } catch (error) {}
+    }
+
+    function clearIndexedDBChats() {
+        try {
+            if (
+                !window.indexedDB ||
+                typeof indexedDB.databases !== "function"
+            ) {
+                return;
+            }
+
+            indexedDB.databases()
+                .then(function (databases) {
+                    (databases || []).forEach(function (database) {
+                        var databaseName =
+                            String(
+                                database &&
+                                database.name ||
+                                ""
+                            );
+
+                        var lower =
+                            databaseName.toLowerCase();
+
+                        var preserveFirebaseAuth =
+                            lower.indexOf(
+                                "firebaseLocalStorageDb"
+                                    .toLowerCase()
+                            ) !== -1;
+
+                        var preserveFirebaseInstallations =
+                            lower.indexOf(
+                                "firebase-installations"
+                            ) !== -1;
+
+                        if (
+                            !preserveFirebaseAuth &&
+                            !preserveFirebaseInstallations
+                        ) {
+                            try {
+                                indexedDB.deleteDatabase(
+                                    databaseName
+                                );
+                            } catch (error) {}
+                        }
+                    });
+                })
+                .catch(function () {});
+        } catch (error) {}
+    }
+
+    function clearBrowserCaches() {
+        try {
+            if (!window.caches) {
+                return;
+            }
+
+            caches.keys()
+                .then(function (cacheNames) {
+                    return Promise.all(
+                        cacheNames.map(function (cacheName) {
+                            return caches.delete(cacheName);
+                        })
+                    );
+                })
+                .catch(function () {});
+        } catch (error) {}
+    }
+
+    function clearVisibleChatUI() {
+        var selectors = [
+            "#chat",
+            "#chatList",
+            "#chat-list",
+            "#savedChats",
+            "#saved-chats",
+            ".chat-list",
+            ".saved-chats",
+            "[data-chat-list]"
+        ];
+
+        selectors.forEach(function (selector) {
+            var elements =
+                document.querySelectorAll(selector);
+
+            elements.forEach(function (element) {
+                element.innerHTML = "";
+            });
+        });
+    }
+
+    function executePurge() {
+        try {
+            clearLocalStorageChats();
+            clearSessionStorageChats();
+            clearIndexedDBChats();
+            clearBrowserCaches();
+
+            window.__MI_AI_FORCE_CHAT_PURGE_DONE__ = true;
+
+            console.log(
+                "[MI AI] All local chats and messages cleared."
+            );
+        } catch (error) {
+            console.error(
+                "[MI AI] Chat purge failed:",
+                error
+            );
+        }
+    }
+
+    if (localStorage.getItem(DONE_KEY) !== "done") {
+        executePurge();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+                clearVisibleChatUI();
+
+                setTimeout(clearVisibleChatUI, 300);
+                setTimeout(clearVisibleChatUI, 1000);
+                setTimeout(clearVisibleChatUI, 2500);
+            },
+            { once: true }
+        );
+    } else {
+        clearVisibleChatUI();
+
+        setTimeout(clearVisibleChatUI, 300);
+        setTimeout(clearVisibleChatUI, 1000);
+        setTimeout(clearVisibleChatUI, 2500);
+    }
+})();
+/* MI AI FORCE CLEAR ALL CHATS V3 END */
+</script>
+
 </head>
 
 <body>
