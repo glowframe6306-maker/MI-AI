@@ -10401,6 +10401,173 @@ span:nth-child(3) {
 /* MI AI CHIEF OWNER FRONTEND RESTORE V1 END */
 </script>
 
+
+<style>
+/* MI AI ACCOUNT ACTION NOTICE STYLE V1 START */
+#miAccountActionOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483600;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.56);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+#miAccountActionOverlay.mi-visible {
+    display: flex;
+}
+
+#miAccountActionCard {
+    width: min(440px, 100%);
+    max-height: min(680px, calc(100vh - 40px));
+    overflow-y: auto;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 26px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(34, 34, 38, 0.96),
+            rgba(13, 13, 16, 0.97)
+        );
+    box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+    text-align: center;
+}
+
+#miAccountActionIcon {
+    display: grid;
+    place-items: center;
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 17px;
+    border-radius: 21px;
+    background: rgba(255, 82, 82, 0.15);
+    font-size: 30px;
+}
+
+#miAccountActionTitle {
+    margin: 0;
+    font-size: clamp(21px, 5vw, 27px);
+    line-height: 1.18;
+    font-weight: 760;
+    letter-spacing: -0.025em;
+}
+
+#miAccountActionRole {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    padding: 7px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    font-size: 13px;
+    font-weight: 680;
+}
+
+#miAccountActionMessage {
+    margin: 17px 0 0;
+    color: rgba(255, 255, 255, 0.77);
+    font-size: 15px;
+    line-height: 1.62;
+    white-space: pre-line;
+}
+
+#miAccountActionReasonWrap {
+    display: none;
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 17px;
+    background: rgba(255, 255, 255, 0.06);
+    text-align: left;
+}
+
+#miAccountActionReasonWrap.mi-visible {
+    display: block;
+}
+
+#miAccountActionReasonLabel {
+    margin-bottom: 5px;
+    color: rgba(255, 255, 255, 0.56);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+#miAccountActionReason {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#miAccountActionContacts {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.mi-account-contact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 48px;
+    padding: 11px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 680;
+    cursor: pointer;
+    transition:
+        transform 150ms ease,
+        background 150ms ease;
+}
+
+.mi-account-contact:hover {
+    background: rgba(255, 255, 255, 0.13);
+}
+
+.mi-account-contact:active {
+    transform: scale(0.975);
+}
+
+#miAccountActionClose {
+    width: 100%;
+    min-height: 47px;
+    margin-top: 13px;
+    border: 0;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #111114;
+    font-size: 14px;
+    font-weight: 760;
+    cursor: pointer;
+}
+
+#miAccountActionClose:active {
+    transform: scale(0.98);
+}
+
+html.mi-account-blocked,
+body.mi-account-blocked {
+    overflow: hidden;
+}
+/* MI AI ACCOUNT ACTION NOTICE STYLE V1 END */
+</style>
+
 </head>
 
 <body>
@@ -30916,6 +31083,642 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 })();
 </script>
 <!-- MI_AI_LOADING_FAILSAFE_V1 END -->
+
+<script>
+/* MI AI ACCOUNT ACTION NOTICE V1 START */
+(function () {
+    "use strict";
+
+    var SUPPORT_EMAIL = "miai.customerservice@gmail.com";
+    var WHATSAPP_NUMBER = "94756390621";
+
+    var originalFetch =
+        typeof window.fetch === "function"
+            ? window.fetch.bind(window)
+            : null;
+
+    var lastNoticeSignature = "";
+    var lastNoticeTime = 0;
+
+    var restrictedWords = [
+        "chat checked",
+        "chats checked",
+        "message checked",
+        "messages checked",
+        "chat reviewed",
+        "chats reviewed",
+        "message reviewed",
+        "messages reviewed",
+        "conversation checked",
+        "conversations checked",
+        "conversation reviewed",
+        "conversations reviewed",
+        "chat monitored",
+        "chats monitored",
+        "messages monitored"
+    ];
+
+    function cleanText(value) {
+        var text = String(value || "").trim();
+
+        restrictedWords.forEach(function (word) {
+            var expression = new RegExp(
+                word.replace(
+                    /[.*+?^${}()|[\]\\]/g,
+                    "\\$&"
+                ),
+                "gi"
+            );
+
+            text = text.replace(expression, "");
+        });
+
+        return text
+            .replace(/\s{2,}/g, " ")
+            .replace(/\s+([.,!?])/g, "$1")
+            .trim();
+    }
+
+    function normalizeRole(role) {
+        var raw = String(role || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[_-]+/g, " ");
+
+        var roles = {
+            "chief owner": "Chief Owner",
+            "owner": "Chief Owner",
+            "chief admin": "Chief Admin",
+            "sub owner": "Sub Owner",
+            "super admin": "Super Admin",
+            "admin": "Admin",
+            "moderator": "Moderator",
+            "support": "Support Team",
+            "support team": "Support Team",
+            "system": "MI AI Team"
+        };
+
+        if (roles[raw]) {
+            return roles[raw];
+        }
+
+        if (!raw) {
+            return "MI AI Team";
+        }
+
+        return raw.replace(
+            /\b\w/g,
+            function (character) {
+                return character.toUpperCase();
+            }
+        );
+    }
+
+    function normalizeAction(action, data) {
+        var raw = String(action || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[_\s-]+/g, "");
+
+        if (
+            raw === "block" ||
+            raw === "blocked" ||
+            data && data.blocked === true
+        ) {
+            return "blocked";
+        }
+
+        if (
+            raw === "suspend" ||
+            raw === "suspended" ||
+            data && data.suspended === true
+        ) {
+            return "suspended";
+        }
+
+        if (
+            raw === "restrict" ||
+            raw === "restricted" ||
+            data && data.restricted === true
+        ) {
+            return "restricted";
+        }
+
+        if (
+            raw === "disable" ||
+            raw === "disabled"
+        ) {
+            return "disabled";
+        }
+
+        if (
+            raw === "warning" ||
+            raw === "warn" ||
+            raw === "warned"
+        ) {
+            return "warning";
+        }
+
+        if (
+            raw === "rolechanged" ||
+            raw === "roleupdated"
+        ) {
+            return "role_changed";
+        }
+
+        if (
+            raw === "unblocked" ||
+            raw === "restored" ||
+            raw === "activated"
+        ) {
+            return "restored";
+        }
+
+        return String(action || "updated")
+            .trim()
+            .toLowerCase();
+    }
+
+    function getActionContent(action, role) {
+        var roleText = normalizeRole(role);
+
+        var contents = {
+            blocked: {
+                icon: "⛔",
+                title: "Your Account Was Blocked",
+                message:
+                    "Your account was blocked by " +
+                    roleText +
+                    ". Please send a review request to our team."
+            },
+
+            suspended: {
+                icon: "⏸️",
+                title: "Your Account Was Suspended",
+                message:
+                    "Your account was suspended by " +
+                    roleText +
+                    ". Please contact our team to request a review."
+            },
+
+            restricted: {
+                icon: "⚠️",
+                title: "Your Account Was Restricted",
+                message:
+                    "Some account features were restricted by " +
+                    roleText +
+                    ". Please contact our team for a review."
+            },
+
+            disabled: {
+                icon: "🔒",
+                title: "Your Account Was Disabled",
+                message:
+                    "Your account was disabled by " +
+                    roleText +
+                    ". Please send a review request to our team."
+            },
+
+            warning: {
+                icon: "⚠️",
+                title: "Account Warning",
+                message:
+                    "An account warning was issued by " +
+                    roleText +
+                    ". Please review the notice and contact our team if required."
+            },
+
+            role_changed: {
+                icon: "🛡️",
+                title: "Your Account Role Was Updated",
+                message:
+                    "Your account role was updated by " +
+                    roleText +
+                    "."
+            },
+
+            restored: {
+                icon: "✅",
+                title: "Your Account Access Was Restored",
+                message:
+                    "Your account access was restored by " +
+                    roleText +
+                    "."
+            },
+
+            updated: {
+                icon: "ℹ️",
+                title: "Your Account Was Updated",
+                message:
+                    "An account change was made by " +
+                    roleText +
+                    ". Please contact our team if you need assistance."
+            }
+        };
+
+        return contents[action] || contents.updated;
+    }
+
+    function ensureModal() {
+        var existing =
+            document.getElementById(
+                "miAccountActionOverlay"
+            );
+
+        if (existing) {
+            return existing;
+        }
+
+        var overlay = document.createElement("div");
+
+        overlay.id = "miAccountActionOverlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute(
+            "aria-labelledby",
+            "miAccountActionTitle"
+        );
+
+        overlay.innerHTML =
+            '<div id="miAccountActionCard">' +
+                '<div id="miAccountActionIcon">ℹ️</div>' +
+                '<h2 id="miAccountActionTitle">' +
+                    'Account Notice' +
+                '</h2>' +
+                '<div id="miAccountActionRole">' +
+                    'Changed by MI AI Team' +
+                '</div>' +
+                '<p id="miAccountActionMessage"></p>' +
+                '<div id="miAccountActionReasonWrap">' +
+                    '<div id="miAccountActionReasonLabel">' +
+                        'Reason' +
+                    '</div>' +
+                    '<div id="miAccountActionReason"></div>' +
+                '</div>' +
+                '<div id="miAccountActionContacts">' +
+                    '<a ' +
+                        'id="miAccountActionEmail" ' +
+                        'class="mi-account-contact" ' +
+                        'href="#">' +
+                        '✉️ Email Review Team' +
+                    '</a>' +
+                    '<a ' +
+                        'id="miAccountActionWhatsApp" ' +
+                        'class="mi-account-contact" ' +
+                        'href="#" ' +
+                        'target="_blank" ' +
+                        'rel="noopener noreferrer">' +
+                        '💬 Contact on WhatsApp' +
+                    '</a>' +
+                '</div>' +
+                '<button ' +
+                    'id="miAccountActionClose" ' +
+                    'type="button">' +
+                    'OK' +
+                '</button>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+
+        var closeButton =
+            document.getElementById(
+                "miAccountActionClose"
+            );
+
+        closeButton.addEventListener(
+            "click",
+            function () {
+                overlay.classList.remove("mi-visible");
+
+                document.documentElement.classList.remove(
+                    "mi-account-blocked"
+                );
+
+                if (document.body) {
+                    document.body.classList.remove(
+                        "mi-account-blocked"
+                    );
+                }
+            }
+        );
+
+        return overlay;
+    }
+
+    function showNotice(input) {
+        var data = input || {};
+
+        var action = normalizeAction(
+            data.action ||
+            data.type ||
+            data.status ||
+            data.accountStatus ||
+            data.moderationAction,
+            data
+        );
+
+        var role = normalizeRole(
+            data.actorRole ||
+            data.performedByRole ||
+            data.changedByRole ||
+            data.roleName ||
+            data.adminRole ||
+            data.sourceRole
+        );
+
+        var content = getActionContent(action, role);
+
+        var customTitle = cleanText(
+            data.title ||
+            data.noticeTitle
+        );
+
+        var customMessage = cleanText(
+            data.message ||
+            data.noticeMessage
+        );
+
+        var reason = cleanText(
+            data.reason ||
+            data.actionReason ||
+            data.moderationReason
+        );
+
+        var signature = JSON.stringify({
+            action: action,
+            role: role,
+            title: customTitle,
+            message: customMessage,
+            reason: reason
+        });
+
+        var now = Date.now();
+
+        if (
+            signature === lastNoticeSignature &&
+            now - lastNoticeTime < 2500
+        ) {
+            return;
+        }
+
+        lastNoticeSignature = signature;
+        lastNoticeTime = now;
+
+        var overlay = ensureModal();
+
+        document.getElementById(
+            "miAccountActionIcon"
+        ).textContent = content.icon;
+
+        document.getElementById(
+            "miAccountActionTitle"
+        ).textContent =
+            customTitle || content.title;
+
+        document.getElementById(
+            "miAccountActionRole"
+        ).textContent =
+            "Changed by " + role;
+
+        document.getElementById(
+            "miAccountActionMessage"
+        ).textContent =
+            customMessage || content.message;
+
+        var reasonWrap =
+            document.getElementById(
+                "miAccountActionReasonWrap"
+            );
+
+        var reasonElement =
+            document.getElementById(
+                "miAccountActionReason"
+            );
+
+        if (reason) {
+            reasonElement.textContent = reason;
+            reasonWrap.classList.add("mi-visible");
+        } else {
+            reasonElement.textContent = "";
+            reasonWrap.classList.remove("mi-visible");
+        }
+
+        var emailLink =
+            document.getElementById(
+                "miAccountActionEmail"
+            );
+
+        var emailSubject =
+            "MI AI Account Review Request";
+
+        var emailBody =
+            "Hello MI AI Team,%0D%0A%0D%0A" +
+            "I would like to request a review of my account action.%0D%0A" +
+            "Action: " +
+            encodeURIComponent(action) +
+            "%0D%0A" +
+            "Changed by: " +
+            encodeURIComponent(role) +
+            "%0D%0A%0D%0A" +
+            "Thank you.";
+
+        emailLink.href =
+            "mailto:" +
+            encodeURIComponent(SUPPORT_EMAIL) +
+            "?subject=" +
+            encodeURIComponent(emailSubject) +
+            "&body=" +
+            emailBody;
+
+        emailLink.textContent =
+            "✉️ " + SUPPORT_EMAIL;
+
+        var whatsappLink =
+            document.getElementById(
+                "miAccountActionWhatsApp"
+            );
+
+        var whatsappText =
+            "Hello MI AI Team, I would like to request a review of my account action. " +
+            "Action: " +
+            action +
+            ". Changed by: " +
+            role +
+            ".";
+
+        whatsappLink.href =
+            "https://wa.me/" +
+            WHATSAPP_NUMBER +
+            "?text=" +
+            encodeURIComponent(whatsappText);
+
+        whatsappLink.textContent =
+            "💬 WhatsApp: +" + WHATSAPP_NUMBER;
+
+        overlay.classList.add("mi-visible");
+
+        document.documentElement.classList.add(
+            "mi-account-blocked"
+        );
+
+        if (document.body) {
+            document.body.classList.add(
+                "mi-account-blocked"
+            );
+        }
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "mi-account-action-notice-shown",
+                {
+                    detail: {
+                        action: action,
+                        actorRole: role,
+                        reason: reason
+                    }
+                }
+            )
+        );
+    }
+
+    function extractNoticeData(payload) {
+        if (
+            !payload ||
+            typeof payload !== "object"
+        ) {
+            return null;
+        }
+
+        var candidates = [
+            payload.accountAction,
+            payload.moderation,
+            payload.accountModeration,
+            payload.accountNotice,
+            payload.accountStatusChange,
+            payload.statusNotice,
+            payload.data &&
+                payload.data.accountAction,
+            payload.data &&
+                payload.data.moderation,
+            payload.user &&
+                payload.user.accountAction
+        ];
+
+        for (
+            var index = 0;
+            index < candidates.length;
+            index += 1
+        ) {
+            if (
+                candidates[index] &&
+                typeof candidates[index] === "object"
+            ) {
+                return candidates[index];
+            }
+        }
+
+        var hasAction =
+            payload.blocked === true ||
+            payload.suspended === true ||
+            payload.restricted === true ||
+            payload.accountStatus === "blocked" ||
+            payload.accountStatus === "suspended" ||
+            payload.accountStatus === "restricted";
+
+        if (hasAction) {
+            return payload;
+        }
+
+        return null;
+    }
+
+    window.miShowAccountActionNotice = showNotice;
+
+    window.addEventListener(
+        "mi-account-action",
+        function (event) {
+            showNotice(
+                event && event.detail
+                    ? event.detail
+                    : {}
+            );
+        }
+    );
+
+    window.addEventListener(
+        "mi-account-status-changed",
+        function (event) {
+            showNotice(
+                event && event.detail
+                    ? event.detail
+                    : {}
+            );
+        }
+    );
+
+    if (originalFetch) {
+        window.fetch = async function () {
+            var response = await originalFetch.apply(
+                window,
+                arguments
+            );
+
+            try {
+                var contentType = String(
+                    response.headers.get(
+                        "content-type"
+                    ) || ""
+                ).toLowerCase();
+
+                if (
+                    contentType.indexOf(
+                        "application/json"
+                    ) !== -1
+                ) {
+                    var clonedResponse =
+                        response.clone();
+
+                    clonedResponse
+                        .json()
+                        .then(function (payload) {
+                            var notice =
+                                extractNoticeData(
+                                    payload
+                                );
+
+                            if (notice) {
+                                showNotice(notice);
+                            }
+                        })
+                        .catch(function () {});
+                }
+            } catch (error) {}
+
+            return response;
+        };
+    }
+
+    function initialize() {
+        ensureModal();
+
+        console.log(
+            "[MI AI] Account action role notice ready."
+        );
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialize,
+            { once: true }
+        );
+    } else {
+        initialize();
+    }
+})();
+/* MI AI ACCOUNT ACTION NOTICE V1 END */
+</script>
+
 </body>
 </html>
 
