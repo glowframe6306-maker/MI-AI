@@ -797,7 +797,6 @@ body.force-mobile-layout #settingsPanel {
   top:76px;
 }
 
-
 /* MI AI IPHONE GLASS BUTTONS - START */
 
 :root {
@@ -2909,7 +2908,6 @@ body.settings-modal-open {
 
 /* MI AI CENTERED SETTINGS - END */
 
-
 /* MI AI LANGUAGE THEME GLASS - START */
 
 :root {
@@ -3262,7 +3260,6 @@ body,
 }
 
 /* MI AI LANGUAGE THEME GLASS - END */
-
 
 /* MI AI COPY BUTTON BELOW REPLY - START */
 
@@ -4746,7 +4743,6 @@ body.mi-keyboard-visible .composer {
     display: none !important;
 }
 
-
 /* =========================================================
    AI COPY BUTTON BELOW REPLY
    ========================================================= */
@@ -4883,7 +4879,6 @@ body.mi-keyboard-visible .composer {
 #chat > .ai > .mi-ai-functional-copy::after {
     display: none !important;
 }
-
 
 /* =========================================================
    LARGER AND MORE COMFORTABLE PHONE DISPLAY
@@ -5212,8 +5207,6 @@ body.mi-keyboard-visible .composer {
 }
 
 /* MI AI SETTINGS ACCORDION COPY MOBILE - END */
-
-
 
 /* MI AI IOS SELECT AND ICON SYSTEM - START */
 
@@ -6119,7 +6112,6 @@ body.mi-app-booting #chatList {
 }
 /* MI AI SMOOTH PERFORMANCE FIX - END */
 
-
 /* MI AI CHAT SMOOTH V3 CSS - START */
 #chat,#chatList,.messages,.chat-messages{contain:layout style}
 #chat>*,#chatList>*,.messages>*,.chat-messages>*{content-visibility:auto;contain-intrinsic-size:auto 72px}
@@ -6606,8 +6598,6 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 <!-- MI AI FIREBASE AUTH END -->
 
-
-
 <style>
 /* MI AI SHARED CHAT ISOLATION V1 - START */
 
@@ -6977,7 +6967,6 @@ body.mi-share-password-locked .composer {
 
 <style>
 
-
 /* MI AI IOS SAFE BUNDLE CSS - START */
 
 /* =========================================================
@@ -7131,7 +7120,6 @@ body.mi-share-password-locked .composer {
     }
 }
 
-
 /* =========================================================
    IOS TOASTS
    ========================================================= */
@@ -7274,7 +7262,6 @@ body.mi-share-password-locked .composer {
     }
 }
 
-
 /* =========================================================
    BUTTON HAPTIC / SPRING ANIMATION
    ========================================================= */
@@ -7331,7 +7318,6 @@ button,
             scale(1);
     }
 }
-
 
 /* =========================================================
    IOS BOTTOM SHEET
@@ -7596,7 +7582,6 @@ button,
     font-weight: 800 !important;
 }
 
-
 /* =========================================================
    MOBILE
    ========================================================= */
@@ -7643,7 +7628,6 @@ button,
     }
 }
 
-
 /* =========================================================
    ACCESSIBILITY
    ========================================================= */
@@ -7666,8 +7650,6 @@ button,
 }
 
 /* MI AI IOS SAFE BUNDLE CSS - END */
-
-
 
 /* MI AI LOGIN SUCCESS POPUP CSS - START */
 
@@ -8136,17 +8118,6 @@ button,
 
 /* MI AI LOGIN SUCCESS POPUP CSS - END */
 
-
-
-
-
-
-
-
-
-
-
-
 /* MI AI CLEAN CHAT ENGINE V9 CSS - START */
 
 #chat {
@@ -8520,7 +8491,6 @@ button[onclick*="newChat"].mi-v9-new-chat-running {
 }
 
 /* MI AI CLEAN CHAT ENGINE V9 CSS - END */
-
 
 /* MI AI WELCOME ANIMATION V10 CSS - START */
 
@@ -9572,19 +9542,6 @@ span:nth-child(3) {
 
 /* MI AI WELCOME ANIMATION V10 CSS - END */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 </style>
 <!-- MI AI MOBILE LARGE NOTCH START -->
 <style id="mi-mobile-large-notch-style">
@@ -9862,224 +9819,6 @@ span:nth-child(3) {
 })();
 </script>
 <!-- MI AI MOBILE LARGE NOTCH END -->
-
-
-
-
-<script>
-/* MI AI FORCE CLEAR ALL CHATS V3 START */
-(function () {
-    "use strict";
-
-    var PURGE_VERSION =
-        "mi_ai_force_clear_all_chats_messages_20260718_v3";
-
-    var DONE_KEY =
-        "__mi_ai_chat_purge_completed__:" + PURGE_VERSION;
-
-    function isFirebaseAuthKey(key) {
-        var lower = String(key || "").toLowerCase();
-
-        return (
-            lower.indexOf("firebase:authuser:") === 0 ||
-            lower.indexOf("firebase:previous_websocket_failure") === 0 ||
-            lower.indexOf("firebase-heartbeat") !== -1 ||
-            lower.indexOf("firebase-installations") !== -1
-        );
-    }
-
-    function isAllowedSettingKey(key) {
-        var lower = String(key || "").toLowerCase();
-
-        return (
-            lower.indexOf("theme") !== -1 ||
-            lower.indexOf("font_size") !== -1 ||
-            lower.indexOf("fontsize") !== -1 ||
-            lower.indexOf("font-size") !== -1 ||
-            lower.indexOf("language") !== -1 ||
-            lower.indexOf("locale") !== -1 ||
-            lower.indexOf("accent") !== -1 ||
-            lower.indexOf("color") !== -1 ||
-            lower.indexOf("appearance") !== -1 ||
-            lower.indexOf("setting") !== -1
-        );
-    }
-
-    function clearLocalStorageChats() {
-        var preserved = {};
-        var keys = [];
-
-        for (var index = 0; index < localStorage.length; index += 1) {
-            var key = localStorage.key(index);
-
-            if (key) {
-                keys.push(key);
-            }
-        }
-
-        keys.forEach(function (key) {
-            if (
-                isFirebaseAuthKey(key) ||
-                isAllowedSettingKey(key)
-            ) {
-                try {
-                    preserved[key] = localStorage.getItem(key);
-                } catch (error) {}
-            }
-        });
-
-        localStorage.clear();
-
-        Object.keys(preserved).forEach(function (key) {
-            try {
-                localStorage.setItem(key, preserved[key]);
-            } catch (error) {}
-        });
-
-        localStorage.setItem(DONE_KEY, "done");
-    }
-
-    function clearSessionStorageChats() {
-        try {
-            sessionStorage.clear();
-        } catch (error) {}
-    }
-
-    function clearIndexedDBChats() {
-        try {
-            if (
-                !window.indexedDB ||
-                typeof indexedDB.databases !== "function"
-            ) {
-                return;
-            }
-
-            indexedDB.databases()
-                .then(function (databases) {
-                    (databases || []).forEach(function (database) {
-                        var databaseName =
-                            String(
-                                database &&
-                                database.name ||
-                                ""
-                            );
-
-                        var lower =
-                            databaseName.toLowerCase();
-
-                        var preserveFirebaseAuth =
-                            lower.indexOf(
-                                "firebaseLocalStorageDb"
-                                    .toLowerCase()
-                            ) !== -1;
-
-                        var preserveFirebaseInstallations =
-                            lower.indexOf(
-                                "firebase-installations"
-                            ) !== -1;
-
-                        if (
-                            !preserveFirebaseAuth &&
-                            !preserveFirebaseInstallations
-                        ) {
-                            try {
-                                indexedDB.deleteDatabase(
-                                    databaseName
-                                );
-                            } catch (error) {}
-                        }
-                    });
-                })
-                .catch(function () {});
-        } catch (error) {}
-    }
-
-    function clearBrowserCaches() {
-        try {
-            if (!window.caches) {
-                return;
-            }
-
-            caches.keys()
-                .then(function (cacheNames) {
-                    return Promise.all(
-                        cacheNames.map(function (cacheName) {
-                            return caches.delete(cacheName);
-                        })
-                    );
-                })
-                .catch(function () {});
-        } catch (error) {}
-    }
-
-    function clearVisibleChatUI() {
-        var selectors = [
-            "#chat",
-            "#chatList",
-            "#chat-list",
-            "#savedChats",
-            "#saved-chats",
-            ".chat-list",
-            ".saved-chats",
-            "[data-chat-list]"
-        ];
-
-        selectors.forEach(function (selector) {
-            var elements =
-                document.querySelectorAll(selector);
-
-            elements.forEach(function (element) {
-                element.innerHTML = "";
-            });
-        });
-    }
-
-    function executePurge() {
-        try {
-            clearLocalStorageChats();
-            clearSessionStorageChats();
-            clearIndexedDBChats();
-            clearBrowserCaches();
-
-            window.__MI_AI_FORCE_CHAT_PURGE_DONE__ = true;
-
-            console.log(
-                "[MI AI] All local chats and messages cleared."
-            );
-        } catch (error) {
-            console.error(
-                "[MI AI] Chat purge failed:",
-                error
-            );
-        }
-    }
-
-    if (localStorage.getItem(DONE_KEY) !== "done") {
-        executePurge();
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            function () {
-                clearVisibleChatUI();
-
-                setTimeout(clearVisibleChatUI, 300);
-                setTimeout(clearVisibleChatUI, 1000);
-                setTimeout(clearVisibleChatUI, 2500);
-            },
-            { once: true }
-        );
-    } else {
-        clearVisibleChatUI();
-
-        setTimeout(clearVisibleChatUI, 300);
-        setTimeout(clearVisibleChatUI, 1000);
-        setTimeout(clearVisibleChatUI, 2500);
-    }
-})();
-/* MI AI FORCE CLEAR ALL CHATS V3 END */
-</script>
 
 </head>
 
@@ -12078,7 +11817,6 @@ if(ids.length > 9){
     chatList.style.maxHeight='none';
 }
 
-
 ids.sort((a,b)=>{
 
 if(chats[a].pin && !chats[b].pin) return -1;
@@ -12115,10 +11853,8 @@ e.preventDefault();
 
 selectedChat=id;
 
-
 document.getElementById("pinOption").innerHTML =
 chats[id].pin ? "✕ Unpin" : "📌 Pin";
-
 
 menu.style.display="block";
 menu.style.left=e.pageX+"px";
@@ -12271,9 +12007,6 @@ renderList();
 menu.style.display="none";
 
 }
-
-
-
 
 let shareOverlayCloseAllowed = false;
 
@@ -12477,7 +12210,6 @@ function appendAiMessage(container, text) {
   container.appendChild(wrap);
   return wrap;
 }
-
 
 async function copyTextToClipboard(text) {
   try {
@@ -13422,7 +13154,6 @@ box.style.width="280px";
 box.style.textAlign="center";
 box.style.boxShadow="0 0 25px #ff7a18";
 
-
 box.innerHTML=`
 
 <h3>🎧 Customer Support</h3>
@@ -13433,13 +13164,11 @@ box.innerHTML=`
 REQUEST VIA EMAIL
 </button>
 
-
 <p>💬 WhatsApp</p>
 
 <button onclick="openWhatsApp()">
 VIA WHATSAPP
 </button>
-
 
 <button onclick="this.parentElement.remove()">
 ✕ Close
@@ -13451,8 +13180,6 @@ document.body.appendChild(box);
 
 }
 
-
-
 /* EMAIL */
 
 function openEmail(){
@@ -13463,8 +13190,6 @@ window.open(
 );
 
 }
-
-
 
 /* WHATSAPP */
 
@@ -13929,7 +13654,6 @@ document.addEventListener(
 
 /* MI AI CENTERED SETTINGS JS - END */
 </script>
-
 
 <script>
 /* MI AI UI TRANSLATION SYSTEM - START */
@@ -14738,7 +14462,6 @@ document.addEventListener(
 
 /* MI AI UI TRANSLATION SYSTEM - END */
 </script>
-
 
 <script>
 /* MI AI CHAT MORE MENU JS - START */
@@ -15756,8 +15479,6 @@ document.addEventListener(
 
 /* MI AI FOUR CHAT OPTIONS FIX - END */
 </script>
-
-
 
 <script>
 /* MI AI MOBILE COMFORT JS - START */
@@ -16924,8 +16645,6 @@ document.addEventListener(
 /* MI AI SETTINGS ACCORDION COPY MOBILE JS - END */
 </script>
 
-
-
 <script>
 /* MI AI IOS SELECT AND ICON SYSTEM JS - START */
 
@@ -17719,12 +17438,6 @@ document.addEventListener(
 /* MI AI IOS SELECT AND ICON SYSTEM JS - END */
 </script>
 
-
-
-
-
-
-
 <script>
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - START */
 
@@ -18159,27 +17872,6 @@ document.addEventListener(
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - END */
 </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script>
 /* MI AI SAFE UI UNBLOCK - START */
 (function () {
@@ -18323,8 +18015,6 @@ document.addEventListener(
 })();
 /* MI AI SAFE UI UNBLOCK - END */
 </script>
-
-
 
 <script>
 /* MI AI SAFE ACCOUNT CHAT RESTORE V4 - START */
@@ -19809,8 +19499,6 @@ document.addEventListener(
 
 /* MI AI LIVE SEARCH AND DEVICE TIME V1 - END */
 </script>
-
-
 
 <script>
 /* MI AI SHARE DROPDOWN FIX V7 - START */
@@ -22162,30 +21850,6 @@ document.addEventListener(
 /* MI AI MANDATORY SHARE PASSWORD JS V1 - END */
 </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script>
 /* MI AI IOS SAFE BUNDLE JS - START */
 
@@ -23496,8 +23160,6 @@ document.addEventListener(
 /* MI AI IOS SAFE BUNDLE JS - END */
 </script>
 
-
-
 <script>
 /* MI AI LOGIN SUCCESS POPUP JS - START */
 
@@ -23865,17 +23527,6 @@ document.addEventListener(
 
 /* MI AI LOGIN SUCCESS POPUP JS - END */
 </script>
-
-
-
-
-
-
-
-
-
-
-
 
 <script>
 /* MI AI CLEAN CHAT ENGINE V9 JS - START */
@@ -25568,25 +25219,9 @@ document.addEventListener(
 /* MI AI CLEAN CHAT ENGINE V9 JS - END */
 </script>
 
-
 <script>
 
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 <!-- MI AI FIREBASE SHARE AUTH BRIDGE START -->
 <script>
@@ -25725,9 +25360,6 @@ document.addEventListener(
 })();
 </script>
 <!-- MI AI FIREBASE SHARE AUTH BRIDGE END -->
-
-
-
 
 <style>
 /* MI AI GOLD IDLE DYNAMIC ISLAND V2 CSS - START */
@@ -26566,7 +26198,6 @@ document.addEventListener(
 </script>
 <!-- === MI AI WEB PHOTO SEARCH END === -->
 
-
 <!-- MI AI CLICKABLE LINKS FINAL START -->
 
 <style>
@@ -26970,8 +26601,6 @@ document.addEventListener(
 
 <!-- MI AI CLICKABLE LINKS FINAL END -->
 
-
-
 <script>
 /* MI AI SMOOTH BOOT GUARD - START */
 (function () {
@@ -27000,7 +26629,6 @@ document.addEventListener(
 })();
 /* MI AI SMOOTH BOOT GUARD - END */
 </script>
-
 
 <script>
 /* MI_AI_CHIEF_OWNER_PERMISSION_UI_START */
@@ -29028,10 +28656,6 @@ window.fetch=function(input,init){
 /* MI AI CHAT SMOOTH V3 JS - END */
 </script>
 
-
-
-
-
 <script>
 /* MI AI STRICT ACCOUNT ISOLATION V1 START */
 (function () {
@@ -29313,8 +28937,6 @@ window.fetch=function(input,init){
 })();
 /* MI AI STRICT ACCOUNT ISOLATION V1 END */
 </script>
-
-
 
 <script>
 /* MI AI ACCOUNT ISOLATION V2 START */
@@ -30839,5 +30461,4 @@ ${rows.map(function (row) {
 <!-- MI AI CHIEF OWNER CONTROL CENTER END -->
 </body>
 </html>
-
 
