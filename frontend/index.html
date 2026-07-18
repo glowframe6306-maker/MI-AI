@@ -10566,6 +10566,234 @@ body.mi-account-blocked {
 /* MI AI ACCOUNT ACTION NOTICE STYLE V1 END */
 </style>
 
+<!-- MI_AI_INSTANT_OPEN_V5 START -->
+<style id="mi-ai-instant-open-v5-style">
+html,
+body,
+#sidebar,
+#main,
+#header,
+#chat,
+#chatList,
+#inputBox {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+body.mi-app-booting,
+body.mi-smooth-loading,
+body.loading,
+body.is-loading {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+body.mi-app-booting #chat,
+body.mi-app-booting #chatList,
+body.mi-smooth-loading #chat,
+body.mi-smooth-loading #chatList {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+#loadingScreen,
+#loading-screen,
+#appLoader,
+#app-loader,
+#pageLoader,
+#page-loader,
+.loading-screen,
+.loading-overlay,
+.loader-overlay,
+.app-loader,
+.page-loader,
+.splash-loader,
+[data-loading-overlay="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+</style>
+
+<script id="mi-ai-instant-open-v5-script">
+(function () {
+    "use strict";
+
+    if (window.__MI_AI_INSTANT_OPEN_V5__) {
+        return;
+    }
+
+    window.__MI_AI_INSTANT_OPEN_V5__ = true;
+
+    function openApplication() {
+        var root = document.documentElement;
+        var body = document.body;
+
+        var blockingClasses = [
+            "mi-app-booting",
+            "mi-smooth-loading",
+            "loading",
+            "is-loading",
+            "app-loading",
+            "page-loading",
+            "initializing",
+            "is-initializing",
+            "auth-loading",
+            "firebase-loading",
+            "no-interaction"
+        ];
+
+        blockingClasses.forEach(function (className) {
+            root.classList.remove(className);
+
+            if (body) {
+                body.classList.remove(className);
+            }
+        });
+
+        if (body) {
+            body.style.setProperty(
+                "visibility",
+                "visible",
+                "important"
+            );
+
+            body.style.setProperty(
+                "opacity",
+                "1",
+                "important"
+            );
+
+            body.style.setProperty(
+                "pointer-events",
+                "auto",
+                "important"
+            );
+        }
+
+        [
+            "#sidebar",
+            "#main",
+            "#header",
+            "#chat",
+            "#chatList",
+            "#inputBox"
+        ].forEach(function (selector) {
+            var element = document.querySelector(selector);
+
+            if (!element) {
+                return;
+            }
+
+            element.style.setProperty(
+                "visibility",
+                "visible",
+                "important"
+            );
+
+            element.style.setProperty(
+                "opacity",
+                "1",
+                "important"
+            );
+
+            element.style.setProperty(
+                "pointer-events",
+                "auto",
+                "important"
+            );
+        });
+
+        [
+            "#loadingScreen",
+            "#loading-screen",
+            "#appLoader",
+            "#app-loader",
+            "#pageLoader",
+            "#page-loader",
+            ".loading-screen",
+            ".loading-overlay",
+            ".loader-overlay",
+            ".app-loader",
+            ".page-loader",
+            ".splash-loader",
+            "[data-loading-overlay='true']"
+        ].forEach(function (selector) {
+            document
+                .querySelectorAll(selector)
+                .forEach(function (element) {
+                    element.style.setProperty(
+                        "display",
+                        "none",
+                        "important"
+                    );
+
+                    element.style.setProperty(
+                        "visibility",
+                        "hidden",
+                        "important"
+                    );
+
+                    element.style.setProperty(
+                        "opacity",
+                        "0",
+                        "important"
+                    );
+
+                    element.style.setProperty(
+                        "pointer-events",
+                        "none",
+                        "important"
+                    );
+
+                    element.setAttribute(
+                        "aria-hidden",
+                        "true"
+                    );
+                });
+        });
+
+        window.__MI_AI_APPLICATION_VISIBLE__ = true;
+    }
+
+    window.miOpenApplication = openApplication;
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            openApplication,
+            { once: true }
+        );
+    } else {
+        openApplication();
+    }
+
+    window.addEventListener(
+        "load",
+        openApplication,
+        { once: true }
+    );
+
+    window.addEventListener(
+        "error",
+        openApplication
+    );
+
+    window.addEventListener(
+        "unhandledrejection",
+        openApplication
+    );
+
+    setTimeout(openApplication, 0);
+    setTimeout(openApplication, 100);
+    setTimeout(openApplication, 500);
+    setTimeout(openApplication, 1500);
+})();
+</script>
+<!-- MI_AI_INSTANT_OPEN_V5 END -->
 </head>
 
 <body>
@@ -31484,430 +31712,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
 
 
-<!-- MI_AI_STARTUP_RECOVERY_V3 START -->
-<style id="mi-ai-startup-recovery-v3-style">
-html,
-body,
-#main,
-#chat,
-#chatList,
-#inputBox {
-    visibility: visible !important;
-}
 
-html,
-body,
-#main {
-    opacity: 1 !important;
-}
-
-body.mi-app-booting #chat,
-body.mi-app-booting #chatList,
-body.mi-smooth-loading #chat,
-body.mi-smooth-loading #chatList {
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-#loadingScreen,
-#loading-screen,
-#appLoader,
-#app-loader,
-#pageLoader,
-#page-loader,
-.loading-screen,
-.loading-overlay,
-.loader-overlay,
-.app-loader,
-.page-loader,
-.splash-loader,
-[data-loading-overlay="true"] {
-    pointer-events: none;
-}
-
-html.mi-startup-ready #loadingScreen,
-html.mi-startup-ready #loading-screen,
-html.mi-startup-ready #appLoader,
-html.mi-startup-ready #app-loader,
-html.mi-startup-ready #pageLoader,
-html.mi-startup-ready #page-loader,
-html.mi-startup-ready .loading-screen,
-html.mi-startup-ready .loading-overlay,
-html.mi-startup-ready .loader-overlay,
-html.mi-startup-ready .app-loader,
-html.mi-startup-ready .page-loader,
-html.mi-startup-ready .splash-loader,
-html.mi-startup-ready [data-loading-overlay="true"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-</style>
-
-<script id="mi-ai-startup-recovery-v3-script">
-(function () {
-    "use strict";
-
-    if (window.__MI_AI_STARTUP_RECOVERY_V3__) {
-        return;
-    }
-
-    window.__MI_AI_STARTUP_RECOVERY_V3__ = true;
-
-    var STARTUP_TIMEOUT_MS = 8000;
-    var startupReleased = false;
-
-    var STARTUP_API_PATHS = [
-        "/api/admin/me",
-        "/api/chief-owner/me",
-        "/api/chief-owner/health",
-        "/api/chief-owner/rbac-options",
-        "/api/direct-messages",
-        "/api/notifications",
-        "/api/conversations",
-        "/api/account-settings",
-        "/api/user-settings",
-        "/api/firebase-auth-health"
-    ];
-
-    function safeRun(callback) {
-        try {
-            callback();
-        } catch (error) {
-            console.warn(
-                "[MI AI] Startup recovery warning:",
-                error
-            );
-        }
-    }
-
-    function isStartupRequest(input, init) {
-        var method = String(
-            (init && init.method) ||
-            (input && input.method) ||
-            "GET"
-        ).toUpperCase();
-
-        if (method !== "GET") {
-            return false;
-        }
-
-        var url = "";
-
-        try {
-            url = typeof input === "string"
-                ? input
-                : String((input && input.url) || "");
-        } catch (_) {
-            return false;
-        }
-
-        return STARTUP_API_PATHS.some(function (path) {
-            return url.indexOf(path) !== -1;
-        });
-    }
-
-    function mergeSignals(controller, originalSignal) {
-        if (!originalSignal) {
-            return controller.signal;
-        }
-
-        if (originalSignal.aborted) {
-            controller.abort();
-            return controller.signal;
-        }
-
-        originalSignal.addEventListener(
-            "abort",
-            function () {
-                controller.abort();
-            },
-            { once: true }
-        );
-
-        return controller.signal;
-    }
-
-    /*
-       Add timeout only around initial GET requests.
-       Chat POST/stream requests are not modified.
-    */
-    safeRun(function () {
-        var previousFetch = window.fetch.bind(window);
-
-        window.fetch = function (input, init) {
-            if (!isStartupRequest(input, init)) {
-                return previousFetch(input, init);
-            }
-
-            var controller = new AbortController();
-            var options = Object.assign({}, init || {});
-
-            options.signal = mergeSignals(
-                controller,
-                options.signal
-            );
-
-            var timer = window.setTimeout(
-                function () {
-                    controller.abort();
-                },
-                STARTUP_TIMEOUT_MS
-            );
-
-            return previousFetch(input, options)
-                .finally(function () {
-                    window.clearTimeout(timer);
-                });
-        };
-    });
-
-    function hideLoadingElements() {
-        var selectors = [
-            "#loadingScreen",
-            "#loading-screen",
-            "#appLoader",
-            "#app-loader",
-            "#pageLoader",
-            "#page-loader",
-            ".loading-screen",
-            ".loading-overlay",
-            ".loader-overlay",
-            ".app-loader",
-            ".page-loader",
-            ".splash-loader",
-            "[data-loading-overlay='true']"
-        ];
-
-        document
-            .querySelectorAll(selectors.join(","))
-            .forEach(function (element) {
-                safeRun(function () {
-                    element.style.setProperty(
-                        "display",
-                        "none",
-                        "important"
-                    );
-
-                    element.style.setProperty(
-                        "visibility",
-                        "hidden",
-                        "important"
-                    );
-
-                    element.style.setProperty(
-                        "opacity",
-                        "0",
-                        "important"
-                    );
-
-                    element.style.setProperty(
-                        "pointer-events",
-                        "none",
-                        "important"
-                    );
-
-                    element.setAttribute(
-                        "aria-hidden",
-                        "true"
-                    );
-                });
-            });
-    }
-
-    function releaseStartup(reason) {
-        if (startupReleased) {
-            hideLoadingElements();
-            return;
-        }
-
-        startupReleased = true;
-
-        safeRun(function () {
-            document.documentElement.classList.add(
-                "mi-startup-ready"
-            );
-
-            document.documentElement.classList.remove(
-                "mi-app-booting",
-                "mi-smooth-loading",
-                "loading",
-                "is-loading",
-                "app-loading",
-                "initializing"
-            );
-
-            if (document.body) {
-                document.body.classList.remove(
-                    "mi-app-booting",
-                    "mi-smooth-loading",
-                    "loading",
-                    "is-loading",
-                    "app-loading",
-                    "page-loading",
-                    "initializing",
-                    "auth-loading",
-                    "firebase-loading",
-                    "no-interaction"
-                );
-
-                document.body.style.setProperty(
-                    "visibility",
-                    "visible",
-                    "important"
-                );
-
-                document.body.style.setProperty(
-                    "opacity",
-                    "1",
-                    "important"
-                );
-
-                document.body.style.setProperty(
-                    "pointer-events",
-                    "auto",
-                    "important"
-                );
-            }
-        });
-
-        hideLoadingElements();
-
-        safeRun(function () {
-            [
-                "#main",
-                "#chat",
-                "#chatList",
-                "#inputBox",
-                "#sidebar"
-            ].forEach(function (selector) {
-                var element =
-                    document.querySelector(selector);
-
-                if (!element) {
-                    return;
-                }
-
-                element.style.setProperty(
-                    "visibility",
-                    "visible",
-                    "important"
-                );
-
-                element.style.setProperty(
-                    "opacity",
-                    "1",
-                    "important"
-                );
-
-                element.style.setProperty(
-                    "pointer-events",
-                    "auto",
-                    "important"
-                );
-            });
-        });
-
-        safeRun(function () {
-            window.dispatchEvent(
-                new CustomEvent(
-                    "mi-ai-startup-released",
-                    {
-                        detail: {
-                            reason: reason || "startup",
-                            timestamp: Date.now()
-                        }
-                    }
-                )
-            );
-        });
-
-        console.info(
-            "[MI AI] Startup released:",
-            reason || "startup"
-        );
-    }
-
-    window.miReleaseStartup = releaseStartup;
-
-    window.addEventListener(
-        "error",
-        function (event) {
-            console.error(
-                "[MI AI] Startup JavaScript error:",
-                event.error || event.message
-            );
-
-            releaseStartup("javascript-error");
-        }
-    );
-
-    window.addEventListener(
-        "unhandledrejection",
-        function (event) {
-            console.error(
-                "[MI AI] Startup promise error:",
-                event.reason
-            );
-
-            releaseStartup("promise-error");
-        }
-    );
-
-    [
-        "mi-firebase-ready",
-        "mi-firebase-error",
-        "mi-firebase-auth-changed",
-        "mi-admin-access-loaded"
-    ].forEach(function (eventName) {
-        window.addEventListener(
-            eventName,
-            function () {
-                releaseStartup(eventName);
-            },
-            { once: true }
-        );
-    });
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            function () {
-                /*
-                   Render immediately. Account data may continue
-                   loading without blocking the application shell.
-                */
-                releaseStartup("dom-ready");
-            },
-            { once: true }
-        );
-    } else {
-        releaseStartup("document-already-ready");
-    }
-
-    window.addEventListener(
-        "load",
-        function () {
-            releaseStartup("window-load");
-        },
-        { once: true }
-    );
-
-    /*
-       Absolute safety release in case an external SDK,
-       event listener or API never resolves.
-    */
-    window.setTimeout(
-        function () {
-            releaseStartup("absolute-timeout");
-        },
-        1200
-    );
-})();
-</script>
-<!-- MI_AI_STARTUP_RECOVERY_V3 END -->
 
 </body>
 </html>
