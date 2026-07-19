@@ -1,6 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script id="MI_AI_BROWSER_LOADING_FAILSAFE_V1">
+(function () {
+    "use strict";
+
+    var finished = false;
+    var timer = null;
+
+    function stopEndlessBrowserLoading() {
+        if (finished) return;
+        finished = true;
+
+        try {
+            window.stop();
+        } catch (error) {
+            console.warn("[MI AI] window.stop failed:", error);
+        }
+
+        try {
+            document.documentElement.classList.remove(
+                "loading",
+                "is-loading",
+                "app-loading",
+                "booting"
+            );
+
+            if (document.body) {
+                document.body.classList.remove(
+                    "loading",
+                    "is-loading",
+                    "app-loading",
+                    "booting"
+                );
+            }
+        } catch (error) {
+            console.warn("[MI AI] Loading class cleanup failed:", error);
+        }
+
+        console.info("[MI AI] Browser loading fail-safe completed.");
+    }
+
+    window.addEventListener("load", function () {
+        finished = true;
+
+        if (timer !== null) {
+            clearTimeout(timer);
+            timer = null;
+        }
+
+        console.info("[MI AI] Page load completed normally.");
+    }, { once: true });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        timer = setTimeout(function () {
+            if (document.readyState !== "complete") {
+                console.warn(
+                    "[MI AI] A resource kept the browser loading. " +
+                    "Stopping the unfinished page request."
+                );
+
+                stopEndlessBrowserLoading();
+            }
+        }, 8000);
+    }, { once: true });
+
+    setTimeout(function () {
+        if (
+            document.readyState !== "complete" &&
+            timer === null
+        ) {
+            stopEndlessBrowserLoading();
+        }
+    }, 12000);
+})();
+</script>
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260719-162100">
 
 <!-- MI_AI_LOCAL_SDK_V2_START -->
