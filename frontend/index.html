@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -29428,13 +29428,28 @@ window.miOpenAccountChat=openPanel;
 /* MI AI CHAT SMOOTH V3 JS - START */
 (function(){
 "use strict";
+if (!document.body) return;
+
 document.body.classList.add("mi-smooth-loading");
 let released=false;
-function release(){if(released)return;released=true;requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove("mi-smooth-loading")})})}
-window.addEventListener("load",release,{once:true});
-window.addEventListener("mi-firebase-ready",function(){setTimeout(release,50)},{once:true});
-window.addEventListener("mi-firebase-auth-changed",function(){setTimeout(release,50)},{once:true});
-setTimeout(release,1400);
+function release(){
+    if (released) return;
+    released=true;
+    if (document.body) {
+        document.body.classList.remove("mi-smooth-loading");
+    }
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", release, { once: true });
+} else {
+    release();
+}
+
+window.addEventListener("load", release, { once: true });
+window.addEventListener("mi-firebase-ready", function(){ setTimeout(release, 50); }, { once: true });
+window.addEventListener("mi-firebase-auth-changed", function(){ setTimeout(release, 50); }, { once: true });
+setTimeout(release, 1400);
 
 const nativeFetch=window.fetch.bind(window);
 const activeGets=new Map();

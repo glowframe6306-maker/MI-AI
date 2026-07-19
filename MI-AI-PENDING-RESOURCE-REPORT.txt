@@ -1,0 +1,14 @@
+﻿
+Result     HTTP Seconds URL                                                                         
+------     ---- ------- ---                                                                         
+OK         200     2.61 https://wa.me/                                                              
+OK         200     1.76 https://wa.me/94756390621                                                   
+OK         200     1.37 https://mi-ai-assistant-of-mi.vercel.app/vendor/firebase-firestore-compat.js
+OK         200     0.63 https://mi-ai-assistant-of-mi.vercel.app/vendor/supabase.min.js             
+OK         200     0.62 https://mi-ai-assistant-of-mi.vercel.app/vendor/firebase-auth-compat.js     
+OK         200     0.52 https://mi-ai-assistant-of-mi.vercel.app/vendor/firebase-app-compat.js      
+SLOW       200     5.79 https://mi-ai-assistant-of-mi.vercel.app/MIAI.svg                           
+HTTP_ERROR 404     1.23 https://mi-ai-assistant-of-mi.vercel.app/$%7Burl%7D                         
+
+
+
