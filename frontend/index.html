@@ -10630,6 +10630,107 @@ body.mi-account-blocked {
 
 
 <!-- MI_AI_INSTANT_OPEN_V5 END -->
+
+<!-- MI_AI_NORMAL_CURSOR_FIX_V1 START -->
+<style id="MI_AI_NORMAL_CURSOR_FIX_V1">
+
+/* Normal cursor for ordinary areas */
+html,
+body,
+#main,
+#chat,
+#sidebar,
+#header,
+#inputBox,
+#chatList {
+    cursor: default !important;
+}
+
+/* Hand cursor only for clickable items */
+button,
+a,
+[role="button"],
+.chatItem,
+.chat-item,
+.menu-item,
+label[for],
+select,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="color"],
+input[type="range"] {
+    cursor: pointer !important;
+}
+
+/* Text cursor only where typing is possible */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+textarea,
+[contenteditable="true"] {
+    cursor: text !important;
+}
+
+/* Disabled controls must never show the blue loading cursor */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"] {
+    cursor: not-allowed !important;
+}
+
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    function resetMouseCursor() {
+        try {
+            document.documentElement.style.removeProperty("cursor");
+
+            if (document.body) {
+                document.body.style.removeProperty("cursor");
+            }
+
+            document.querySelectorAll(
+                '[style*="cursor: wait"],' +
+                '[style*="cursor:wait"],' +
+                '[style*="cursor: progress"],' +
+                '[style*="cursor:progress"]'
+            ).forEach(function (element) {
+                element.style.removeProperty("cursor");
+            });
+        } catch (error) {
+            console.warn("[MI AI] Cursor reset failed:", error);
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            resetMouseCursor,
+            { once: true }
+        );
+    } else {
+        resetMouseCursor();
+    }
+
+    window.addEventListener("load", resetMouseCursor, { once: true });
+
+    setTimeout(resetMouseCursor, 500);
+    setTimeout(resetMouseCursor, 2000);
+})();
+</script>
+<!-- MI_AI_NORMAL_CURSOR_FIX_V1 END -->
 </head>
 
 <body>
