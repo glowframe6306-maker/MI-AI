@@ -1,88 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script id="MI_AI_BROWSER_LOADING_FAILSAFE_V1">
+
+<script id="MI_AI_CLEAN_BOOT_GUARD_V1">
 (function () {
     "use strict";
 
-    var finished = false;
-    var timer = null;
+    function revealApplication() {
+        document.documentElement.classList.remove(
+            "loading",
+            "is-loading",
+            "app-loading",
+            "page-loading",
+            "mi-app-booting",
+            "mi-smooth-loading"
+        );
 
-    function stopEndlessBrowserLoading() {
-        if (finished) return;
-        finished = true;
-
-        try {
-            window.stop();
-        } catch (error) {
-            console.warn("[MI AI] window.stop failed:", error);
-        }
-
-        try {
-            document.documentElement.classList.remove(
+        if (document.body) {
+            document.body.classList.remove(
                 "loading",
                 "is-loading",
                 "app-loading",
-                "booting"
+                "page-loading",
+                "mi-app-booting",
+                "mi-smooth-loading"
             );
 
-            if (document.body) {
-                document.body.classList.remove(
-                    "loading",
-                    "is-loading",
-                    "app-loading",
-                    "booting"
-                );
-            }
-        } catch (error) {
-            console.warn("[MI AI] Loading class cleanup failed:", error);
+            document.body.style.visibility = "visible";
+            document.body.style.opacity = "1";
+            document.body.removeAttribute("aria-busy");
         }
-
-        console.info("[MI AI] Browser loading fail-safe completed.");
     }
 
-    window.addEventListener("load", function () {
-        finished = true;
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            revealApplication,
+            { once: true }
+        );
+    } else {
+        revealApplication();
+    }
 
-        if (timer !== null) {
-            clearTimeout(timer);
-            timer = null;
-        }
-
-        console.info("[MI AI] Page load completed normally.");
-    }, { once: true });
-
-    document.addEventListener("DOMContentLoaded", function () {
-        timer = setTimeout(function () {
-            if (document.readyState !== "complete") {
-                console.warn(
-                    "[MI AI] A resource kept the browser loading. " +
-                    "Stopping the unfinished page request."
-                );
-
-                stopEndlessBrowserLoading();
-            }
-        }, 8000);
-    }, { once: true });
-
-    setTimeout(function () {
-        if (
-            document.readyState !== "complete" &&
-            timer === null
-        ) {
-            stopEndlessBrowserLoading();
-        }
-    }, 12000);
+    window.setTimeout(revealApplication, 1000);
+    window.setTimeout(revealApplication, 3000);
 })();
 </script>
+
+
+
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260719-162100">
 
 <!-- MI_AI_LOCAL_SDK_V2_START -->
-<script src="/vendor/supabase.min.js"></script>
-<script src="/vendor/firebase-app-compat.js"></script>
-<script src="/vendor/firebase-auth-compat.js"></script>
-<script src="/vendor/firebase-firestore-compat.js"></script>
+<script defer src="/vendor/supabase.min.js"></script>
+<script defer src="/vendor/firebase-app-compat.js"></script>
+<script defer src="/vendor/firebase-auth-compat.js"></script>
+<script defer src="/vendor/firebase-firestore-compat.js"></script>
 <!-- MI_AI_LOCAL_SDK_V2_END -->
 
 
@@ -10652,232 +10626,9 @@ body.mi-account-blocked {
 </style>
 
 <!-- MI_AI_INSTANT_OPEN_V5 START -->
-<style id="mi-ai-instant-open-v5-style">
-html,
-body,
-#sidebar,
-#main,
-#header,
-#chat,
-#chatList,
-#inputBox {
-    visibility: visible !important;
-    opacity: 1 !important;
-}
 
-body.mi-app-booting,
-body.mi-smooth-loading,
-body.loading,
-body.is-loading {
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
 
-body.mi-app-booting #chat,
-body.mi-app-booting #chatList,
-body.mi-smooth-loading #chat,
-body.mi-smooth-loading #chatList {
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
 
-#loadingScreen,
-#loading-screen,
-#appLoader,
-#app-loader,
-#pageLoader,
-#page-loader,
-.loading-screen,
-.loading-overlay,
-.loader-overlay,
-.app-loader,
-.page-loader,
-.splash-loader,
-[data-loading-overlay="true"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-</style>
-
-<script id="mi-ai-instant-open-v5-script">
-(function () {
-    "use strict";
-
-    if (window.__MI_AI_INSTANT_OPEN_V5__) {
-        return;
-    }
-
-    window.__MI_AI_INSTANT_OPEN_V5__ = true;
-
-    function openApplication() {
-        var root = document.documentElement;
-        var body = document.body;
-
-        var blockingClasses = [
-            "mi-app-booting",
-            "mi-smooth-loading",
-            "loading",
-            "is-loading",
-            "app-loading",
-            "page-loading",
-            "initializing",
-            "is-initializing",
-            "auth-loading",
-            "firebase-loading",
-            "no-interaction"
-        ];
-
-        blockingClasses.forEach(function (className) {
-            root.classList.remove(className);
-
-            if (body) {
-                body.classList.remove(className);
-            }
-        });
-
-        if (body) {
-            body.style.setProperty(
-                "visibility",
-                "visible",
-                "important"
-            );
-
-            body.style.setProperty(
-                "opacity",
-                "1",
-                "important"
-            );
-
-            body.style.setProperty(
-                "pointer-events",
-                "auto",
-                "important"
-            );
-        }
-
-        [
-            "#sidebar",
-            "#main",
-            "#header",
-            "#chat",
-            "#chatList",
-            "#inputBox"
-        ].forEach(function (selector) {
-            var element = document.querySelector(selector);
-
-            if (!element) {
-                return;
-            }
-
-            element.style.setProperty(
-                "visibility",
-                "visible",
-                "important"
-            );
-
-            element.style.setProperty(
-                "opacity",
-                "1",
-                "important"
-            );
-
-            element.style.setProperty(
-                "pointer-events",
-                "auto",
-                "important"
-            );
-        });
-
-        [
-            "#loadingScreen",
-            "#loading-screen",
-            "#appLoader",
-            "#app-loader",
-            "#pageLoader",
-            "#page-loader",
-            ".loading-screen",
-            ".loading-overlay",
-            ".loader-overlay",
-            ".app-loader",
-            ".page-loader",
-            ".splash-loader",
-            "[data-loading-overlay='true']"
-        ].forEach(function (selector) {
-            document
-                .querySelectorAll(selector)
-                .forEach(function (element) {
-                    element.style.setProperty(
-                        "display",
-                        "none",
-                        "important"
-                    );
-
-                    element.style.setProperty(
-                        "visibility",
-                        "hidden",
-                        "important"
-                    );
-
-                    element.style.setProperty(
-                        "opacity",
-                        "0",
-                        "important"
-                    );
-
-                    element.style.setProperty(
-                        "pointer-events",
-                        "none",
-                        "important"
-                    );
-
-                    element.setAttribute(
-                        "aria-hidden",
-                        "true"
-                    );
-                });
-        });
-
-        window.__MI_AI_APPLICATION_VISIBLE__ = true;
-    }
-
-    window.miOpenApplication = openApplication;
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            openApplication,
-            { once: true }
-        );
-    } else {
-        openApplication();
-    }
-
-    window.addEventListener(
-        "load",
-        openApplication,
-        { once: true }
-    );
-
-    window.addEventListener(
-        "error",
-        openApplication
-    );
-
-    window.addEventListener(
-        "unhandledrejection",
-        openApplication
-    );
-
-    setTimeout(openApplication, 0);
-    setTimeout(openApplication, 100);
-    setTimeout(openApplication, 500);
-    setTimeout(openApplication, 1500);
-})();
-</script>
 <!-- MI_AI_INSTANT_OPEN_V5 END -->
 </head>
 
@@ -10902,9 +10653,9 @@ body.mi-smooth-loading #chatList {
 <div id="main">
 <div id="header">
 <button id="mobileMenuToggle" type="button" onclick="toggleMobileMenu()" aria-label="Open menu">&#9776;</button>
-<img
+<img decoding="async" fetchpriority="low" 
     id="headerLogo"
-    src="/MIAI.svg"
+    src="/favicon.svg"
     alt="MI AI Logo"
     width="48"
     height="48">
@@ -14331,12 +14082,81 @@ function applyForcedLayout() {
   }
 }
 
-window.addEventListener("load", async () => {
-    applyForcedLayout();
-    populateLanguageSelector();
-    await applyLanguage('en', false);
-    await initChat();
-});
+
+(function () {
+    "use strict";
+
+    let miStartupStarted = false;
+
+    async function miStartApplication() {
+        if (miStartupStarted) {
+            return;
+        }
+
+        miStartupStarted = true;
+
+        try {
+            applyForcedLayout();
+        } catch (error) {
+            console.error("[MI AI] Layout startup failed:", error);
+        }
+
+        try {
+            populateLanguageSelector();
+        } catch (error) {
+            console.error("[MI AI] Language selector startup failed:", error);
+        }
+
+        try {
+            await applyLanguage("en", false);
+        } catch (error) {
+            console.error("[MI AI] Language startup failed:", error);
+        }
+
+        try {
+            await initChat();
+        } catch (error) {
+            console.error("[MI AI] Chat startup failed:", error);
+        }
+
+        document.documentElement.classList.remove(
+            "loading",
+            "is-loading",
+            "app-loading",
+            "mi-app-booting",
+            "mi-smooth-loading"
+        );
+
+        if (document.body) {
+            document.body.classList.remove(
+                "loading",
+                "is-loading",
+                "app-loading",
+                "mi-app-booting",
+                "mi-smooth-loading"
+            );
+
+            document.body.removeAttribute("aria-busy");
+        }
+
+        window.dispatchEvent(
+            new CustomEvent("mi-ai-startup-complete")
+        );
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            miStartApplication,
+            { once: true }
+        );
+    } else {
+        miStartApplication();
+    }
+
+    window.setTimeout(miStartApplication, 1500);
+})();
+
 
 window.addEventListener('beforeunload', persistChats);
 window.addEventListener('pagehide', persistChats);
@@ -27770,34 +27590,7 @@ document.addEventListener(
 
 
 
-<script>
-/* MI AI SMOOTH BOOT GUARD - START */
-(function () {
-    "use strict";
 
-    document.body.classList.add("mi-app-booting");
-    let released = false;
-
-    function releaseBootGuard() {
-        if (released) return;
-        released = true;
-
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-                document.body.classList.remove("mi-app-booting");
-            });
-        });
-    }
-
-    window.addEventListener("load", releaseBootGuard, { once: true });
-    window.addEventListener("mi-firebase-auth-changed", function () {
-        window.setTimeout(releaseBootGuard, 80);
-    }, { once: true });
-
-    window.setTimeout(releaseBootGuard, 1800);
-})();
-/* MI AI SMOOTH BOOT GUARD - END */
-</script>
 
 
 <script>
@@ -31849,84 +31642,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
 
 
-<!-- MI_AI_BROWSER_LOADING_WATCHDOG_START -->
-<script>
-(function () {
-    'use strict';
 
-    let miDocumentLoadingStopped = false;
-
-    function miFinishBrowserLoading() {
-        if (miDocumentLoadingStopped) {
-            return;
-        }
-
-        miDocumentLoadingStopped = true;
-
-        try {
-            document.documentElement.classList.remove(
-                'mi-app-booting',
-                'mi-smooth-loading',
-                'loading'
-            );
-
-            if (document.body) {
-                document.body.classList.remove(
-                    'mi-app-booting',
-                    'mi-smooth-loading',
-                    'loading'
-                );
-
-                document.body.removeAttribute('aria-busy');
-            }
-        } catch (error) {
-            console.warn('[MI AI] Loading-class cleanup failed:', error);
-        }
-
-        try {
-            window.stop();
-        } catch (error) {
-            console.warn('[MI AI] window.stop failed:', error);
-        }
-
-        try {
-            window.dispatchEvent(
-                new CustomEvent('mi-ai-browser-loading-finished')
-            );
-        } catch (error) {
-            // CustomEvent is optional.
-        }
-
-        console.info('[MI AI] Browser loading watchdog completed.');
-    }
-
-    function miScheduleFinish() {
-        window.setTimeout(miFinishBrowserLoading, 3500);
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener(
-            'DOMContentLoaded',
-            miScheduleFinish,
-            { once: true }
-        );
-    } else {
-        miScheduleFinish();
-    }
-
-    window.addEventListener(
-        'load',
-        function () {
-            window.setTimeout(miFinishBrowserLoading, 300);
-        },
-        { once: true }
-    );
-
-    // Final fallback if a third-party resource never completes.
-    window.setTimeout(miFinishBrowserLoading, 10000);
-})();
-</script>
-<!-- MI_AI_BROWSER_LOADING_WATCHDOG_END -->
 </body>
 </html>
 
