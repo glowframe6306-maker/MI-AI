@@ -1183,16 +1183,92 @@ def get_groq_client():
     return groq_client
 
 
+# MI AI SMART GROQ MESSAGES V2 - START
 def _build_groq_messages(messages_payload):
+    """
+    Normalize conversation history and add MI AI response/research policy.
+    """
+
     normalized = []
+
     for item in messages_payload or []:
         if not isinstance(item, dict):
             continue
-        role = str(item.get("role") or "user").strip() or "user"
-        content = item.get("content") or item.get("text") or ""
+
+        role = str(
+            item.get("role") or "user"
+        ).strip() or "user"
+
+        content = (
+            item.get("content")
+            or item.get("text")
+            or ""
+        )
+
         if content:
-            normalized.append({"role": role, "content": str(content)})
-    return normalized
+            normalized.append(
+                {
+                    "role": role,
+                    "content": str(content),
+                }
+            )
+
+    try:
+        try:
+            from backend.mi_ai_smart_research import (
+                prepare_groq_messages,
+            )
+        except ImportError:
+            from mi_ai_smart_research import (
+                prepare_groq_messages,
+            )
+
+        return prepare_groq_messages(
+            normalized,
+            messages_payload,
+        )
+
+    except Exception as research_error:
+        try:
+            app.logger.warning(
+                "MI AI smart research preparation failed: %s",
+                research_error,
+            )
+        except Exception:
+            pass
+
+        fallback_policy = """
+You are MI AI, an accurate and friendly AI assistant.
+
+Answer the user's actual question directly.
+Do not ask unnecessary advanced follow-up questions.
+When the request is clear enough, make sensible assumptions and provide the
+best complete answer.
+Match the user's language.
+Give full runnable code when full code is requested.
+Never invent current facts or claim to have searched or opened a link unless
+verified research context was actually supplied.
+If a link cannot be checked, state that briefly instead of guessing.
+""".strip()
+
+        has_policy = any(
+            message.get("role") == "system"
+            and "You are MI AI, an accurate"
+            in str(message.get("content") or "")
+            for message in normalized
+        )
+
+        if not has_policy:
+            normalized.insert(
+                0,
+                {
+                    "role": "system",
+                    "content": fallback_policy,
+                },
+            )
+
+        return normalized
+# MI AI SMART GROQ MESSAGES V2 - END
 
 
 def _extract_text_from_groq_response(response):
