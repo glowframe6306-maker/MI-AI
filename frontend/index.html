@@ -32656,450 +32656,7 @@ setTimeout(checkOwner,1000);
 
 
 <script>
-/* MI AI ACCOUNT ISOLATION V2 START */
 
-(function () {
-    "use strict";
-
-    const PRIVATE_API_PATHS = [
-        "/api/conversations",
-        "/api/messages",
-        "/api/account-settings",
-        "/api/user-settings",
-        "/api/direct-messages"
-    ];
-
-    const originalFetch =
-        window.fetch.bind(window);
-
-    function getCurrentFirebaseUser() {
-        try {
-            if (
-                window.miFirebaseAuth &&
-                window.miFirebaseAuth.currentUser
-            ) {
-                return window.miFirebaseAuth.currentUser;
-            }
-        } catch (error) {
-            console.warn(
-                "[MI Account] miFirebaseAuth unavailable.",
-                error
-            );
-        }
-
-        try {
-            if (
-                window.firebase &&
-                typeof window.firebase.auth === "function"
-            ) {
-                return (
-                    window.firebase.auth().currentUser
-                    || null
-                );
-            }
-        } catch (error) {
-            console.warn(
-                "[MI Account] Firebase auth unavailable.",
-                error
-            );
-        }
-
-        return window.miFirebaseUser || null;
-    }
-
-    function getRequestPath(input) {
-        try {
-            const requestUrl =
-                typeof input === "string"
-                    ? input
-                    : input.url;
-
-            return new URL(
-                requestUrl,
-                window.location.origin
-            ).pathname.replace(/\/+$/, "");
-        } catch (error) {
-            return String(input || "")
-                .split("?")[0]
-                .replace(/\/+$/, "");
-        }
-    }
-
-    function isPrivateAccountRequest(input) {
-        const path = getRequestPath(input);
-
-        return PRIVATE_API_PATHS.some(
-            function (privatePath) {
-                return (
-                    path === privatePath ||
-                    path.startsWith(
-                        privatePath + "/"
-                    )
-                );
-            }
-        );
-    }
-
-    async function getFirebaseIdToken(
-        forceRefresh
-    ) {
-        const user =
-            getCurrentFirebaseUser();
-
-        if (
-            !user ||
-            typeof user.getIdToken !== "function"
-        ) {
-            return "";
-        }
-
-        return await user.getIdToken(
-            Boolean(forceRefresh)
-        );
-    }
-
-    function createUnauthorizedResponse(
-        message
-    ) {
-        return new Response(
-            JSON.stringify({
-                success: false,
-                message:
-                    message
-                    || "Please sign in again."
-            }),
-            {
-                status: 401,
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                }
-            }
-        );
-    }
-
-    function forceVerifiedOwnership(
-        body,
-        user
-    ) {
-        if (
-            !body ||
-            typeof body !== "object"
-        ) {
-            return body;
-        }
-
-        body.user_id = String(user.uid);
-        body.owner_id = String(user.uid);
-        body.account_id = String(user.uid);
-        body.session_id = String(user.uid);
-
-        if (user.email) {
-            body.email =
-                String(user.email).toLowerCase();
-
-            body.user_email =
-                String(user.email).toLowerCase();
-        }
-
-        return body;
-    }
-
-    function clearPreviousAccountScreen() {
-        try {
-            window.selectedChat = null;
-            window.currentChat = null;
-            window.activeConversationId = null;
-        } catch (error) {
-            console.warn(
-                "[MI Account] Could not reset chat selection.",
-                error
-            );
-        }
-
-        const selectors = [
-            "#messages",
-            "#chatMessages",
-            "#chat",
-            ".chat-messages",
-            ".messages-container"
-        ];
-
-        selectors.forEach(
-            function (selector) {
-                try {
-                    const element =
-                        document.querySelector(
-                            selector
-                        );
-
-                    if (element) {
-                        element.innerHTML = "";
-                    }
-                } catch (error) {
-                    console.warn(
-                        "[MI Account] Screen clear failed.",
-                        error
-                    );
-                }
-            }
-        );
-    }
-
-    window.miCurrentAccountUid =
-        function () {
-            const user =
-                getCurrentFirebaseUser();
-
-            return user && user.uid
-                ? String(user.uid)
-                : "";
-        };
-
-    window.miAccountStorageKey =
-        function (key) {
-            const uid =
-                window.miCurrentAccountUid()
-                || "guest";
-
-            return (
-                "mi_account_" +
-                uid +
-                "_" +
-                String(key || "")
-            );
-        };
-
-    window.fetch =
-        async function (input, init) {
-            if (
-                !isPrivateAccountRequest(input)
-            ) {
-                return originalFetch(
-                    input,
-                    init
-                );
-            }
-
-            const user =
-                getCurrentFirebaseUser();
-
-            if (!user || !user.uid) {
-                return createUnauthorizedResponse(
-                    "Please sign in to access your chats."
-                );
-            }
-
-            const options =
-                Object.assign(
-                    {},
-                    init || {}
-                );
-
-            const originalHeaders =
-                options.headers ||
-                (
-                    typeof input !== "string" &&
-                    input
-                        ? input.headers
-                        : undefined
-                ) ||
-                {};
-
-            const headers =
-                new Headers(
-                    originalHeaders
-                );
-
-            let token = "";
-
-            try {
-                token =
-                    await getFirebaseIdToken(
-                        false
-                    );
-            } catch (error) {
-                console.error(
-                    "[MI Account] Token load failed.",
-                    error
-                );
-            }
-
-            if (!token) {
-                return createUnauthorizedResponse(
-                    "Authentication token is unavailable."
-                );
-            }
-
-            headers.set(
-                "Authorization",
-                "Bearer " + token
-            );
-
-            headers.set(
-                "X-User-Id",
-                String(user.uid)
-            );
-
-            headers.set(
-                "X-Session-Id",
-                String(user.uid)
-            );
-
-            if (user.email) {
-                headers.set(
-                    "X-User-Email",
-                    String(user.email).toLowerCase()
-                );
-            }
-
-            const contentType =
-                String(
-                    headers.get(
-                        "Content-Type"
-                    )
-                    || ""
-                ).toLowerCase();
-
-            if (
-                typeof options.body === "string" &&
-                contentType.includes(
-                    "application/json"
-                )
-            ) {
-                try {
-                    const parsedBody =
-                        JSON.parse(
-                            options.body
-                        );
-
-                    options.body =
-                        JSON.stringify(
-                            forceVerifiedOwnership(
-                                parsedBody,
-                                user
-                            )
-                        );
-                } catch (error) {
-                    console.warn(
-                        "[MI Account] JSON body could not be updated.",
-                        error
-                    );
-                }
-            }
-
-            options.headers = headers;
-
-            let response =
-                await originalFetch(
-                    input,
-                    options
-                );
-
-            if (response.status === 401) {
-                try {
-                    const refreshedToken =
-                        await getFirebaseIdToken(
-                            true
-                        );
-
-                    if (refreshedToken) {
-                        headers.set(
-                            "Authorization",
-                            "Bearer " +
-                                refreshedToken
-                        );
-
-                        options.headers =
-                            headers;
-
-                        response =
-                            await originalFetch(
-                                input,
-                                options
-                            );
-                    }
-                } catch (error) {
-                    console.error(
-                        "[MI Account] Token refresh failed.",
-                        error
-                    );
-                }
-            }
-
-            return response;
-        };
-
-    function connectAccountListener() {
-        let auth = null;
-
-        try {
-            if (window.miFirebaseAuth) {
-                auth =
-                    window.miFirebaseAuth;
-            } else if (
-                window.firebase &&
-                typeof window.firebase.auth ===
-                    "function"
-            ) {
-                auth =
-                    window.firebase.auth();
-            }
-        } catch (error) {
-            auth = null;
-        }
-
-        if (
-            !auth ||
-            typeof auth.onAuthStateChanged !==
-                "function"
-        ) {
-            setTimeout(
-                connectAccountListener,
-                500
-            );
-
-            return;
-        }
-
-        let previousUid =
-            getCurrentFirebaseUser()?.uid
-            || "";
-
-        auth.onAuthStateChanged(
-            function (user) {
-                const nextUid =
-                    user?.uid || "";
-
-                if (
-                    previousUid !== nextUid
-                ) {
-                    clearPreviousAccountScreen();
-                }
-
-                previousUid = nextUid;
-
-                window.dispatchEvent(
-                    new CustomEvent(
-                        "mi-account-changed",
-                        {
-                            detail: {
-                                uid: nextUid,
-                                email:
-                                    user?.email
-                                    || ""
-                            }
-                        }
-                    )
-                );
-            }
-        );
-    }
-
-    connectAccountListener();
-})();
-
-/* MI AI ACCOUNT ISOLATION V2 END */
 </script>
 
 
@@ -34048,6 +33605,455 @@ setTimeout(checkOwner,1000);
 </script>
 
 <!-- MI_AI_OWNER_VISIBLE_FINAL_END -->
+
+
+<script>
+/* MI AI ACCOUNT ISOLATION V2 START */
+
+(function () {
+    "use strict";
+
+    const PRIVATE_API_PATHS = [
+        "/api/conversations",
+        "/api/messages",
+        "/api/account-settings",
+        "/api/user-settings",
+        "/api/direct-messages"
+    ];
+
+    const originalFetch =
+        window.fetch.bind(window);
+
+    function getCurrentFirebaseUser() {
+        try {
+            if (
+                window.miFirebaseAuth &&
+                window.miFirebaseAuth.currentUser
+            ) {
+                return window.miFirebaseAuth.currentUser;
+            }
+        } catch (error) {
+            console.warn(
+                "[MI Account] miFirebaseAuth unavailable.",
+                error
+            );
+        }
+
+        try {
+            if (
+                window.firebase &&
+                typeof window.firebase.auth === "function"
+            ) {
+                return (
+                    window.firebase.auth().currentUser
+                    || null
+                );
+            }
+        } catch (error) {
+            console.warn(
+                "[MI Account] Firebase auth unavailable.",
+                error
+            );
+        }
+
+        return window.miFirebaseUser || null;
+    }
+
+    function getRequestPath(input) {
+        try {
+            const requestUrl =
+                typeof input === "string"
+                    ? input
+                    : input.url;
+
+            return new URL(
+                requestUrl,
+                window.location.origin
+            ).pathname.replace(/\/+$/, "");
+        } catch (error) {
+            return String(input || "")
+                .split("?")[0]
+                .replace(/\/+$/, "");
+        }
+    }
+
+    function isPrivateAccountRequest(input) {
+        const path = getRequestPath(input);
+
+        return PRIVATE_API_PATHS.some(
+            function (privatePath) {
+                return (
+                    path === privatePath ||
+                    path.startsWith(
+                        privatePath + "/"
+                    )
+                );
+            }
+        );
+    }
+
+    async function getFirebaseIdToken(
+        forceRefresh
+    ) {
+        const user =
+            getCurrentFirebaseUser();
+
+        if (
+            !user ||
+            typeof user.getIdToken !== "function"
+        ) {
+            return "";
+        }
+
+        return await user.getIdToken(
+            Boolean(forceRefresh)
+        );
+    }
+
+    function createUnauthorizedResponse(
+        message
+    ) {
+        return new Response(
+            JSON.stringify({
+                success: false,
+                message:
+                    message
+                    || "Please sign in again."
+            }),
+            {
+                status: 401,
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                }
+            }
+        );
+    }
+
+    function forceVerifiedOwnership(
+        body,
+        user
+    ) {
+        if (
+            !body ||
+            typeof body !== "object"
+        ) {
+            return body;
+        }
+
+        body.user_id = String(user.uid);
+        body.owner_id = String(user.uid);
+        body.account_id = String(user.uid);
+        body.session_id = String(user.uid);
+
+        if (user.email) {
+            body.email =
+                String(user.email).toLowerCase();
+
+            body.user_email =
+                String(user.email).toLowerCase();
+        }
+
+        return body;
+    }
+
+    function clearPreviousAccountScreen() {
+        try {
+            window.selectedChat = null;
+            window.currentChat = null;
+            window.activeConversationId = null;
+        } catch (error) {
+            console.warn(
+                "[MI Account] Could not reset chat selection.",
+                error
+            );
+        }
+
+        const selectors = [
+            "#messages",
+            "#chatMessages",
+            "#chat",
+            ".chat-messages",
+            ".messages-container"
+        ];
+
+        selectors.forEach(
+            function (selector) {
+                try {
+                    const element =
+                        document.querySelector(
+                            selector
+                        );
+
+                    if (element) {
+                        element.innerHTML = "";
+                    }
+                } catch (error) {
+                    console.warn(
+                        "[MI Account] Screen clear failed.",
+                        error
+                    );
+                }
+            }
+        );
+    }
+
+    window.miCurrentAccountUid =
+        function () {
+            const user =
+                getCurrentFirebaseUser();
+
+            return user && user.uid
+                ? String(user.uid)
+                : "";
+        };
+
+    window.miAccountStorageKey =
+        function (key) {
+            const uid =
+                window.miCurrentAccountUid()
+                || "guest";
+
+            return (
+                "mi_account_" +
+                uid +
+                "_" +
+                String(key || "")
+            );
+        };
+
+    window.fetch =
+        async function (input, init) {
+            if (
+                !isPrivateAccountRequest(input)
+            ) {
+                return originalFetch(
+                    input,
+                    init
+                );
+            }
+
+            const user =
+                getCurrentFirebaseUser();
+
+            if (!user || !user.uid) {
+                return createUnauthorizedResponse(
+                    "Please sign in to access your chats."
+                );
+            }
+
+            const options =
+                Object.assign(
+                    {},
+                    init || {}
+                );
+
+            const originalHeaders =
+                options.headers ||
+                (
+                    typeof input !== "string" &&
+                    input
+                        ? input.headers
+                        : undefined
+                ) ||
+                {};
+
+            const headers =
+                new Headers(
+                    originalHeaders
+                );
+
+            let token = "";
+
+            try {
+                token =
+                    await getFirebaseIdToken(
+                        false
+                    );
+            } catch (error) {
+                console.error(
+                    "[MI Account] Token load failed.",
+                    error
+                );
+            }
+
+            if (!token) {
+                return createUnauthorizedResponse(
+                    "Authentication token is unavailable."
+                );
+            }
+
+            headers.set(
+                "Authorization",
+                "Bearer " + token
+            );
+
+            headers.set(
+                "X-User-Id",
+                String(user.uid)
+            );
+
+            headers.set(
+                "X-Session-Id",
+                String(user.uid)
+            );
+
+            if (user.email) {
+                headers.set(
+                    "X-User-Email",
+                    String(user.email).toLowerCase()
+                );
+            }
+
+            const contentType =
+                String(
+                    headers.get(
+                        "Content-Type"
+                    )
+                    || ""
+                ).toLowerCase();
+
+            if (
+                typeof options.body === "string" &&
+                contentType.includes(
+                    "application/json"
+                )
+            ) {
+                try {
+                    const parsedBody =
+                        JSON.parse(
+                            options.body
+                        );
+
+                    options.body =
+                        JSON.stringify(
+                            forceVerifiedOwnership(
+                                parsedBody,
+                                user
+                            )
+                        );
+                } catch (error) {
+                    console.warn(
+                        "[MI Account] JSON body could not be updated.",
+                        error
+                    );
+                }
+            }
+
+            options.headers = headers;
+
+            let response =
+                await originalFetch(
+                    input,
+                    options
+                );
+
+            if (response.status === 401) {
+                try {
+                    const refreshedToken =
+                        await getFirebaseIdToken(
+                            true
+                        );
+
+                    if (refreshedToken) {
+                        headers.set(
+                            "Authorization",
+                            "Bearer " +
+                                refreshedToken
+                        );
+
+                        options.headers =
+                            headers;
+
+                        response =
+                            await originalFetch(
+                                input,
+                                options
+                            );
+                    }
+                } catch (error) {
+                    console.error(
+                        "[MI Account] Token refresh failed.",
+                        error
+                    );
+                }
+            }
+
+            return response;
+        };
+
+    function connectAccountListener() {
+        let auth = null;
+
+        try {
+            if (window.miFirebaseAuth) {
+                auth =
+                    window.miFirebaseAuth;
+            } else if (
+                window.firebase &&
+                typeof window.firebase.auth ===
+                    "function"
+            ) {
+                auth =
+                    window.firebase.auth();
+            }
+        } catch (error) {
+            auth = null;
+        }
+
+        if (
+            !auth ||
+            typeof auth.onAuthStateChanged !==
+                "function"
+        ) {
+            setTimeout(
+                connectAccountListener,
+                500
+            );
+
+            return;
+        }
+
+        let previousUid =
+            getCurrentFirebaseUser()?.uid
+            || "";
+
+        auth.onAuthStateChanged(
+            function (user) {
+                const nextUid =
+                    user?.uid || "";
+
+                if (
+                    previousUid !== nextUid
+                ) {
+                    clearPreviousAccountScreen();
+                }
+
+                previousUid = nextUid;
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "mi-account-changed",
+                        {
+                            detail: {
+                                uid: nextUid,
+                                email:
+                                    user?.email
+                                    || ""
+                            }
+                        }
+                    )
+                );
+            }
+        );
+    }
+
+    connectAccountListener();
+})();
+
+/* MI AI ACCOUNT ISOLATION V2 END */
+</script>
+
 </body>
 </html>
 
