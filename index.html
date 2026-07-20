@@ -10907,10 +10907,8 @@ textarea:disabled,
     id="miChiefOwnerSidebarButton"
     type="button"
     aria-label="Chief Owner Permissions"
-    style="display:none;">
-    <span aria-hidden="true">&#9819;</span>
-    <span>Chief Owner Permissions</span>
-</button>
+    style="display:none"
+>ðŸ‘‘ Chief Owner Permissions</button>
 <div id="chatList"></div>
 
 </div>   <!-- CLOSE SIDEBAR -->
@@ -32145,390 +32143,244 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
 
 <script id="MI_AI_PERMANENT_CHAT_DELETE_V3_LOADER" src="/mi-chat-permanent-delete.js" defer></script>
-
-
-
-
-
-
-
-<!-- MI_AI_EXACT_OWNER_SIDEBAR_FIX_START -->
-
-<style id="miExactOwnerSidebarStyle">
+<!-- MI_AI_OWNER_PANEL_BRIDGE_START -->
+<style id="miOwnerPanelBridgeStyles">
 #miChiefOwnerSidebarButton {
-    display: none;
-    width: 100% !important;
-    min-height: 42px !important;
-    box-sizing: border-box !important;
-    margin: 9px 0 0 !important;
-    padding: 11px 14px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 9px !important;
-    border: 1px solid rgba(255, 215, 90, 0.68) !important;
-    border-radius: 16px !important;
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,255,255,0.18),
-            rgba(255,255,255,0) 38%
-        ),
-        linear-gradient(
-            135deg,
-            rgba(24,35,62,0.98),
-            rgba(78,45,109,0.98)
-        ) !important;
-    color: #ffffff !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.24),
-        0 8px 22px rgba(0,0,0,0.22) !important;
-    font-family:
-        "Nirmala UI",
-        "Segoe UI",
-        Arial,
-        sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    line-height: 1.2 !important;
-    cursor: pointer !important;
-}
-
-#miChiefOwnerSidebarButton:hover {
-    transform: translateY(-1px) !important;
-    border-color: rgba(255, 229, 135, 0.95) !important;
-}
-
-/* The old account direct-message Chat control must never appear. */
-#miAccountChatButton,
-button#miAccountChatButton,
-#header #miAccountChatButton,
-.headerActions #miAccountChatButton {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
+    width: 100%;
+    margin-top: 10px;
 }
 </style>
 
-<script id="miExactOwnerSidebarScript">
+<script id="miOwnerPanelBridgeScript">
 (function () {
     "use strict";
 
-    const CHIEF_OWNER_EMAIL =
-        "teamofchatbot.miai@gmail.com";
+    const OWNER_EMAIL = "teamofchatbot.miai@gmail.com";
+    const SIDEBAR_BUTTON_ID = "miChiefOwnerSidebarButton";
+    const REAL_LAUNCHER_ID = "miFinalOwnerBtn";
+    const REAL_OVERLAY_ID = "miFinalOwnerOverlay";
+    const CHAT_BUTTON_ID = "miAccountChatButton";
 
-    const OWNER_BUTTON_ID =
-        "miChiefOwnerSidebarButton";
-
-    let ownerVisible = false;
-    let synchronizationTimer = null;
-
-    function normalizedEmail(value) {
-        return String(value || "")
-            .trim()
-            .toLowerCase();
-    }
-
-    function getFirebaseUser() {
+    function authObject() {
         try {
+            if (window.miFirebaseAuth) {
+                return window.miFirebaseAuth;
+            }
+
             if (
                 window.firebase &&
                 typeof window.firebase.auth === "function"
             ) {
-                return window.firebase.auth().currentUser;
+                return window.firebase.auth();
             }
         }
-        catch (error) {
-        }
-
-        try {
-            if (
-                window.miFirebaseAuth &&
-                window.miFirebaseAuth.currentUser
-            ) {
-                return window.miFirebaseAuth.currentUser;
-            }
-        }
-        catch (error) {
-        }
+        catch (_) {}
 
         return null;
     }
 
-    function emailFromStoredSession() {
-        const keys = [
-            "mi_user_email",
-            "mi_current_user_email",
-            "mi-auth-email",
-            "userEmail",
-            "email"
-        ];
+    function currentUser() {
+        const auth = authObject();
 
-        for (const key of keys) {
-            try {
-                const value = localStorage.getItem(key);
-
-                if (
-                    normalizedEmail(value) ===
-                    CHIEF_OWNER_EMAIL
-                ) {
-                    return CHIEF_OWNER_EMAIL;
-                }
-            }
-            catch (error) {
-            }
-        }
-
-        return "";
+        return (
+            (auth && auth.currentUser) ||
+            window.miFirebaseUser ||
+            window.currentFirebaseUser ||
+            null
+        );
     }
 
-    async function verifyOwner() {
-        const firebaseUser = getFirebaseUser();
-        const firebaseEmail = normalizedEmail(
-            firebaseUser && firebaseUser.email
-        );
-
-        if (firebaseEmail === CHIEF_OWNER_EMAIL) {
-            ownerVisible = true;
-            return true;
-        }
-
-        /*
-          Try the real backend authorization endpoint when a Firebase
-          ID token is available. The backend remains authoritative for
-          every actual management action.
-        */
-        if (
-            firebaseUser &&
-            typeof firebaseUser.getIdToken === "function"
-        ) {
-            try {
-                const token =
-                    await firebaseUser.getIdToken(false);
-
-                const response = await fetch(
-                    "/api/admin/me",
-                    {
-                        method: "GET",
-                        headers: {
-                            "Authorization":
-                                "Bearer " + token,
-                            "Accept":
-                                "application/json"
-                        },
-                        cache: "no-store"
-                    }
-                );
-
-                if (response.ok) {
-                    const data = await response.json();
-
-                    ownerVisible = Boolean(
-                        data &&
-                        (
-                            data.isChiefOwner === true ||
-                            data.is_chief_owner === true ||
-                            normalizedEmail(data.email) ===
-                                CHIEF_OWNER_EMAIL ||
-                            normalizedEmail(
-                                data.user && data.user.email
-                            ) === CHIEF_OWNER_EMAIL
-                        )
-                    );
-
-                    return ownerVisible;
-                }
-            }
-            catch (error) {
-                console.warn(
-                    "[MI AI] Owner endpoint check failed:",
-                    error
-                );
-            }
-        }
-
-        ownerVisible =
-            emailFromStoredSession() ===
-            CHIEF_OWNER_EMAIL;
-
-        return ownerVisible;
+    function sidebarButton() {
+        return document.getElementById(SIDEBAR_BUTTON_ID);
     }
 
     function removeHeaderChatButton() {
-        const directMessageButton =
-            document.getElementById(
-                "miAccountChatButton"
-            );
+        const button = document.getElementById(CHAT_BUTTON_ID);
 
-        if (directMessageButton) {
-            directMessageButton.remove();
+        if (button) {
+            button.remove();
+        }
+    }
+
+    async function backendConfirmsOwner(user) {
+        if (
+            !user ||
+            typeof user.getIdToken !== "function"
+        ) {
+            return false;
         }
 
-        const header =
-            document.getElementById("header");
+        try {
+            const response = await fetch(
+                "/api/admin/me",
+                {
+                    headers: {
+                        Authorization:
+                            "Bearer " +
+                            await user.getIdToken(true)
+                    },
+                    cache: "no-store"
+                }
+            );
 
-        if (!header) {
+            const data = await response
+                .json()
+                .catch(function () {
+                    return {};
+                });
+
+            return Boolean(
+                response.ok &&
+                (
+                    data.isChiefOwner === true ||
+                    data.is_chief_owner === true ||
+                    data.role === "chief_owner" ||
+                    data.role === "Chief Owner"
+                )
+            );
+        }
+        catch (_) {
+            return false;
+        }
+    }
+
+    async function refreshVisibility() {
+        const button = sidebarButton();
+
+        if (!button) {
             return;
         }
 
-        header.querySelectorAll(
-            "button, a, [role='button']"
-        ).forEach(function (element) {
-            const text = String(
-                element.innerText ||
-                element.textContent ||
-                element.getAttribute("aria-label") ||
-                ""
-            )
-            .replace(/\s+/g, " ")
+        const user = currentUser();
+
+        if (!user) {
+            button.style.display = "none";
+            return;
+        }
+
+        const email = String(user.email || "")
             .trim()
             .toLowerCase();
 
-            if (text === "chat") {
-                element.remove();
-            }
-        });
-    }
-
-    function openChiefOwnerPanel() {
-        const originalButton =
-            document.getElementById(
-                "miChiefOwnerEntry"
+        const isOwner =
+            email === OWNER_EMAIL &&
+            (
+                await backendConfirmsOwner(user) ||
+                email === OWNER_EMAIL
             );
 
-        if (
-            originalButton &&
-            originalButton !==
-                document.getElementById(
-                    OWNER_BUTTON_ID
-                )
-        ) {
-            originalButton.click();
-            return;
-        }
+        button.style.display = isOwner
+            ? "block"
+            : "none";
+    }
 
+    function openRealOverlayImmediately() {
         const overlay =
-            document.getElementById(
-                "miRbacOverlay"
-            ) ||
-            document.getElementById(
-                "miFinalOwnerOverlay"
-            ) ||
-            document.getElementById(
-                "chiefOwnerOverlay"
-            );
+            document.getElementById(REAL_OVERLAY_ID);
 
-        if (overlay) {
-            overlay.hidden = false;
-            overlay.style.display = "block";
-            overlay.setAttribute(
-                "aria-hidden",
-                "false"
-            );
-            document.body.style.overflow =
-                "hidden";
-            return;
+        if (!overlay) {
+            return false;
         }
+
+        overlay.hidden = false;
+        overlay.classList.add("open");
+        overlay.style.display = "flex";
+
+        return true;
+    }
+
+    function clickRealLauncher() {
+        const realLauncher =
+            document.getElementById(REAL_LAUNCHER_ID);
 
         if (
-            typeof window
-                .miOpenChiefOwnerPermissions ===
-                "function"
+            realLauncher &&
+            typeof realLauncher.click === "function"
         ) {
-            window
-                .miOpenChiefOwnerPermissions();
-            return;
+            realLauncher.click();
+            return true;
         }
 
-        alert(
-            "Chief Owner Permissions panel is unavailable. " +
-            "Please refresh the page and sign in again."
-        );
+        return false;
     }
 
-    function updateButton() {
-        removeHeaderChatButton();
-
-        const button =
-            document.getElementById(
-                OWNER_BUTTON_ID
-            );
-
-        const settings =
-            document.getElementById(
-                "settingsBtn"
-            );
-
-        if (!button || !settings) {
-            return;
-        }
-
-        if (
-            settings.nextElementSibling !==
-            button
-        ) {
-            settings.insertAdjacentElement(
-                "afterend",
-                button
-            );
-        }
-
-        button.style.setProperty(
-            "display",
-            ownerVisible ? "flex" : "none",
-            "important"
-        );
-
-        button.style.setProperty(
-            "visibility",
-            ownerVisible ? "visible" : "hidden",
-            "important"
-        );
-
-        button.style.setProperty(
-            "opacity",
-            ownerVisible ? "1" : "0",
-            "important"
-        );
-
-        button.hidden = !ownerVisible;
-    }
-
-    async function synchronize() {
-        await verifyOwner();
-        updateButton();
-    }
-
-    function scheduleSynchronization() {
-        window.clearTimeout(
-            synchronizationTimer
-        );
-
-        synchronizationTimer =
-            window.setTimeout(
-                function () {
-                    synchronize().catch(
-                        function (error) {
-                            console.error(
-                                "[MI AI] Owner button error:",
-                                error
-                            );
-
-                            updateButton();
-                        }
-                    );
-                },
-                100
-            );
-    }
-
-    function start() {
-        const button =
-            document.getElementById(
-                OWNER_BUTTON_ID
-            );
+    async function openChiefOwnerPanel() {
+        const button = sidebarButton();
 
         if (button) {
+            button.disabled = true;
+            button.textContent =
+                "â³ Opening Chief Owner Permissions...";
+        }
+
+        try {
+            const user = currentUser();
+            const email = String(
+                (user && user.email) || ""
+            )
+                .trim()
+                .toLowerCase();
+
+            if (!user || email !== OWNER_EMAIL) {
+                alert(
+                    "Chief Owner access is available only " +
+                    "to the Chief Owner account."
+                );
+                return;
+            }
+
+            /*
+             * The real MI-AI Chief Owner module creates
+             * miFinalOwnerOverlay when miFinalOwnerBtn is clicked.
+             */
+            if (openRealOverlayImmediately()) {
+                return;
+            }
+
+            clickRealLauncher();
+
+            for (let attempt = 0; attempt < 30; attempt += 1) {
+                await new Promise(function (resolve) {
+                    setTimeout(resolve, 100);
+                });
+
+                if (openRealOverlayImmediately()) {
+                    return;
+                }
+
+                if (attempt === 8 || attempt === 18) {
+                    clickRealLauncher();
+                }
+            }
+
+            console.error(
+                "[MI Owner Bridge] miFinalOwnerOverlay " +
+                "was not created by miFinalOwnerBtn."
+            );
+
+            alert(
+                "Chief Owner panel could not be opened. " +
+                "Please sign out, sign in with the Chief Owner " +
+                "account, and try again."
+            );
+        }
+        finally {
+            if (button) {
+                button.disabled = false;
+                button.textContent =
+                    "ðŸ‘‘ Chief Owner Permissions";
+            }
+        }
+    }
+
+    function connectButton() {
+        const button = sidebarButton();
+
+        if (
+            button &&
+            button.dataset.miOwnerBridge !== "1"
+        ) {
+            button.dataset.miOwnerBridge = "1";
             button.addEventListener(
                 "click",
                 openChiefOwnerPanel
@@ -32536,102 +32388,54 @@ button#miAccountChatButton,
         }
 
         removeHeaderChatButton();
-        scheduleSynchronization();
-
-        const observer =
-            new MutationObserver(
-                function () {
-                    removeHeaderChatButton();
-                    updateButton();
-                }
-            );
-
-        observer.observe(
-            document.documentElement,
-            {
-                childList: true,
-                subtree: true
-            }
-        );
-
-        window.setInterval(
-            function () {
-                removeHeaderChatButton();
-                updateButton();
-            },
-            1000
-        );
-
-        window.setTimeout(
-            scheduleSynchronization,
-            500
-        );
-
-        window.setTimeout(
-            scheduleSynchronization,
-            1500
-        );
-
-        window.setTimeout(
-            scheduleSynchronization,
-            3000
-        );
     }
 
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            { once: true }
-        );
-    }
-    else {
-        start();
+    function repair() {
+        connectButton();
+        removeHeaderChatButton();
+        refreshVisibility();
     }
 
-    window.addEventListener(
-        "load",
-        scheduleSynchronization
-    );
+    const observer = new MutationObserver(function () {
+        connectButton();
+        removeHeaderChatButton();
+    });
 
-    window.addEventListener(
-        "focus",
-        scheduleSynchronization
+    observer.observe(
+        document.documentElement,
+        {
+            childList: true,
+            subtree: true
+        }
     );
 
     document.addEventListener(
-        "visibilitychange",
+        "DOMContentLoaded",
         function () {
-            if (!document.hidden) {
-                scheduleSynchronization();
-            }
+            repair();
+
+            [200, 700, 1500, 3000].forEach(
+                function (delay) {
+                    setTimeout(repair, delay);
+                }
+            );
         }
     );
 
-    try {
-        if (
-            window.firebase &&
-            typeof window.firebase.auth ===
-                "function"
-        ) {
-            window.firebase
-                .auth()
-                .onAuthStateChanged(
-                    scheduleSynchronization
-                );
-        }
-    }
-    catch (error) {
-    }
+    window.addEventListener(
+        "mi-admin-access-loaded",
+        refreshVisibility
+    );
 
-    window.miRefreshChiefOwnerSidebar =
-        scheduleSynchronization;
+    window.addEventListener(
+        "mi-account-changed",
+        refreshVisibility
+    );
+
+    setInterval(removeHeaderChatButton, 1200);
+    setTimeout(repair, 100);
 })();
 </script>
-
-<!-- MI_AI_EXACT_OWNER_SIDEBAR_FIX_END -->
+<!-- MI_AI_OWNER_PANEL_BRIDGE_END -->
 </body>
 </html>
