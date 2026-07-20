@@ -10958,7 +10958,7 @@ textarea:disabled,
     type="button"
     onclick="closeSettings()"
     aria-label="Close Settings">
-    Ã¢Å“â€¢
+    ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢
 </button>
 <h3 data-i18n="settings.title">Settings</h3>
 
@@ -10968,8 +10968,8 @@ textarea:disabled,
         data-mi-i18n-ignore="true"
         onchange="window.MIAI18N && window.MIAI18N.setLanguage(this.value)">
         <option value="en">English</option>
-        <option value="si">Ã Â·Æ’Ã Â·â€™Ã Â¶â€šÃ Â·â€žÃ Â¶Â½</option>
-        <option value="ta">Ã Â®Â¤Ã Â®Â®Ã Â®Â¿Ã Â®Â´Ã Â¯Â</option>
+        <option value="si">ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã¢â‚¬Å¡ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â¶Ã‚Â½</option>
+        <option value="ta">ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‚Â</option>
     </select>
 
 <label data-i18n="settings.theme">Theme</label>
@@ -10987,7 +10987,7 @@ textarea:disabled,
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
-      <button id="sendBtn" type="button" onclick="sendOrStop()">Ã¢Å¾Â¤</button>
+      <button id="sendBtn" type="button" onclick="sendOrStop()">ÃƒÂ¢Ã…Â¾Ã‚Â¤</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -11001,19 +11001,19 @@ textarea:disabled,
 <div id="menu">
 
 <div onclick="renameChat()">
-Ã¢Å“Å½ Rename
+ÃƒÂ¢Ã…â€œÃ…Â½ Rename
 </div>
 
 <div onclick="pinChat()" id="pinOption">
-Ã°Å¸â€œÅ’ Pin
+ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™ Pin
 </div>
 
 <div onclick="shareChat()">
-Ã°Å¸â€â€” Share
+ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Share
 </div>
 
 <div onclick="deleteChat()" style="color:red">
-Ã°Å¸â€”â€˜ Delete
+ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã¢â‚¬Ëœ Delete
 </div>
 
 </div>
@@ -11136,19 +11136,19 @@ function populateLanguageSelector() {
 
 function updateTranslatedUi() {
   const loginBtn = document.getElementById('loginBtn');
-  if (loginBtn) loginBtn.textContent = `Ã°Å¸â€â€˜ ${t('auth.login', 'Login')}`;
+  if (loginBtn) loginBtn.textContent = `ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Ëœ ${t('auth.login', 'Login')}`;
 
   const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.textContent = `Ã°Å¸Å¡Âª ${t('auth.logout', 'Logout')}`;
+  if (logoutBtn) logoutBtn.textContent = `ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Âª ${t('auth.logout', 'Logout')}`;
 
   const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
-  if (newChatButton) newChatButton.innerHTML = `Ã¢Å¾â€¢ ${t('sidebar.newChat', 'New Chat')}`;
+  if (newChatButton) newChatButton.innerHTML = `ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢ ${t('sidebar.newChat', 'New Chat')}`;
 
   const settingsButton = document.getElementById('settingsBtn');
-  if (settingsButton) settingsButton.innerHTML = `Ã¢Å¡â„¢ ${t('sidebar.settings', 'Settings')}`;
+  if (settingsButton) settingsButton.innerHTML = `ÃƒÂ¢Ã…Â¡Ã¢â€žÂ¢ ${t('sidebar.settings', 'Settings')}`;
 
   const supportButton = document.getElementById('supportBtn');
-  if (supportButton) supportButton.innerHTML = `Ã°Å¸â€œÅ¾ ${t('sidebar.support', 'Customer Support')}`;
+  if (supportButton) supportButton.innerHTML = `ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â¾ ${t('sidebar.support', 'Customer Support')}`;
 
   const mobileMenuClose = document.getElementById('mobileMenuClose');
   if (mobileMenuClose) mobileMenuClose.setAttribute('aria-label', t('nav.closeMenu', 'Close menu'));
@@ -11269,11 +11269,11 @@ function formatFileSize(bytes) {
 
 function getAttachmentDisplayIcon(file) {
   const type = (file && file.type) || '';
-  if (type.startsWith('image/')) return 'Ã°Å¸â€“Â¼Ã¯Â¸Â';
-  if (type.includes('pdf')) return 'Ã°Å¸â€œâ€ž';
-  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return 'Ã°Å¸â€œÅ ';
-  if (type.includes('presentation') || type.includes('powerpoint')) return 'Ã°Å¸â€œÂ½Ã¯Â¸Â';
-  return 'Ã°Å¸â€œÅ½';
+  if (type.startsWith('image/')) return 'ÃƒÂ°Ã…Â¸Ã¢â‚¬â€œÃ‚Â¼ÃƒÂ¯Ã‚Â¸Ã‚Â';
+  if (type.includes('pdf')) return 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Å¾';
+  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â ';
+  if (type.includes('presentation') || type.includes('powerpoint')) return 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â½ÃƒÂ¯Ã‚Â¸Ã‚Â';
+  return 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â½';
 }
 
 function renderPendingAttachmentPreview() {
@@ -11288,7 +11288,7 @@ function renderPendingAttachmentPreview() {
         <span style="font-size:16px;">${getAttachmentDisplayIcon(file)}</span>
         <div style="min-width:0;">
           <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.name}</div>
-          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} Ã¢â‚¬Â¢ ${formatFileSize(file.size)}</div>
+          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${formatFileSize(file.size)}</div>
         </div>
       </div>
       <button type="button" onclick="removePendingAttachment(${index})" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
@@ -11573,7 +11573,7 @@ function showLoginPrompt(chatId) {
     box.style.color = '#f8fafc';
 
     box.innerHTML = `
-      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">Ã¢Å“â€¢</button>
+      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">${t('auth.loginPrompt.title', 'Login to unlock more')}</div>
       <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">${t('auth.loginPrompt.description', 'Enjoy these benefits when you sign in:')}</div>
       <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
@@ -11582,7 +11582,7 @@ function showLoginPrompt(chatId) {
         <li>${t('auth.loginPrompt.benefitPersonal', 'Get faster, more personal replies')}</li>
       </ul>
       <div style="display:flex;justify-content:center;">
-        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">Ã°Å¸â€â€™ Login</button>
+        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â„¢ Login</button>
       </div>
     `;
 
@@ -11729,22 +11729,22 @@ function openProfilePanel() {
     box.style.color = '#f8fafc';
 
     box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">Ã¢Å“â€¢</button>
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
       <div style="font-size:18px;font-weight:700;margin-bottom:14px;">Your profile</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <label style="font-size:13px;color:#cbd5e1;">Name</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>Ã°Å¸â€˜â€¹</span>
+          <span>ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Â¹</span>
           <input id="profileName" value="${(profile.name || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
         </div>
         <label style="font-size:13px;color:#cbd5e1;">Age</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>Ã°Å¸Å½â€š</span>
+          <span>ÃƒÂ°Ã…Â¸Ã…Â½Ã¢â‚¬Å¡</span>
           <input id="profileAge" value="${(profile.age || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" />
         </div>
         <label style="font-size:13px;color:#cbd5e1;">Email</label>
         <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
-          <span>Ã°Å¸â€œÂ§</span>
+          <span>ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â§</span>
           <input id="profileEmail" value="${(profile.email || '').replace(/"/g, '&quot;')}" style="width:100%;border:none;outline:none;background:transparent;color:#fff;" readonly />
         </div>
       </div>
@@ -11773,7 +11773,7 @@ function confirmLogout() {
     const box = document.getElementById('profilePanel');
     if (!box) return;
     box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">Ã¢Å“â€¢</button>
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
         <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
@@ -12024,7 +12024,7 @@ function showSharedPrivacyGate(payload) {
 
     overlay.innerHTML = `
       <div style="width:min(92vw,480px);max-height:90vh;overflow:auto;position:relative;padding:24px 24px 84px;border-radius:24px;background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.14);box-shadow:0 24px 60px rgba(0,0,0,0.36);">
-        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">Ã¢Å“â€¢</button>
+        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
         <div style="font-size:22px;font-weight:800;margin-bottom:8px;">Shared chat privacy</div>
         <div style="font-size:13px;color:#cbd5e1;margin-bottom:16px;">This link follows the privacy rules selected by the owner. Review them below, then continue.</div>
         <div style="display:grid;gap:8px;margin-bottom:16px;">
@@ -12220,7 +12220,7 @@ function showApprovalRequestsPanel() {
   box.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:16px;font-weight:700;">Approval requests</div>
-      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">Ã¢Å“â€¢</button>
+      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
     </div>
     ${requests.length ? requests.map((req) => `
       <div style="margin-bottom:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.08);">
@@ -12860,8 +12860,8 @@ if (attachments.length > 0) {
     attachmentBox.style.marginBottom = '12px';
     attachmentBox.innerHTML = attachments.map((attachment) => `
       <div style="margin-bottom:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#f8fafc;">
-        <div style="font-size:13px;font-weight:700;">Ã°Å¸â€œÂ ${attachment.file_name || 'Uploaded file'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} Ã¢â‚¬Â¢ ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
+        <div style="font-size:13px;font-weight:700;">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â ${attachment.file_name || 'Uploaded file'}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
       </div>
     `).join('');
     chatBox.appendChild(attachmentBox);
@@ -12917,8 +12917,8 @@ const visibleChatTitle =
     ).trim();
 
 div.innerText =
-    (chats[id].pin ? "Ã°Å¸â€œÅ’ " : "") +
-    "Ã°Å¸â€™Â¬ " +
+    (chats[id].pin ? "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™ " : "") +
+    "ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬ " +
     visibleChatTitle;
 
 div.onclick=()=>openChat(id);
@@ -12932,7 +12932,7 @@ selectedChat=id;
 
 
 document.getElementById("pinOption").innerHTML =
-chats[id].pin ? "Ã¢Å“â€¢ Unpin" : "Ã°Å¸â€œÅ’ Pin";
+chats[id].pin ? "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢ Unpin" : "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™ Pin";
 
 
 menu.style.display="block";
@@ -13272,7 +13272,7 @@ function createCopyButton(text) {
   button.type = 'button';
   button.className = 'aiCopyButton';
   button.title = 'Copy';
-  button.innerHTML = 'Ã°Å¸â€œâ€¹';
+  button.innerHTML = 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹';
   button.onclick = async (event) => {
     event.stopPropagation();
     await copyTextToClipboard(text || '');
@@ -13737,7 +13737,7 @@ async function send() {
   }
 
   if (uploadErrors.length) {
-    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' Ã¢â‚¬Â¢ ');
+    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ');
     setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
   }
 
@@ -14157,7 +14157,7 @@ async function save() {
 function setReplyControlState(isActive) {
     const sendButton = document.getElementById('sendBtn');
     if (sendButton) {
-        sendButton.innerHTML = isActive ? 'Ã¢Å¾Å“' : 'Ã¢Â¬â€ ';
+        sendButton.innerHTML = isActive ? 'ÃƒÂ¢Ã…Â¾Ã…â€œ' : 'ÃƒÂ¢Ã‚Â¬Ã¢â‚¬Â ';
         sendButton.title = isActive ? 'Stop reply' : 'Send message';
     }
 }
@@ -14240,16 +14240,16 @@ box.style.boxShadow="0 0 25px #ff7a18";
 
 box.innerHTML=`
 
-<h3>Ã°Å¸Å½Â§ Customer Support</h3>
+<h3>ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â§ Customer Support</h3>
 
-<p>Ã°Å¸â€œÂ§ Email</p>
+<p>ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â§ Email</p>
 
 <button onclick="openEmail()">
 REQUEST VIA EMAIL
 </button>
 
 
-<p>Ã°Å¸â€™Â¬ WhatsApp</p>
+<p>ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬ WhatsApp</p>
 
 <button onclick="openWhatsApp()">
 VIA WHATSAPP
@@ -14257,7 +14257,7 @@ VIA WHATSAPP
 
 
 <button onclick="this.parentElement.remove()">
-Ã¢Å“â€¢ Close
+ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢ Close
 </button>
 
 `;
@@ -15272,21 +15272,21 @@ document.addEventListener(
         setStaticButton(
             "#sidebar button[onclick*='newChat']",
             "newChat",
-            "Ã¢Å¾Å“",
+            "ÃƒÂ¢Ã…Â¾Ã…â€œ",
             language
         );
 
         setStaticButton(
             "#settingsBtn",
             "settings",
-            "Ã¢Å“â€°",
+            "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â°",
             language
         );
 
         setStaticButton(
             "#supportBtn",
             "customerSupport",
-            "ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â§",
+            "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Â§",
             language
         );
 
@@ -15687,23 +15687,23 @@ document.addEventListener(
             },
 
             si: {
-                copy: "Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                rename: "Ã Â¶Â±Ã Â¶Â¸ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                pin: "Ã Â¶â€°Ã Â·â€žÃ Â·â€¦Ã Â¶Â§ Ã Â¶â€¦Ã Â¶Â¸Ã Â·â€Ã Â¶Â«Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                unpin: "Ã Â¶â€¦Ã Â¶Â¸Ã Â·â€Ã Â¶Â«Ã Â·â€œÃ Â¶Â¸ Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                share: "Ã Â¶Â¶Ã Â·â„¢Ã Â¶Â¯Ã Â·ÂÃ Â¶Å“Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                deleteText: "Ã Â¶Â¸Ã Â¶Å¡Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                copied: "Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â!"
+                copy: "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                rename: "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                pin: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                unpin: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                share: "ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                deleteText: "ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                copied: "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã‚Â!"
             },
 
             ta: {
-                copy: "Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯Â",
-                rename: "Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Ë† Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â¯Â",
-                pin: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯Â",
-                unpin: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯ÂÃ Â®Â©Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â",
-                share: "Ã Â®ÂªÃ Â®â€¢Ã Â®Â¿Ã Â®Â°Ã Â¯Â",
-                deleteText: "Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â",
-                copied: "Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â!"
+                copy: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚Â",
+                rename: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â",
+                pin: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚Â",
+                unpin: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
+                share: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â",
+                deleteText: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
+                copied: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â!"
             }
         };
 
@@ -15841,7 +15841,7 @@ document.addEventListener(
             menu.appendChild(
                 menuButton(
                     "copy",
-                    "Ã°Å¸â€œâ€¹",
+                    "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹",
                     text("copy"),
                     false
                 )
@@ -15855,14 +15855,14 @@ document.addEventListener(
         menu.append(
             menuButton(
                 "rename",
-                "Ã¢Å¡Â ",
+                "ÃƒÂ¢Ã…Â¡Ã‚Â ",
                 text("rename"),
                 false
             ),
 
             menuButton(
                 "pin",
-                pinned ? "Ã°Å¸â€œÅ’" : "Ã°Å¸â€œÂ",
+                pinned ? "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™" : "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â",
                 pinned
                     ? text("unpin")
                     : text("pin"),
@@ -15871,14 +15871,14 @@ document.addEventListener(
 
             menuButton(
                 "share",
-                "Ã¢â€¹Â¯",
+                "ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â¯",
                 text("share"),
                 false
             ),
 
             menuButton(
                 "delete",
-                "Ã°Å¸â€”â€˜",
+                "ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã¢â‚¬Ëœ",
                 text("deleteText"),
                 true
             )
@@ -16423,19 +16423,19 @@ document.addEventListener(
             },
 
             si: {
-                rename: "Ã Â¶Â±Ã Â¶Â¸ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                pin: "Ã Â¶â€°Ã Â·â€žÃ Â·â€¦Ã Â¶Â§ Ã Â¶â€¦Ã Â¶Â¸Ã Â·â€Ã Â¶Â«Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                unpin: "Ã Â¶â€¦Ã Â¶Â¸Ã Â·â€Ã Â¶Â«Ã Â·â€œÃ Â¶Â¸ Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                share: "Ã Â¶Â¶Ã Â·â„¢Ã Â¶Â¯Ã Â·ÂÃ Â¶Å“Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                deleteText: "Ã Â¶Â¸Ã Â¶Å¡Ã Â¶Â±Ã Â·Å Ã Â¶Â±"
+                rename: "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                pin: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                unpin: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                share: "ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                deleteText: "ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±"
             },
 
             ta: {
-                rename: "Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Ë† Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â¯Â",
-                pin: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯Â",
-                unpin: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯ÂÃ Â®Â©Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â",
-                share: "Ã Â®ÂªÃ Â®â€¢Ã Â®Â¿Ã Â®Â°Ã Â¯Â",
-                deleteText: "Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â"
+                rename: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â",
+                pin: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚Â",
+                unpin: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
+                share: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â",
+                deleteText: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â"
             }
         };
 
@@ -16553,14 +16553,14 @@ document.addEventListener(
                     menu.replaceChildren(
                         makeButton(
                             "rename",
-                            "Ã¢Å¡Â ",
+                            "ÃƒÂ¢Ã…Â¡Ã‚Â ",
                             label("rename"),
                             false
                         ),
 
                         makeButton(
                             "pin",
-                            pinned ? "Ã°Å¸â€œÅ’" : "Ã°Å¸â€œÂ",
+                            pinned ? "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™" : "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â",
                             pinned
                                 ? label("unpin")
                                 : label("pin"),
@@ -16569,14 +16569,14 @@ document.addEventListener(
 
                         makeButton(
                             "share",
-                            "Ã¢â€¹Â¯",
+                            "ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â¯",
                             label("share"),
                             false
                         ),
 
                         makeButton(
                             "delete",
-                            "Ã°Å¸â€”â€˜",
+                            "ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã¢â‚¬Ëœ",
                             label("deleteText"),
                             true
                         )
@@ -16951,11 +16951,11 @@ document.addEventListener(
         },
 
         ta: {
-            language: "Ã Â®Â®Ã Â¯Å Ã Â®Â´Ã Â®Â¿",
-            theme: "Ã Â®Â¤Ã Â¯â‚¬Ã Â®Â®Ã Â¯Â",
-            fontSize: "Ã Â®Å½Ã Â®Â´Ã Â¯ÂÃ Â®Â¤Ã Â¯ÂÃ Â®Â¤Ã Â®Â³Ã Â®ÂµÃ Â¯Â",
-            copy: "Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯Â",
-            copied: "Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â!"
+            language: "ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â®Ã‚Â¿",
+            theme: "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â",
+            fontSize: "ÃƒÂ Ã‚Â®Ã…Â½ÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚Â",
+            copy: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚Â",
+            copied: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â!"
         }
     };
 
@@ -17007,8 +17007,8 @@ document.addEventListener(
 
                 return (
                     content.includes("language")
-                    || content.includes("Ã Â¶Â·Ã Â·ÂÃ Â·â€šÃ Â·ÂÃ Â·â‚¬")
-                    || content.includes("Ã Â®Â®Ã Â¯Å Ã Â®Â´Ã Â®Â¿")
+                    || content.includes("ÃƒÂ Ã‚Â¶Ã‚Â·ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â‚¬Å¡ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬")
+                    || content.includes("ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â®Ã‚Â¿")
                 );
             })
         );
@@ -17062,8 +17062,8 @@ document.addEventListener(
                 return (
                     content.includes("font")
                     || content.includes("size")
-                    || content.includes("Ã Â¶â€¦Ã Â¶Å¡Ã Â·â€Ã Â¶Â»Ã Â·â€")
-                    || content.includes("Ã Â®Å½Ã Â®Â´Ã Â¯ÂÃ Â®Â¤Ã Â¯ÂÃ Â®Â¤Ã Â®Â³Ã Â®ÂµÃ Â¯Â")
+                    || content.includes("ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬Â")
+                    || content.includes("ÃƒÂ Ã‚Â®Ã…Â½ÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚Â")
                 );
             })
         );
@@ -17182,7 +17182,7 @@ document.addEventListener(
             "true"
         );
 
-        arrow.textContent = "Ã¢â€“Â¾";
+        arrow.textContent = "ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¾";
 
         button.append(
             left,
@@ -17356,7 +17356,7 @@ document.addEventListener(
         accordion.append(
             createSection(
                 "language",
-                "Ã°Å¸Å’Â",
+                "ÃƒÂ°Ã…Â¸Ã…â€™Ã‚Â",
                 word("language"),
                 languageControl,
                 panel
@@ -17364,7 +17364,7 @@ document.addEventListener(
 
             createSection(
                 "theme",
-                "Ã°Å¸Å½Â¨",
+                "ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¨",
                 word("theme"),
                 themeControl,
                 panel
@@ -17600,10 +17600,10 @@ document.addEventListener(
                             "copy"
                         )
                         || combined.includes(
-                            "Ã°Å¸â€œâ€¹"
+                            "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹"
                         )
                         || combined.includes(
-                            "Ã°Å¸â€œÂ¤"
+                            "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¤"
                         )
                     );
                 });
@@ -17618,7 +17618,7 @@ document.addEventListener(
                     "button";
 
                 copyButton.textContent =
-                    "Ã°Å¸â€œâ€¹";
+                    "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹";
 
                 aiBubble.appendChild(
                     copyButton
@@ -17684,12 +17684,12 @@ document.addEventListener(
                             copyButton.textContent;
 
                         copyButton.textContent =
-                            "Ã¢Å“â€œ";
+                            "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“";
 
                         setTimeout(
                             function () {
                                 copyButton.textContent =
-                                    oldText || "Ã°Å¸â€œâ€¹";
+                                    oldText || "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹";
                             },
                             1000
                         );
@@ -18016,7 +18016,7 @@ document.addEventListener(
             check.className =
                 "mi-ios-option-check";
 
-            check.textContent = "Ã¢Å“â€œ";
+            check.textContent = "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“";
 
             check.setAttribute(
                 "aria-hidden",
@@ -20219,7 +20219,7 @@ document.addEventListener(
         /\b(latest|live|current|today|now|score|scores|result|results|match|game|news|weather|price|stock|election|president|prime minister|ceo|release|update|updated|breaking)\b/i;
 
     const TIME_PATTERN =
-        /\b(what(?:'s| is)? the time|time now|current time|local time|Ã Â¶Å¡Ã Â·ÂÃ Â¶Â½Ã Â¶Âº|Ã Â¶Â¯Ã Â·ÂÃ Â¶Â±Ã Â·Å  Ã Â¶Å¡Ã Â·ÂÃ Â¶Â½Ã Â¶Âº|Ã Â®Â¨Ã Â¯â€¡Ã Â®Â°Ã Â®Â®Ã Â¯Â|Ã Â®Â¤Ã Â®Â±Ã Â¯ÂÃ Â®ÂªÃ Â¯â€¹Ã Â®Â¤Ã Â¯Ë†Ã Â®Â¯ Ã Â®Â¨Ã Â¯â€¡Ã Â®Â°Ã Â®Â®Ã Â¯Â)\b/i;
+        /\b(what(?:'s| is)? the time|time now|current time|local time|ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Âº|ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Âº|ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â|ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã¢â‚¬Â¹ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â)\b/i;
 
     function extractQuestion(payload) {
         if (!payload || typeof payload !== "object") {
@@ -21484,13 +21484,13 @@ document.addEventListener(
     function badgeText() {
         const values = {
             en:
-                "Shared conversation Ã¢â‚¬â€ only this chat is available",
+                "Shared conversation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only this chat is available",
 
             si:
-                "Ã Â·Æ’Ã Â·â„¢Ã Â¶Â½Ã Â·Å Ã Â¶Â´Ã Â·â€™Ã Â·â€¦Ã Â·â€™Ã Â¶Å“Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã¢â‚¬â€ Ã Â¶Â¸Ã Â·Å¡ chat Ã Â¶â€˜Ã Â¶Å¡ Ã Â¶Â´Ã Â¶Â¸Ã Â¶Â«Ã Â¶Å¡Ã Â·Å  Ã Â¶Â½Ã Â¶Â¯ Ã Â·â€žÃ Â·ÂÃ Â¶Å¡",
+                "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â¡ chat ÃƒÂ Ã‚Â¶Ã¢â‚¬ËœÃƒÂ Ã‚Â¶Ã…Â¡ ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Â¯ ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…Â¡",
 
             ta:
-                "Ã Â®ÂªÃ Â®â€¢Ã Â®Â¿Ã Â®Â°Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸ Ã Â®â€°Ã Â®Â°Ã Â¯Ë†Ã Â®Â¯Ã Â®Â¾Ã Â®Å¸Ã Â®Â²Ã Â¯Â Ã¢â‚¬â€ Ã Â®â€¡Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤ Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â®Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯ÂÃ Â®Â®Ã Â¯Â Ã Â®â€¢Ã Â®Â¿Ã Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®Â®Ã Â¯Â"
+                "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â"
         };
 
         return (
@@ -23104,7 +23104,7 @@ document.addEventListener(
     function words() {
         const all = {
             en: {
-                thinking: "ThinkingÃ¢â‚¬Â¦",
+                thinking: "ThinkingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦",
                 copied: "Message copied",
                 saved: "Chat saved",
                 uploaded: "File uploaded",
@@ -23121,37 +23121,37 @@ document.addEventListener(
             },
 
             si: {
-                thinking: "Ã Â·Æ’Ã Â·â€™Ã Â¶Â­Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
-                copied: "Ã Â¶Â´Ã Â¶Â«Ã Â·â€™Ã Â·â‚¬Ã Â·â€™Ã Â¶Â©Ã Â¶Âº Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                saved: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã Â·Æ’Ã Â·â€Ã Â¶Â»Ã Â¶Å¡Ã Â·â€™Ã Â¶Â± Ã Â¶Â½Ã Â¶Â¯Ã Â·â€œ",
-                uploaded: "Ã Â¶Å“Ã Â·Å“Ã Â¶Â±Ã Â·â€Ã Â·â‚¬ Ã Â¶â€¹Ã Â¶Â©Ã Â·â€Ã Â¶Å“Ã Â¶Â­ Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                online: "Ã Â¶â€¦Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶Âº Ã Â·Æ’Ã Â¶Å¡Ã Â·Å Ã¢â‚¬ÂÃ Â¶Â»Ã Â·â€œÃ Â¶ÂºÃ Â¶ÂºÃ Â·â€™",
-                offline: "Ã Â¶â€Ã Â¶Â¶ Ã Â¶â€¦Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶ÂºÃ Â¶Â§ Ã Â·Æ’Ã Â¶Â¸Ã Â·Å Ã Â¶Â¶Ã Â¶Â±Ã Â·Å Ã Â¶Â° Ã Â¶Â±Ã Â·Å“Ã Â·â‚¬Ã Â·Å¡",
-                rename: "Ã Â¶Â±Ã Â¶Â¸ Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                pin: "Ã Â¶â€°Ã Â·â€žÃ Â·â€¦Ã Â¶Â§ Ã Â¶â€¦Ã Â¶Â¸Ã Â·â€Ã Â¶Â«Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                unpin: "Ã Â¶â€¦Ã Â¶Â¸Ã Â·â€Ã Â¶Â«Ã Â·â€œÃ Â¶Â¸ Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                share: "Ã Â¶Â¶Ã Â·â„¢Ã Â¶Â¯Ã Â·ÂÃ Â¶Å“Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                deleteText: "Ã Â¶Â¸Ã Â¶Å¡Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                settings: "Ã Â·Æ’Ã Â·ÂÃ Â¶Å¡Ã Â·Æ’Ã Â·â€Ã Â¶Â¸Ã Â·Å ",
-                cancel: "Ã Â¶â€¦Ã Â·â‚¬Ã Â¶Â½Ã Â¶â€šÃ Â¶Å“Ã Â·â€ Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±",
-                chatOptions: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€žÃ Â·Å¡ Ã Â·â‚¬Ã Â·â€™Ã Â¶Å¡Ã Â¶Â½Ã Â·Å Ã Â¶Â´"
+                thinking: "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ...",
+                copied: "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â©ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã‚Â",
+                saved: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â± ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã¢â‚¬Å“",
+                uploaded: "ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¹ÃƒÂ Ã‚Â¶Ã‚Â©ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â­ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                online: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¢ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â‚¬â„¢",
+                offline: "ÃƒÂ Ã‚Â¶Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¶ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¢ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â° ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…â€œÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã…Â¡",
+                rename: "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                pin: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                unpin: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                share: "ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                deleteText: "ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                settings: "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â ",
+                cancel: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã¢â‚¬Å¡ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã¢â‚¬Â ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
+                chatOptions: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã…Â¡ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â´"
             },
 
             ta: {
-                thinking: "Ã Â®Å¡Ã Â®Â¿Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯ÂÃ¢â‚¬Â¦",
-                copied: "Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿ Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                saved: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Å¡Ã Â¯â€¡Ã Â®Â®Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                uploaded: "Ã Â®â€¢Ã Â¯â€¹Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®ÂªÃ Â®Â¤Ã Â®Â¿Ã Â®ÂµÃ Â¯â€¡Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                online: "Ã Â®Â®Ã Â¯â‚¬Ã Â®Â£Ã Â¯ÂÃ Â®Å¸Ã Â¯ÂÃ Â®Â®Ã Â¯Â Ã Â®â€ Ã Â®Â©Ã Â¯ÂÃ Â®Â²Ã Â¯Ë†Ã Â®Â©Ã Â¯Â",
-                offline: "Ã Â®Â¨Ã Â¯â‚¬Ã Â®â„¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®â€ Ã Â®Æ’Ã Â®ÂªÃ Â¯ÂÃ Â®Â²Ã Â¯Ë†Ã Â®Â©Ã Â®Â¿Ã Â®Â²Ã Â¯Â Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â³Ã Â¯â‚¬Ã Â®Â°Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â",
-                rename: "Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Ë† Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â¯Â",
-                pin: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯Â",
-                unpin: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯ÂÃ Â®Â©Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â",
-                share: "Ã Â®ÂªÃ Â®â€¢Ã Â®Â¿Ã Â®Â°Ã Â¯Â",
-                deleteText: "Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â",
-                settings: "Ã Â®â€¦Ã Â®Â®Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â",
-                cancel: "Ã Â®Â°Ã Â®Â¤Ã Â¯ÂÃ Â®Â¤Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯Â",
-                chatOptions: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂµÃ Â®Â¿Ã Â®Â°Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®â„¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â"
+                thinking: "ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦",
+                copied: "ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                saved: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                uploaded: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¹ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                online: "ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â£ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â",
+                offline: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã†â€™ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â",
+                rename: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â",
+                pin: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚Â",
+                unpin: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
+                share: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â",
+                deleteText: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
+                settings: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â",
+                cancel: "ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚Â",
+                chatOptions: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â"
             }
         };
 
@@ -23291,11 +23291,11 @@ document.addEventListener(
     function islandIcon(type) {
         const values = {
             thinking: "",
-            success: "Ã¢Å“â€œ",
-            copy: "Ã°Å¸â€œâ€¹",
-            save: "Ã¢Å“â€œ",
-            upload: "Ã¢Â¬â€ ",
-            online: "Ã¢â€”Â",
+            success: "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“",
+            copy: "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹",
+            save: "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“",
+            upload: "ÃƒÂ¢Ã‚Â¬Ã¢â‚¬Â ",
+            online: "ÃƒÂ¢Ã¢â‚¬â€Ã‚Â",
             offline: "!",
             info: "i"
         };
@@ -23607,7 +23607,7 @@ document.addEventListener(
                     "mi-ios-sheet-action-icon";
 
                 icon.textContent =
-                    action.icon || "Ã¢â‚¬Â¢";
+                    action.icon || "ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢";
 
                 const label =
                     document.createElement(
@@ -23794,7 +23794,7 @@ document.addEventListener(
             labels.chatOptions,
             [
                 {
-                    icon: "Ã¢Å¡Â ",
+                    icon: "ÃƒÂ¢Ã…Â¡Ã‚Â ",
                     label:
                         labels.rename,
                     run:
@@ -23807,8 +23807,8 @@ document.addEventListener(
                 {
                     icon:
                         pinned
-                            ? "Ã¢Ë†â€™"
-                            : "Ã°Å¸â€œÂ",
+                            ? "ÃƒÂ¢Ã‹â€ Ã¢â‚¬â„¢"
+                            : "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â",
                     label:
                         pinned
                             ? labels.unpin
@@ -23821,7 +23821,7 @@ document.addEventListener(
                         }
                 },
                 {
-                    icon: "Ã¢â€¹Â¯",
+                    icon: "ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â¯",
                     label:
                         labels.share,
                     run:
@@ -23832,7 +23832,7 @@ document.addEventListener(
                         }
                 },
                 {
-                    icon: "Ã°Å¸â€œÅ’",
+                    icon: "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™",
                     label:
                         labels.deleteText,
                     danger: true,
@@ -24420,24 +24420,24 @@ document.addEventListener(
 
             si: {
                 title:
-                    "Ã Â¶Â±Ã Â·ÂÃ Â·â‚¬Ã Â¶Â­ Ã Â·Æ’Ã Â·ÂÃ Â¶Â¯Ã Â¶Â»Ã Â¶ÂºÃ Â·â„¢Ã Â¶Â±Ã Â·Å  Ã Â¶Â´Ã Â·â€™Ã Â·â€¦Ã Â·â€™Ã Â¶Å“Ã Â¶Â±Ã Â·â€™Ã Â¶Â¸Ã Â·â€!",
+                    "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬Â!",
 
                 message:
-                    "MI AI Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â­ Ã Â¶Â´Ã Â·â€™Ã Â·â‚¬Ã Â·â€™Ã Â·Æ’Ã Â·â€œÃ Â¶Â¸Ã Â·â„¢Ã Â¶Â±Ã Â·Å  Ã Â¶â€Ã Â¶Â¶Ã Â¶Å“Ã Â·Å¡ Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã Â·Æ’Ã Â·â€ž Ã Â·Æ’Ã Â·ÂÃ Â¶Å¡Ã Â·Æ’Ã Â·â€Ã Â¶Â¸Ã Â·Å  Ã Â·Æ’Ã Â·â€“Ã Â¶Â¯Ã Â·ÂÃ Â¶Â±Ã Â¶Â¸Ã Â·Å Ã Â¶Âº.",
+                    "MI AI ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â­ ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã…Â¡ ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬â€œÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Âº.",
 
                 continueText:
-                    "Ã Â¶â€°Ã Â¶Â¯Ã Â·â€™Ã Â¶Â»Ã Â·â€™Ã Â¶ÂºÃ Â¶Â§ Ã Â¶ÂºÃ Â¶Â±Ã Â·Å Ã Â¶Â±"
+                    "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±"
             },
 
             ta: {
                 title:
-                    "Ã Â®Â®Ã Â¯â‚¬Ã Â®Â£Ã Â¯ÂÃ Â®Å¸Ã Â¯ÂÃ Â®Â®Ã Â¯Â Ã Â®ÂµÃ Â®Â°Ã Â®ÂµÃ Â¯â€¡Ã Â®Â±Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â¯â€¹Ã Â®Â®Ã Â¯Â!",
+                    "ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â£ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¹ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â!",
 
                 message:
-                    "MI AI-Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¤Ã Â®Â©Ã Â¯Â Ã Â®Â®Ã Â¯â€šÃ Â®Â²Ã Â®Â®Ã Â¯Â Ã Â®â€°Ã Â®â„¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®Â®Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â®Ã Â¯Â Ã Â®â€¦Ã Â®Â®Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®Â¤Ã Â®Â¯Ã Â®Â¾Ã Â®Â°Ã Â¯Â.",
+                    "MI AI-ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã¢â‚¬Å¡ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â.",
 
                 continueText:
-                    "Ã Â®Â¤Ã Â¯Å Ã Â®Å¸Ã Â®Â°Ã Â®ÂµÃ Â¯ÂÃ Â®Â®Ã Â¯Â"
+                    "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â"
             }
         };
 
@@ -25015,7 +25015,7 @@ document.addEventListener(
         }
 
         if (
-            /^(hi|hii+|hello|hey|good morning|good afternoon|good evening|Ã Â·â€žÃ Â·â„¢Ã Â¶Â½Ã Â·Â|Ã Â·â€žÃ Â·ÂÃ Â¶ÂºÃ Â·â€™|Ã Â®ÂµÃ Â®Â£Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â®Ã Â¯Â)\b/i
+            /^(hi|hii+|hello|hey|good morning|good afternoon|good evening|ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã‚Â|ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â‚¬â„¢|ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â£ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â)\b/i
                 .test(original)
         ) {
             return "User Greeting";
@@ -25670,7 +25670,7 @@ document.addEventListener(
                         "background:rgba(255,255,255,.06);";
 
                     card.textContent =
-                        "Ã°Å¸â€œÂ " +
+                        "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â " +
                         (
                             attachment.file_name ||
                             attachment.name ||
@@ -25832,10 +25832,10 @@ document.addEventListener(
                 item.textContent =
                     (
                         chat?.pin
-                            ? "Ã°Å¸â€œÅ’ "
+                            ? "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™ "
                             : ""
                     ) +
-                    "Ã°Å¸â€™Â¬ " +
+                    "ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬ " +
                     titleForChat(
                         chatId
                     );
@@ -25886,8 +25886,8 @@ document.addEventListener(
                         if (pinOption) {
                             pinOption.textContent =
                                 chat?.pin
-                                    ? "Ã¢Å“â€¢ Unpin"
-                                    : "Ã°Å¸â€œÅ’ Pin";
+                                    ? "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢ Unpin"
+                                    : "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™ Pin";
                         }
 
                         const contextMenu =
@@ -26901,59 +26901,59 @@ document.addEventListener(
             },
             si: {
                 idle: "MI AI",
-                thinking: "Ã Â·Æ’Ã Â·â€™Ã Â¶Â­Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
-                searching: "Ã Â·Æ’Ã Â·â„¢Ã Â·â‚¬Ã Â·â€œÃ Â¶Â¸...",
-                sending: "Ã Â¶ÂºÃ Â·â‚¬Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
-                sent: "Ã Â¶Â´Ã Â¶Â«Ã Â·â€™Ã Â·â‚¬Ã Â·â€™Ã Â¶Â©Ã Â¶Âº Ã Â¶ÂºÃ Â·â‚¬Ã Â·Â Ã Â¶â€¡Ã Â¶Â­",
-                copied: "Ã Â¶Â´Ã Â·â€™Ã Â¶Â§Ã Â¶Â´Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                saved: "Ã Â·Æ’Ã Â·â€Ã Â¶Â»Ã Â¶Å¡Ã Â·â€™Ã Â¶Â± Ã Â¶Â½Ã Â¶Â¯Ã Â·â€œ",
-                loading: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã Â¶Â´Ã Â·ÂÃ Â¶Â§Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
-                loaded: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã Â¶Â´Ã Â·â€“Ã Â¶Â»Ã Â¶Â«Ã Â¶Âº Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                online: "Ã Â¶â€¦Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶Âº Ã Â·Æ’Ã Â¶Å¡Ã Â·Å Ã¢â‚¬ÂÃ Â¶Â»Ã Â·â€œÃ Â¶ÂºÃ Â¶ÂºÃ Â·â€™",
-                offline: "Ã Â¶â€Ã Â¶Â¶ Ã Â¶â€¦Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â¶Â»Ã Â·Å Ã Â¶Â¢Ã Â·ÂÃ Â¶Â½Ã Â¶ÂºÃ Â¶Â§ Ã Â·Æ’Ã Â¶Â¸Ã Â·Å Ã Â¶Â¶Ã Â¶Â±Ã Â·Å Ã Â¶Â° Ã Â¶Â±Ã Â·Å“Ã Â·â‚¬Ã Â·Å¡",
-                newChat: "Ã Â¶Â±Ã Â·â‚¬ Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž",
-                opened: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                renamed: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã Â¶Â±Ã Â·ÂÃ Â¶Â¸Ã Â¶Âº Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â±Ã Â·Æ’Ã Â·Å  Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                deleted: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž Ã Â¶Â¸Ã Â¶Å¡Ã Â·Â Ã Â¶Â¯Ã Â¶Â¸Ã Â¶Â± Ã Â¶Â½Ã Â¶Â¯Ã Â·â€œ",
-                pinned: "Ã Â¶Å¡Ã Â¶Â­Ã Â·ÂÃ Â¶Â¶Ã Â·â€ž pin Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                unpinned: "Pin Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â¶Å¡Ã Â·â€¦Ã Â·Â",
-                uploaded: "Ã Â¶Å“Ã Â·Å“Ã Â¶Â±Ã Â·â€Ã Â·â‚¬ Ã Â¶â€¹Ã Â¶Â©Ã Â·â€Ã Â¶Å“Ã Â¶Â­ Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                sharing: "Ã Â¶Â½Ã Â·â€™Ã Â¶Â±Ã Â·Å Ã Â¶Å¡Ã Â·Å  Ã Â¶Â±Ã Â·â€™Ã Â¶Â»Ã Â·Å Ã Â¶Â¸Ã Â·ÂÃ Â¶Â«Ã Â¶Âº Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
-                shared: "Ã Â¶Â½Ã Â·â€™Ã Â¶Â±Ã Â·Å Ã Â¶Å¡Ã Â·Å  Ã Â¶Â±Ã Â·â€™Ã Â¶Â»Ã Â·Å Ã Â¶Â¸Ã Â·ÂÃ Â¶Â«Ã Â¶Âº Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                settings: "Ã Â·Æ’Ã Â·ÂÃ Â¶Å¡Ã Â·Æ’Ã Â·â€Ã Â¶Â¸Ã Â·Å  Ã Â·â‚¬Ã Â·â€™Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­ Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                theme: "Ã Â¶Â­Ã Â·Å¡Ã Â¶Â¸Ã Â·ÂÃ Â·â‚¬ Ã Â¶ÂºÃ Â·ÂÃ Â·â‚¬Ã Â¶Â­Ã Â·Å Ã Â¶Å¡Ã Â·ÂÃ Â¶Â½Ã Â·â€œÃ Â¶Â± Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                login: "Ã Â¶Â´Ã Â·â€™Ã Â·â‚¬Ã Â·â€™Ã Â·Æ’Ã Â·â„¢Ã Â¶Â¸Ã Â·â€™Ã Â¶Â±Ã Â·Å ...",
-                loggedIn: "Ã Â¶Â´Ã Â·â€™Ã Â·â‚¬Ã Â·â€™Ã Â·Æ’Ã Â·â€œ Ã Â¶â€¡Ã Â¶Â­",
-                logout: "Ã Â¶â€°Ã Â·â‚¬Ã Â¶Â­Ã Â·Å  Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº",
-                error: "Ã Â¶ÂºÃ Â¶Â¸Ã Â·Å  Ã Â¶Â¯Ã Â·ÂÃ Â·â€šÃ Â¶ÂºÃ Â¶Å¡Ã Â·Å  Ã Â¶â€¡Ã Â¶Â­Ã Â·â€™ Ã Â·â‚¬Ã Â·â€™Ã Â¶Âº"
+                thinking: "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ...",
+                searching: "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸...",
+                sending: "ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ...",
+                sent: "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â©ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã‚Â ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¡ÃƒÂ Ã‚Â¶Ã‚Â­",
+                copied: "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã‚Â",
+                saved: "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â± ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã¢â‚¬Å“",
+                loading: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ...",
+                loaded: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â€œÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                online: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¢ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â‚¬â„¢",
+                offline: "ÃƒÂ Ã‚Â¶Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¶ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¢ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â° ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…â€œÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã…Â¡",
+                newChat: "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾",
+                opened: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã‹Å“ÃƒÂ Ã‚Â¶Ã‚Â­ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                renamed: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                deleted: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã‚Â ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã‚Â± ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã¢â‚¬Å“",
+                pinned: "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ pin ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã‚Â",
+                unpinned: "Pin ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã‚Â",
+                uploaded: "ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¹ÃƒÂ Ã‚Â¶Ã‚Â©ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â­ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                sharing: "ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ...",
+                shared: "ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                settings: "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã‹Å“ÃƒÂ Ã‚Â¶Ã‚Â­ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                theme: "ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬ ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â± ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                login: "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ...",
+                loggedIn: "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¡ÃƒÂ Ã‚Â¶Ã‚Â­",
+                logout: "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº",
+                error: "ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â‚¬Å¡ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¡ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº"
             },
             ta: {
                 idle: "MI AI",
-                thinking: "Ã Â®Å¡Ã Â®Â¿Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                searching: "Ã Â®Â¤Ã Â¯â€¡Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                sending: "Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                sent: "Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¿ Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                copied: "Ã Â®Â¨Ã Â®â€¢Ã Â®Â²Ã Â¯â€ Ã Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                saved: "Ã Â®Å¡Ã Â¯â€¡Ã Â®Â®Ã Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                loading: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                loaded: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†Ã Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
-                online: "Ã Â®â€ Ã Â®Â©Ã Â¯ÂÃ Â®Â²Ã Â¯Ë†Ã Â®Â©Ã Â¯Â",
-                offline: "Ã Â®Â¨Ã Â¯â‚¬Ã Â®â„¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®â€ Ã Â®Æ’Ã Â®ÂªÃ Â¯ÂÃ Â®Â²Ã Â¯Ë†Ã Â®Â©Ã Â®Â¿Ã Â®Â²Ã Â¯Â Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â³Ã Â¯â‚¬Ã Â®Â°Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â",
-                newChat: "Ã Â®ÂªÃ Â¯ÂÃ Â®Â¤Ã Â®Â¿Ã Â®Â¯ Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë†",
-                opened: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                renamed: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â¯â€ Ã Â®Â¯Ã Â®Â°Ã Â¯Â Ã Â®Â®Ã Â®Â¾Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                deleted: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                pinned: "Ã Â®â€¦Ã Â®Â°Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Ë† Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¯Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯Â Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â³Ã Â®Â¤Ã Â¯Â",
-                unpinned: "Ã Â®ÂªÃ Â®Â¿Ã Â®Â©Ã Â¯Â Ã Â®Â¨Ã Â¯â‚¬Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                uploaded: "Ã Â®â€¢Ã Â¯â€¹Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â Ã Â®ÂªÃ Â®Â¤Ã Â®Â¿Ã Â®ÂµÃ Â¯â€¡Ã Â®Â±Ã Â¯ÂÃ Â®Â±Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                sharing: "Ã Â®Â²Ã Â®Â¿Ã Â®â„¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Ë† Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                shared: "Ã Â®Â²Ã Â®Â¿Ã Â®â„¢Ã Â¯ÂÃ Â®â€¢Ã Â¯Â Ã Â®â€°Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â®Â¾Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                settings: "Ã Â®â€¦Ã Â®Â®Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â Ã Â®Â¤Ã Â®Â¿Ã Â®Â±Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â©",
-                theme: "Ã Â®Â¤Ã Â¯â‚¬Ã Â®Â®Ã Â¯Â Ã Â®ÂªÃ Â¯ÂÃ Â®Â¤Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Â¿Ã Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â",
-                login: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¤Ã Â¯Â...",
-                loggedIn: "Ã Â®â€°Ã Â®Â³Ã Â¯ÂÃ Â®Â¨Ã Â¯ÂÃ Â®Â´Ã Â¯Ë†Ã Â®Â¨Ã Â¯ÂÃ Â®Â¤Ã Â¯ÂÃ Â®ÂµÃ Â®Â¿Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯â‚¬Ã Â®Â°Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â",
-                logout: "Ã Â®ÂµÃ Â¯â€ Ã Â®Â³Ã Â®Â¿Ã Â®Â¯Ã Â¯â€¡Ã Â®Â±Ã Â®Â¿Ã Â®ÂµÃ Â®Â¿Ã Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â¯â‚¬Ã Â®Â°Ã Â¯ÂÃ Â®â€¢Ã Â®Â³Ã Â¯Â",
-                error: "Ã Â®ÂÃ Â®Â¤Ã Â¯â€¹ Ã Â®Â¤Ã Â®ÂµÃ Â®Â±Ã Â¯Â Ã Â®ÂÃ Â®Â±Ã Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â¯ÂÃ Â®Å¸Ã Â®Â¤Ã Â¯Â"
+                thinking: "ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â...",
+                searching: "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â...",
+                sending: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â...",
+                sent: "ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                copied: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                saved: "ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                loading: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â...",
+                loaded: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â©",
+                online: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â",
+                offline: "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã†â€™ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â",
+                newChat: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â¯ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€ ",
+                opened: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                renamed: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                deleted: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                pinned: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                unpinned: "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                uploaded: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¹ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                sharing: "ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â...",
+                shared: "ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                settings: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â©",
+                theme: "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
+                login: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â...",
+                loggedIn: "ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â",
+                logout: "ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â",
+                error: "ÃƒÂ Ã‚Â®Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¹ ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â"
             }
         };
 
@@ -26980,18 +26980,18 @@ document.addEventListener(
     function iconFor(type) {
         const icons = {
             info: "i",
-            thinking: "Ã¢â€¹Â¯",
-            searching: "Ã¢Å’â€¢",
-            sending: "Ã¢Å¾Â¤",
-            success: "Ã¢Å“â€œ",
-            copy: "Ã°Å¸â€œâ€¹",
-            save: "Ã¢Å“â€œ",
-            upload: "Ã¢Â¬â€ ",
-            share: "Ã¢â€ â€”",
-            settings: "Ã¢Å¡â„¢",
-            login: "Ã¢â€ Âª",
-            logout: "Ã¢â€ Â©",
-            online: "Ã¢â€”Â",
+            thinking: "ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â¯",
+            searching: "ÃƒÂ¢Ã…â€™Ã¢â‚¬Â¢",
+            sending: "ÃƒÂ¢Ã…Â¾Ã‚Â¤",
+            success: "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“",
+            copy: "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹",
+            save: "ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“",
+            upload: "ÃƒÂ¢Ã‚Â¬Ã¢â‚¬Â ",
+            share: "ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â€",
+            settings: "ÃƒÂ¢Ã…Â¡Ã¢â€žÂ¢",
+            login: "ÃƒÂ¢Ã¢â‚¬Â Ã‚Âª",
+            logout: "ÃƒÂ¢Ã¢â‚¬Â Ã‚Â©",
+            online: "ÃƒÂ¢Ã¢â‚¬â€Ã‚Â",
             offline: "!",
             error: "!"
         };
@@ -27118,16 +27118,16 @@ document.addEventListener(
             if (
                 id.includes("search") ||
                 value.includes("search") ||
-                value.includes("Ã Â·Æ’Ã Â·â„¢Ã Â·â‚¬Ã Â·â€œÃ Â¶Â¸") ||
-                value.includes("Ã Â®Â¤Ã Â¯â€¡Ã Â®Å¸")
+                value.includes("ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸") ||
+                value.includes("ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã…Â¸")
             ) {
                 notify(w.searching, "searching", 1900);
             }
             else if (
                 id.includes("send") ||
                 value === "send" ||
-                value.includes("Ã Â¶ÂºÃ Â·â‚¬Ã Â¶Â±Ã Â·Å Ã Â¶Â±") ||
-                value.includes("Ã Â®â€¦Ã Â®Â©Ã Â¯ÂÃ Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â¯Â")
+                value.includes("ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±") ||
+                value.includes("ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚Â")
             ) {
                 notify(w.sending, "sending", 1200);
             }
@@ -27378,14 +27378,14 @@ document.addEventListener(
         const imageTerms = [
             "photo", "photos", "image", "images", "picture", "pictures",
             "wallpaper", "pic", "pics",
-            "Ã Â·â€ Ã Â·Å“Ã Â¶Â§Ã Â·Â", "Ã Â¶Â´Ã Â·â€™Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â·â€“Ã Â¶Â»", "Ã Â¶Â´Ã Â·â€™Ã Â¶Â±Ã Â·Å Ã Â¶Â­Ã Â·â€“Ã Â¶Â»Ã Â¶ÂºÃ Â¶Å¡Ã Â·Å ",
+            "ÃƒÂ Ã‚Â·Ã¢â‚¬Â ÃƒÂ Ã‚Â·Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â·Ã‚Â", "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã¢â‚¬â€œÃƒÂ Ã‚Â¶Ã‚Â»", "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã¢â‚¬â€œÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â ",
             "photo ekak", "image ekak", "picture ekak",
-            "Ã Â®ÂªÃ Â®Å¸Ã Â®Â®Ã Â¯Â", "Ã Â®ÂªÃ Â¯ÂÃ Â®â€¢Ã Â¯Ë†Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â®Â®Ã Â¯Â"
+            "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â", "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â"
         ];
 
         const requestTerms = [
             "show", "send", "find", "search", "give", "get", "want", "need",
-            "Ã Â¶Â´Ã Â·â„¢Ã Â¶Â±Ã Â·Å Ã Â¶Â±", "Ã Â¶â€˜Ã Â·â‚¬Ã Â¶Â±Ã Â·Å Ã Â¶Â±", "Ã Â·â€žÃ Â·Å“Ã Â¶Âº", "Ã Â¶Â¯Ã Â·â„¢Ã Â¶Â±Ã Â·Å Ã Â¶Â±", "Ã Â¶â€¢Ã Â¶Â±",
+            "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±", "ÃƒÂ Ã‚Â¶Ã¢â‚¬ËœÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±", "ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã…â€œÃƒÂ Ã‚Â¶Ã‚Âº", "ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±", "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¶Ã‚Â±",
             "pennanna", "yawanna", "hoyanna", "denna", "ona"
         ];
 
@@ -28155,7 +28155,7 @@ document.addEventListener(
             '<strong>Chief Owner Controls</strong>' +
             '<small>Secure backend verified access</small>' +
             '</div>' +
-            '<button type="button" id="miChiefOwnerClose">Ãƒâ€”</button>' +
+            '<button type="button" id="miChiefOwnerClose">ÃƒÆ’Ã¢â‚¬â€</button>' +
             '</div>' +
             '<div id="miChiefOwnerActionGrid" class="mi-chief-owner-action-grid"></div>' +
             '</div>';
@@ -28652,19 +28652,19 @@ document.addEventListener(
 
     /*
      * HTML entities are used instead of direct emoji characters.
-     * This prevents UTF-8/mojibake problems such as ÃƒÂ°Ã…Â¸ or Ã¢â€°Â¡Ã†â€™.
+     * This prevents UTF-8/mojibake problems such as ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ or ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¡Ãƒâ€ Ã¢â‚¬â„¢.
      */
     const ICONS = Object.freeze({
-        newChat: "&#10133;",                    // Ã¢Å¾â€¢
-        customerSupport: "&#127911;",          // Ã°Å¸Å½Â§
-        settings: "&#9881;&#65039;",           // Ã¢Å¡â„¢Ã¯Â¸Â
-        login: "&#128233;",                    // Ã°Å¸â€œÂ©
-        logout: "&#128228;",                   // Ã°Å¸â€œÂ¤
-        notifications: "&#128276;",            // Ã°Å¸â€â€
-        pin: "&#128204;",                      // Ã°Å¸â€œÅ’
-        delete: "&#128465;&#65039;",           // Ã°Å¸â€”â€˜Ã¯Â¸Â
-        share: "&#128228;",                    // Ã°Å¸â€œÂ¤
-        rename: "&#128394;&#65039;"            // Ã°Å¸â€“Å Ã¯Â¸Â
+        newChat: "&#10133;",                    // ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢
+        customerSupport: "&#127911;",          // ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â§
+        settings: "&#9881;&#65039;",           // ÃƒÂ¢Ã…Â¡Ã¢â€žÂ¢ÃƒÂ¯Ã‚Â¸Ã‚Â
+        login: "&#128233;",                    // ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â©
+        logout: "&#128228;",                   // ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¤
+        notifications: "&#128276;",            // ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Â
+        pin: "&#128204;",                      // ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™
+        delete: "&#128465;&#65039;",           // ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã¢â‚¬ËœÃƒÂ¯Ã‚Â¸Ã‚Â
+        share: "&#128228;",                    // ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¤
+        rename: "&#128394;&#65039;"            // ÃƒÂ°Ã…Â¸Ã¢â‚¬â€œÃ…Â ÃƒÂ¯Ã‚Â¸Ã‚Â
     });
 
     let iconRepairRunning = false;
@@ -29075,13 +29075,13 @@ document.addEventListener(
             const text = button.textContent || "";
 
             if (
-                /ÃƒÂ°Ã…Â¸|Ã¢â€°Â¡Ã†â€™|ÃƒÆ’|ÃƒÂ¢Ã¢â€šÂ¬|ÃƒÂ¢Ã…â€œ|ÃƒÂ¯Ã‚Â»Ã‚Â¿/.test(text) &&
+                /ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸|ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¡Ãƒâ€ Ã¢â‚¬â„¢|ÃƒÆ’Ã†â€™|ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬|ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“|ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¿/.test(text) &&
                 button.dataset.miIconFixed !== "true"
             ) {
                 button.textContent = text
-                    .replace(/ÃƒÂ°Ã…Â¸\S*/g, "")
-                    .replace(/Ã¢â€°Â¡Ã†â€™\S*/g, "")
-                    .replace(/ÃƒÆ’\S*/g, "")
+                    .replace(/ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸\S*/g, "")
+                    .replace(/ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¡Ãƒâ€ Ã¢â‚¬â„¢\S*/g, "")
+                    .replace(/ÃƒÆ’Ã†â€™\S*/g, "")
                     .trim();
             }
         });
@@ -29331,86 +29331,86 @@ window.miOpenAccountChat=openPanel;
             "Yesterday": "Yesterday"
         },
         si: {
-            "New Chat": "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã¢â‚¬Å¡ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â ",
-            "Customer Support": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â·ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã…Â¡ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Âº",
-            "Customer Service": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â·ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã…Â¡ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬",
-            "Settings": "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã…Â ",
-            "Login": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Logout": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Language": "ÃƒÂ Ã‚Â¶Ã‚Â·ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â‚¬Å¡ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬",
-            "Theme": "ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã¢â€šÂ¬",
-            "Font Size": "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬Â ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Âº",
-            "Share": "ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Create a link": "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â³ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Generate link": "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â³ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Cancel": "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â¶Ã¢â‚¬Å¡ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã¢â‚¬Â ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Copy": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Copied": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â§ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã‚Â",
-            "Rename": "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Pin": "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Unpin": "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â°ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Delete": "ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Close": "ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Save": "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Send": "ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Stop": "ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Search": "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…â€œÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "View only": "ÃƒÂ Ã‚Â¶Ã‚Â¶ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã‚Â§ ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢",
-            "Can edit": "ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã¢â‚¬Å¡ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã¢â‚¬Â¦ ÃƒÂ Ã‚Â·Ã¢â‚¬Å¾ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…Â¡",
-            "Login Required": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â‚¬Å“ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â·Ã…Â ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â‚¬â„¢",
-            "Please login": "ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â» ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Email": "ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬ËœÃƒÂ Ã‚Â¶Ã‚Â½",
-            "Password": "ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚Âº",
-            "Forgot password?": "ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â»ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚Âº ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â¶Ã‚Â¯?",
-            "Create account": "ÃƒÂ Ã‚Â¶Ã…â€œÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â«ÃƒÂ Ã‚Â·Ã¢â‚¬ÂÃƒÂ Ã‚Â¶Ã‚Â¸ÃƒÂ Ã‚Â¶Ã…Â¡ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Sign in": "ÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Sign up": "ÃƒÂ Ã‚Â¶Ã‚Â½ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â´ÃƒÂ Ã‚Â¶Ã‚Â¯ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã¢â‚¬Å¡ÃƒÂ Ã‚Â¶Ã‚Â ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±",
-            "Ask MI AI...": "MI AI ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±...",
-            "Ask from MI AI...": "MI AI ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã¢â€žÂ¢ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã¢â‚¬â„¢ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â  ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã…Â ÃƒÂ Ã‚Â¶Ã‚Â±...",
-            "No chats yet": "ÃƒÂ Ã‚Â¶Ã‚Â­ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â¶Ã‚Â¸ ÃƒÂ Ã‚Â·Ã†â€™ÃƒÂ Ã‚Â¶Ã¢â‚¬Å¡ÃƒÂ Ã‚Â·Ã¢â€šÂ¬ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â¯ ÃƒÂ Ã‚Â¶Ã‚Â±ÃƒÂ Ã‚Â·Ã‚ÂÃƒÂ Ã‚Â¶Ã‚Â­",
-            "Today": "ÃƒÂ Ã‚Â¶Ã¢â‚¬Â¦ÃƒÂ Ã‚Â¶Ã‚Â¯",
-            "Yesterday": "ÃƒÂ Ã‚Â¶Ã…Â ÃƒÂ Ã‚Â¶Ã‚ÂºÃƒÂ Ã‚Â·Ã…Â¡"
+            "New Chat": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ",
+            "Customer Support": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â·ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Âº",
+            "Customer Service": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â·ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬",
+            "Settings": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ",
+            "Login": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Logout": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Language": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â·ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬",
+            "Theme": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬",
+            "Font Size": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â«ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Âº",
+            "Share": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¶ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Create a link": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¶ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Generate link": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¶ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Âº ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Cancel": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â½ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Copy": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Copied": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â§ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚Â",
+            "Rename": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Pin": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â§ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â«ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Unpin": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â«ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Delete": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Close": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Save": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Send": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Stop": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Search": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "View only": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¶ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â½ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â§ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â«ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢",
+            "Can edit": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â«ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Âº ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡",
+            "Login Required": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢",
+            "Please login": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â«ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â» ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Email": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â½",
+            "Password": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Âº",
+            "Forgot password?": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â»ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Âº ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯?",
+            "Create account": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â«ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Sign in": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Sign up": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â½ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±",
+            "Ask MI AI...": "MI AI ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±...",
+            "Ask from MI AI...": "MI AI ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±...",
+            "No chats yet": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¸ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â­",
+            "Today": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚Â¯",
+            "Yesterday": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¶Ãƒâ€šÃ‚ÂºÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â·Ãƒâ€¦Ã‚Â¡"
         },
         ta: {
-            "New Chat": "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â¯ ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Customer Support": "ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚Â",
-            "Customer Service": "ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‹â€ ",
-            "Settings": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Login": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Logout": "ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Language": "ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â®Ã‚Â¿",
-            "Theme": "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Font Size": "ÃƒÂ Ã‚Â®Ã…Â½ÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚Â",
-            "Share": "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Create a link": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â£ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Generate link": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â£ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Cancel": "ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Copy": "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Copied": "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Rename": "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Pin": "ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Unpin": "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Delete": "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â€šÂ¬ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Close": "ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã¢â‚¬Å¡ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Save": "ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¿",
-            "Send": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¦ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â¯Ã‚Â",
-            "Stop": "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Search": "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚Â",
-            "View only": "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Can edit": "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Login Required": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‹â€ ",
-            "Please login": "ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Email": "ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â®Ã…Â¾ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Password": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Forgot password?": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã…Â ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¾?",
-            "Create account": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â£ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‹â€  ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Sign in": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â´ÃƒÂ Ã‚Â¯Ã‹â€ ",
-            "Sign up": "ÃƒÂ Ã‚Â®Ã‚ÂªÃƒÂ Ã‚Â®Ã‚Â¤ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã‚ÂµÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã…Â¡ÃƒÂ Ã‚Â¯Ã¢â‚¬Â ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Ask MI AI...": "MI AI-ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â...",
-            "Ask from MI AI...": "MI AI-ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¿ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â€žÂ¢ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â...",
-            "No chats yet": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â®ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â°ÃƒÂ Ã‚Â®Ã‚Â°ÃƒÂ Ã‚Â¯Ã‹â€ ÃƒÂ Ã‚Â®Ã‚Â¯ÃƒÂ Ã‚Â®Ã‚Â¾ÃƒÂ Ã‚Â®Ã…Â¸ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã¢â‚¬Â¢ÃƒÂ Ã‚Â®Ã‚Â³ÃƒÂ Ã‚Â¯Ã‚Â ÃƒÂ Ã‚Â®Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â²ÃƒÂ Ã‚Â¯Ã‹â€ ",
-            "Today": "ÃƒÂ Ã‚Â®Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â©ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â",
-            "Yesterday": "ÃƒÂ Ã‚Â®Ã‚Â¨ÃƒÂ Ã‚Â¯Ã¢â‚¬Â¡ÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚ÂÃƒÂ Ã‚Â®Ã‚Â±ÃƒÂ Ã‚Â¯Ã‚Â"
+            "New Chat": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Customer Support": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Customer Service": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ",
+            "Settings": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Login": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Logout": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Language": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿",
+            "Theme": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Font Size": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â½ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Share": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Create a link": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â£ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Generate link": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â£ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Cancel": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Copy": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Copied": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Rename": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Pin": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Unpin": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Delete": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Close": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Save": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿",
+            "Send": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â©ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Stop": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Search": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "View only": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Can edit": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Login Required": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ",
+            "Please login": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Email": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â©ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â©ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Password": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Forgot password?": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¦Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾?",
+            "Create account": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â£ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â  ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Sign in": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â´ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ",
+            "Sign up": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂªÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚ÂµÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Ask MI AI...": "MI AI-ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â...",
+            "Ask from MI AI...": "MI AI-ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â...",
+            "No chats yet": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â©ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â©ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â®ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¾ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â³ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â²ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€¹Ã¢â‚¬Â ",
+            "Today": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â©ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â",
+            "Yesterday": "ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â®Ãƒâ€šÃ‚Â±ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¯Ãƒâ€šÃ‚Â"
         }
     };
 
@@ -30390,11 +30390,11 @@ const API="/api/chief-owner";let meta={roles:[],permissions:[]};const $=x=>docum
 async function tok(){const a=window.miFirebaseAuth||(window.firebase&&firebase.auth?firebase.auth():null),u=(a&&a.currentUser)||window.miFirebaseUser||window.currentFirebaseUser;if(!u)throw new Error("Please login again.");return u.getIdToken(true)}
 async function api(p,o={}){const h=new Headers(o.headers||{});h.set("Authorization","Bearer "+await tok());h.set("Content-Type","application/json");const r=await fetch(API+p,{...o,headers:h,cache:"no-store"}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||"Request failed.");return d}
 function stat(m,e=false){const x=$("miFOStatus");if(x){x.textContent=m;x.style.color=e?"#ff9ba5":"#bdf5d7"}}
-function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.textContent="ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Ëœ Chief Owner Permissions";b.onclick=open;s.appendChild(b)}return b}
+function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.textContent="ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ Chief Owner Permissions";b.onclick=open;s.appendChild(b)}return b}
 async function vis(){const b=launcher();if(!b)return;try{const r=await fetch("/api/admin/me",{headers:{Authorization:"Bearer "+await tok()}}),d=await r.json();b.style.display=r.ok&&d.isChiefOwner?"block":"none"}catch(_){b.style.display="none"}}
 function opts(a){return a.map(x=>`<option value="${esc(x)}">${esc(x.replaceAll("_"," "))}</option>`).join("")}function checks(){return meta.permissions.map(x=>`<label><input type="checkbox" value="${esc(x)}"> ${esc(x)}</label>`).join("")}
 function panel(){if($("miFinalOwnerOverlay"))return;const o=document.createElement("div");o.id="miFinalOwnerOverlay";o.innerHTML=`<section id="miFinalOwnerPanel"><header class="miFOHead">
-<h2>Chief Owner Permissions</h2><button id="miFOClose">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button></header><div class="miFOBody"><nav id="miFONav" class="miFONav"><button class="active" data-p="users">Users</button><button data-p="chats">Chats</button><button data-p="staff">Staff</button><button data-p="roles">New Role</button><button data-p="permissions">Permissions</button><button data-p="audit">Audit</button></nav><main class="miFOContent"><div id="miFOStatus" class="miFOStatus">Ready.</div>
+<h2>Chief Owner Permissions</h2><button id="miFOClose">ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢</button></header><div class="miFOBody"><nav id="miFONav" class="miFONav"><button class="active" data-p="users">Users</button><button data-p="chats">Chats</button><button data-p="staff">Staff</button><button data-p="roles">New Role</button><button data-p="permissions">Permissions</button><button data-p="audit">Audit</button></nav><main class="miFOContent"><div id="miFOStatus" class="miFOStatus">Ready.</div>
 <section class="miFOPage active" data-p="users"><h3>User Management</h3><div class="miFOForm"><input id="fuEmail" type="email" placeholder="User email"><textarea id="fuReason" placeholder="Required reason"></textarea><div class="miFOActions"><button data-u="search">Search</button><button data-u="block">Block</button><button data-u="unblock">Unblock</button><button data-u="suspend">Suspend</button><button data-u="restore">Restore</button><button data-u="disable">Disable</button><button data-u="enable">Enable</button><button data-u="force_logout">Force Logout</button><button data-u="delete">Delete</button></div></div><div id="fuOut"></div></section>
 <section class="miFOPage" data-p="chats"><h3>Chats</h3><div class="miFOForm"><input id="fcEmail" type="email" placeholder="User email"><textarea id="fcReason" placeholder="Required access reason"></textarea><button id="fcLoad">View Chats</button></div><div id="fcOut"></div></section>
 <section class="miFOPage" data-p="staff"><h3>Staff & Roles</h3><div class="miFOForm"><input id="fsEmail" type="email" placeholder="Staff email"><select id="fsRole">${opts(meta.roles)}</select><input id="fsDept" placeholder="Department"><textarea id="fsReason" placeholder="Required reason"></textarea><div class="miFOActions"><button data-s="assign_role">Assign Role</button><button data-s="promote">Promote</button><button data-s="demote">Demote</button><button data-s="suspend">Suspend</button><button data-s="restore">Restore</button><button data-s="remove_role">Remove Role</button><button data-s="remove_staff">Remove Staff</button><button data-s="search">Search</button></div></div><div id="fsOut"></div></section>
@@ -30461,7 +30461,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         const button = ownerButton();
         if (!panel || !button) return null;
         if (button.parentElement !== panel) panel.appendChild(button);
-        button.textContent = "ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ¢â‚¬Ëœ Chief Owner Permissions";
+        button.textContent = "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ Chief Owner Permissions";
         return button;
     }
 
@@ -31443,7 +31443,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
         var contents = {
             blocked: {
-                icon: "Ã¢â€ºâ€",
+                icon: "ÃƒÂ¢Ã¢â‚¬ÂºÃ¢â‚¬Â",
                 title: "Your Account Was Blocked",
                 message:
                     "Your account was blocked by " +
@@ -31452,7 +31452,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             },
 
             suspended: {
-                icon: "Ã¢ÂÂ¸Ã¯Â¸Â",
+                icon: "ÃƒÂ¢Ã‚ÂÃ‚Â¸ÃƒÂ¯Ã‚Â¸Ã‚Â",
                 title: "Your Account Was Suspended",
                 message:
                     "Your account was suspended by " +
@@ -31461,7 +31461,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             },
 
             restricted: {
-                icon: "Ã¢Å¡Â Ã¯Â¸Â",
+                icon: "ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â",
                 title: "Your Account Was Restricted",
                 message:
                     "Some account features were restricted by " +
@@ -31470,7 +31470,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             },
 
             disabled: {
-                icon: "Ã°Å¸â€â€™",
+                icon: "ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â„¢",
                 title: "Your Account Was Disabled",
                 message:
                     "Your account was disabled by " +
@@ -31479,7 +31479,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             },
 
             warning: {
-                icon: "Ã¢Å¡Â Ã¯Â¸Â",
+                icon: "ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â",
                 title: "Account Warning",
                 message:
                     "An account warning was issued by " +
@@ -31488,7 +31488,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             },
 
             role_changed: {
-                icon: "Ã°Å¸â€ºÂ¡Ã¯Â¸Â",
+                icon: "ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â",
                 title: "Your Account Role Was Updated",
                 message:
                     "Your account role was updated by " +
@@ -31497,7 +31497,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             },
 
             restored: {
-                icon: "Ã¢Å“â€¦",
+                icon: "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦",
                 title: "Your Account Access Was Restored",
                 message:
                     "Your account access was restored by " +
@@ -31506,7 +31506,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             },
 
             updated: {
-                icon: "Ã¢â€žÂ¹Ã¯Â¸Â",
+                icon: "ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â",
                 title: "Your Account Was Updated",
                 message:
                     "An account change was made by " +
@@ -31540,7 +31540,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
         overlay.innerHTML =
             '<div id="miAccountActionCard">' +
-                '<div id="miAccountActionIcon">Ã¢â€žÂ¹Ã¯Â¸Â</div>' +
+                '<div id="miAccountActionIcon">ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â</div>' +
                 '<h2 id="miAccountActionTitle">' +
                     'Account Notice' +
                 '</h2>' +
@@ -31559,7 +31559,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
                         'id="miAccountActionEmail" ' +
                         'class="mi-account-contact" ' +
                         'href="#">' +
-                        'Ã¢Å“â€°Ã¯Â¸Â Email Review Team' +
+                        'ÃƒÂ¢Ã…â€œÃ¢â‚¬Â°ÃƒÂ¯Ã‚Â¸Ã‚Â Email Review Team' +
                     '</a>' +
                     '<a ' +
                         'id="miAccountActionWhatsApp" ' +
@@ -31567,7 +31567,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
                         'href="#" ' +
                         'target="_blank" ' +
                         'rel="noopener noreferrer">' +
-                        'Ã°Å¸â€™Â¬ Contact on WhatsApp' +
+                        'ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬ Contact on WhatsApp' +
                     '</a>' +
                 '</div>' +
                 '<button ' +
@@ -31730,7 +31730,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             emailBody;
 
         emailLink.textContent =
-            "Ã¢Å“â€°Ã¯Â¸Â " + SUPPORT_EMAIL;
+            "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â°ÃƒÂ¯Ã‚Â¸Ã‚Â " + SUPPORT_EMAIL;
 
         var whatsappLink =
             document.getElementById(
@@ -31752,7 +31752,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             encodeURIComponent(whatsappText);
 
         whatsappLink.textContent =
-            "Ã°Å¸â€™Â¬ WhatsApp: +" + WHATSAPP_NUMBER;
+            "ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬ WhatsApp: +" + WHATSAPP_NUMBER;
 
         overlay.classList.add("mi-visible");
 
@@ -32145,6 +32145,8 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
 
 <script id="MI_AI_PERMANENT_CHAT_DELETE_V3_LOADER" src="/mi-chat-permanent-delete.js" defer></script>
+
+
 
 
 
