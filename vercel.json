@@ -1,48 +1,100 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": false,
-  "trailingSlash": false,
-  "headers": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        }
-      ]
+      "src": "api/index.py",
+      "use": "@vercel/python"
     },
     {
-      "source": "/index.html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        }
-      ]
+      "src": "index.html",
+      "use": "@vercel/static"
     },
     {
-      "source": "/vendor/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      "src": "MIAI.svg",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "favicon.svg",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "vendor/**",
+      "use": "@vercel/static"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/debug/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/send-otp",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/login",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/logout",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/verify-otp",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/verify-login",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/conversations",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/messages",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/chat",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/share-links(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/share-notifications(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/supabase-config",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/MIAI.svg",
+      "dest": "/MIAI.svg"
+    },
+    {
+      "src": "/favicon.svg",
+      "dest": "/favicon.svg"
+    },
+    {
+      "src": "/vendor/(.*)",
+      "dest": "/vendor/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
