@@ -29,52 +29,8 @@
       "dest": "/api/index.py"
     },
     {
-      "src": "/debug/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/send-otp",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/login",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/logout",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/verify-otp",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/verify-login",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/conversations",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/messages",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/chat",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/share-links(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/share-notifications(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/supabase-config",
-      "dest": "/api/index.py"
+      "src": "/vendor/(.*)",
+      "dest": "/vendor/$1"
     },
     {
       "src": "/MIAI.svg",
@@ -83,10 +39,6 @@
     {
       "src": "/favicon.svg",
       "dest": "/favicon.svg"
-    },
-    {
-      "src": "/vendor/(.*)",
-      "dest": "/vendor/$1"
     },
     {
       "src": "/",
