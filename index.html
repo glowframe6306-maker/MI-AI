@@ -2,6 +2,164 @@
 <html>
 <head>
 
+<!-- MI_AI_LOADING_RESCUE_V2_START -->
+<script id="MI_AI_LOADING_RESCUE_V2">
+(function () {
+    "use strict";
+
+    /*
+       The project creates many MutationObservers. Repeated DOM changes can
+       schedule the same callback hundreds of times. This wrapper combines
+       callbacks per animation frame without disabling any observer.
+    */
+    if (
+        typeof window.MutationObserver === "function" &&
+        !window.__MI_OBSERVER_GUARD_INSTALLED__
+    ) {
+        window.__MI_OBSERVER_GUARD_INSTALLED__ = true;
+
+        const NativeMutationObserver = window.MutationObserver;
+
+        window.MutationObserver = function (callback) {
+            let queuedRecords = [];
+            let queuedObserver = null;
+            let scheduled = false;
+
+            const nativeObserver = new NativeMutationObserver(
+                function (records, observer) {
+                    queuedRecords.push.apply(
+                        queuedRecords,
+                        records
+                    );
+
+                    queuedObserver = observer;
+
+                    if (scheduled) {
+                        return;
+                    }
+
+                    scheduled = true;
+
+                    requestAnimationFrame(function () {
+                        const recordsToSend =
+                            queuedRecords.slice();
+
+                        const observerToSend =
+                            queuedObserver;
+
+                        queuedRecords.length = 0;
+                        queuedObserver = null;
+                        scheduled = false;
+
+                        try {
+                            callback(
+                                recordsToSend,
+                                observerToSend
+                            );
+                        } catch (error) {
+                            console.error(
+                                "[MI AI] Observer callback error:",
+                                error
+                            );
+                        }
+                    });
+                }
+            );
+
+            return nativeObserver;
+        };
+
+        window.MutationObserver.prototype =
+            NativeMutationObserver.prototype;
+    }
+
+    function releaseBusyState() {
+        const classes = [
+            "loading",
+            "is-loading",
+            "app-loading",
+            "page-loading",
+            "booting",
+            "mi-app-booting",
+            "mi-smooth-loading"
+        ];
+
+        document.documentElement.classList.remove(
+            ...classes
+        );
+
+        document.documentElement.style.removeProperty(
+            "cursor"
+        );
+
+        if (document.body) {
+            document.body.classList.remove(...classes);
+            document.body.removeAttribute("aria-busy");
+            document.body.style.removeProperty("cursor");
+        }
+
+        document.querySelectorAll(
+            '[style*="cursor: wait"],' +
+            '[style*="cursor:wait"],' +
+            '[style*="cursor: progress"],' +
+            '[style*="cursor:progress"]'
+        ).forEach(function (element) {
+            element.style.removeProperty("cursor");
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            releaseBusyState,
+            { once: true }
+        );
+    } else {
+        releaseBusyState();
+    }
+
+    window.addEventListener(
+        "mi-ai-main-started",
+        releaseBusyState,
+        { once: true }
+    );
+
+    window.setTimeout(releaseBusyState, 1000);
+    window.setTimeout(releaseBusyState, 3000);
+})();
+</script>
+
+<style id="MI_AI_CURSOR_RESCUE_V2">
+html,
+body,
+#main,
+#chat,
+#sidebar,
+#header {
+    cursor: default !important;
+}
+
+button,
+a,
+[role="button"],
+.chatItem,
+.chat-item,
+select,
+input[type="button"],
+input[type="submit"] {
+    cursor: pointer !important;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+    cursor: text !important;
+}
+</style>
+<!-- MI_AI_LOADING_RESCUE_V2_END -->
+
+
+
 <script id="MI_AI_CLEAN_BOOT_GUARD_V1">
 (function () {
     "use strict";
@@ -10630,6 +10788,107 @@ body.mi-account-blocked {
 
 
 <!-- MI_AI_INSTANT_OPEN_V5 END -->
+
+<!-- MI_AI_NORMAL_CURSOR_FIX_V1 START -->
+<style id="MI_AI_NORMAL_CURSOR_FIX_V1">
+
+/* Normal cursor for ordinary areas */
+html,
+body,
+#main,
+#chat,
+#sidebar,
+#header,
+#inputBox,
+#chatList {
+    cursor: default !important;
+}
+
+/* Hand cursor only for clickable items */
+button,
+a,
+[role="button"],
+.chatItem,
+.chat-item,
+.menu-item,
+label[for],
+select,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="color"],
+input[type="range"] {
+    cursor: pointer !important;
+}
+
+/* Text cursor only where typing is possible */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+textarea,
+[contenteditable="true"] {
+    cursor: text !important;
+}
+
+/* Disabled controls must never show the blue loading cursor */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"] {
+    cursor: not-allowed !important;
+}
+
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    function resetMouseCursor() {
+        try {
+            document.documentElement.style.removeProperty("cursor");
+
+            if (document.body) {
+                document.body.style.removeProperty("cursor");
+            }
+
+            document.querySelectorAll(
+                '[style*="cursor: wait"],' +
+                '[style*="cursor:wait"],' +
+                '[style*="cursor: progress"],' +
+                '[style*="cursor:progress"]'
+            ).forEach(function (element) {
+                element.style.removeProperty("cursor");
+            });
+        } catch (error) {
+            console.warn("[MI AI] Cursor reset failed:", error);
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            resetMouseCursor,
+            { once: true }
+        );
+    } else {
+        resetMouseCursor();
+    }
+
+    window.addEventListener("load", resetMouseCursor, { once: true });
+
+    setTimeout(resetMouseCursor, 500);
+    setTimeout(resetMouseCursor, 2000);
+})();
+</script>
+<!-- MI_AI_NORMAL_CURSOR_FIX_V1 END -->
 </head>
 
 <body>
@@ -29327,13 +29586,28 @@ window.miOpenAccountChat=openPanel;
 /* MI AI CHAT SMOOTH V3 JS - START */
 (function(){
 "use strict";
+if (!document.body) return;
+
 document.body.classList.add("mi-smooth-loading");
 let released=false;
-function release(){if(released)return;released=true;requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove("mi-smooth-loading")})})}
-window.addEventListener("load",release,{once:true});
-window.addEventListener("mi-firebase-ready",function(){setTimeout(release,50)},{once:true});
-window.addEventListener("mi-firebase-auth-changed",function(){setTimeout(release,50)},{once:true});
-setTimeout(release,1400);
+function release(){
+    if (released) return;
+    released=true;
+    if (document.body) {
+        document.body.classList.remove("mi-smooth-loading");
+    }
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", release, { once: true });
+} else {
+    release();
+}
+
+window.addEventListener("load", release, { once: true });
+window.addEventListener("mi-firebase-ready", function(){ setTimeout(release, 50); }, { once: true });
+window.addEventListener("mi-firebase-auth-changed", function(){ setTimeout(release, 50); }, { once: true });
+setTimeout(release, 1400);
 
 const nativeFetch=window.fetch.bind(window);
 const activeGets=new Map();
