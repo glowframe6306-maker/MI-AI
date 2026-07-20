@@ -3519,6 +3519,36 @@ def mi_ai_admin_permission_check():
 
 # MI_AI_SECURE_RBAC_REGISTER
 register_rbac(app)
+
+# MI AI VERIFIED LINKS GUARD V1 - START
+try:
+    from backend.mi_ai_verified_links import (
+        sanitize_flask_json_response,
+    )
+except ImportError:
+    from mi_ai_verified_links import (
+        sanitize_flask_json_response,
+    )
+
+
+@app.after_request
+def mi_ai_remove_unverified_links(response):
+    """
+    Prevent dead or guessed links from being returned as working links.
+    Static assets and non-JSON responses are left unchanged.
+    """
+
+    try:
+        request_path = str(request.path or "")
+    except Exception:
+        request_path = ""
+
+    if not request_path.startswith("/api/"):
+        return response
+
+    return sanitize_flask_json_response(response)
+# MI AI VERIFIED LINKS GUARD V1 - END
+
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
