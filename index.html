@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 
@@ -31916,6 +31916,224 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
 
 
+
+
+
+<!-- MI_AI_DYNAMIC_ISLAND_AUTO_HIDE_V1_START -->
+<style id="MI_AI_DYNAMIC_ISLAND_AUTO_HIDE_V1_STYLE">
+#miDynamicIsland:not(.mi-island-visible) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform:
+        translateX(-50%)
+        translateY(-18px)
+        scale(0.86) !important;
+}
+
+#miDynamicIsland.mi-island-visible {
+    visibility: visible !important;
+}
+</style>
+
+<script id="MI_AI_DYNAMIC_ISLAND_AUTO_HIDE_V1">
+(function () {
+    "use strict";
+
+    if (window.__MI_DYNAMIC_ISLAND_AUTO_HIDE_V1__) {
+        return;
+    }
+
+    window.__MI_DYNAMIC_ISLAND_AUTO_HIDE_V1__ = true;
+
+    let lastActiveTime = 0;
+    let lastMessageCount = 0;
+
+    function island() {
+        return document.getElementById("miDynamicIsland");
+    }
+
+    function hideIslandSafely() {
+        const element = island();
+
+        if (!element) {
+            return;
+        }
+
+        element.classList.remove(
+            "mi-island-visible",
+            "mi-island-thinking",
+            "mi-island-compact"
+        );
+
+        element.setAttribute("aria-hidden", "true");
+    }
+
+    function showStateExists() {
+        const element = island();
+
+        if (!element) {
+            return false;
+        }
+
+        return element.classList.contains(
+            "mi-island-visible"
+        );
+    }
+
+    function replyFlagActive() {
+        try {
+            if (
+                typeof replyInProgress !== "undefined" &&
+                Boolean(replyInProgress)
+            ) {
+                return true;
+            }
+        } catch (error) {
+            // Ignore inaccessible global.
+        }
+
+        return Boolean(window.replyInProgress);
+    }
+
+    function stopButtonActive() {
+        const button = document.getElementById("sendBtn");
+
+        if (!button) {
+            return false;
+        }
+
+        if (button.dataset.miStopButton === "true") {
+            return true;
+        }
+
+        const title = String(
+            button.title || ""
+        ).toLowerCase();
+
+        const aria = String(
+            button.getAttribute("aria-label") || ""
+        ).toLowerCase();
+
+        return (
+            title.includes("stop") ||
+            aria.includes("stop")
+        );
+    }
+
+    function currentMessageCount() {
+        return document.querySelectorAll(
+            [
+                ".message",
+                ".message-row",
+                ".user-message",
+                ".assistant-message",
+                ".ai-message",
+                ".messageBubble",
+                ".message-bubble"
+            ].join(",")
+        ).length;
+    }
+
+    function isActuallyReplying() {
+        return replyFlagActive() && stopButtonActive();
+    }
+
+    function monitorIsland() {
+        const element = island();
+
+        if (!element) {
+            return;
+        }
+
+        const replying = isActuallyReplying();
+        const count = currentMessageCount();
+
+        if (replying) {
+            lastActiveTime = Date.now();
+            lastMessageCount = count;
+            element.setAttribute("aria-hidden", "false");
+            return;
+        }
+
+        /*
+          If an answer appeared but replyInProgress remained stuck,
+          hide the island immediately.
+        */
+        if (
+            showStateExists() &&
+            count > lastMessageCount &&
+            !stopButtonActive()
+        ) {
+            hideIslandSafely();
+            lastMessageCount = count;
+            return;
+        }
+
+        /*
+          Safety timeout: Thinking must never stay forever.
+        */
+        if (
+            element.classList.contains("mi-island-thinking") &&
+            Date.now() - lastActiveTime > 2500 &&
+            !stopButtonActive()
+        ) {
+            hideIslandSafely();
+            return;
+        }
+
+        /*
+          Idle state must always be hidden.
+        */
+        if (
+            element.classList.contains("mi-island-thinking") &&
+            !replying
+        ) {
+            hideIslandSafely();
+        }
+    }
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            hideIslandSafely();
+            lastMessageCount = currentMessageCount();
+        },
+        { once: true }
+    );
+
+    window.addEventListener(
+        "load",
+        function () {
+            hideIslandSafely();
+            lastMessageCount = currentMessageCount();
+        },
+        { once: true }
+    );
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const sendButton = event.target.closest(
+                "#sendBtn, #sendButton"
+            );
+
+            if (!sendButton) {
+                return;
+            }
+
+            setTimeout(monitorIsland, 100);
+        },
+        true
+    );
+
+    setInterval(monitorIsland, 300);
+
+    window.miHideDynamicIsland =
+        hideIslandSafely;
+})();
+</script>
+<!-- MI_AI_DYNAMIC_ISLAND_AUTO_HIDE_V1_END -->
 
 </body>
 </html>
