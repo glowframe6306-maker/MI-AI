@@ -34054,6 +34054,347 @@ setTimeout(checkOwner,1000);
 /* MI AI ACCOUNT ISOLATION V2 END */
 </script>
 
+
+
+<!-- MI_AI_SAFE_TEXT_REPAIR_V1_START -->
+<script id="miAiSafeTextRepairV1">
+(function () {
+    "use strict";
+
+    var STARTED_FLAG = "__miSafeMojibakeRepairStarted";
+
+    if (window[STARTED_FLAG]) {
+        return;
+    }
+
+    window[STARTED_FLAG] = true;
+
+    function badScore(value) {
+        var text = String(value == null ? "" : value);
+        var score = 0;
+        var markers = [
+            "\u00c3",
+            "\u00c2",
+            "\u00e2",
+            "\u00f0",
+            "\ufffd"
+        ];
+
+        markers.forEach(function (marker) {
+            var position = 0;
+
+            while (true) {
+                position = text.indexOf(marker, position);
+
+                if (position === -1) {
+                    break;
+                }
+
+                score += 1;
+                position += marker.length;
+            }
+        });
+
+        return score;
+    }
+
+    function looksBroken(value) {
+        return badScore(value) > 0;
+    }
+
+    function decodeLatin1Utf8(value) {
+        var text = String(value == null ? "" : value);
+        var bytes = [];
+
+        for (var index = 0; index < text.length; index += 1) {
+            var code = text.charCodeAt(index);
+
+            if (code > 255) {
+                return text;
+            }
+
+            bytes.push(code);
+        }
+
+        try {
+            return new TextDecoder(
+                "utf-8",
+                { fatal: true }
+            ).decode(new Uint8Array(bytes));
+        } catch (error) {
+            return text;
+        }
+    }
+
+    function repairText(value) {
+        var current = String(value == null ? "" : value);
+
+        if (!looksBroken(current)) {
+            return current;
+        }
+
+        for (var attempt = 0; attempt < 4; attempt += 1) {
+            var repaired = decodeLatin1Utf8(current);
+
+            if (!repaired || repaired === current) {
+                break;
+            }
+
+            if (badScore(repaired) >= badScore(current)) {
+                break;
+            }
+
+            current = repaired;
+
+            if (!looksBroken(current)) {
+                break;
+            }
+        }
+
+        return current;
+    }
+
+    function repairJsonValue(value) {
+        if (typeof value === "string") {
+            return repairText(value);
+        }
+
+        if (Array.isArray(value)) {
+            return value.map(repairJsonValue);
+        }
+
+        if (value && typeof value === "object") {
+            Object.keys(value).forEach(function (key) {
+                value[key] = repairJsonValue(value[key]);
+            });
+        }
+
+        return value;
+    }
+
+    function repairStorage(storage) {
+        var keys = [];
+
+        try {
+            for (
+                var index = 0;
+                index < storage.length;
+                index += 1
+            ) {
+                var key = storage.key(index);
+
+                if (key) {
+                    keys.push(key);
+                }
+            }
+        } catch (error) {
+            return;
+        }
+
+        keys.forEach(function (key) {
+            var original;
+
+            try {
+                original = storage.getItem(key);
+            } catch (error) {
+                return;
+            }
+
+            if (
+                typeof original !== "string" ||
+                !looksBroken(original)
+            ) {
+                return;
+            }
+
+            var repaired = original;
+
+            try {
+                repaired = JSON.stringify(
+                    repairJsonValue(
+                        JSON.parse(original)
+                    )
+                );
+            } catch (error) {
+                repaired = repairText(original);
+            }
+
+            if (repaired !== original) {
+                try {
+                    storage.setItem(key, repaired);
+                } catch (error) {
+                    console.warn(
+                        "[MI Text Repair] Could not repair storage key:",
+                        key
+                    );
+                }
+            }
+        });
+    }
+
+    function repairTextNode(node) {
+        if (
+            !node ||
+            node.nodeType !== Node.TEXT_NODE
+        ) {
+            return;
+        }
+
+        var parent = node.parentElement;
+
+        if (
+            parent &&
+            parent.closest("script,style,code,pre")
+        ) {
+            return;
+        }
+
+        var original = node.nodeValue || "";
+        var repaired = repairText(original);
+
+        if (repaired !== original) {
+            node.nodeValue = repaired;
+        }
+    }
+
+    function repairAttributes(element) {
+        if (
+            !element ||
+            element.nodeType !== Node.ELEMENT_NODE
+        ) {
+            return;
+        }
+
+        [
+            "title",
+            "placeholder",
+            "aria-label",
+            "alt"
+        ].forEach(function (attributeName) {
+            if (!element.hasAttribute(attributeName)) {
+                return;
+            }
+
+            var original =
+                element.getAttribute(attributeName) || "";
+
+            var repaired = repairText(original);
+
+            if (repaired !== original) {
+                element.setAttribute(
+                    attributeName,
+                    repaired
+                );
+            }
+        });
+    }
+
+    function repairTree(root) {
+        if (!root) {
+            return;
+        }
+
+        if (root.nodeType === Node.TEXT_NODE) {
+            repairTextNode(root);
+            return;
+        }
+
+        if (root.nodeType === Node.ELEMENT_NODE) {
+            repairAttributes(root);
+        }
+
+        var walker = document.createTreeWalker(
+            root,
+            NodeFilter.SHOW_TEXT |
+                NodeFilter.SHOW_ELEMENT
+        );
+
+        var node = walker.currentNode;
+
+        while (node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                repairTextNode(node);
+            } else if (
+                node.nodeType === Node.ELEMENT_NODE
+            ) {
+                repairAttributes(node);
+            }
+
+            node = walker.nextNode();
+        }
+    }
+
+    function repairEverything() {
+        try {
+            repairStorage(window.localStorage);
+        } catch (error) {
+            console.warn(
+                "[MI Text Repair] localStorage skipped."
+            );
+        }
+
+        try {
+            repairStorage(window.sessionStorage);
+        } catch (error) {
+            console.warn(
+                "[MI Text Repair] sessionStorage skipped."
+            );
+        }
+
+        repairTree(document.body);
+    }
+
+    window.miRepairBrokenText = repairText;
+    window.miRepairBrokenDisplay = repairEverything;
+
+    var observer = new MutationObserver(
+        function (mutationList) {
+            mutationList.forEach(function (mutation) {
+                if (
+                    mutation.type === "characterData"
+                ) {
+                    repairTextNode(mutation.target);
+                }
+
+                mutation.addedNodes.forEach(
+                    function (addedNode) {
+                        repairTree(addedNode);
+                    }
+                );
+            });
+        }
+    );
+
+    function startRepair() {
+        repairEverything();
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+
+        window.setTimeout(repairEverything, 300);
+        window.setTimeout(repairEverything, 1000);
+        window.setTimeout(repairEverything, 2500);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startRepair,
+            { once: true }
+        );
+    } else {
+        startRepair();
+    }
+})();
+</script>
+<!-- MI_AI_SAFE_TEXT_REPAIR_V1_END -->
+
 </body>
 </html>
 
