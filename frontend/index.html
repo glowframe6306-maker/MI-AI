@@ -32451,6 +32451,841 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 })();
 </script>
 <!-- MI_AI_CHIEF_OWNER_RBAC_END -->
+
+
+<!-- MI_AI_CHAT_MULTI_DELETE_AZ_V1_START -->
+<style id="MI_AI_CHAT_MULTI_DELETE_AZ_V1_STYLE">
+#miChatManageToolbar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    margin: 9px 0 10px;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+#miChatManageToolbar button {
+    min-height: 34px;
+    flex: 1 1 auto;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 11px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.14),
+            rgba(255,255,255,.045)
+        );
+    color: #f7f8ff;
+    padding: 7px 9px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+        transform .16s ease,
+        border-color .16s ease,
+        background .16s ease;
+}
+
+#miChatManageToolbar button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(123,187,255,.58);
+}
+
+#miChatDeleteSelectedBtn {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(188,48,62,.90),
+            rgba(105,23,34,.92)
+        ) !important;
+    border-color: rgba(255,118,129,.55) !important;
+}
+
+#miChatCancelSelectionBtn {
+    flex: 0 0 auto !important;
+}
+
+#miChatSelectionCount {
+    display: none;
+    width: 100%;
+    margin: -2px 0 8px;
+    padding: 7px 10px;
+    box-sizing: border-box;
+    border: 1px solid rgba(88,165,255,.23);
+    border-radius: 10px;
+    background: rgba(43,107,185,.10);
+    color: rgba(232,242,255,.88);
+    font-size: 12px;
+    text-align: center;
+}
+
+body.mi-chat-selection-mode #miChatSelectionCount {
+    display: block;
+}
+
+.mi-chat-select-box {
+    display: none;
+    flex: 0 0 auto;
+    width: 19px;
+    height: 19px;
+    margin: 0 8px 0 1px;
+    accent-color: #4da3ff;
+    cursor: pointer;
+}
+
+body.mi-chat-selection-mode .mi-chat-select-box {
+    display: inline-block;
+}
+
+body.mi-chat-selection-mode #chatList .chatItem {
+    display: flex !important;
+    align-items: center !important;
+    user-select: none;
+}
+
+body.mi-chat-selection-mode #chatList .chatItem.mi-chat-selected {
+    outline: 1px solid rgba(74,165,255,.62);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(44,126,220,.25),
+            rgba(90,56,170,.18)
+        ) !important;
+}
+
+body.mi-chat-selection-mode #chatList .chatItem::after {
+    content: "";
+}
+
+@media (max-width: 760px) {
+    #miChatManageToolbar {
+        gap: 5px;
+    }
+
+    #miChatManageToolbar button {
+        padding: 7px 6px;
+        font-size: 11px;
+    }
+}
+</style>
+
+<script id="MI_AI_CHAT_MULTI_DELETE_AZ_V1">
+(function () {
+    "use strict";
+
+    if (window.__MI_CHAT_MULTI_DELETE_AZ_V1__) {
+        return;
+    }
+
+    window.__MI_CHAT_MULTI_DELETE_AZ_V1__ = true;
+
+    let selectionMode = false;
+    let sortDirection = "default";
+    const selectedIds = new Set();
+
+    function getChatTitle(id) {
+        const chat = chats[id] || {};
+
+        return String(
+            chat.title ||
+            chat.name ||
+            chat.chatName ||
+            id ||
+            ""
+        ).trim();
+    }
+
+    function getChatListElement() {
+        return document.getElementById("chatList");
+    }
+
+    function getSidebarContainer() {
+        const list = getChatListElement();
+
+        if (!list) {
+            return null;
+        }
+
+        return list.parentElement;
+    }
+
+    function showMessage(message, type) {
+        if (typeof window.showToast === "function") {
+            window.showToast(message, type || "success");
+            return;
+        }
+
+        if (typeof window.miShowToast === "function") {
+            window.miShowToast(message, type || "success");
+            return;
+        }
+
+        if (type === "error") {
+            alert(message);
+        }
+    }
+
+    function ensureToolbar() {
+        const list = getChatListElement();
+        const container = getSidebarContainer();
+
+        if (!list || !container) {
+            return;
+        }
+
+        if (document.getElementById("miChatManageToolbar")) {
+            return;
+        }
+
+        const toolbar = document.createElement("div");
+        toolbar.id = "miChatManageToolbar";
+
+        toolbar.innerHTML = `
+            <button type="button" id="miChatSelectModeBtn">
+                ☑ Delete Chats
+            </button>
+
+            <button type="button" id="miChatSortBtn">
+                A–Z
+            </button>
+
+            <button type="button" id="miChatDeleteSelectedBtn"
+                hidden>
+                Delete Selected
+            </button>
+
+            <button type="button" id="miChatCancelSelectionBtn"
+                hidden>
+                Cancel
+            </button>
+        `;
+
+        const count = document.createElement("div");
+        count.id = "miChatSelectionCount";
+        count.textContent = "0 chats selected";
+
+        container.insertBefore(toolbar, list);
+        container.insertBefore(count, list);
+
+        document.getElementById("miChatSelectModeBtn")
+            .addEventListener("click", startSelectionMode);
+
+        document.getElementById("miChatSortBtn")
+            .addEventListener("click", toggleSort);
+
+        document.getElementById("miChatDeleteSelectedBtn")
+            .addEventListener("click", deleteSelectedChats);
+
+        document.getElementById("miChatCancelSelectionBtn")
+            .addEventListener("click", cancelSelectionMode);
+
+        updateToolbar();
+    }
+
+    function updateToolbar() {
+        const selectButton =
+            document.getElementById("miChatSelectModeBtn");
+
+        const sortButton =
+            document.getElementById("miChatSortBtn");
+
+        const deleteButton =
+            document.getElementById("miChatDeleteSelectedBtn");
+
+        const cancelButton =
+            document.getElementById("miChatCancelSelectionBtn");
+
+        const count =
+            document.getElementById("miChatSelectionCount");
+
+        if (
+            !selectButton ||
+            !sortButton ||
+            !deleteButton ||
+            !cancelButton
+        ) {
+            return;
+        }
+
+        selectButton.hidden = selectionMode;
+        sortButton.hidden = selectionMode;
+        deleteButton.hidden = !selectionMode;
+        cancelButton.hidden = !selectionMode;
+
+        deleteButton.disabled = selectedIds.size === 0;
+
+        deleteButton.textContent =
+            selectedIds.size > 0
+                ? "Delete Selected (" + selectedIds.size + ")"
+                : "Delete Selected";
+
+        if (count) {
+            count.textContent =
+                selectedIds.size +
+                (
+                    selectedIds.size === 1
+                        ? " chat selected"
+                        : " chats selected"
+                );
+        }
+
+        if (sortDirection === "default") {
+            sortButton.textContent = "A–Z";
+            sortButton.title = "Sort chats alphabetically";
+        }
+        else if (sortDirection === "az") {
+            sortButton.textContent = "Z–A";
+            sortButton.title = "Currently A–Z. Click for Z–A.";
+        }
+        else {
+            sortButton.textContent = "Default";
+            sortButton.title =
+                "Currently Z–A. Click for default order.";
+        }
+    }
+
+    function startSelectionMode() {
+        selectionMode = true;
+        selectedIds.clear();
+        document.body.classList.add("mi-chat-selection-mode");
+        renderList();
+        updateToolbar();
+    }
+
+    function cancelSelectionMode() {
+        selectionMode = false;
+        selectedIds.clear();
+        document.body.classList.remove("mi-chat-selection-mode");
+        renderList();
+        updateToolbar();
+    }
+
+    function toggleSelected(id, checked) {
+        if (checked) {
+            selectedIds.add(id);
+        } else {
+            selectedIds.delete(id);
+        }
+
+        const item = document.querySelector(
+            '#chatList .chatItem[data-id="' +
+            CSS.escape(id) +
+            '"]'
+        );
+
+        if (item) {
+            item.classList.toggle(
+                "mi-chat-selected",
+                selectedIds.has(id)
+            );
+        }
+
+        updateToolbar();
+    }
+
+    function sortedChatIds() {
+        const ids = Object.keys(chats);
+
+        ids.sort(function (a, b) {
+            const aPinned = Boolean(chats[a] && chats[a].pin);
+            const bPinned = Boolean(chats[b] && chats[b].pin);
+
+            if (aPinned && !bPinned) return -1;
+            if (!aPinned && bPinned) return 1;
+
+            if (sortDirection === "az") {
+                return getChatTitle(a).localeCompare(
+                    getChatTitle(b),
+                    undefined,
+                    {
+                        numeric: true,
+                        sensitivity: "base"
+                    }
+                );
+            }
+
+            if (sortDirection === "za") {
+                return getChatTitle(b).localeCompare(
+                    getChatTitle(a),
+                    undefined,
+                    {
+                        numeric: true,
+                        sensitivity: "base"
+                    }
+                );
+            }
+
+            const aUpdated = Number(
+                chats[a] && (
+                    chats[a].updatedAt ||
+                    chats[a].updated_at ||
+                    chats[a].createdAt ||
+                    0
+                )
+            );
+
+            const bUpdated = Number(
+                chats[b] && (
+                    chats[b].updatedAt ||
+                    chats[b].updated_at ||
+                    chats[b].createdAt ||
+                    0
+                )
+            );
+
+            return bUpdated - aUpdated;
+        });
+
+        return ids;
+    }
+
+    window.renderList = function renderList() {
+        const list = getChatListElement();
+
+        if (!list) {
+            return;
+        }
+
+        list.innerHTML = "";
+
+        const ids = sortedChatIds();
+
+        if (ids.length > 9) {
+            list.classList.add("scrollable");
+            list.style.maxHeight = "calc(100vh - 320px)";
+        } else {
+            list.classList.remove("scrollable");
+            list.style.maxHeight = "none";
+        }
+
+        ids.forEach(function (id) {
+            const chat = chats[id] || {};
+            const item = document.createElement("div");
+
+            item.className = "chatItem";
+            item.dataset.id = id;
+
+            if (selectedIds.has(id)) {
+                item.classList.add("mi-chat-selected");
+            }
+
+            if (selectionMode) {
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.className = "mi-chat-select-box";
+                checkbox.checked = selectedIds.has(id);
+                checkbox.setAttribute(
+                    "aria-label",
+                    "Select " + getChatTitle(id)
+                );
+
+                checkbox.addEventListener(
+                    "click",
+                    function (event) {
+                        event.stopPropagation();
+                    }
+                );
+
+                checkbox.addEventListener(
+                    "change",
+                    function () {
+                        toggleSelected(id, checkbox.checked);
+                    }
+                );
+
+                item.appendChild(checkbox);
+            }
+
+            const label = document.createElement("span");
+            label.className = "mi-chat-item-label";
+            label.textContent =
+                (chat.pin ? "📌 " : "") +
+                "💬 " +
+                getChatTitle(id);
+
+            item.appendChild(label);
+
+            item.addEventListener("click", function (event) {
+                if (selectionMode) {
+                    event.preventDefault();
+
+                    const nextState = !selectedIds.has(id);
+                    toggleSelected(id, nextState);
+
+                    const checkbox =
+                        item.querySelector(".mi-chat-select-box");
+
+                    if (checkbox) {
+                        checkbox.checked = nextState;
+                    }
+
+                    return;
+                }
+
+                openChat(id);
+            });
+
+            item.addEventListener(
+                "contextmenu",
+                function (event) {
+                    if (selectionMode) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    event.preventDefault();
+                    selectedChat = id;
+
+                    const pinOption =
+                        document.getElementById("pinOption");
+
+                    if (pinOption) {
+                        pinOption.innerHTML =
+                            chat.pin
+                                ? "✕ Unpin"
+                                : "📌 Pin";
+                    }
+
+                    if (menu) {
+                        menu.style.display = "block";
+                        menu.style.left = event.pageX + "px";
+                        menu.style.top = event.pageY + "px";
+                    }
+                }
+            );
+
+            list.appendChild(item);
+        });
+
+        ensureToolbar();
+        updateToolbar();
+    };
+
+    function toggleSort() {
+        if (sortDirection === "default") {
+            sortDirection = "az";
+        }
+        else if (sortDirection === "az") {
+            sortDirection = "za";
+        }
+        else {
+            sortDirection = "default";
+        }
+
+        try {
+            localStorage.setItem(
+                "mi_chat_sort_direction",
+                sortDirection
+            );
+        } catch (_) {}
+
+        renderList();
+        updateToolbar();
+    }
+
+    async function deleteFromBackend(chatId) {
+        const token =
+            localStorage.getItem("mi_supabase_token");
+
+        if (!token || !isAuthenticated()) {
+            return;
+        }
+
+        const response = await fetch(
+            "/api/conversations/" +
+            encodeURIComponent(chatId),
+            {
+                method: "DELETE",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "X-User-Id":
+                        localStorage.getItem("mi_user_id") || "",
+                    "X-User-Email":
+                        localStorage.getItem("mi_user_email") || ""
+                }
+            }
+        );
+
+        if (
+            !response.ok &&
+            response.status !== 404
+        ) {
+            let detail = "";
+
+            try {
+                detail = await response.text();
+            } catch (_) {}
+
+            throw new Error(
+                "Backend could not delete chat " +
+                chatId +
+                (
+                    detail
+                        ? ": " + detail.slice(0, 140)
+                        : ""
+                )
+            );
+        }
+    }
+
+    async function deleteFromFirestore(chatId) {
+        if (
+            !isAuthenticated() ||
+            !window.miFirebaseUser ||
+            !window.firebase ||
+            typeof window.firebase.firestore !== "function"
+        ) {
+            return;
+        }
+
+        const database = window.firebase.firestore();
+
+        await database
+            .collection("users")
+            .doc(window.miFirebaseUser.uid)
+            .collection("chats")
+            .doc(chatId)
+            .delete();
+    }
+
+    async function deleteOneSelectedChat(chatId) {
+        const failures = [];
+
+        try {
+            await deleteFromBackend(chatId);
+        } catch (error) {
+            failures.push(error.message);
+        }
+
+        try {
+            await deleteFromFirestore(chatId);
+        } catch (error) {
+            failures.push(
+                "Firestore delete failed for " +
+                chatId +
+                ": " +
+                error.message
+            );
+        }
+
+        /*
+          Remove locally only when at least one persistent delete path
+          succeeded, or when the account is operating locally/guest.
+        */
+        const authenticated = isAuthenticated();
+
+        if (
+            failures.length === 0 ||
+            !authenticated
+        ) {
+            delete chats[chatId];
+
+            if (currentChat === chatId) {
+                currentChat = null;
+
+                if (chatBox) {
+                    chatBox.innerHTML = "";
+                }
+            }
+
+            return {
+                id: chatId,
+                deleted: true,
+                errors: []
+            };
+        }
+
+        return {
+            id: chatId,
+            deleted: false,
+            errors: failures
+        };
+    }
+
+    async function deleteSelectedChats() {
+        const ids = Array.from(selectedIds);
+
+        if (!ids.length) {
+            return;
+        }
+
+        const accepted = confirm(
+            "Permanently delete " +
+            ids.length +
+            (
+                ids.length === 1
+                    ? " selected chat?"
+                    : " selected chats?"
+            ) +
+            "\n\nThis action cannot be undone."
+        );
+
+        if (!accepted) {
+            return;
+        }
+
+        const deleteButton =
+            document.getElementById("miChatDeleteSelectedBtn");
+
+        const cancelButton =
+            document.getElementById("miChatCancelSelectionBtn");
+
+        if (deleteButton) {
+            deleteButton.disabled = true;
+            deleteButton.textContent = "Deleting...";
+        }
+
+        if (cancelButton) {
+            cancelButton.disabled = true;
+        }
+
+        const deleted = [];
+        const failed = [];
+
+        for (const id of ids) {
+            const result = await deleteOneSelectedChat(id);
+
+            if (result.deleted) {
+                deleted.push(id);
+            } else {
+                failed.push(result);
+            }
+        }
+
+        save();
+
+        deleted.forEach(function (id) {
+            selectedIds.delete(id);
+        });
+
+        if (failed.length === 0) {
+            selectionMode = false;
+            selectedIds.clear();
+            document.body.classList.remove(
+                "mi-chat-selection-mode"
+            );
+
+            renderList();
+            updateToolbar();
+
+            showMessage(
+                deleted.length +
+                (
+                    deleted.length === 1
+                        ? " chat deleted."
+                        : " chats deleted."
+                ),
+                "success"
+            );
+
+            try {
+                window.dispatchEvent(
+                    new CustomEvent("mi-chat-deleted", {
+                        detail: {
+                            chatIds: deleted.slice()
+                        }
+                    })
+                );
+            } catch (_) {}
+
+            return;
+        }
+
+        renderList();
+        updateToolbar();
+
+        if (cancelButton) {
+            cancelButton.disabled = false;
+        }
+
+        const firstError =
+            failed[0].errors &&
+            failed[0].errors[0]
+                ? failed[0].errors[0]
+                : "Unknown delete error.";
+
+        showMessage(
+            deleted.length +
+            " deleted; " +
+            failed.length +
+            " failed. " +
+            firstError,
+            "error"
+        );
+    }
+
+    /*
+      Keep the normal single-chat Delete option fully operational.
+    */
+    window.deleteChat = async function deleteChat() {
+        if (!selectedChat) {
+            return;
+        }
+
+        const chatId = selectedChat;
+
+        if (!confirm("Delete this chat permanently?")) {
+            return;
+        }
+
+        const result = await deleteOneSelectedChat(chatId);
+
+        if (!result.deleted) {
+            showMessage(
+                result.errors[0] ||
+                "The chat could not be deleted.",
+                "error"
+            );
+            return;
+        }
+
+        selectedChat = null;
+
+        save();
+        renderList();
+
+        if (menu) {
+            menu.style.display = "none";
+        }
+
+        showMessage("Chat deleted.", "success");
+    };
+
+    function start() {
+        try {
+            const savedSort =
+                localStorage.getItem(
+                    "mi_chat_sort_direction"
+                );
+
+            if (
+                savedSort === "az" ||
+                savedSort === "za"
+            ) {
+                sortDirection = savedSort;
+            }
+        } catch (_) {}
+
+        ensureToolbar();
+        renderList();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- MI_AI_CHAT_MULTI_DELETE_AZ_V1_END -->
+
 </body>
 </html>
 
