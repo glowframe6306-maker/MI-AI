@@ -1,99 +1,96 @@
 (function () {
     "use strict";
 
-    if (window.__miAiVisibleCleanupInstalled) {
+    if (window.__miAiFinalUnknownCharacterCleaner) {
         return;
     }
 
-    window.__miAiVisibleCleanupInstalled = true;
+    window.__miAiFinalUnknownCharacterCleaner = true;
 
     const suspiciousPattern =
-        /(?:Ã|Â|ð|â|ï|Æ|ƒ|‚|€|™|œ|ž|Ÿ|¤|¢|£)/;
+        /[\u0080-\u024F\u2000-\u206F\uFFFD]|Ã|Â|ð|â|ï|Æ|ƒ|‚|€|™|œ|ž|Ÿ/;
 
-    const exactLabels = [
-        "Chief Owner Permissions",
-        "Customer Support",
-        "New Chat",
-        "Settings",
-        "Login",
-        "Logout",
-        "User Greeting"
+    const knownLabels = [
+        ["Chief Owner Permissions", "Chief Owner Permissions"],
+        ["Customer Support", "Customer Support"],
+        ["User Greeting", "User Greeting"],
+        ["NEW CHAT", "New Chat"],
+        ["New Chat", "New Chat"],
+        ["Settings", "Settings"],
+        ["Logout", "Logout"],
+        ["Login", "Login"]
     ];
 
-    function suspiciousScore(value) {
-        const matches = String(value || "").match(
-            /(?:Ã|Â|ð|â|ï|Æ|ƒ|‚|€|™|œ|ž|Ÿ|¤|¢|£)/g
-        );
-
-        return matches ? matches.length : 0;
-    }
-
-    function cleanKnownLabel(value) {
+    function knownReadableText(value) {
         const text = String(value || "");
 
-        for (const label of exactLabels) {
-            if (text.includes(label)) {
-                if (label === "Chief Owner Permissions") {
-                    return "🛡️ Chief Owner Permissions";
-                }
-
-                if (label === "User Greeting") {
-                    return "💬 User Greeting";
-                }
-
-                return label;
+        for (const [search, replacement] of knownLabels) {
+            if (text.toLowerCase().includes(search.toLowerCase())) {
+                return replacement;
             }
         }
 
         return null;
     }
 
-    function cleanMultilineText(value) {
-        const text = String(value || "");
+    function removeCorruptedCharacters(value) {
+        const original = String(value ?? "");
 
-        if (!suspiciousPattern.test(text)) {
-            return text;
+        if (!suspiciousPattern.test(original)) {
+            return original;
         }
 
-        const knownLabel = cleanKnownLabel(text);
+        const known = knownReadableText(original);
 
-        if (knownLabel) {
-            return knownLabel;
+        if (known) {
+            return known;
         }
 
-        const lines = text
-            .split(/\r?\n/)
-            .map(function (line) {
-                return line.trim();
-            })
-            .filter(Boolean);
+        let cleaned = original
+            // Remove C1 control and common mojibake character ranges.
+            .replace(/[\u0080-\u024F]/g, "")
+            .replace(/[\u2000-\u206F]/g, " ")
+            .replace(/\uFFFD/g, "")
+            // Remove remaining known corruption marker characters.
+            .replace(/[ÃÂðâïÆƒ‚€™œžŸ¤¢£]/g, "")
+            // Remove invisible control characters except line breaks and tabs.
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+            // Clean repeated punctuation and spacing left by corruption.
+            .replace(/[¦§¨¬­¯°±´µ¶·¸¿]+/g, "")
+            .replace(/[ \t]{2,}/g, " ")
+            .replace(/\s*\n\s*/g, " ")
+            .trim();
 
-        const cleanLines = lines.filter(function (line) {
-            return (
-                suspiciousScore(line) === 0 &&
-                /[A-Za-z0-9\u0D80-\u0DFF\u0B80-\u0BFF]/.test(line)
-            );
-        });
+        // Keep readable Latin, numbers, Sinhala, Tamil and normal symbols.
+        const readableMatches = cleaned.match(
+            /[A-Za-z0-9\u0D80-\u0DFF\u0B80-\u0BFF]+/g
+        );
 
-        if (cleanLines.length > 0) {
-            return cleanLines.join(" ");
+        if (!readableMatches || readableMatches.length === 0) {
+            return "";
         }
 
-        return text;
+        return cleaned;
+    }
+
+    window.miAiRemoveCorruptedCharacters =
+        removeCorruptedCharacters;
+
+    function ignored(element) {
+        return Boolean(
+            element &&
+            element.closest &&
+            element.closest(
+                "script, style, code, pre, textarea, noscript"
+            )
+        );
     }
 
     function cleanTextNode(node) {
-        if (!node || node.nodeType !== Node.TEXT_NODE) {
-            return;
-        }
-
-        const parent = node.parentElement;
-
         if (
-            parent &&
-            parent.closest(
-                "script, style, code, pre, textarea, noscript"
-            )
+            !node ||
+            node.nodeType !== Node.TEXT_NODE ||
+            ignored(node.parentElement)
         ) {
             return;
         }
@@ -104,56 +101,45 @@
             return;
         }
 
-        const cleaned = cleanMultilineText(original);
+        const cleaned = removeCorruptedCharacters(original);
 
         if (cleaned !== original) {
             node.nodeValue = cleaned;
         }
     }
 
-    function cleanAttribute(element, attributeName) {
+    function cleanAttribute(element, name) {
         if (!element || !element.getAttribute) {
             return;
         }
 
-        const original = element.getAttribute(attributeName);
+        const original = element.getAttribute(name);
 
         if (!original || !suspiciousPattern.test(original)) {
             return;
         }
 
-        const cleaned = cleanMultilineText(original);
+        const cleaned = removeCorruptedCharacters(original);
 
-        if (cleaned !== original) {
-            element.setAttribute(attributeName, cleaned);
+        if (cleaned) {
+            element.setAttribute(name, cleaned);
+        } else {
+            element.removeAttribute(name);
         }
     }
 
-    function cleanElementText(element) {
+    function cleanValue(element) {
         if (
             !element ||
-            element.nodeType !== Node.ELEMENT_NODE ||
-            element.closest(
-                "script, style, code, pre, textarea, noscript"
-            )
+            !("value" in element) ||
+            typeof element.value !== "string" ||
+            !suspiciousPattern.test(element.value)
         ) {
             return;
         }
 
-        const original = element.textContent || "";
-
-        if (!suspiciousPattern.test(original)) {
-            return;
-        }
-
-        const knownLabel = cleanKnownLabel(original);
-
-        if (
-            knownLabel &&
-            element.children.length === 0
-        ) {
-            element.textContent = knownLabel;
-        }
+        element.value =
+            removeCorruptedCharacters(element.value);
     }
 
     function cleanRoot(root) {
@@ -174,8 +160,11 @@
             return;
         }
 
-        if (root.nodeType === Node.ELEMENT_NODE) {
-            cleanElementText(root);
+        if (
+            root.nodeType === Node.ELEMENT_NODE &&
+            ignored(root)
+        ) {
+            return;
         }
 
         const walker = document.createTreeWalker(
@@ -198,7 +187,8 @@
         if (root.querySelectorAll) {
             elements.push(
                 ...root.querySelectorAll(
-                    "[title], [aria-label], [placeholder], button, a, option"
+                    "[title], [aria-label], [placeholder], " +
+                    "input, button, option"
                 )
             );
         }
@@ -207,24 +197,27 @@
             cleanAttribute(element, "title");
             cleanAttribute(element, "aria-label");
             cleanAttribute(element, "placeholder");
-            cleanElementText(element);
+            cleanValue(element);
         }
     }
 
-    function cleanStoredValue(value) {
+    function cleanStoredObject(value) {
         if (typeof value === "string") {
-            return cleanMultilineText(value);
+            return removeCorruptedCharacters(value);
         }
 
         if (Array.isArray(value)) {
-            return value.map(cleanStoredValue);
+            return value.map(cleanStoredObject);
         }
 
-        if (value && typeof value === "object") {
+        if (
+            value &&
+            typeof value === "object"
+        ) {
             const result = {};
 
-            for (const [key, childValue] of Object.entries(value)) {
-                result[key] = cleanStoredValue(childValue);
+            for (const [key, child] of Object.entries(value)) {
+                result[key] = cleanStoredObject(child);
             }
 
             return result;
@@ -233,15 +226,17 @@
         return value;
     }
 
-    function cleanLocalStorage() {
-        for (let index = 0; index < localStorage.length; index += 1) {
-            const key = localStorage.key(index);
+    function cleanStorage(storage) {
+        const updates = [];
+
+        for (let index = 0; index < storage.length; index += 1) {
+            const key = storage.key(index);
 
             if (!key) {
                 continue;
             }
 
-            const original = localStorage.getItem(key);
+            const original = storage.getItem(key);
 
             if (!original || !suspiciousPattern.test(original)) {
                 continue;
@@ -249,25 +244,28 @@
 
             try {
                 const parsed = JSON.parse(original);
-                const cleaned = cleanStoredValue(parsed);
-                const serialized = JSON.stringify(cleaned);
+                const cleaned = cleanStoredObject(parsed);
 
-                if (serialized !== original) {
-                    localStorage.setItem(key, serialized);
-                }
+                updates.push([
+                    key,
+                    JSON.stringify(cleaned)
+                ]);
             } catch (error) {
-                const cleaned = cleanMultilineText(original);
-
-                if (cleaned !== original) {
-                    localStorage.setItem(key, cleaned);
-                }
+                updates.push([
+                    key,
+                    removeCorruptedCharacters(original)
+                ]);
             }
+        }
+
+        for (const [key, cleaned] of updates) {
+            storage.setItem(key, cleaned);
         }
     }
 
     let scheduled = false;
 
-    function scheduleCleanup() {
+    function scheduleClean() {
         if (scheduled) {
             return;
         }
@@ -280,12 +278,13 @@
         });
     }
 
-    function startCleanup() {
+    function start() {
         try {
-            cleanLocalStorage();
+            cleanStorage(localStorage);
+            cleanStorage(sessionStorage);
         } catch (error) {
             console.warn(
-                "[MI AI] Local visible-text cleanup skipped:",
+                "[MI AI] Stored title cleanup skipped:",
                 error
             );
         }
@@ -310,7 +309,7 @@
                 }
             }
 
-            scheduleCleanup();
+            scheduleClean();
         });
 
         observer.observe(document.body, {
@@ -321,23 +320,25 @@
             attributeFilter: [
                 "title",
                 "aria-label",
-                "placeholder"
+                "placeholder",
+                "value"
             ]
         });
 
-        setTimeout(scheduleCleanup, 250);
-        setTimeout(scheduleCleanup, 750);
-        setTimeout(scheduleCleanup, 1500);
-        setTimeout(scheduleCleanup, 3000);
+        setTimeout(scheduleClean, 100);
+        setTimeout(scheduleClean, 500);
+        setTimeout(scheduleClean, 1000);
+        setTimeout(scheduleClean, 2000);
+        setTimeout(scheduleClean, 5000);
     }
 
     if (document.readyState === "loading") {
         document.addEventListener(
             "DOMContentLoaded",
-            startCleanup,
+            start,
             { once: true }
         );
     } else {
-        startCleanup();
+        start();
     }
 })();
