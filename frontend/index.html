@@ -11492,7 +11492,7 @@ async function loadLocale(langCode) {
 }
 
 function t(key, fallback = '') {
-  return translations[key] || fallback || key;
+  return sanitizeUiText(translations[key] || fallback || key);
 }
 
 function populateLanguageSelector() {
@@ -11508,20 +11508,22 @@ function populateLanguageSelector() {
 }
 
 function updateTranslatedUi() {
+  repairDocumentText(document.body);
+
   const loginBtn = document.getElementById('loginBtn');
-  if (loginBtn) loginBtn.textContent = `ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Ëœ ${t('auth.login', 'Login')}`;
+  if (loginBtn) loginBtn.textContent = `${sanitizeUiText('🔐')} ${t('auth.login', 'Login')}`;
 
   const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) logoutBtn.textContent = `ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Âª ${t('auth.logout', 'Logout')}`;
+  if (logoutBtn) logoutBtn.textContent = `${sanitizeUiText('↪')} ${t('auth.logout', 'Logout')}`;
 
   const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
-  if (newChatButton) newChatButton.innerHTML = `ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢ ${t('sidebar.newChat', 'New Chat')}`;
+  if (newChatButton) newChatButton.innerHTML = `${sanitizeUiText('➕')} ${t('sidebar.newChat', 'New Chat')}`;
 
   const settingsButton = document.getElementById('settingsBtn');
-  if (settingsButton) settingsButton.innerHTML = `ÃƒÂ¢Ã…Â¡Ã¢â€žÂ¢ ${t('sidebar.settings', 'Settings')}`;
+  if (settingsButton) settingsButton.innerHTML = `${sanitizeUiText('⚙️')} ${t('sidebar.settings', 'Settings')}`;
 
   const supportButton = document.getElementById('supportBtn');
-  if (supportButton) supportButton.innerHTML = `ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â¾ ${t('sidebar.support', 'Customer Support')}`;
+  if (supportButton) supportButton.innerHTML = `${sanitizeUiText('📞')} ${t('sidebar.support', 'Customer Support')}`;
 
   const mobileMenuClose = document.getElementById('mobileMenuClose');
   if (mobileMenuClose) mobileMenuClose.setAttribute('aria-label', t('nav.closeMenu', 'Close menu'));
@@ -11942,6 +11944,101 @@ let attachmentUploadInProgress = false;
 let attachmentProgress = 0;
 let attachmentStatusText = '';
 
+function sanitizeUiText(value) {
+    if (value === null || value === undefined) return '';
+    if (typeof value !== 'string') return String(value);
+
+    let text = value;
+    const replacements = [
+        ['ðŸ‘‘', '👑'],
+        ['ðŸ“Œ', '📂'],
+        ['ðŸ’¬', '🗑'],
+        ['ðŸ“œ', '📄'],
+        ['âŒ', '✕'],
+        ['â€™', '’'],
+        ['â€œ', '“'],
+        ['â€', '”'],
+        ['â€“', '–'],
+        ['â€¦', '…'],
+        ['ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢', '✕'],
+        ['ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢', '➕'],
+        ['ÃƒÂ¢Ã…Â¡Ã¢â€žÂ¢', '⚙️'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â¾', '📞'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬', '💬'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™', '📌'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã¢â‚¬Ëœ', '🗑'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€', '🔗'],
+        ['ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â¯', '🔗'],
+        ['ÃƒÂ¢Ã…Â¡Ã‚Â ', '✎'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹', '📋'],
+        ['ÃƒÂ¢Ã‚Â¬Ã¢â‚¬Â ', '➤'],
+        ['ÃƒÂ¢Ã…Â¾Ã…â€œ', '⏹'],
+        ['ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Âª', '🔓'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Ëœ', '🔐'],
+        ['ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â', '📎'],
+        ['ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢', '•']
+    ];
+
+    replacements.forEach(([from, to]) => {
+        text = text.split(from).join(to);
+    });
+
+    return text;
+}
+
+function sanitizeStoredChatData(value) {
+    if (Array.isArray(value)) {
+        return value.map((item) => sanitizeStoredChatData(item));
+    }
+
+    if (value && typeof value === 'object') {
+        const normalized = {};
+        Object.keys(value).forEach((key) => {
+            normalized[key] = sanitizeStoredChatData(value[key]);
+        });
+        return normalized;
+    }
+
+    if (typeof value === 'string') {
+        return sanitizeUiText(value);
+    }
+
+    return value;
+}
+
+function repairDocumentText(root = document.body) {
+    if (!root || !(root instanceof Node)) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    const textNodes = [];
+    let currentNode = walker.nextNode();
+
+    while (currentNode) {
+        textNodes.push(currentNode);
+        currentNode = walker.nextNode();
+    }
+
+    textNodes.forEach((node) => {
+        if (!node || !node.nodeValue) return;
+        const repaired = sanitizeUiText(node.nodeValue);
+        if (repaired !== node.nodeValue) {
+            node.nodeValue = repaired;
+        }
+    });
+
+    root.querySelectorAll?.('[aria-label], [title], [alt], [placeholder]').forEach((element) => {
+        ['aria-label', 'title', 'alt', 'placeholder'].forEach((attribute) => {
+            const attributeValue = element.getAttribute(attribute);
+            if (attributeValue) {
+                const repaired = sanitizeUiText(attributeValue);
+                if (repaired !== attributeValue) {
+                    element.setAttribute(attribute, repaired);
+                }
+            }
+        });
+    });
+}
+
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
 }
@@ -12021,8 +12118,8 @@ function showLoginPrompt(chatId) {
     box.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.35)';
     box.style.color = '#f8fafc';
 
-    box.innerHTML = `
-      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
+    box.innerHTML = sanitizeUiText(`
+      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">${t('auth.loginPrompt.title', 'Login to unlock more')}</div>
       <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">${t('auth.loginPrompt.description', 'Enjoy these benefits when you sign in:')}</div>
       <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
@@ -12031,9 +12128,9 @@ function showLoginPrompt(chatId) {
         <li>${t('auth.loginPrompt.benefitPersonal', 'Get faster, more personal replies')}</li>
       </ul>
       <div style="display:flex;justify-content:center;">
-        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â„¢ Login</button>
+        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">🔐 Login</button>
       </div>
-    `;
+    `);
 
     document.body.appendChild(box);
     loginPromptBox = box;
@@ -12103,7 +12200,7 @@ function loadGuestChats() {
     let parsed = {};
     if (saved) {
         try {
-            parsed = JSON.parse(saved) || {};
+            parsed = sanitizeStoredChatData(JSON.parse(saved) || {});
         } catch {
             parsed = {};
         }
@@ -12221,14 +12318,14 @@ function saveProfileAndStay() {
 function confirmLogout() {
     const box = document.getElementById('profilePanel');
     if (!box) return;
-    box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
+    box.innerHTML = sanitizeUiText(`
+      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
         <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
         <button type="button" onclick="handleLogoutConfirmation()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.logout', 'Logout')}</button>
       </div>
-    `;
+    `);
 }
 
 function handleLogoutConfirmation() {
@@ -12471,9 +12568,9 @@ function showSharedPrivacyGate(payload) {
     overlay.style.zIndex = '10004';
     overlay.style.color = '#f8fafc';
 
-    overlay.innerHTML = `
+    overlay.innerHTML = sanitizeUiText(`
       <div style="width:min(92vw,480px);max-height:90vh;overflow:auto;position:relative;padding:24px 24px 84px;border-radius:24px;background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.14);box-shadow:0 24px 60px rgba(0,0,0,0.36);">
-        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
+        <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
 
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
@@ -12742,10 +12839,10 @@ function showApprovalRequestsPanel() {
   box.style.padding = '18px';
   box.style.zIndex = '10003';
   box.style.color = '#f8fafc';
-  box.innerHTML = `
+  box.innerHTML = sanitizeUiText(`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:16px;font-weight:700;">Approval requests</div>
-      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢</button>
+      <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
 
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
@@ -12993,7 +13090,7 @@ async function loadUserChats() {
       try {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          chats = parsed;
+          chats = sanitizeStoredChatData(parsed);
           currentChat = Object.keys(chats || {})[0] || null;
         }
       } catch {
@@ -13461,8 +13558,8 @@ if (attachments.length > 0) {
     attachmentBox.style.marginBottom = '12px';
     attachmentBox.innerHTML = attachments.map((attachment) => `
       <div style="margin-bottom:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#f8fafc;">
-        <div style="font-size:13px;font-weight:700;">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â ${attachment.file_name || 'Uploaded file'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
+        <div style="font-size:13px;font-weight:700;">${sanitizeUiText('📎')} ${sanitizeUiText(attachment.file_name || 'Uploaded file')}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${sanitizeUiText(attachment.file_type || '')} ${sanitizeUiText('•')} ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
       </div>
     `).join('');
     chatBox.appendChild(attachmentBox);
@@ -13473,7 +13570,7 @@ if (attachments.length > 0) {
     } else {
         let d = document.createElement("div");
         d.className = m.role;
-        d.textContent = m.text;
+        d.textContent = sanitizeUiText(m.text);
         chatBox.appendChild(d);
     }
 });
@@ -13509,17 +13606,18 @@ ids.forEach(id=>{
 let div=document.createElement("div");
 div.className="chatItem";
 div.dataset.id=id;
-const visibleChatTitle =
+const visibleChatTitle = sanitizeUiText(
     String(
         chats[id]?.title ||
         chats[id]?.name ||
         chats[id]?.chatName ||
         id
-    ).trim();
+    ).trim()
+);
 
-div.innerText =
-    (chats[id].pin ? "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™ " : "") +
-    "ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬ " +
+div.textContent =
+    (chats[id].pin ? `${sanitizeUiText('📌')} ` : '') +
+    `${sanitizeUiText('💬')} ` +
     visibleChatTitle;
 
 div.onclick=()=>openChat(id);
@@ -13533,7 +13631,7 @@ selectedChat=id;
 
 
 document.getElementById("pinOption").innerHTML =
-chats[id].pin ? "ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢ Unpin" : "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…â€™ Pin";
+chats[id].pin ? `${sanitizeUiText('✕')} Unpin` : `${sanitizeUiText('📌')} Pin`;
 
 
 menu.style.display="block";
@@ -14834,7 +14932,7 @@ async function save() {
 function setReplyControlState(isActive) {
     const sendButton = document.getElementById('sendBtn');
     if (sendButton) {
-        sendButton.innerHTML = isActive ? 'ÃƒÂ¢Ã…Â¾Ã…â€œ' : 'ÃƒÂ¢Ã‚Â¬Ã¢â‚¬Â ';
+        sendButton.innerHTML = isActive ? sanitizeUiText('⏹') : sanitizeUiText('➤');
         sendButton.title = isActive ? 'Stop reply' : 'Send message';
     }
 }
@@ -14915,11 +15013,11 @@ box.style.textAlign="center";
 box.style.boxShadow="0 0 25px #ff7a18";
 
 
-box.innerHTML=`
+box.innerHTML=sanitizeUiText(`
 
-<h3>ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â§ Customer Support</h3>
+<h3>📧 Customer Support</h3>
 
-<p>ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â§ Email</p>
+<p>📧 Email</p>
 
 <button onclick="openEmail()">
 REQUEST VIA EMAIL
@@ -15002,7 +15100,7 @@ setTimeout(checkOwner,1000);
 
 
 
-<p>ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¬ WhatsApp</p>
+<p>💬 WhatsApp</p>
 
 <button onclick="openWhatsApp()">
 VIA WHATSAPP
@@ -15010,7 +15108,7 @@ VIA WHATSAPP
 
 
 <button onclick="this.parentElement.remove()">
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢ Close
+✕ Close
 </button>
 
 `;
