@@ -34395,6 +34395,896 @@ setTimeout(checkOwner,1000);
 </script>
 <!-- MI_AI_SAFE_TEXT_REPAIR_V1_END -->
 
+<!-- MI_AI_UTF8_MOJIBAKE_FIX_START -->
+<script id="miAiUtf8MojibakeRepair">
+(() => {
+    "use strict";
+
+    if (window.__MI_AI_UTF8_REPAIR_INSTALLED__) {
+        return;
+    }
+
+    window.__MI_AI_UTF8_REPAIR_INSTALLED__ = true;
+
+    const BAD_PATTERN =
+        /(?:Ãƒ|Ã‚|Ã|Â|â€|â€™|â€œ|â€\x9d|â€“|â€”|â€¢|â„¢|ðŸ|ï¸|ï¿½|�|[\u0080-\u009f])/u;
+
+    const BAD_GLOBAL_PATTERN =
+        /(?:Ãƒ|Ã‚|Ã|Â|â€|â€™|â€œ|â€\x9d|â€“|â€”|â€¢|â„¢|ðŸ|ï¸|ï¿½|�|[\u0080-\u009f])/gu;
+
+    const SKIPPED_TAGS = new Set([
+        "SCRIPT",
+        "STYLE",
+        "TEXTAREA",
+        "NOSCRIPT",
+        "CODE",
+        "PRE",
+        "SVG",
+        "PATH"
+    ]);
+
+    function badness(value) {
+        if (typeof value !== "string" || !value) {
+            return 0;
+        }
+
+        const matches = value.match(BAD_GLOBAL_PATTERN);
+        return matches ? matches.length : 0;
+    }
+
+    function decodeLatin1AsUtf8(value) {
+        try {
+            const bytes = Uint8Array.from(
+                Array.from(value),
+                character => character.charCodeAt(0) & 0xff
+            );
+
+            return new TextDecoder("utf-8", {
+                fatal: true
+            }).decode(bytes);
+        } catch {
+            return value;
+        }
+    }
+
+    function decodeWindows1252AsUtf8(value) {
+        const windows1252Map = new Map([
+            [0x20ac, 0x80],
+            [0x201a, 0x82],
+            [0x0192, 0x83],
+            [0x201e, 0x84],
+            [0x2026, 0x85],
+            [0x2020, 0x86],
+            [0x2021, 0x87],
+            [0x02c6, 0x88],
+            [0x2030, 0x89],
+            [0x0160, 0x8a],
+            [0x2039, 0x8b],
+            [0x0152, 0x8c],
+            [0x017d, 0x8e],
+            [0x2018, 0x91],
+            [0x2019, 0x92],
+            [0x201c, 0x93],
+            [0x201d, 0x94],
+            [0x2022, 0x95],
+            [0x2013, 0x96],
+            [0x2014, 0x97],
+            [0x02dc, 0x98],
+            [0x2122, 0x99],
+            [0x0161, 0x9a],
+            [0x203a, 0x9b],
+            [0x0153, 0x9c],
+            [0x017e, 0x9e],
+            [0x0178, 0x9f]
+        ]);
+
+        try {
+            const bytes = Uint8Array.from(
+                Array.from(value),
+                character => {
+                    const codePoint = character.codePointAt(0);
+
+                    if (windows1252Map.has(codePoint)) {
+                        return windows1252Map.get(codePoint);
+                    }
+
+                    if (codePoint <= 0xff) {
+                        return codePoint;
+                    }
+
+                    throw new Error("Character cannot be represented as Windows-1252.");
+                }
+            );
+
+            return new TextDecoder("utf-8", {
+                fatal: true
+            }).decode(bytes);
+        } catch {
+            return value;
+        }
+    }
+
+    function repairString(value) {
+        if (
+            typeof value !== "string" ||
+            value.length === 0 ||
+            !BAD_PATTERN.test(value)
+        ) {
+            return value;
+        }
+
+        let current = value;
+
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+            const candidates = [
+                current,
+                decodeLatin1AsUtf8(current),
+                decodeWindows1252AsUtf8(current)
+            ];
+
+            let best = current;
+            let bestScore = badness(current);
+
+            for (const candidate of candidates) {
+                const candidateScore = badness(candidate);
+
+                if (candidateScore < bestScore) {
+                    best = candidate;
+                    bestScore = candidateScore;
+                }
+            }
+
+            if (best === current) {
+                break;
+            }
+
+            current = best;
+        }
+
+        return current;
+    }
+
+    function repairValue(value, seen = new WeakSet()) {
+        if (typeof value === "string") {
+            return repairString(value);
+        }
+
+        if (!value || typeof value !== "object") {
+            return value;
+        }
+
+        if (seen.has(value)) {
+            return value;
+        }
+
+        seen.add(value);
+
+        if (Array.isArray(value)) {
+            let changed = false;
+
+            const repairedArray = value.map(item => {
+                const repairedItem = repairValue(item, seen);
+
+                if (repairedItem !== item) {
+                    changed = true;
+                }
+
+                return repairedItem;
+            });
+
+            return changed ? repairedArray : value;
+        }
+
+        let changed = false;
+        const repairedObject = {};
+
+        for (const [key, item] of Object.entries(value)) {
+            const repairedKey = repairString(key);
+            const repairedItem = repairValue(item, seen);
+
+            if (repairedKey !== key || repairedItem !== item) {
+                changed = true;
+            }
+
+            repairedObject[repairedKey] = repairedItem;
+        }
+
+        return changed ? repairedObject : value;
+    }
+
+    function repairStorage(storage) {
+        if (!storage) {
+            return;
+        }
+
+        const updates = [];
+
+        for (let index = 0; index < storage.length; index += 1) {
+            const key = storage.key(index);
+
+            if (!key) {
+                continue;
+            }
+
+            const rawValue = storage.getItem(key);
+
+            if (
+                typeof rawValue !== "string" ||
+                !BAD_PATTERN.test(rawValue)
+            ) {
+                continue;
+            }
+
+            let repairedValue = repairString(rawValue);
+
+            try {
+                const parsed = JSON.parse(rawValue);
+                const repairedParsed = repairValue(parsed);
+                repairedValue = JSON.stringify(repairedParsed);
+            } catch {
+                // Non-JSON LocalStorage values are repaired as plain text.
+            }
+
+            if (repairedValue !== rawValue) {
+                updates.push([key, repairedValue]);
+            }
+        }
+
+        for (const [key, repairedValue] of updates) {
+            try {
+                storage.setItem(key, repairedValue);
+            } catch (error) {
+                console.warn(
+                    "[MI AI UTF-8] Could not repair storage item:",
+                    key,
+                    error
+                );
+            }
+        }
+    }
+
+    function shouldSkipNode(node) {
+        const parent = node.parentElement;
+
+        if (!parent) {
+            return true;
+        }
+
+        if (SKIPPED_TAGS.has(parent.tagName)) {
+            return true;
+        }
+
+        if (
+            parent.closest(
+                "script, style, textarea, noscript, code, pre, svg"
+            )
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function repairTextNode(node) {
+        if (
+            !node ||
+            node.nodeType !== Node.TEXT_NODE ||
+            shouldSkipNode(node)
+        ) {
+            return;
+        }
+
+        const original = node.nodeValue;
+
+        if (
+            typeof original !== "string" ||
+            !BAD_PATTERN.test(original)
+        ) {
+            return;
+        }
+
+        const repaired = repairString(original);
+
+        if (repaired !== original) {
+            node.nodeValue = repaired;
+        }
+    }
+
+    function repairElementAttributes(element) {
+        if (!(element instanceof Element)) {
+            return;
+        }
+
+        const attributeNames = [
+            "title",
+            "aria-label",
+            "placeholder",
+            "alt",
+            "data-title",
+            "data-name"
+        ];
+
+        for (const attributeName of attributeNames) {
+            if (!element.hasAttribute(attributeName)) {
+                continue;
+            }
+
+            const original = element.getAttribute(attributeName);
+
+            if (
+                typeof original !== "string" ||
+                !BAD_PATTERN.test(original)
+            ) {
+                continue;
+            }
+
+            const repaired = repairString(original);
+
+            if (repaired !== original) {
+                element.setAttribute(attributeName, repaired);
+            }
+        }
+
+        if (
+            element instanceof HTMLInputElement &&
+            typeof element.value === "string" &&
+            BAD_PATTERN.test(element.value)
+        ) {
+            element.value = repairString(element.value);
+        }
+    }
+
+    function repairDom(root = document.body) {
+        if (!root) {
+            return;
+        }
+
+        if (root.nodeType === Node.TEXT_NODE) {
+            repairTextNode(root);
+            return;
+        }
+
+        if (root instanceof Element) {
+            repairElementAttributes(root);
+        }
+
+        const textWalker = document.createTreeWalker(
+            root,
+            NodeFilter.SHOW_TEXT
+        );
+
+        let textNode;
+
+        while ((textNode = textWalker.nextNode())) {
+            repairTextNode(textNode);
+        }
+
+        if (root.querySelectorAll) {
+            root.querySelectorAll("*").forEach(repairElementAttributes);
+        }
+    }
+
+    function installMutationRepair() {
+        if (!document.documentElement) {
+            return;
+        }
+
+        let pending = false;
+        const changedRoots = new Set();
+
+        const flush = () => {
+            pending = false;
+
+            for (const root of changedRoots) {
+                repairDom(root);
+            }
+
+            changedRoots.clear();
+        };
+
+        const observer = new MutationObserver(mutations => {
+            for (const mutation of mutations) {
+                if (
+                    mutation.type === "characterData" &&
+                    mutation.target
+                ) {
+                    repairTextNode(mutation.target);
+                    continue;
+                }
+
+                for (const addedNode of mutation.addedNodes) {
+                    if (
+                        addedNode.nodeType === Node.ELEMENT_NODE ||
+                        addedNode.nodeType === Node.TEXT_NODE
+                    ) {
+                        changedRoots.add(addedNode);
+                    }
+                }
+            }
+
+            if (changedRoots.size > 0 && !pending) {
+                pending = true;
+                queueMicrotask(flush);
+            }
+        });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+    }
+
+    function runRepair() {
+        try {
+            repairStorage(window.localStorage);
+        } catch (error) {
+            console.warn("[MI AI UTF-8] LocalStorage repair skipped:", error);
+        }
+
+        try {
+            repairStorage(window.sessionStorage);
+        } catch (error) {
+            console.warn("[MI AI UTF-8] SessionStorage repair skipped:", error);
+        }
+
+        repairDom(document.body);
+        installMutationRepair();
+
+        window.miRepairMojibake = repairString;
+
+        window.dispatchEvent(
+            new CustomEvent("mi-ai-utf8-repair-ready")
+        );
+
+        console.info("[MI AI UTF-8] Corrupted text repair installed.");
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            runRepair,
+            {
+                once: true
+            }
+        );
+    } else {
+        runRepair();
+    }
+})();
+</script>
+<!-- MI_AI_UTF8_MOJIBAKE_FIX_END -->
+
+<!-- MI_AI_MOJIBAKE_REPAIR_START -->
+<script id="miAiMojibakeRepair">
+(() => {
+    "use strict";
+
+    if (window.__MI_AI_MOJIBAKE_REPAIR_ACTIVE__) {
+        return;
+    }
+
+    window.__MI_AI_MOJIBAKE_REPAIR_ACTIVE__ = true;
+
+    const badTextPattern =
+        /(?:Ãƒ|Ã‚|Ã|Â|â€|â€™|â€œ|â€\x9d|â€“|â€”|â€¢|â„¢|ðŸ|ï¸|ï¿½|�|[\u0080-\u009f])/u;
+
+    const badTextGlobalPattern =
+        /(?:Ãƒ|Ã‚|Ã|Â|â€|â€™|â€œ|â€\x9d|â€“|â€”|â€¢|â„¢|ðŸ|ï¸|ï¿½|�|[\u0080-\u009f])/gu;
+
+    const skippedTags = new Set([
+        "SCRIPT",
+        "STYLE",
+        "TEXTAREA",
+        "NOSCRIPT",
+        "CODE",
+        "PRE",
+        "SVG",
+        "PATH"
+    ]);
+
+    function corruptionScore(value) {
+        if (typeof value !== "string" || value.length === 0) {
+            return 0;
+        }
+
+        const matches = value.match(badTextGlobalPattern);
+        return matches ? matches.length : 0;
+    }
+
+    function decodeLatin1AsUtf8(value) {
+        try {
+            const bytes = Uint8Array.from(
+                Array.from(value),
+                character => character.charCodeAt(0) & 255
+            );
+
+            return new TextDecoder("utf-8", {
+                fatal: true
+            }).decode(bytes);
+        } catch {
+            return value;
+        }
+    }
+
+    function decodeWindows1252AsUtf8(value) {
+        const windows1252Map = new Map([
+            [0x20ac, 0x80],
+            [0x201a, 0x82],
+            [0x0192, 0x83],
+            [0x201e, 0x84],
+            [0x2026, 0x85],
+            [0x2020, 0x86],
+            [0x2021, 0x87],
+            [0x02c6, 0x88],
+            [0x2030, 0x89],
+            [0x0160, 0x8a],
+            [0x2039, 0x8b],
+            [0x0152, 0x8c],
+            [0x017d, 0x8e],
+            [0x2018, 0x91],
+            [0x2019, 0x92],
+            [0x201c, 0x93],
+            [0x201d, 0x94],
+            [0x2022, 0x95],
+            [0x2013, 0x96],
+            [0x2014, 0x97],
+            [0x02dc, 0x98],
+            [0x2122, 0x99],
+            [0x0161, 0x9a],
+            [0x203a, 0x9b],
+            [0x0153, 0x9c],
+            [0x017e, 0x9e],
+            [0x0178, 0x9f]
+        ]);
+
+        try {
+            const bytes = Uint8Array.from(
+                Array.from(value),
+                character => {
+                    const codePoint = character.codePointAt(0);
+
+                    if (windows1252Map.has(codePoint)) {
+                        return windows1252Map.get(codePoint);
+                    }
+
+                    if (codePoint <= 255) {
+                        return codePoint;
+                    }
+
+                    throw new Error(
+                        "The character cannot be converted from Windows-1252."
+                    );
+                }
+            );
+
+            return new TextDecoder("utf-8", {
+                fatal: true
+            }).decode(bytes);
+        } catch {
+            return value;
+        }
+    }
+
+    function repairText(value) {
+        if (
+            typeof value !== "string" ||
+            value.length === 0 ||
+            !badTextPattern.test(value)
+        ) {
+            return value;
+        }
+
+        let current = value;
+
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+            const candidates = [
+                current,
+                decodeLatin1AsUtf8(current),
+                decodeWindows1252AsUtf8(current)
+            ];
+
+            let bestValue = current;
+            let bestScore = corruptionScore(current);
+
+            for (const candidate of candidates) {
+                const candidateScore = corruptionScore(candidate);
+
+                if (candidateScore < bestScore) {
+                    bestValue = candidate;
+                    bestScore = candidateScore;
+                }
+            }
+
+            if (bestValue === current) {
+                break;
+            }
+
+            current = bestValue;
+        }
+
+        return current;
+    }
+
+    function repairStoredValue(value, visited = new WeakSet()) {
+        if (typeof value === "string") {
+            return repairText(value);
+        }
+
+        if (!value || typeof value !== "object") {
+            return value;
+        }
+
+        if (visited.has(value)) {
+            return value;
+        }
+
+        visited.add(value);
+
+        if (Array.isArray(value)) {
+            return value.map(item => repairStoredValue(item, visited));
+        }
+
+        const repairedObject = {};
+
+        for (const [key, item] of Object.entries(value)) {
+            repairedObject[repairText(key)] =
+                repairStoredValue(item, visited);
+        }
+
+        return repairedObject;
+    }
+
+    function repairBrowserStorage(storage) {
+        if (!storage) {
+            return;
+        }
+
+        const pendingUpdates = [];
+
+        for (let index = 0; index < storage.length; index += 1) {
+            const key = storage.key(index);
+
+            if (!key) {
+                continue;
+            }
+
+            const originalValue = storage.getItem(key);
+
+            if (
+                typeof originalValue !== "string" ||
+                !badTextPattern.test(originalValue)
+            ) {
+                continue;
+            }
+
+            let repairedValue = repairText(originalValue);
+
+            try {
+                const parsedValue = JSON.parse(originalValue);
+                const repairedParsedValue =
+                    repairStoredValue(parsedValue);
+
+                repairedValue = JSON.stringify(repairedParsedValue);
+            } catch {
+                // The value is plain text instead of JSON.
+            }
+
+            if (repairedValue !== originalValue) {
+                pendingUpdates.push([
+                    key,
+                    repairedValue
+                ]);
+            }
+        }
+
+        for (const [key, repairedValue] of pendingUpdates) {
+            try {
+                storage.setItem(key, repairedValue);
+            } catch (error) {
+                console.warn(
+                    "[MI AI UTF-8] Failed to repair a stored value:",
+                    key,
+                    error
+                );
+            }
+        }
+    }
+
+    function isSkippedTextNode(node) {
+        const parent = node.parentElement;
+
+        if (!parent) {
+            return true;
+        }
+
+        if (skippedTags.has(parent.tagName)) {
+            return true;
+        }
+
+        return Boolean(
+            parent.closest(
+                "script, style, textarea, noscript, code, pre, svg"
+            )
+        );
+    }
+
+    function repairTextNode(node) {
+        if (
+            !node ||
+            node.nodeType !== Node.TEXT_NODE ||
+            isSkippedTextNode(node)
+        ) {
+            return;
+        }
+
+        const originalValue = node.nodeValue;
+
+        if (
+            typeof originalValue !== "string" ||
+            !badTextPattern.test(originalValue)
+        ) {
+            return;
+        }
+
+        const repairedValue = repairText(originalValue);
+
+        if (repairedValue !== originalValue) {
+            node.nodeValue = repairedValue;
+        }
+    }
+
+    function repairElementAttributes(element) {
+        if (!(element instanceof Element)) {
+            return;
+        }
+
+        const attributeNames = [
+            "title",
+            "aria-label",
+            "placeholder",
+            "alt",
+            "data-title",
+            "data-name",
+            "data-chat-title"
+        ];
+
+        for (const attributeName of attributeNames) {
+            if (!element.hasAttribute(attributeName)) {
+                continue;
+            }
+
+            const originalValue =
+                element.getAttribute(attributeName);
+
+            if (
+                typeof originalValue !== "string" ||
+                !badTextPattern.test(originalValue)
+            ) {
+                continue;
+            }
+
+            const repairedValue = repairText(originalValue);
+
+            if (repairedValue !== originalValue) {
+                element.setAttribute(
+                    attributeName,
+                    repairedValue
+                );
+            }
+        }
+    }
+
+    function repairDom(root = document.body) {
+        if (!root) {
+            return;
+        }
+
+        if (root.nodeType === Node.TEXT_NODE) {
+            repairTextNode(root);
+            return;
+        }
+
+        if (root instanceof Element) {
+            repairElementAttributes(root);
+        }
+
+        const walker = document.createTreeWalker(
+            root,
+            NodeFilter.SHOW_TEXT
+        );
+
+        let currentTextNode;
+
+        while ((currentTextNode = walker.nextNode())) {
+            repairTextNode(currentTextNode);
+        }
+
+        if (root.querySelectorAll) {
+            root.querySelectorAll("*").forEach(
+                repairElementAttributes
+            );
+        }
+    }
+
+    function installDomObserver() {
+        if (!document.documentElement) {
+            return;
+        }
+
+        const observer = new MutationObserver(mutations => {
+            for (const mutation of mutations) {
+                if (mutation.type === "characterData") {
+                    repairTextNode(mutation.target);
+                    continue;
+                }
+
+                for (const addedNode of mutation.addedNodes) {
+                    if (
+                        addedNode.nodeType === Node.TEXT_NODE ||
+                        addedNode.nodeType === Node.ELEMENT_NODE
+                    ) {
+                        repairDom(addedNode);
+                    }
+                }
+            }
+        });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+    }
+
+    function runFullRepair() {
+        try {
+            repairBrowserStorage(window.localStorage);
+        } catch (error) {
+            console.warn(
+                "[MI AI UTF-8] Local storage repair was skipped:",
+                error
+            );
+        }
+
+        try {
+            repairBrowserStorage(window.sessionStorage);
+        } catch (error) {
+            console.warn(
+                "[MI AI UTF-8] Session storage repair was skipped:",
+                error
+            );
+        }
+
+        repairDom(document.body);
+        installDomObserver();
+
+        window.miRepairCorruptedText = repairText;
+        window.miRepairAllVisibleText = () => repairDom(document.body);
+
+        window.dispatchEvent(
+            new CustomEvent("mi-ai-mojibake-repair-ready")
+        );
+
+        console.info(
+            "[MI AI UTF-8] Corrupted text repair is active."
+        );
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            runFullRepair,
+            {
+                once: true
+            }
+        );
+    } else {
+        runFullRepair();
+    }
+})();
+</script>
+<!-- MI_AI_MOJIBAKE_REPAIR_END -->
 </body>
 </html>
 
