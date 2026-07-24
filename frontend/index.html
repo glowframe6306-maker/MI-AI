@@ -25854,43 +25854,18 @@ setTimeout(checkOwner,1000);
         false;
 
     function cleanText(value) {
-        const text = String(value || "");
-
-        if (!text) {
-            return "";
-        }
-
-        const cleaned = text
-            .replace(/<[^>]*>/g, " ")
-            .replace(/[\u0000]/g, "")
-            .replace(/\s+/g, " ")
+        return String(
+            value || ""
+        )
+            .replace(
+                /<[^>]*>/g,
+                " "
+            )
+            .replace(
+                /\s+/g,
+                " "
+            )
             .trim();
-
-        if (!cleaned) {
-            return "";
-        }
-
-        return /[ÃÂðâïÆƒ‚€™œžŸ]/.test(cleaned)
-            ? cleaned.replace(/[ÃÂðâïÆƒ‚€™œžŸ]/g, "").replace(/\s+/g, " ").trim()
-            : cleaned;
-    }
-
-    function looksGenericTitle(value) {
-        const title = cleanText(value).toUpperCase();
-
-        return [
-            "NEW CHAT",
-            "USER GREETING",
-            "CHAT MANAGEMENT",
-            "GENERAL CONVERSATION",
-            "GENERAL QUESTION",
-            "PROGRAMMING REQUEST",
-            "IMAGE REQUEST",
-            "LOGIN SUPPORT",
-            "WEATHER QUESTION",
-            "EMAIL REQUEST",
-            "SUMMARY REQUEST"
-        ].includes(title);
     }
 
     function chatMap() {
@@ -26117,19 +26092,10 @@ setTimeout(checkOwner,1000);
         }
 
         if (
-            /^(hi|hii+|hello|hey|good morning|good afternoon|good evening)\b/i
+            /^(hi|hii+|hello|hey|good morning|good afternoon|good evening|Ãƒ Ã‚-â‚¬Å¾Ãƒ Ã‚-ž¢Ãƒ Ã‚¶Ã‚½Ãƒ Ã‚-Ã‚|Ãƒ Ã‚-â‚¬Å¾Ãƒ Ã‚-Ã‚Ãƒ Ã‚¶Ã‚ºÃƒ Ã‚-â‚¬â„¢|Ãƒ Ã‚(R)Ã‚µÃƒ Ã‚(R)Ã‚£Ãƒ Ã‚(R)â‚¬¢Ãƒ Ã‚¯Ã‚Ãƒ Ã‚(R)â‚¬¢Ãƒ Ã‚(R)Ã‚(R)Ãƒ Ã‚¯Ã‚)\b/i
                 .test(original)
         ) {
-            const words = original
-                .split(/\s+/)
-                .filter(Boolean)
-                .slice(0, 3);
-
-            return words.length > 1
-                ? words.map(function (word) {
-                    return word.charAt(0).toUpperCase() + word.slice(1);
-                }).join(" ")
-                : "Greeting";
+            return "User Greeting";
         }
 
         if (
@@ -26364,18 +26330,6 @@ setTimeout(checkOwner,1000);
 
         if (!chat) {
             return EMPTY_TITLE;
-        }
-
-        const existingTitle = cleanText(
-            chat.title || chat.name || chat.chatName || ""
-        );
-
-        if (
-            existingTitle &&
-            !looksGenericTitle(existingTitle) &&
-            !/[ÃÂðâïÆƒ‚€™œžŸ]/.test(existingTitle)
-        ) {
-            return existingTitle;
         }
 
         const first =
@@ -27392,28 +27346,21 @@ setTimeout(checkOwner,1000);
                     const chat =
                         allChats[chatId];
 
+                    const wanted =
+                        firstUserMessage(chat)
+                            ? semanticTitle(
+                                firstUserMessage(
+                                    chat
+                                )
+                            )
+                            : EMPTY_TITLE;
+
                     const current =
                         cleanText(
                             chat.title ||
                             chat.name ||
-                            chat.chatName || ""
+                            chat.chatName
                         );
-
-                    if (
-                        current &&
-                        !looksGenericTitle(current) &&
-                        !/[ÃÂðâïÆƒ‚€™œžŸ]/.test(current)
-                    ) {
-                        return;
-                    }
-
-                    const first =
-                        firstUserMessage(chat);
-
-                    const wanted =
-                        first
-                            ? semanticTitle(first)
-                            : EMPTY_TITLE;
 
                     if (
                         current !== wanted
@@ -31110,12 +31057,11 @@ const API="/api/chief-owner";let meta={roles:[],permissions:[]};const $=x=>docum
 async function tok(){const a=window.miFirebaseAuth||(window.firebase&&firebase.auth?firebase.auth():null),u=(a&&a.currentUser)||window.miFirebaseUser||window.currentFirebaseUser;if(!u)throw new Error("Please login again.");return u.getIdToken(true)}
 async function api(p,o={}){const h=new Headers(o.headers||{});h.set("Authorization","Bearer "+await tok());h.set("Content-Type","application/json");const r=await fetch(API+p,{...o,headers:h,cache:"no-store"}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||"Request failed.");return d}
 function stat(m,e=false){const x=$("miFOStatus");if(x){x.textContent=m;x.style.color=e?"#ff9ba5":"#bdf5d7"}}
-function setOwnerButtonLabel(button){const label="Chief Owner Permissions";if(!button)return null;button.textContent=label;button.setAttribute("aria-label",label);button.setAttribute("title",label);return button}
-function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.onclick=open;s.appendChild(b)}return setOwnerButtonLabel(b)}
+function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.textContent="Chief Owner Permissions";b.onclick=open;s.appendChild(b)}return b}
 async function vis(){const b=launcher();if(!b)return;try{const r=await fetch("/api/admin/me",{headers:{Authorization:"Bearer "+await tok()}}),d=await r.json();b.style.display=r.ok&&d.isChiefOwner?"block":"none"}catch(_){b.style.display="none"}}
 function opts(a){return a.map(x=>`<option value="${esc(x)}">${esc(x.replaceAll("_"," "))}</option>`).join("")}function checks(){return meta.permissions.map(x=>`<label><input type="checkbox" value="${esc(x)}"> ${esc(x)}</label>`).join("")}
 function panel(){if($("miFinalOwnerOverlay"))return;const o=document.createElement("div");o.id="miFinalOwnerOverlay";o.innerHTML=`<section id="miFinalOwnerPanel"><header class="miFOHead">
-<h2>Chief Owner Permissions</h2><button id="miFOClose" aria-label="Close">×</button>
+<h2>Chief Owner Permissions</h2><button id="miFOClose">ÃƒÆ’Ã‚¢Ãƒ...â‚¬Å“Ãƒ¢š¬Ã‚¢</button>
 
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
@@ -31258,10 +31204,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         const button = ownerButton();
         if (!panel || !button) return null;
         if (button.parentElement !== panel) panel.appendChild(button);
-        const label = "Chief Owner Permissions";
-        button.textContent = label;
-        button.setAttribute("aria-label", label);
-        button.setAttribute("title", label);
+        button.textContent = "Chief Owner Permissions";
         return button;
     }
 
