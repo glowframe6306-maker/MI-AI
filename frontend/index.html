@@ -35376,23 +35376,19 @@ setTimeout(checkOwner,1000);
 </script>
 <!-- MI_AI_MOJIBAKE_REPAIR_END -->
 
-<!-- MI_AI_FINAL_VISIBLE_TEXT_FIX_V2_START -->
+<!-- MI_AI_FINAL_VISIBLE_TEXT_FIX_V3_START -->
 <script>
 
 (function () {
     "use strict";
 
-    if (
-        window.__MI_AI_FINAL_VISIBLE_TEXT_FIX_V2__
-    ) {
+    if (window.__MI_AI_FINAL_VISIBLE_TEXT_FIX_V3__) {
         return;
     }
 
-    window.__MI_AI_FINAL_VISIBLE_TEXT_FIX_V2__ =
-        true;
+    window.__MI_AI_FINAL_VISIBLE_TEXT_FIX_V3__ = true;
 
-    var OWNER_LABEL =
-        "Chief Owner Permissions";
+    var OWNER_LABEL = "Chief Owner Permissions";
 
     var KNOWN_CHAT_TITLES = [
         "User Greeting",
@@ -35408,61 +35404,18 @@ setTimeout(checkOwner,1000);
     var BAD_TEXT_PATTERN =
         /(?:Ã|Â|ð|â|ï|Æ|ƒ|‚|€|™|œ|ž|Ÿ)/;
 
-    function repairOwnerButtons() {
-        var selectors = [
-            "#miFinalOwnerBtn",
-            "#miChiefOwnerPermissionButton",
-            "#chiefOwnerBtn"
-        ];
-
-        document
-            .querySelectorAll(
-                selectors.join(",")
-            )
-            .forEach(function (button) {
-                if (
-                    button.textContent !==
-                    OWNER_LABEL
-                ) {
-                    button.textContent =
-                        OWNER_LABEL;
-                }
-            });
-
-        document
-            .querySelectorAll("button")
-            .forEach(function (button) {
-                var value =
-                    String(
-                        button.textContent || ""
-                    ).trim();
-
-                if (
-                    value.indexOf(
-                        OWNER_LABEL
-                    ) !== -1 &&
-                    value !== OWNER_LABEL
-                ) {
-                    button.textContent =
-                        OWNER_LABEL;
-                }
-            });
-    }
-
     function findKnownTitle(value) {
-        var text =
-            String(value || "").trim();
+        var current = String(value || "").trim();
 
         for (
             var index = 0;
             index < KNOWN_CHAT_TITLES.length;
             index += 1
         ) {
-            var title =
-                KNOWN_CHAT_TITLES[index];
+            var title = KNOWN_CHAT_TITLES[index];
 
             if (
-                text.toLowerCase().indexOf(
+                current.toLowerCase().indexOf(
                     title.toLowerCase()
                 ) !== -1
             ) {
@@ -35473,14 +35426,15 @@ setTimeout(checkOwner,1000);
         return "";
     }
 
-    function fallbackReadableTitle(value) {
-        var lines =
-            String(value || "")
-                .split(/\r?\n/)
-                .map(function (line) {
-                    return line.trim();
-                })
-                .filter(Boolean);
+    function findReadableTitle(value) {
+        var current = String(value || "").trim();
+
+        var lines = current
+            .split(/\r?\n/)
+            .map(function (line) {
+                return line.trim();
+            })
+            .filter(Boolean);
 
         for (
             var index = lines.length - 1;
@@ -35499,10 +35453,51 @@ setTimeout(checkOwner,1000);
             }
         }
 
+        var matches = current.match(
+            /[A-Za-z][A-Za-z0-9]*(?:[ '&()_-]+[A-Za-z0-9]+)*/g
+        );
+
+        if (matches && matches.length) {
+            return matches[matches.length - 1]
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
         return "";
     }
 
-    function repairChatItems() {
+    function repairOwnerButtons() {
+        document
+            .querySelectorAll(
+                "#miFinalOwnerBtn, " +
+                "#miChiefOwnerPermissionButton, " +
+                "#chiefOwnerBtn"
+            )
+            .forEach(function (button) {
+                if (
+                    button.textContent !== OWNER_LABEL
+                ) {
+                    button.textContent = OWNER_LABEL;
+                }
+            });
+
+        document
+            .querySelectorAll("button")
+            .forEach(function (button) {
+                var current = String(
+                    button.textContent || ""
+                ).trim();
+
+                if (
+                    current.indexOf(OWNER_LABEL) !== -1 &&
+                    current !== OWNER_LABEL
+                ) {
+                    button.textContent = OWNER_LABEL;
+                }
+            });
+    }
+
+    function repairChatTitles() {
         document
             .querySelectorAll(
                 "#chatList .chatItem, " +
@@ -35511,10 +35506,9 @@ setTimeout(checkOwner,1000);
                 ".chat-item[data-chat-id]"
             )
             .forEach(function (item) {
-                var current =
-                    String(
-                        item.textContent || ""
-                    ).trim();
+                var current = String(
+                    item.textContent || ""
+                ).trim();
 
                 if (
                     !current ||
@@ -35525,34 +35519,33 @@ setTimeout(checkOwner,1000);
 
                 var repaired =
                     findKnownTitle(current) ||
-                    fallbackReadableTitle(current);
+                    findReadableTitle(current);
 
                 if (
                     repaired &&
                     repaired !== current
                 ) {
-                    item.textContent =
-                        repaired;
+                    item.textContent = repaired;
                 }
             });
     }
 
     function repairInterface() {
         repairOwnerButtons();
-        repairChatItems();
+        repairChatTitles();
     }
 
-    var cleanupScheduled = false;
+    var scheduled = false;
 
     function scheduleRepair() {
-        if (cleanupScheduled) {
+        if (scheduled) {
             return;
         }
 
-        cleanupScheduled = true;
+        scheduled = true;
 
         requestAnimationFrame(function () {
-            cleanupScheduled = false;
+            scheduled = false;
             repairInterface();
         });
     }
@@ -35560,10 +35553,9 @@ setTimeout(checkOwner,1000);
     function startRepair() {
         repairInterface();
 
-        var observer =
-            new MutationObserver(
-                scheduleRepair
-            );
+        var observer = new MutationObserver(
+            scheduleRepair
+        );
 
         observer.observe(
             document.documentElement,
@@ -35607,15 +35599,11 @@ setTimeout(checkOwner,1000);
             repairInterface;
     }
 
-    if (
-        document.readyState === "loading"
-    ) {
+    if (document.readyState === "loading") {
         document.addEventListener(
             "DOMContentLoaded",
             startRepair,
-            {
-                once: true
-            }
+            { once: true }
         );
     } else {
         startRepair();
@@ -35623,7 +35611,7 @@ setTimeout(checkOwner,1000);
 })();
 
 </script>
-<!-- MI_AI_FINAL_VISIBLE_TEXT_FIX_V2_END -->
+<!-- MI_AI_FINAL_VISIBLE_TEXT_FIX_V3_END -->
 </body>
 </html>
 
