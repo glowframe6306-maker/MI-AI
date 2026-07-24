@@ -31057,7 +31057,7 @@ const API="/api/chief-owner";let meta={roles:[],permissions:[]};const $=x=>docum
 async function tok(){const a=window.miFirebaseAuth||(window.firebase&&firebase.auth?firebase.auth():null),u=(a&&a.currentUser)||window.miFirebaseUser||window.currentFirebaseUser;if(!u)throw new Error("Please login again.");return u.getIdToken(true)}
 async function api(p,o={}){const h=new Headers(o.headers||{});h.set("Authorization","Bearer "+await tok());h.set("Content-Type","application/json");const r=await fetch(API+p,{...o,headers:h,cache:"no-store"}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||"Request failed.");return d}
 function stat(m,e=false){const x=$("miFOStatus");if(x){x.textContent=m;x.style.color=e?"#ff9ba5":"#bdf5d7"}}
-function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.textContent="ÃƒÆ’Ã‚°Ãƒ...Ã‚¸Ãƒ¢š¬Ã‹Å“Ãƒ¢š¬Ã‹Å“ Chief Owner Permissions";b.onclick=open;s.appendChild(b)}return b}
+function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.textContent="Chief Owner Permissions";b.onclick=open;s.appendChild(b)}return b}
 async function vis(){const b=launcher();if(!b)return;try{const r=await fetch("/api/admin/me",{headers:{Authorization:"Bearer "+await tok()}}),d=await r.json();b.style.display=r.ok&&d.isChiefOwner?"block":"none"}catch(_){b.style.display="none"}}
 function opts(a){return a.map(x=>`<option value="${esc(x)}">${esc(x.replaceAll("_"," "))}</option>`).join("")}function checks(){return meta.permissions.map(x=>`<label><input type="checkbox" value="${esc(x)}"> ${esc(x)}</label>`).join("")}
 function panel(){if($("miFinalOwnerOverlay"))return;const o=document.createElement("div");o.id="miFinalOwnerOverlay";o.innerHTML=`<section id="miFinalOwnerPanel"><header class="miFOHead">
@@ -31204,7 +31204,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         const button = ownerButton();
         if (!panel || !button) return null;
         if (button.parentElement !== panel) panel.appendChild(button);
-        button.textContent = "ÃƒÆ’Ã‚°Ãƒ...Ã‚¸Ãƒ¢š¬Ã‹Å“Ãƒ¢š¬Ã‹Å“ Chief Owner Permissions";
+        button.textContent = "Chief Owner Permissions";
         return button;
     }
 
@@ -35375,6 +35375,255 @@ setTimeout(checkOwner,1000);
 })();
 </script>
 <!-- MI_AI_MOJIBAKE_REPAIR_END -->
+
+<!-- MI_AI_FINAL_VISIBLE_TEXT_FIX_V2_START -->
+<script>
+
+(function () {
+    "use strict";
+
+    if (
+        window.__MI_AI_FINAL_VISIBLE_TEXT_FIX_V2__
+    ) {
+        return;
+    }
+
+    window.__MI_AI_FINAL_VISIBLE_TEXT_FIX_V2__ =
+        true;
+
+    var OWNER_LABEL =
+        "Chief Owner Permissions";
+
+    var KNOWN_CHAT_TITLES = [
+        "User Greeting",
+        "User Farewell",
+        "User Appreciation",
+        "General Question",
+        "Math Question",
+        "Weather Question",
+        "New Chat",
+        "NEW CHAT"
+    ];
+
+    var BAD_TEXT_PATTERN =
+        /(?:Ã|Â|ð|â|ï|Æ|ƒ|‚|€|™|œ|ž|Ÿ)/;
+
+    function repairOwnerButtons() {
+        var selectors = [
+            "#miFinalOwnerBtn",
+            "#miChiefOwnerPermissionButton",
+            "#chiefOwnerBtn"
+        ];
+
+        document
+            .querySelectorAll(
+                selectors.join(",")
+            )
+            .forEach(function (button) {
+                if (
+                    button.textContent !==
+                    OWNER_LABEL
+                ) {
+                    button.textContent =
+                        OWNER_LABEL;
+                }
+            });
+
+        document
+            .querySelectorAll("button")
+            .forEach(function (button) {
+                var value =
+                    String(
+                        button.textContent || ""
+                    ).trim();
+
+                if (
+                    value.indexOf(
+                        OWNER_LABEL
+                    ) !== -1 &&
+                    value !== OWNER_LABEL
+                ) {
+                    button.textContent =
+                        OWNER_LABEL;
+                }
+            });
+    }
+
+    function findKnownTitle(value) {
+        var text =
+            String(value || "").trim();
+
+        for (
+            var index = 0;
+            index < KNOWN_CHAT_TITLES.length;
+            index += 1
+        ) {
+            var title =
+                KNOWN_CHAT_TITLES[index];
+
+            if (
+                text.toLowerCase().indexOf(
+                    title.toLowerCase()
+                ) !== -1
+            ) {
+                return title;
+            }
+        }
+
+        return "";
+    }
+
+    function fallbackReadableTitle(value) {
+        var lines =
+            String(value || "")
+                .split(/\r?\n/)
+                .map(function (line) {
+                    return line.trim();
+                })
+                .filter(Boolean);
+
+        for (
+            var index = lines.length - 1;
+            index >= 0;
+            index -= 1
+        ) {
+            var line = lines[index];
+
+            if (
+                !BAD_TEXT_PATTERN.test(line) &&
+                /^[A-Za-z0-9][A-Za-z0-9 '&()_-]{1,100}$/.test(
+                    line
+                )
+            ) {
+                return line;
+            }
+        }
+
+        return "";
+    }
+
+    function repairChatItems() {
+        document
+            .querySelectorAll(
+                "#chatList .chatItem, " +
+                "#chatList .chat-item, " +
+                ".chatItem[data-chat-id], " +
+                ".chat-item[data-chat-id]"
+            )
+            .forEach(function (item) {
+                var current =
+                    String(
+                        item.textContent || ""
+                    ).trim();
+
+                if (
+                    !current ||
+                    !BAD_TEXT_PATTERN.test(current)
+                ) {
+                    return;
+                }
+
+                var repaired =
+                    findKnownTitle(current) ||
+                    fallbackReadableTitle(current);
+
+                if (
+                    repaired &&
+                    repaired !== current
+                ) {
+                    item.textContent =
+                        repaired;
+                }
+            });
+    }
+
+    function repairInterface() {
+        repairOwnerButtons();
+        repairChatItems();
+    }
+
+    var cleanupScheduled = false;
+
+    function scheduleRepair() {
+        if (cleanupScheduled) {
+            return;
+        }
+
+        cleanupScheduled = true;
+
+        requestAnimationFrame(function () {
+            cleanupScheduled = false;
+            repairInterface();
+        });
+    }
+
+    function startRepair() {
+        repairInterface();
+
+        var observer =
+            new MutationObserver(
+                scheduleRepair
+            );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+
+        [
+            100,
+            300,
+            700,
+            1500,
+            3000,
+            5000
+        ].forEach(function (delay) {
+            window.setTimeout(
+                repairInterface,
+                delay
+            );
+        });
+
+        window.addEventListener(
+            "focus",
+            repairInterface
+        );
+
+        window.addEventListener(
+            "mi-admin-access-loaded",
+            repairInterface
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            repairInterface
+        );
+
+        window.miRepairVisibleText =
+            repairInterface;
+    }
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startRepair,
+            {
+                once: true
+            }
+        );
+    } else {
+        startRepair();
+    }
+})();
+
+</script>
+<!-- MI_AI_FINAL_VISIBLE_TEXT_FIX_V2_END -->
 </body>
 </html>
 
