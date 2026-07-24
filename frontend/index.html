@@ -35612,6 +35612,390 @@ setTimeout(checkOwner,1000);
 
 </script>
 <!-- MI_AI_FINAL_VISIBLE_TEXT_FIX_V3_END -->
+
+<!-- MI_AI_PERMANENT_TEXT_CLEAN_V4_START -->
+<script>
+
+(function () {
+    "use strict";
+
+    if (window.__MI_AI_PERMANENT_TEXT_CLEAN_V4__) {
+        return;
+    }
+
+    window.__MI_AI_PERMANENT_TEXT_CLEAN_V4__ = true;
+
+    var OWNER_LABEL = "Chief Owner Permissions";
+
+    var BAD_CHARACTERS =
+        /[ÃÂðâïÆƒ‚€™œžŸ]/;
+
+    var KNOWN_TITLES = [
+        "User Greeting",
+        "User Farewell",
+        "User Appreciation",
+        "General Question",
+        "Math Question",
+        "Weather Question",
+        "New Chat",
+        "NEW CHAT"
+    ];
+
+    function extractCleanTitle(value) {
+        var text = String(value == null ? "" : value)
+            .replace(/\u0000/g, "")
+            .trim();
+
+        if (!text) {
+            return "";
+        }
+
+        for (
+            var index = 0;
+            index < KNOWN_TITLES.length;
+            index += 1
+        ) {
+            var knownTitle = KNOWN_TITLES[index];
+
+            if (
+                text.toLowerCase().indexOf(
+                    knownTitle.toLowerCase()
+                ) !== -1
+            ) {
+                return knownTitle;
+            }
+        }
+
+        if (!BAD_CHARACTERS.test(text)) {
+            return text;
+        }
+
+        var lines = text
+            .split(/\r?\n/)
+            .map(function (line) {
+                return line.trim();
+            })
+            .filter(Boolean);
+
+        for (
+            var lineIndex = lines.length - 1;
+            lineIndex >= 0;
+            lineIndex -= 1
+        ) {
+            var line = lines[lineIndex];
+
+            if (
+                !BAD_CHARACTERS.test(line) &&
+                /^[A-Za-z0-9][A-Za-z0-9 '&()_.-]{0,100}$/.test(
+                    line
+                )
+            ) {
+                return line;
+            }
+        }
+
+        var readableParts = text.match(
+            /[A-Za-z][A-Za-z0-9]*(?:[ '&()_.-]+[A-Za-z0-9]+)*/g
+        );
+
+        if (readableParts && readableParts.length) {
+            return readableParts[
+                readableParts.length - 1
+            ].replace(/\s+/g, " ").trim();
+        }
+
+        return "New Chat";
+    }
+
+    function cleanOwnerControls() {
+        document.querySelectorAll(
+            "#miFinalOwnerBtn," +
+            "#miChiefOwnerPermissionButton," +
+            "#chiefOwnerBtn," +
+            "#miChiefOwnerEntry," +
+            "[data-mi-chief-owner-control]"
+        ).forEach(function (button) {
+            if (
+                button.id === "miChiefOwnerEntry"
+            ) {
+                var spans =
+                    button.querySelectorAll("span");
+
+                if (spans.length >= 2) {
+                    spans[0].textContent = "";
+                    spans[1].textContent =
+                        OWNER_LABEL;
+                } else {
+                    button.textContent =
+                        OWNER_LABEL;
+                }
+
+                return;
+            }
+
+            button.textContent = OWNER_LABEL;
+        });
+
+        document.querySelectorAll("button").forEach(
+            function (button) {
+                var value = String(
+                    button.textContent || ""
+                ).trim();
+
+                if (
+                    value.indexOf(OWNER_LABEL) !== -1 &&
+                    value !== OWNER_LABEL
+                ) {
+                    button.textContent =
+                        OWNER_LABEL;
+                }
+            }
+        );
+    }
+
+    function cleanChatList() {
+        document.querySelectorAll(
+            "#chatList .chatItem," +
+            "#chatList .chat-item," +
+            "#chatList [data-chat-id]"
+        ).forEach(function (item) {
+            var current = String(
+                item.textContent || ""
+            ).trim();
+
+            if (!current) {
+                return;
+            }
+
+            var repaired =
+                extractCleanTitle(current);
+
+            if (
+                repaired &&
+                repaired !== current
+            ) {
+                item.textContent = repaired;
+            }
+        });
+    }
+
+    function cleanObjectTitles(value, visited) {
+        if (
+            !value ||
+            typeof value !== "object"
+        ) {
+            return false;
+        }
+
+        if (visited.has(value)) {
+            return false;
+        }
+
+        visited.add(value);
+
+        var changed = false;
+
+        Object.keys(value).forEach(function (key) {
+            var child = value[key];
+
+            if (
+                typeof child === "string" &&
+                /title|name|label/i.test(key) &&
+                BAD_CHARACTERS.test(child)
+            ) {
+                var repaired =
+                    extractCleanTitle(child);
+
+                if (
+                    repaired &&
+                    repaired !== child
+                ) {
+                    value[key] = repaired;
+                    changed = true;
+                }
+
+                return;
+            }
+
+            if (
+                child &&
+                typeof child === "object"
+            ) {
+                if (
+                    cleanObjectTitles(
+                        child,
+                        visited
+                    )
+                ) {
+                    changed = true;
+                }
+            }
+        });
+
+        return changed;
+    }
+
+    function cleanKnownGlobalObjects() {
+        [
+            "chats",
+            "chatData",
+            "chatHistory",
+            "conversations",
+            "savedChats"
+        ].forEach(function (name) {
+            try {
+                var value = window[name];
+
+                if (
+                    value &&
+                    typeof value === "object"
+                ) {
+                    cleanObjectTitles(
+                        value,
+                        new WeakSet()
+                    );
+                }
+            } catch (_) {}
+        });
+    }
+
+    function cleanLocalStorageTitles() {
+        for (
+            var index = 0;
+            index < localStorage.length;
+            index += 1
+        ) {
+            var key = localStorage.key(index);
+
+            if (!key) {
+                continue;
+            }
+
+            var raw = localStorage.getItem(key);
+
+            if (
+                !raw ||
+                raw.length > 5000000 ||
+                raw.indexOf("{") === -1 &&
+                raw.indexOf("[") === -1
+            ) {
+                continue;
+            }
+
+            try {
+                var parsed = JSON.parse(raw);
+
+                var changed = cleanObjectTitles(
+                    parsed,
+                    new WeakSet()
+                );
+
+                if (changed) {
+                    localStorage.setItem(
+                        key,
+                        JSON.stringify(parsed)
+                    );
+                }
+            } catch (_) {}
+        }
+    }
+
+    function cleanEverything() {
+        cleanOwnerControls();
+        cleanChatList();
+        cleanKnownGlobalObjects();
+    }
+
+    var cleanupPending = false;
+
+    function scheduleCleanup() {
+        if (cleanupPending) {
+            return;
+        }
+
+        cleanupPending = true;
+
+        requestAnimationFrame(function () {
+            cleanupPending = false;
+            cleanEverything();
+        });
+    }
+
+    function start() {
+        cleanLocalStorageTitles();
+        cleanEverything();
+
+        var observer = new MutationObserver(
+            scheduleCleanup
+        );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                characterData: true
+            }
+        );
+
+        [
+            100,
+            300,
+            700,
+            1200,
+            2000,
+            3500,
+            6000
+        ].forEach(function (delay) {
+            setTimeout(
+                cleanEverything,
+                delay
+            );
+        });
+
+        window.addEventListener(
+            "focus",
+            cleanEverything
+        );
+
+        window.addEventListener(
+            "storage",
+            function () {
+                cleanLocalStorageTitles();
+                cleanEverything();
+            }
+        );
+
+        window.addEventListener(
+            "mi-admin-access-loaded",
+            cleanEverything
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            function () {
+                cleanLocalStorageTitles();
+                cleanEverything();
+            }
+        );
+
+        window.miCleanCorruptedUiText =
+            cleanEverything;
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    } else {
+        start();
+    }
+})();
+
+</script>
+<!-- MI_AI_PERMANENT_TEXT_CLEAN_V4_END -->
 </body>
 </html>
 
