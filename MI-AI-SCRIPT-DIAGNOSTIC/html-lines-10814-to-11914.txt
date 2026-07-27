@@ -1,0 +1,1101 @@
+010814: label[for],
+010815: select,
+010816: input[type="button"],
+010817: input[type="submit"],
+010818: input[type="reset"],
+010819: input[type="checkbox"],
+010820: input[type="radio"],
+010821: input[type="color"],
+010822: input[type="range"] {
+010823:     cursor: pointer !important;
+010824: }
+010825: 
+010826: /* Text cursor only where typing is possible */
+010827: input[type="text"],
+010828: input[type="email"],
+010829: input[type="password"],
+010830: input[type="search"],
+010831: input[type="number"],
+010832: input[type="tel"],
+010833: input[type="url"],
+010834: textarea,
+010835: [contenteditable="true"] {
+010836:     cursor: text !important;
+010837: }
+010838: 
+010839: /* Disabled controls must never show the blue loading cursor */
+010840: button:disabled,
+010841: input:disabled,
+010842: select:disabled,
+010843: textarea:disabled,
+010844: [aria-disabled="true"] {
+010845:     cursor: not-allowed !important;
+010846: }
+010847: 
+010848: </style>
+010849: 
+010850: <script>
+010851: (function () {
+010852:     "use strict";
+010853: 
+010854:     function resetMouseCursor() {
+010855:         try {
+010856:             document.documentElement.style.removeProperty("cursor");
+010857: 
+010858:             if (document.body) {
+010859:                 document.body.style.removeProperty("cursor");
+010860:             }
+010861: 
+010862:             document.querySelectorAll(
+010863:                 '[style*="cursor: wait"],' +
+010864:                 '[style*="cursor:wait"],' +
+010865:                 '[style*="cursor: progress"],' +
+010866:                 '[style*="cursor:progress"]'
+010867:             ).forEach(function (element) {
+010868:                 element.style.removeProperty("cursor");
+010869:             });
+010870:         } catch (error) {
+010871:             console.warn("[MI AI] Cursor reset failed:", error);
+010872:         }
+010873:     }
+010874: 
+010875:     if (document.readyState === "loading") {
+010876:         document.addEventListener(
+010877:             "DOMContentLoaded",
+010878:             resetMouseCursor,
+010879:             { once: true }
+010880:         );
+010881:     } else {
+010882:         resetMouseCursor();
+010883:     }
+010884: 
+010885:     window.addEventListener("load", resetMouseCursor, { once: true });
+010886: 
+010887:     setTimeout(resetMouseCursor, 500);
+010888:     setTimeout(resetMouseCursor, 2000);
+010889: })();
+010890: </script>
+010891: <!-- MI_AI_NORMAL_CURSOR_FIX_V1 END -->
+010892: </head>
+010893: 
+010894: <body>
+010895: <div id="mobileMenuBackdrop" onclick="closeMobileMenu()"></div>
+010896: <!-- SIDEBAR -->
+010897: <div id="sidebar">
+010898: <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+010899:   <h3 style="margin:0;text-align:left;flex:1;">MI AI ChatBOT</h3>
+010900:   <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">&#10005;</button>
+010901: 
+010902: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
+010903: 
+010904: <button
+010905:     data-chief-owner-button="true"
+010906:     type="button"
+010907:     style="display:none;width:100%;margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F7E27C);color:#111;font-weight:bold;cursor:pointer;border:none;"
+010908: >
+010909:     Chief Owner Permissions
+010910: </button>
+010911: 
+010912: </div>
+010913: 
+010914: <button onclick="newChat()">&#10133; New Chat</button>
+010915: <button id="supportBtn" onclick="customerSupport()">&#127911; Customer Support</button>
+010916: <button id="settingsBtn" onclick="toggleSettings()">&#9881;&#65039; Settings</button>
+010917: 
+010918: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
+010919: 
+010920: <button
+010921:     data-chief-owner-button="true"
+010922:     type="button"
+010923:     style="display:none;width:100%;margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F7E27C);color:#111;font-weight:bold;cursor:pointer;border:none;"
+010924: >
+010925:     Chief Owner Permissions
+010926: </button>
+010927: 
+010928: 
+010929: 
+010930: 
+010931: </div>   <!-- CLOSE SIDEBAR -->
+010932: 
+010933: <!-- MAIN -->
+010934: <div id="main">
+010935: <div id="header">
+010936: <button id="mobileMenuToggle" type="button" onclick="toggleMobileMenu()" aria-label="Open menu">&#9776;</button>
+010937: <img decoding="async" fetchpriority="low"
+010938:     id="headerLogo"
+010939:     src="/MIAI.svg"
+010940:     alt="MI AI Logo"
+010941:     width="48"
+010942:     height="48">
+010943:   <span>MI AI ChatBOT</span>
+010944:   <div class="headerActions">
+010945:     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
+010946:     <button id="loginBtn" onclick="openLogin()" type="button">&#128274; Login</button>
+010947:     <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">&#10162; Logout</button>
+010948:   </div>
+010949: </div>
+010950: 
+010951: <div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
+010952:   <div style="display:flex;gap:6px;margin-bottom:18px;">
+010953:     <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">&#128274; Login</button>
+010954:     <button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#cbd5e1;font-weight:700;">Register</button>
+010955:   </div>
+010956:   <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
+010957:   <div id="authForm"></div>
+010958: </div>
+010959: 
+010960: <div id="authReminder" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.08);padding:12px 16px;border-radius:16px;color:#f8fafc;z-index:999;max-width:90vw;text-align:center;font-size:13px;"></div>
+010961: 
+010962: 
+010963: 
+010964: <!-- SETTINGS -->
+010965: <div
+010966:     id="settingsBackdrop"
+010967:     aria-hidden="true"
+010968:     onclick="closeSettings()">
+010969: </div>
+010970: <div id="settingsPanel" role="dialog" aria-modal="true" aria-hidden="true">
+010971: <button
+010972:     id="settingsCloseBtn"
+010973:     type="button"
+010974:     onclick="closeSettings()"
+010975:     aria-label="Close Settings">
+010976:     Ãƒ¢Ã…"â‚¬¢
+010977: </button>
+010978: 
+010979: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
+010980: 
+010981: <button
+010982: id="chiefOwnerBtn"
+010983: style="
+010984: display:none;
+010985: width:100%;
+010986: margin-top:10px;
+010987: padding:12px;
+010988: border-radius:14px;
+010989: background:linear-gradient(135deg,#D4AF37,#F7E27C);
+010990: color:#111;
+010991: font-weight:bold;
+010992: cursor:pointer;
+010993: border:none;
+010994: ">
+010995: 👑 Chief Owner Permissions
+010996: </button>
+010997: 
+010998: <script>
+010999: 
+011000: (async()=>{
+011001: 
+011002: function currentUser(){
+011003: 
+011004: try{
+011005: 
+011006: if(window.firebase?.auth){
+011007: return firebase.auth().currentUser;
+011008: }
+011009: 
+011010: if(window.miFirebaseAuth){
+011011: return window.miFirebaseAuth.currentUser;
+011012: }
+011013: 
+011014: }catch(e){}
+011015: 
+011016: return null;
+011017: 
+011018: }
+011019: 
+011020: async function checkOwner(){
+011021: 
+011022: const u=currentUser();
+011023: 
+011024: if(!u)return;
+011025: 
+011026: const email=(u.email||"").toLowerCase();
+011027: 
+011028: if(email==="teamofchatbot.miai@gmail.com"){
+011029: 
+011030: const b=document.getElementById("chiefOwnerBtn");
+011031: 
+011032: if(b){
+011033: 
+011034: b.style.display="block";
+011035: 
+011036: b.onclick=function(){
+011037: 
+011038: location.href="/chief-owner";
+011039: 
+011040: };
+011041: 
+011042: }
+011043: 
+011044: }
+011045: 
+011046: }
+011047: 
+011048: setTimeout(checkOwner,1000);
+011049: 
+011050: })();
+011051: 
+011052: </script>
+011053: 
+011054: <h3 data-i18n="settings.title">Settings</h3>
+011055: 
+011056: <label data-i18n="settings.language">Language</label>
+011057: <select
+011058:         id="languageSelect"
+011059:         data-mi-i18n-ignore="true"
+011060:         onchange="window.MIAI18N && window.MIAI18N.setLanguage(this.value)">
+011061:         <option value="en">English</option>
+011062:         <option value="si">Ãƒ Ã‚-Ã†'Ãƒ Ã‚-â‚¬â„¢Ãƒ Ã‚¶â‚¬Å¡Ãƒ Ã‚-â‚¬Å¾Ãƒ Ã‚¶Ã‚½</option>
+011063:         <option value="ta">Ãƒ Ã‚(R)Ã‚¤Ãƒ Ã‚(R)Ã‚(R)Ãƒ Ã‚(R)Ã‚¿Ãƒ Ã‚(R)Ã‚´Ãƒ Ã‚¯Ã‚</option>
+011064:     </select>
+011065: 
+011066: <label data-i18n="settings.theme">Theme</label>
+011067: <input type="color" id="themeColor">
+011068: <button onclick="applyTheme()" data-i18n="settings.apply">Apply</button>
+011069: 
+011070: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
+011071: 
+011072: <button
+011073: id="chiefOwnerBtn"
+011074: style="
+011075: display:none;
+011076: width:100%;
+011077: margin-top:10px;
+011078: padding:12px;
+011079: border-radius:14px;
+011080: background:linear-gradient(135deg,#D4AF37,#F7E27C);
+011081: color:#111;
+011082: font-weight:bold;
+011083: cursor:pointer;
+011084: border:none;
+011085: ">
+011086: Chief Owner Permissions
+011087: </button>
+011088: 
+011089: <script>
+011090: 
+011091: (async()=>{
+011092: 
+011093: function currentUser(){
+011094: 
+011095: try{
+011096: 
+011097: if(window.firebase?.auth){
+011098: return firebase.auth().currentUser;
+011099: }
+011100: 
+011101: if(window.miFirebaseAuth){
+011102: return window.miFirebaseAuth.currentUser;
+011103: }
+011104: 
+011105: }catch(e){}
+011106: 
+011107: return null;
+011108: 
+011109: }
+011110: 
+011111: async function checkOwner(){
+011112: 
+011113: const u=currentUser();
+011114: 
+011115: if(!u)return;
+011116: 
+011117: const email=(u.email||"").toLowerCase();
+011118: 
+011119: if(email==="teamofchatbot.miai@gmail.com"){
+011120: 
+011121: const b=document.getElementById("chiefOwnerBtn");
+011122: 
+011123: if(b){
+011124: 
+011125: b.style.display="block";
+011126: 
+011127: b.onclick=function(){
+011128: 
+011129: location.href="/chief-owner";
+011130: 
+011131: };
+011132: 
+011133: }
+011134: 
+011135: }
+011136: 
+011137: }
+011138: 
+011139: setTimeout(checkOwner,1000);
+011140: 
+011141: })();
+011142: 
+011143: </script>
+011144: 
+011145: 
+011146: <label data-i18n="settings.fontSize">Font Size</label>
+011147: <input type="range" min="12" max="25" value="15" oninput="setFont(this.value)">
+011148: </div>
+011149: 
+011150: <!-- INPUT -->
+011151: <div id="inputBox">
+011152:   <div style="display:flex;flex:1;flex-direction:column;gap:8px;">
+011153:     <div id="attachmentPreview" style="display:none;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#e2e8f0;font-size:13px;"></div>
+011154:     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
+011155:     <div style="display:flex;gap:8px;align-items:flex-end;">
+011156:       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
+011157:       <button id="sendBtn" type="button" onclick="sendOrStop()">Ãƒ¢Ã…¾Ã‚¤</button>
+011158: 
+011159: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
+011160: 
+011161: <button
+011162: id="chiefOwnerBtn"
+011163: style="
+011164: display:none;
+011165: width:100%;
+011166: margin-top:10px;
+011167: padding:12px;
+011168: border-radius:14px;
+011169: background:linear-gradient(135deg,#D4AF37,#F7E27C);
+011170: color:#111;
+011171: font-weight:bold;
+011172: cursor:pointer;
+011173: border:none;
+011174: ">
+011175: Chief Owner Permissions
+011176: </button>
+011177: 
+011178: <script>
+011179: 
+011180: (async()=>{
+011181: 
+011182: function currentUser(){
+011183: 
+011184: try{
+011185: 
+011186: if(window.firebase?.auth){
+011187: return firebase.auth().currentUser;
+011188: }
+011189: 
+011190: if(window.miFirebaseAuth){
+011191: return window.miFirebaseAuth.currentUser;
+011192: }
+011193: 
+011194: }catch(e){}
+011195: 
+011196: return null;
+011197: 
+011198: }
+011199: 
+011200: async function checkOwner(){
+011201: 
+011202: const u=currentUser();
+011203: 
+011204: if(!u)return;
+011205: 
+011206: const email=(u.email||"").toLowerCase();
+011207: 
+011208: if(email==="teamofchatbot.miai@gmail.com"){
+011209: 
+011210: const b=document.getElementById("chiefOwnerBtn");
+011211: 
+011212: if(b){
+011213: 
+011214: b.style.display="block";
+011215: 
+011216: b.onclick=function(){
+011217: 
+011218: location.href="/chief-owner";
+011219: 
+011220: };
+011221: 
+011222: }
+011223: 
+011224: }
+011225: 
+011226: }
+011227: 
+011228: setTimeout(checkOwner,1000);
+011229: 
+011230: })();
+011231: 
+011232: </script>
+011233: 
+011234:     </div>
+011235:     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
+011236:   </div>
+011237: </div>
+011238: <div id="watermark">MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION. </div>
+011239: <div id="watermark">CREATED AND POWERED BY M.I.MUHAMMADH</div>
+011240: 
+011241: </div>
+011242: 
+011243: <!-- RIGHT CLICK MENU -->
+011244: <div id="menu">
+011245: 
+011246: <div onclick="renameChat()">
+011247: Ãƒ¢Ã…"Ã…½ Rename
+011248: </div>
+011249: 
+011250: <div onclick="pinChat()" id="pinOption">
+011251: Ãƒ°Ã…¸â‚¬Å“Ã…' Pin
+011252: </div>
+011253: 
+011254: <div onclick="shareChat()">
+011255: Ãƒ°Ã…¸â‚¬â‚¬" Share
+011256: </div>
+011257: 
+011258: <div onclick="deleteChat()" style="color:red">
+011259: Ãƒ°Ã…¸â‚¬"â‚¬Ëœ Delete
+011260: </div>
+011261: 
+011262: </div>
+011263: 
+011264: <script>
+011265: window.FIREBASE_CONFIG = {
+011266:   apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
+011267:   authDomain: "mi-ai-99e6a.firebaseapp.com",
+011268:   projectId: "mi-ai-99e6a",
+011269:   storageBucket: "mi-ai-99e6a.firebasestorage.app",
+011270:   messagingSenderId: "845086558623",
+011271:   appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
+011272: };
+011273: 
+011274: let firebaseAuth = null;
+011275: let authMode = 'signin';
+011276: let user = null;
+011277: let currentLanguage = 'en';
+011278: let translations = {};
+011279: const translationCache = {};
+011280: const RTL_LANGUAGE_CODES = new Set(['ar', 'fa', 'he', 'ur']);
+011281: const SUPPORTED_LANGUAGES = [
+011282:   { code: 'en', file: 'en', label: 'English' },
+011283:   { code: 'si', file: 'si', label: 'Sinhala' },
+011284:   { code: 'ta', file: 'ta', label: 'Tamil' }
+011285: ];
+011286: function getFirebaseConfig() {
+011287:   const config =
+011288:     window.FIREBASE_CONFIG &&
+011289:     typeof window.FIREBASE_CONFIG === "object"
+011290:       ? window.FIREBASE_CONFIG
+011291:       : null;
+011292: 
+011293:   if (
+011294:     !config ||
+011295:     !String(config.apiKey || "").trim() ||
+011296:     !String(config.authDomain || "").trim() ||
+011297:     !String(config.projectId || "").trim() ||
+011298:     !String(config.appId || "").trim()
+011299:   ) {
+011300:     return null;
+011301:   }
+011302: 
+011303:   return config;
+011304: }
+011305: 
+011306: async function initFirebase() {
+011307: 
+011308:     if (firebaseAuth) return firebaseAuth;
+011309: 
+011310:     const config = getFirebaseConfig();
+011311: 
+011312:     if (!config || !config.apiKey) {
+011313:         throw new Error("Firebase configuration is missing.");
+011314:     }
+011315: 
+011316:     if (!window.firebase || !window.firebase.apps) {
+011317:         throw new Error("Firebase SDK failed to load.");
+011318:     }
+011319: 
+011320:     if (!window.firebase.apps.length) {
+011321:         window.firebase.initializeApp(config);
+011322:     }
+011323: 
+011324:     firebaseAuth = window.firebase.auth();
+011325: 
+011326:     return firebaseAuth;
+011327: }
+011328: 
+011329: function getCurrentLanguageStorageKey() {
+011330:   const userId = (user && user.id) || localStorage.getItem('mi_user_id') || '';
+011331:   return userId ? `mi_language_${userId}` : null;
+011332: }
+011333: 
+011334: function getStoredLanguageCode() {
+011335:   if (!isAuthenticated()) return 'en';
+011336:   const storageKey = getCurrentLanguageStorageKey();
+011337:   if (!storageKey) return 'en';
+011338:   return localStorage.getItem(storageKey) || 'en';
+011339: }
+011340: 
+011341: function normalizeLanguageCode(code) {
+011342:   const candidate = (code || 'en').toLowerCase();
+011343:   const match = SUPPORTED_LANGUAGES.find((entry) => entry.code === candidate);
+011344:   return match ? match.code : 'en';
+011345: }
+011346: 
+011347: async function loadLocale(langCode) {
+011348:   const normalized = normalizeLanguageCode(langCode);
+011349:   if (translationCache[normalized]) return translationCache[normalized];
+011350: 
+011351:   const entry = SUPPORTED_LANGUAGES.find((item) => item.code === normalized) || SUPPORTED_LANGUAGES[0];
+011352:   try {
+011353:     const response = await fetch(`./locales/${entry.file}.json`);
+011354:     if (!response.ok) throw new Error('missing locale');
+011355:     const data = await response.json();
+011356:     translationCache[normalized] = data;
+011357:     return data;
+011358:   } catch (error) {
+011359:     translationCache[normalized] = {};
+011360:     return {};
+011361:   }
+011362: }
+011363: 
+011364: function t(key, fallback = '') {
+011365:   return sanitizeUiText(translations[key] || fallback || key);
+011366: }
+011367: 
+011368: function populateLanguageSelector() {
+011369:   const select = document.getElementById('languageSelect');
+011370:   if (!select) return;
+011371:   select.innerHTML = '';
+011372:   SUPPORTED_LANGUAGES.forEach((language) => {
+011373:     const option = document.createElement('option');
+011374:     option.value = language.code;
+011375:     option.textContent = language.label;
+011376:     select.appendChild(option);
+011377:   });
+011378: }
+011379: 
+011380: function updateTranslatedUi() {
+011381:   repairDocumentText(document.body);
+011382: 
+011383:   const loginBtn = document.getElementById('loginBtn');
+011384:   if (loginBtn) loginBtn.textContent = `${sanitizeUiText('🔐')} ${t('auth.login', 'Login')}`;
+011385: 
+011386:   const logoutBtn = document.getElementById('logoutBtn');
+011387:   if (logoutBtn) logoutBtn.textContent = `${sanitizeUiText('↪')} ${t('auth.logout', 'Logout')}`;
+011388: 
+011389:   const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
+011390:   if (newChatButton) newChatButton.innerHTML = `${sanitizeUiText('➕')} ${t('sidebar.newChat', 'New Chat')}`;
+011391: 
+011392:   const settingsButton = document.getElementById('settingsBtn');
+011393:   if (settingsButton) settingsButton.innerHTML = `${sanitizeUiText('⚙️')} ${t('sidebar.settings', 'Settings')}`;
+011394: 
+011395:   const supportButton = document.getElementById('supportBtn');
+011396:   if (supportButton) supportButton.innerHTML = `${sanitizeUiText('📞')} ${t('sidebar.support', 'Customer Support')}`;
+011397: 
+011398:   const mobileMenuClose = document.getElementById('mobileMenuClose');
+011399:   if (mobileMenuClose) mobileMenuClose.setAttribute('aria-label', t('nav.closeMenu', 'Close menu'));
+011400: 
+011401:   const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+011402:   if (mobileMenuToggle) mobileMenuToggle.setAttribute('aria-label', t('nav.openMenu', 'Open menu'));
+011403: 
+011404:   const settingsTitle = document.querySelector('#settingsPanel h3');
+011405:   if (settingsTitle) settingsTitle.textContent = t('settings.title', 'Settings');
+011406: 
+011407:   const languageLabel = document.querySelector('#settingsPanel label[data-i18n="settings.language"]');
+011408:   if (languageLabel) languageLabel.textContent = t('settings.language', 'Language');
+011409: 
+011410:   const themeLabel = document.querySelector('#settingsPanel label[data-i18n="settings.theme"]');
+011411:   if (themeLabel) themeLabel.textContent = t('settings.theme', 'Theme');
+011412: 
+011413:   const fontLabel = document.querySelector('#settingsPanel label[data-i18n="settings.fontSize"]');
+011414:   if (fontLabel) fontLabel.textContent = t('settings.fontSize', 'Font Size');
+011415: 
+011416:   const applyButton = document.querySelector('#settingsPanel button[onclick="applyTheme()"]');
+011417:   if (applyButton) applyButton.textContent = t('settings.apply', 'Apply');
+011418: 
+011419:   const chatInput = document.getElementById('msg');
+011420:   if (chatInput) chatInput.placeholder = t('chat.placeholder', 'Ask from MI AI...');
+011421: 
+011422:   const sendButton = document.getElementById('sendBtn');
+011423:   if (sendButton) sendButton.title = t('chat.send', 'Send');
+011424: 
+011425:   const signInTab = document.getElementById('signInTab');
+011426:   if (signInTab) signInTab.textContent = t('auth.signIn', 'Sign In');
+011427: 
+011428:   const registerTab = document.getElementById('registerTab');
+011429:   if (registerTab) registerTab.textContent = t('auth.register', 'Register');
+011430: 
+011431:   const resetButton = document.querySelector('#authForm button[onclick="handlePasswordReset()"]');
+011432:   if (resetButton) resetButton.textContent = t('auth.resetPassword', 'Reset password');
+011433: 
+011434:   const languageSelect = document.getElementById('languageSelect');
+011435:   if (languageSelect) languageSelect.value = currentLanguage;
+011436: 
+011437:   document.documentElement.setAttribute('lang', currentLanguage);
+011438:   document.documentElement.setAttribute('dir', RTL_LANGUAGE_CODES.has(currentLanguage) ? 'rtl' : 'ltr');
+011439:   document.body.setAttribute('dir', RTL_LANGUAGE_CODES.has(currentLanguage) ? 'rtl' : 'ltr');
+011440:   document.body.classList.toggle('rtl', RTL_LANGUAGE_CODES.has(currentLanguage));
+011441:   document.documentElement.classList.toggle('rtl', RTL_LANGUAGE_CODES.has(currentLanguage));
+011442:   document.title = t('app.title', 'MI AI');
+011443: }
+011444: 
+011445: async function applyLanguage(langCode, persist = true) {
+011446:   const normalized = normalizeLanguageCode(langCode);
+011447:   const localeData = await loadLocale(normalized);
+011448:   const fallback = translationCache.en || {};
+011449:   translations = { ...fallback, ...(localeData || {}) };
+011450:   currentLanguage = normalized;
+011451: 
+011452:   updateTranslatedUi();
+011453: 
+011454:   if (persist && isAuthenticated()) {
+011455:     const storageKey = getCurrentLanguageStorageKey();
+011456:     if (storageKey) {
+011457:       localStorage.setItem(storageKey, normalized);
+011458:     }
+011459: 
+011460:     // Auto-save language to Firestore if authenticated
+011461:     if (window.firestorePersistence && window.miFirebaseUser) {
+011462:         window.firestorePersistence.saveSettings({ language: normalized }).catch(err =>
+011463:             console.error('[Persistence] Language save error:', err)
+011464:         );
+011465:     }
+011466:   }
+011467: 
+011468:   if (!isAuthenticated()) {
+011469:     localStorage.removeItem('mi_current_language');
+011470:   }
+011471: }
+011472: 
+011473: async function changeLanguage(langCode) {
+011474:   const normalized = normalizeLanguageCode(langCode);
+011475:   await applyLanguage(normalized, true);
+011476: }
+011477: 
+011478: function triggerFileUpload() {
+011479:   const input = document.getElementById('fileInput');
+011480:   if (input) input.click();
+011481: }
+011482: 
+011483: function setAttachmentUiState(isVisible, message, progressValue) {
+011484:   const preview = document.getElementById('attachmentPreview');
+011485:   const progress = document.getElementById('attachmentProgress');
+011486:   if (!preview || !progress) return;
+011487:   if (isVisible) {
+011488:     preview.style.display = 'block';
+011489:     preview.innerHTML = message;
+011490:   } else {
+011491:     preview.style.display = 'none';
+011492:     preview.innerHTML = '';
+011493:   }
+011494:   if (progressValue !== undefined && progressValue !== null) {
+011495:     progress.style.display = 'block';
+011496:     progress.textContent = progressValue;
+011497:   } else {
+011498:     progress.style.display = 'none';
+011499:     progress.textContent = '';
+011500:   }
+011501: }
+011502: 
+011503: function formatFileSize(bytes) {
+011504:   if (!bytes || bytes <= 0) return '0 KB';
+011505:   const units = ['B', 'KB', 'MB', 'GB'];
+011506:   let size = Number(bytes);
+011507:   let unitIndex = 0;
+011508:   while (size >= 1024 && unitIndex < units.length - 1) {
+011509:     size = size / 1024;
+011510:     unitIndex += 1;
+011511:   }
+011512:   return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+011513: }
+011514: 
+011515: function getAttachmentDisplayIcon(file) {
+011516:   const type = (file && file.type) || '';
+011517:   if (type.startsWith('image/')) return 'Ãƒ°Ã…¸â‚¬"Ã‚¼Ãƒ¯Ã‚¸Ã‚';
+011518:   if (type.includes('pdf')) return 'Ãƒ°Ã…¸â‚¬Å“â‚¬Å¾';
+011519:   if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return 'Ãƒ°Ã…¸â‚¬Å“Ã… ';
+011520:   if (type.includes('presentation') || type.includes('powerpoint')) return 'Ãƒ°Ã…¸â‚¬Å“Ã‚½Ãƒ¯Ã‚¸Ã‚';
+011521:   return 'Ãƒ°Ã…¸â‚¬Å“Ã…½';
+011522: }
+011523: 
+011524: function renderPendingAttachmentPreview() {
+011525:   if (!pendingAttachments || !pendingAttachments.length) {
+011526:     setAttachmentUiState(false, '', '');
+011527:     return;
+011528:   }
+011529: 
+011530:   const items = pendingAttachments.map((file, index) => `
+011531:     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;">
+011532:       <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+011533:         <span style="font-size:16px;">${getAttachmentDisplayIcon(file)}</span>
+011534:         <div style="min-width:0;">
+011535:           <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.name}</div>
+011536:           <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} Ãƒ¢š¬Ã‚¢ ${formatFileSize(file.size)}</div>
+011537:         </div>
+011538:       </div>
+011539:       <button type="button" onclick="removePendingAttachment(${index})" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
+011540: 
+011541: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
+011542: 
+011543: <button
+011544: id="chiefOwnerBtn"
+011545: style="
+011546: display:none;
+011547: width:100%;
+011548: margin-top:10px;
+011549: padding:12px;
+011550: border-radius:14px;
+011551: background:linear-gradient(135deg,#D4AF37,#F7E27C);
+011552: color:#111;
+011553: font-weight:bold;
+011554: cursor:pointer;
+011555: border:none;
+011556: ">
+011557: Chief Owner Permissions
+011558: </button>
+011559: 
+011560: <script>
+011561: 
+011562: (async()=>{
+011563: 
+011564: function currentUser(){
+011565: 
+011566: try{
+011567: 
+011568: if(window.firebase?.auth){
+011569: return firebase.auth().currentUser;
+011570: }
+011571: 
+011572: if(window.miFirebaseAuth){
+011573: return window.miFirebaseAuth.currentUser;
+011574: }
+011575: 
+011576: }catch(e){}
+011577: 
+011578: return null;
+011579: 
+011580: }
+011581: 
+011582: async function checkOwner(){
+011583: 
+011584: const u=currentUser();
+011585: 
+011586: if(!u)return;
+011587: 
+011588: const email=(u.email||"").toLowerCase();
+011589: 
+011590: if(email==="teamofchatbot.miai@gmail.com"){
+011591: 
+011592: const b=document.getElementById("chiefOwnerBtn");
+011593: 
+011594: if(b){
+011595: 
+011596: b.style.display="block";
+011597: 
+011598: b.onclick=function(){
+011599: 
+011600: location.href="/chief-owner";
+011601: 
+011602: };
+011603: 
+011604: }
+011605: 
+011606: }
+011607: 
+011608: }
+011609: 
+011610: setTimeout(checkOwner,1000);
+011611: 
+011612: })();
+011613: 
+011614: </script>
+011615: 
+011616:     </div>
+011617:   `).join('');
+011618: 
+011619:   setAttachmentUiState(true, `<div style="display:flex;flex-direction:column;gap:4px;">${items}</div>`, '');
+011620: }
+011621: 
+011622: function handleFileSelection(event) {
+011623:   const input = event.target;
+011624:   const files = input && input.files ? Array.from(input.files) : [];
+011625:   if (!files.length) return;
+011626: 
+011627:   try {
+011628:     const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt', '.xlsx', '.xls', '.csv', '.pptx', '.ppt', '.png', '.jpg', '.jpeg', '.webp', '.svg'];
+011629:     const allowedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.ms-powerpoint', 'image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+011630:     const validFiles = [];
+011631:     const errors = [];
+011632:     const existingKeys = new Set((pendingAttachments || []).map((file) => `${file.name}:${file.size}:${file.type}`));
+011633: 
+011634:     files.forEach((file) => {
+011635:       const ext = (file.name || '').substring((file.name || '').lastIndexOf('.')).toLowerCase();
+011636:       const mimeOk = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(ext);
+011637:       const dedupeKey = `${file.name}:${file.size}:${file.type}`;
+011638:       if (existingKeys.has(dedupeKey)) {
+011639:         errors.push(`${file.name} is already queued.`);
+011640:         return;
+011641:       }
+011642:       if (!mimeOk) {
+011643:         errors.push(`${file.name} is not a supported file type.`);
+011644:         return;
+011645:       }
+011646:       if (!file.size || file.size <= 0) {
+011647:         errors.push(`${file.name} is empty.`);
+011648:         return;
+011649:       }
+011650:       if (file.size > 20 * 1024 * 1024) {
+011651:         errors.push(`${file.name} is larger than 20 MB.`);
+011652:         return;
+011653:       }
+011654:       validFiles.push(file);
+011655:       existingKeys.add(dedupeKey);
+011656:     });
+011657: 
+011658:     pendingAttachments = pendingAttachments.concat(validFiles);
+011659:     attachmentUploadInProgress = false;
+011660:     attachmentProgress = 0;
+011661:     attachmentStatusText = '';
+011662:     renderPendingAttachmentPreview();
+011663:     if (errors.length) {
+011664:       const message = errors.slice(0, 3).join(' ');
+011665:       setAttachmentUiState(true, `<div style="color:#fda4af;">${message}</div>`, '');
+011666:     }
+011667:     input.value = '';
+011668:   } catch (error) {
+011669:     console.error('File selection failed', error);
+011670:     setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to process the selected file.</div>', '');
+011671:     input.value = '';
+011672:   }
+011673: }
+011674: 
+011675: function removePendingAttachment(index) {
+011676:   if (typeof index === 'number' && pendingAttachments[index]) {
+011677:     pendingAttachments.splice(index, 1);
+011678:   } else {
+011679:     pendingAttachments = [];
+011680:   }
+011681:   attachmentUploadInProgress = false;
+011682:   attachmentProgress = 0;
+011683:   attachmentStatusText = '';
+011684:   renderPendingAttachmentPreview();
+011685: }
+011686: 
+011687: function getUploadErrorMessage(xhr, fallback) {
+011688:   try {
+011689:     const parsed = JSON.parse(xhr.responseText || '{}');
+011690:     if (parsed && parsed.error) return parsed.error;
+011691:   } catch (error) {
+011692:     console.error('Upload response parse error', error);
+011693:   }
+011694:   return fallback;
+011695: }
+011696: 
+011697: async function uploadSingleAttachment(file, index, total) {
+011698:   const token = localStorage.getItem('mi_supabase_token');
+011699:   if (!token) {
+011700:     throw new Error('Please sign in before uploading files.');
+011701:   }
+011702: 
+011703:   const formData = new FormData();
+011704:   formData.append('file', file);
+011705:   formData.append('conversation_id', currentChat);
+011706: 
+011707:   return await new Promise((resolve, reject) => {
+011708:     const xhr = new XMLHttpRequest();
+011709:     xhr.open('POST', '/api/upload', true);
+011710:     xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+011711:     xhr.upload.onprogress = (event) => {
+011712:       if (event.lengthComputable) {
+011713:         attachmentProgress = Math.round((event.loaded / event.total) * 100);
+011714:         attachmentStatusText = `Uploading file ${index} of ${total}... ${attachmentProgress}%`;
+011715:         setAttachmentUiState(true, `<div style="font-weight:700;">${file.name}</div><div style="font-size:12px;color:#94a3b8;">${attachmentStatusText}</div>`, attachmentStatusText);
+011716:       }
+011717:     };
+011718:     xhr.onload = () => {
+011719:       if (xhr.status >= 200 && xhr.status < 300) {
+011720:         try {
+011721:           const data = JSON.parse(xhr.responseText || '{}');
+011722:           if (data && data.attachment) {
+011723:             resolve(data.attachment);
+011724:           } else {
+011725:             reject(new Error(getUploadErrorMessage(xhr, 'Upload failed.')));
+011726:           }
+011727:         } catch (error) {
+011728:           reject(new Error(getUploadErrorMessage(xhr, 'Upload failed.')));
+011729:         }
+011730:       } else {
+011731:         reject(new Error(getUploadErrorMessage(xhr, 'Upload failed.')));
+011732:       }
+011733:     };
+011734:     xhr.onerror = () => {
+011735:       reject(new Error('Network error while uploading the file.'));
+011736:     };
+011737:     xhr.send(formData);
+011738:   });
+011739: }
+011740: 
+011741: async function uploadPendingAttachments() {
+011742:   if (!pendingAttachments || !pendingAttachments.length) return { attachments: [], errors: [] };
+011743:   if (!currentChat) return { attachments: [], errors: [{ name: 'chat', message: 'No active chat.' }] };
+011744: 
+011745:   const token = localStorage.getItem('mi_supabase_token');
+011746:   if (!token) {
+011747:     return { attachments: [], errors: [{ name: 'auth', message: 'Please sign in before uploading files.' }] };
+011748:   }
+011749: 
+011750:   const uploadedAttachments = [];
+011751:   const errors = [];
+011752:   const total = pendingAttachments.length;
+011753:   attachmentUploadInProgress = true;
+011754: 
+011755:   for (let index = 0; index < pendingAttachments.length; index += 1) {
+011756:     const file = pendingAttachments[index];
+011757:     let lastError = 'Upload failed.';
+011758:     for (let attempt = 1; attempt <= 3; attempt += 1) {
+011759:       try {
+011760:         const attachment = await uploadSingleAttachment(file, index + 1, total);
+011761:         uploadedAttachments.push(attachment);
+011762:         lastError = null;
+011763:         break;
+011764:       } catch (error) {
+011765:         lastError = error && error.message ? error.message : 'Upload failed.';
+011766:         if (attempt < 3) {
+011767:           attachmentStatusText = `Retrying ${file.name} (${attempt}/3)...`;
+011768:           setAttachmentUiState(true, `<div style="font-weight:700;">${file.name}</div><div style="font-size:12px;color:#94a3b8;">${attachmentStatusText}</div>`, attachmentStatusText);
+011769:         }
+011770:       }
+011771:     }
+011772:     if (lastError) {
+011773:       errors.push({ name: file.name, message: lastError });
+011774:     }
+011775:   }
+011776: 
+011777:   attachmentUploadInProgress = false;
+011778:   pendingAttachments = [];
+011779:   renderPendingAttachmentPreview();
+011780:   return { attachments: uploadedAttachments, errors };
+011781: }
+011782: 
+011783: let chatBox = document.getElementById("chat");
+011784: let chatList = document.getElementById("chatList");
+011785: let input = document.getElementById("msg");
+011786: let menu = document.getElementById("menu");
+011787: let authReminder = document.getElementById("authReminder");
+011788: let loginPromptBox = null;
+011789: 
+011790: let guestId = localStorage.getItem("mi_guest_id");
+011791: if (!guestId) {
+011792:     guestId = "guest_" + crypto.randomUUID();
+011793:     localStorage.setItem("mi_guest_id", guestId);
+011794: }
+011795: 
+011796: let accountId = localStorage.getItem("mi_account");
+011797: 
+011798: if (!accountId) {
+011799:     accountId = guestId;
+011800:     localStorage.setItem("mi_account", accountId);
+011801: }
+011802: 
+011803: let chats = {};
+011804: let currentChat = null;
+011805: let selectedChat = null;
+011806: let shareOverlay = null;
+011807: let sharedChatData = null;
+011808: let replyAbortController = null;
+011809: let replyTypingTimer = null;
+011810: let replyInProgress = false;
+011811: let pendingAttachment = null;
+011812: let pendingAttachments = [];
+011813: let attachmentUploadInProgress = false;
+011814: let attachmentProgress = 0;
+011815: let attachmentStatusText = '';
+011816: 
+011817: function sanitizeUiText(value) {
+011818:     if (value === null || value === undefined) return '';
+011819:     if (typeof value !== 'string') return String(value);
+011820: 
+011821:     let text = value;
+011822:     const replacements = [
+011823:         ['ðŸ‘‘', '👑'],
+011824:         ['ðŸ“Œ', '📂'],
+011825:         ['ðŸ’¬', '🗑'],
+011826:         ['ðŸ“œ', '📄'],
+011827:         ['Œ', '✕'],
+011828:         [''', '’'],
+011829:         ['"', '“'],
+011830:         ['"', '”'],
+011831:         ['-', '–'],
+011832:         ['...', '…'],
+011833:         ['Ãƒ¢Ã…"â‚¬¢', '✕'],
+011834:         ['Ãƒ¢Ã…¾â‚¬¢', '➕'],
+011835:         ['Ãƒ¢Ã…¡ž¢', '⚙️'],
+011836:         ['Ãƒ°Ã…¸â‚¬Å“Ã…¾', '📞'],
+011837:         ['Ãƒ°Ã…¸â‚¬â„¢Ã‚¬', '💬'],
+011838:         ['Ãƒ°Ã…¸â‚¬Å“Ã…'', '📌'],
+011839:         ['Ãƒ°Ã…¸â‚¬"â‚¬Ëœ', '🗑'],
+011840:         ['Ãƒ°Ã…¸â‚¬â‚¬"', '🔗'],
+011841:         ['Ãƒ¢â‚¬¹Ã‚¯', '🔗'],
+011842:         ['Ãƒ¢Ã…¡Ã‚ ', '✎'],
+011843:         ['Ãƒ°Ã…¸â‚¬Å“â‚¬¹', '📋'],
+011844:         ['Ãƒ¢Ã‚¬â‚¬ ', '➤'],
+011845:         ['Ãƒ¢Ã…¾Ã…"', '⏹'],
+011846:         ['Ãƒ°Ã…¸Ã…¡Ã‚ª', '🔓'],
+011847:         ['Ãƒ°Ã…¸â‚¬â‚¬Ëœ', '🔐'],
+011848:         ['Ãƒ°Ã…¸â‚¬Å“Ã‚', '📎'],
+011849:         ['Ãƒ¢š¬Ã‚¢', '•']
+011850:     ];
+011851: 
+011852:     replacements.forEach(([from, to]) => {
+011853:         text = text.split(from).join(to);
+011854:     });
+011855: 
+011856:     return text;
+011857: }
+011858: 
+011859: function sanitizeStoredChatData(value) {
+011860:     if (Array.isArray(value)) {
+011861:         return value.map((item) => sanitizeStoredChatData(item));
+011862:     }
+011863: 
+011864:     if (value && typeof value === 'object') {
+011865:         const normalized = {};
+011866:         Object.keys(value).forEach((key) => {
+011867:             normalized[key] = sanitizeStoredChatData(value[key]);
+011868:         });
+011869:         return normalized;
+011870:     }
+011871: 
+011872:     if (typeof value === 'string') {
+011873:         return sanitizeUiText(value);
+011874:     }
+011875: 
+011876:     return value;
+011877: }
+011878: 
+011879: function repairDocumentText(root = document.body) {
+011880:     if (!root || !(root instanceof Node)) return;
+011881: 
+011882:     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+011883:     const textNodes = [];
+011884:     let currentNode = walker.nextNode();
+011885: 
+011886:     while (currentNode) {
+011887:         textNodes.push(currentNode);
+011888:         currentNode = walker.nextNode();
+011889:     }
+011890: 
+011891:     textNodes.forEach((node) => {
+011892:         if (!node || !node.nodeValue) return;
+011893:         const repaired = sanitizeUiText(node.nodeValue);
+011894:         if (repaired !== node.nodeValue) {
+011895:             node.nodeValue = repaired;
+011896:         }
+011897:     });
+011898: 
+011899:     root.querySelectorAll?.('[aria-label], [title], [alt], [placeholder]').forEach((element) => {
+011900:         ['aria-label', 'title', 'alt', 'placeholder'].forEach((attribute) => {
+011901:             const attributeValue = element.getAttribute(attribute);
+011902:             if (attributeValue) {
+011903:                 const repaired = sanitizeUiText(attributeValue);
+011904:                 if (repaired !== attributeValue) {
+011905:                     element.setAttribute(attribute, repaired);
+011906:                 }
+011907:             }
+011908:         });
+011909:     });
+011910: }
+011911: 
+011912: function isAuthenticated() {
+011913:     return Boolean(user && localStorage.getItem('mi_supabase_token'));
+011914: }

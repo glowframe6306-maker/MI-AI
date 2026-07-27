@@ -1,0 +1,11 @@
+$path = Join-Path $PWD 'frontend/index.html'
+$content = Get-Content -Raw $path
+$pattern = [regex]'(?s)<!--\s*MI_AI_CHIEF_OWNER_BUTTON\s*-->\s*<button\b[^>]*id="chiefOwnerBtn"[^>]*>.*?</script>'
+$replacement = '<!-- MI_AI_CHIEF_OWNER_BUTTON -->`r`n`r`n<button data-chief-owner-button="true" type="button" style="display:none;width:100%;margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F7E27C);color:#111;font-weight:bold;cursor:pointer;border:none;">Chief Owner Permissions</button>'
+$content = $pattern.Replace($content, $replacement)
+if ($content -notmatch 'syncChiefOwnerButtons') {
+    $script = "`r`n<script>`r`n(function () {`r`n    \"use strict\";`r`n`r`n    function currentUser() {`r`n        try {`r`n            if (window.firebase?.auth) {`r`n                return window.firebase.auth().currentUser;`r`n            }`r`n`r`n            if (window.miFirebaseAuth) {`r`n                return window.miFirebaseAuth.currentUser;`r`n            }`r`n        } catch (error) {`r`n            console.warn('[MI AI] Chief owner lookup failed:', error);`r`n        }`r`n`r`n        return null;`r`n    }`r`n`r`n    function syncChiefOwnerButtons() {`r`n        const buttons = Array.from(document.querySelectorAll('[data-chief-owner-button=\"true\"]'));`r`n        const user = currentUser();`r`n        const email = (user?.email || '').toLowerCase();`r`n`r`n        buttons.forEach(function (button) {`r`n            if (email === 'teamofchatbot.miai@gmail.com') {`r`n                button.style.display = 'block';`r`n                button.onclick = function () {`r`n                    location.href = '/chief-owner';`r`n                };`r`n            } else {`r`n                button.style.display = 'none';`r`n                button.onclick = null;`r`n            }`r`n        });`r`n    }`r`n`r`n    if (document.readyState === 'loading') {`r`n        document.addEventListener('DOMContentLoaded', syncChiefOwnerButtons, { once: true });`r`n    } else {`r`n        syncChiefOwnerButtons();`r`n    }`r`n`r`n    window.addEventListener('load', syncChiefOwnerButtons);`r`n    setTimeout(syncChiefOwnerButtons, 1000);`r`n})();`r`n</script>"
+    $content = $content -replace '</body>', ($script + "`r`n</body>")
+}
+Set-Content -Path $path -Value $content -NoNewline
+Write-Output 'patched'

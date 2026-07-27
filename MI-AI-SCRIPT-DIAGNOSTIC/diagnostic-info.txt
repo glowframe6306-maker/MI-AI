@@ -1,0 +1,7 @@
+HTML script number: 19
+Inline JavaScript number: 15
+HTML start line: 14913
+HTML end line: 14967
+JavaScript lines: 54
+Opening script tags: 0
+Closing script tags: 0

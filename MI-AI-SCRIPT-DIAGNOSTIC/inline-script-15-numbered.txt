@@ -1,0 +1,54 @@
+000001: 
+000002: 
+000003: (async()=>{
+000004: 
+000005: function currentUser(){
+000006: 
+000007: try{
+000008: 
+000009: if(window.firebase?.auth){
+000010: return firebase.auth().currentUser;
+000011: }
+000012: 
+000013: if(window.miFirebaseAuth){
+000014: return window.miFirebaseAuth.currentUser;
+000015: }
+000016: 
+000017: }catch(e){}
+000018: 
+000019: return null;
+000020: 
+000021: }
+000022: 
+000023: async function checkOwner(){
+000024: 
+000025: const u=currentUser();
+000026: 
+000027: if(!u)return;
+000028: 
+000029: const email=(u.email||"").toLowerCase();
+000030: 
+000031: if(email==="teamofchatbot.miai@gmail.com"){
+000032: 
+000033: const b=document.getElementById("chiefOwnerBtn");
+000034: 
+000035: if(b){
+000036: 
+000037: b.style.display="block";
+000038: 
+000039: b.onclick=function(){
+000040: 
+000041: location.href="/chief-owner";
+000042: 
+000043: };
+000044: 
+000045: }
+000046: 
+000047: }
+000048: 
+000049: }
+000050: 
+000051: setTimeout(checkOwner,1000);
+000052: 
+000053: })();
+000054: 

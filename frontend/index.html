@@ -10902,77 +10902,12 @@ textarea:disabled,
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
 <button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
+    data-chief-owner-button="true"
+    type="button"
+    style="display:none;width:100%;margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F7E27C);color:#111;font-weight:bold;cursor:pointer;border:none;"
+>
+    Chief Owner Permissions
 </button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
 </div>
 
@@ -10983,77 +10918,12 @@ setTimeout(checkOwner,1000);
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
 <button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
+    data-chief-owner-button="true"
+    type="button"
+    style="display:none;width:100%;margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F7E27C);color:#111;font-weight:bold;cursor:pointer;border:none;"
+>
+    Chief Owner Permissions
 </button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
 
 
@@ -11122,7 +10992,7 @@ font-weight:bold;
 cursor:pointer;
 border:none;
 ">
-Chief Owner Permissions
+👑 Chief Owner Permissions
 </button>
 
 <script>
@@ -23635,78 +23505,12 @@ document.addEventListener(
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
 <button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
+    data-chief-owner-button="true"
+    type="button"
+    style="display:none;width:100%;margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F7E27C);color:#111;font-weight:bold;cursor:pointer;border:none;"
+>
+    Chief Owner Permissions
 </button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
-
 
                     <div
                         id="miSharePasswordError"
@@ -35400,9 +35204,6 @@ setTimeout(checkOwner,1000);
         "New Chat",
         "NEW CHAT"
     ];
-
-    var BAD_TEXT_PATTERN =
-        /(?:Ã|Â|ð|â|ï|Æ|ƒ|‚|€|™|œ|ž|Ÿ)/;
 
     function findKnownTitle(value) {
         var current = String(value || "").trim();
