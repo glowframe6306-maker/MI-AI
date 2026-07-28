@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -10976,80 +10976,7 @@ textarea:disabled,
     Ãƒ¢Ã…"â‚¬¢
 </button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-👑 Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
 <h3 data-i18n="settings.title">Settings</h3>
 
@@ -11067,80 +10994,7 @@ setTimeout(checkOwner,1000);
 <input type="color" id="themeColor">
 <button onclick="applyTheme()" data-i18n="settings.apply">Apply</button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
 
 <label data-i18n="settings.fontSize">Font Size</label>
@@ -11156,80 +11010,7 @@ setTimeout(checkOwner,1000);
       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
       <button id="sendBtn" type="button" onclick="sendOrStop()">Ãƒ¢Ã…¾Ã‚¤</button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
@@ -11536,85 +11317,9 @@ function renderPendingAttachmentPreview() {
           <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} Ãƒ¢š¬Ã‚¢ ${formatFileSize(file.size)}</div>
         </div>
       </div>
-      <button type="button" onclick="removePendingAttachment(${index})" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
-
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
-
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
-
-    </div>
-  `).join('');
+            <button type="button" onclick="removePendingAttachment(${index})" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
+        </div>
+    `).join('');
 
   setAttachmentUiState(true, `<div style="display:flex;flex-direction:column;gap:4px;">${items}</div>`, '');
 }
@@ -12442,27 +12147,6 @@ function showSharedPrivacyGate(payload) {
       <div style="width:min(92vw,480px);max-height:90vh;overflow:auto;position:relative;padding:24px 24px 84px;border-radius:24px;background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.14);box-shadow:0 24px 60px rgba(0,0,0,0.36);">
         <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
-
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
 (async()=>{
 
 function currentUser(){
@@ -12713,27 +12397,6 @@ function showApprovalRequestsPanel() {
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:16px;font-weight:700;">Approval requests</div>
       <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
-
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
 
 (async()=>{
 
@@ -13907,80 +13570,7 @@ function showLinkShareOptions(chatId) {
     <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
       <button type="button" onclick="toggleMoreSecurityPanel()" style="width:100%;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#fff;font-weight:700;cursor:pointer;">More security</button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
       <div id="moreSecurityPanel" style="display:none;margin-top:10px;">
         <div style="margin-bottom:10px;">
@@ -14891,80 +14481,7 @@ box.innerHTML=sanitizeUiText(`
 REQUEST VIA EMAIL
 </button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
 
 
@@ -23502,16 +23019,6 @@ document.addEventListener(
                         Open shared chat
                     </button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
-
-<button
-    data-chief-owner-button="true"
-    type="button"
-    style="display:none;width:100%;margin-top:10px;padding:12px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F7E27C);color:#111;font-weight:bold;cursor:pointer;border:none;"
->
-    Chief Owner Permissions
-</button>
-
                     <div
                         id="miSharePasswordError"
                         role="alert"
@@ -24002,27 +23509,6 @@ document.addEventListener(
                 <div id="miIosSheetTitle"></div>
                 <div id="miIosSheetActions"></div>
                 <button id="miIosSheetCancel" type="button"></button>
-
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
-
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
 
 (async()=>{
 
@@ -25316,25 +24802,6 @@ setTimeout(checkOwner,1000);
                     id="miLoginSuccessContinue"
                     type="button"
                 ></button>
-
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
-
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
 
 <script>
 
@@ -29032,80 +28499,7 @@ setTimeout(checkOwner,1000);
             '</div>' +
             '<button type="button" id="miChiefOwnerClose">ÃƒÆ’â‚¬"</button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 ' +
             '</div>' +
             '<div id="miChiefOwnerActionGrid" class="mi-chief-owner-action-grid"></div>' +
@@ -30867,80 +30261,7 @@ function opts(a){return a.map(x=>`<option value="${esc(x)}">${esc(x.replaceAll("
 function panel(){if($("miFinalOwnerOverlay"))return;const o=document.createElement("div");o.id="miFinalOwnerOverlay";o.innerHTML=`<section id="miFinalOwnerPanel"><header class="miFOHead">
 <h2>Chief Owner Permissions</h2><button id="miFOClose">ÃƒÆ’Ã‚¢Ãƒ...â‚¬Å“Ãƒ¢š¬Ã‚¢</button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 </header><div class="miFOBody"><nav id="miFONav" class="miFONav"><button class="active" data-p="users">Users</button><button data-p="chats">Chats</button><button data-p="staff">Staff</button><button data-p="roles">New Role</button><button data-p="permissions">Permissions</button><button data-p="audit">Audit</button></nav><main class="miFOContent"><div id="miFOStatus" class="miFOStatus">Ready.</div>
 <section class="miFOPage active" data-p="users"><h3>User Management</h3><div class="miFOForm"><input id="fuEmail" type="email" placeholder="User email"><textarea id="fuReason" placeholder="Required reason"></textarea><div class="miFOActions"><button data-u="search">Search</button><button data-u="block">Block</button><button data-u="unblock">Unblock</button><button data-u="suspend">Suspend</button><button data-u="restore">Restore</button><button data-u="disable">Disable</button><button data-u="enable">Enable</button><button data-u="force_logout">Force Logout</button><button data-u="delete">Delete</button></div></div><div id="fuOut"></div></section>
 <section class="miFOPage" data-p="chats"><h3>Chats</h3><div class="miFOForm"><input id="fcEmail" type="email" placeholder="User email"><textarea id="fcReason" placeholder="Required access reason"></textarea><button id="fcLoad">View Chats</button></div><div id="fcOut"></div></section>
@@ -32121,37 +31442,10 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
                     'id="miAccountActionClose" ' +
                     'type="button">' +
                     'OK' +
-                '</button>
+                '</button>' +
+                '</div>';
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
-
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
+        d.innerHTML = h;
 }
 
 if(window.miFirebaseAuth){
@@ -32807,80 +32101,7 @@ setTimeout(checkOwner,1000);
   <span>Chief Owner Permissions</span>
 </button>
 
-<!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
-<button
-id="chiefOwnerBtn"
-style="
-display:none;
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:14px;
-background:linear-gradient(135deg,#D4AF37,#F7E27C);
-color:#111;
-font-weight:bold;
-cursor:pointer;
-border:none;
-">
-Chief Owner Permissions
-</button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
 
 <div id="miRbacOverlay" role="dialog" aria-modal="true" aria-labelledby="miRbacTitle">
@@ -35797,8 +35018,43 @@ setTimeout(checkOwner,1000);
 
 </script>
 <!-- MI_AI_PERMANENT_TEXT_CLEAN_V4_END -->
-</body>
+<script>
+(function(){
+  ' + "'use strict';" + '
+
+  function getCurrentUser() {
+    try {
+      if (window.firebase && window.firebase.auth) return window.firebase.auth().currentUser;
+      if (window.miFirebaseAuth) return window.miFirebaseAuth.currentUser;
+    } catch (e) {}
+    return null;
+  }
+
+  async function revealChiefOwnerButtons(){
+    try {
+      const u = getCurrentUser();
+      if (!u) return;
+      const email = (u.email||'').toLowerCase();
+      if (email !== ' + "'teamofchatbot.miai@gmail.com'" + ") return;
+      document.querySelectorAll('.chiefOwnerBtn').forEach(btn=>{
+        try{
+          btn.style.display = 'block';
+          btn.addEventListener('click', ()=>{ location.href = '/chief-owner'; });
+        }catch(e){/* ignore */}
+      });
+    } catch (e) {
+      console.error('[MI AI] revealChiefOwnerButtons error', e);
+    }
+  }
+
+  document.addEventListener('mi-firebase-ready', revealChiefOwnerButtons);
+  document.addEventListener('mi-firebase-auth-changed', revealChiefOwnerButtons);
+  document.addEventListener('DOMContentLoaded', ()=> setTimeout(revealChiefOwnerButtons, 600));
+  setTimeout(revealChiefOwnerButtons, 1200);
+})();
+</script></body>
 </html>
+
 
 
 
