@@ -158,8 +158,6 @@ textarea,
 </style>
 <!-- MI_AI_LOADING_RESCUE_V2_END -->
 
-
-
 <script id="MI_AI_CLEAN_BOOT_GUARD_V1">
 (function () {
     "use strict";
@@ -205,9 +203,6 @@ textarea,
 })();
 </script>
 
-
-
-
     <link rel="icon" type="image/svg+xml" href="/MIAI.svg?v=20260719-162100">
 
 <!-- MI_AI_LOCAL_SDK_V2_START -->
@@ -221,11 +216,6 @@ textarea,
 <meta charset="UTF-8">
 <title>MI AI ChatBOT Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-
-
-
-
-
 
 <style>
 
@@ -5430,8 +5420,6 @@ body.mi-keyboard-visible .composer {
 
 /* MI AI SETTINGS ACCORDION COPY MOBILE - END */
 
-
-
 /* MI AI IOS SELECT AND ICON SYSTEM - START */
 
 :root {
@@ -6821,8 +6809,6 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 <!-- MI AI FIREBASE AUTH END -->
 
-
-
 <style>
 /* MI AI SHARED CHAT ISOLATION V1 - START */
 
@@ -7882,8 +7868,6 @@ button,
 
 /* MI AI IOS SAFE BUNDLE CSS - END */
 
-
-
 /* MI AI LOGIN SUCCESS POPUP CSS - START */
 
 #miLoginSuccessBackdrop {
@@ -8350,17 +8334,6 @@ button,
 }
 
 /* MI AI LOGIN SUCCESS POPUP CSS - END */
-
-
-
-
-
-
-
-
-
-
-
 
 /* MI AI CLEAN CHAT ENGINE V9 CSS - START */
 
@@ -9787,19 +9760,6 @@ span:nth-child(3) {
 
 /* MI AI WELCOME ANIMATION V10 CSS - END */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 </style>
 <!-- MI AI MOBILE LARGE NOTCH START -->
 <style id="mi-mobile-large-notch-style">
@@ -10077,12 +10037,6 @@ span:nth-child(3) {
 })();
 </script>
 <!-- MI AI MOBILE LARGE NOTCH END -->
-
-
-
-
-
-
 
 <script>
 /* MI AI SAFE CHAT ONLY CLEAR V4 START */
@@ -10785,8 +10739,6 @@ body.mi-account-blocked {
 
 <!-- MI_AI_INSTANT_OPEN_V5 START -->
 
-
-
 <!-- MI_AI_INSTANT_OPEN_V5 END -->
 
 <!-- MI_AI_NORMAL_CURSOR_FIX_V1 START -->
@@ -10925,9 +10877,6 @@ textarea:disabled,
     Chief Owner Permissions
 </button>
 
-
-
-
 </div>   <!-- CLOSE SIDEBAR -->
 
 <!-- MAIN -->
@@ -10959,8 +10908,6 @@ textarea:disabled,
 
 <div id="authReminder" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.08);padding:12px 16px;border-radius:16px;color:#f8fafc;z-index:999;max-width:90vw;text-align:center;font-size:13px;"></div>
 
-
-
 <!-- SETTINGS -->
 <div
     id="settingsBackdrop"
@@ -10975,8 +10922,6 @@ textarea:disabled,
     aria-label="Close Settings">
     Ãƒ¢Ã…"â‚¬¢
 </button>
-
-
 
 <h3 data-i18n="settings.title">Settings</h3>
 
@@ -10994,9 +10939,6 @@ textarea:disabled,
 <input type="color" id="themeColor">
 <button onclick="applyTheme()" data-i18n="settings.apply">Apply</button>
 
-
-
-
 <label data-i18n="settings.fontSize">Font Size</label>
 <input type="range" min="12" max="25" value="15" oninput="setFont(this.value)">
 </div>
@@ -11009,8 +10951,6 @@ textarea:disabled,
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
       <button id="sendBtn" type="button" onclick="sendOrStop()">➤</button>
-
-
 
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
@@ -12147,60 +12087,6 @@ function showSharedPrivacyGate(payload) {
       <div style="width:min(92vw,480px);max-height:90vh;overflow:auto;position:relative;padding:24px 24px 84px;border-radius:24px;background:rgba(15,23,42,0.98);border:1px solid rgba(255,255,255,0.14);box-shadow:0 24px 60px rgba(0,0,0,0.36);">
         <button type="button" id="sharedGateClose" style="position:absolute;top:14px;right:14px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
 
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
-
         <div style="font-size:22px;font-weight:800;margin-bottom:8px;">Shared chat privacy</div>
         <div style="font-size:13px;color:#cbd5e1;margin-bottom:16px;">This link follows the privacy rules selected by the owner. Review them below, then continue.</div>
         <div style="display:grid;gap:8px;margin-bottom:16px;">
@@ -12397,60 +12283,6 @@ function showApprovalRequestsPanel() {
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-size:16px;font-weight:700;">Approval requests</div>
       <button type="button" onclick="this.parentElement.parentElement.remove()" style="border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
     </div>
     ${requests.length ? requests.map((req) => `
@@ -13317,9 +13149,6 @@ menu.style.display="none";
 
 }
 
-
-
-
 let shareOverlayCloseAllowed = false;
 
 function removeShareOverlay(force = false) {
@@ -13569,8 +13398,6 @@ function showLinkShareOptions(chatId) {
 
     <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
       <button type="button" onclick="toggleMoreSecurityPanel()" style="width:100%;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#fff;font-weight:700;cursor:pointer;">More security</button>
-
-
 
       <div id="moreSecurityPanel" style="display:none;margin-top:10px;">
         <div style="margin-bottom:10px;">
@@ -14481,10 +14308,6 @@ box.innerHTML=sanitizeUiText(`
 REQUEST VIA EMAIL
 </button>
 
-
-
-
-
 <p>💬 WhatsApp</p>
 
 <button onclick="openWhatsApp()">
@@ -14507,8 +14330,6 @@ document.body.appendChild(box);
 
 }
 
-
-
 /* EMAIL */
 
 function openEmail(){
@@ -14519,8 +14340,6 @@ window.open(
 );
 
 }
-
-
 
 /* WHATSAPP */
 
@@ -16889,8 +16708,6 @@ document.addEventListener(
 /* MI AI FOUR CHAT OPTIONS FIX - END */
 </script>
 
-
-
 <script>
 /* MI AI MOBILE COMFORT JS - START */
 
@@ -18056,8 +17873,6 @@ document.addEventListener(
 /* MI AI SETTINGS ACCORDION COPY MOBILE JS - END */
 </script>
 
-
-
 <script>
 /* MI AI IOS SELECT AND ICON SYSTEM JS - START */
 
@@ -18851,12 +18666,6 @@ document.addEventListener(
 /* MI AI IOS SELECT AND ICON SYSTEM JS - END */
 </script>
 
-
-
-
-
-
-
 <script>
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - START */
 
@@ -19291,27 +19100,6 @@ document.addEventListener(
 /* MI AI ACCOUNT SETTINGS PERSISTENCE - END */
 </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script>
 /* MI AI SAFE UI UNBLOCK - START */
 (function () {
@@ -19455,8 +19243,6 @@ document.addEventListener(
 })();
 /* MI AI SAFE UI UNBLOCK - END */
 </script>
-
-
 
 <script>
 /* MI AI SAFE ACCOUNT CHAT RESTORE V4 - START */
@@ -20941,8 +20727,6 @@ document.addEventListener(
 
 /* MI AI LIVE SEARCH AND DEVICE TIME V1 - END */
 </script>
-
-
 
 <script>
 /* MI AI SHARE DROPDOWN FIX V7 - START */
@@ -23294,30 +23078,6 @@ document.addEventListener(
 /* MI AI MANDATORY SHARE PASSWORD JS V1 - END */
 </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script>
 /* MI AI IOS SAFE BUNDLE JS - START */
 
@@ -23521,60 +23281,6 @@ document.addEventListener(
                 <div id="miIosSheetTitle"></div>
                 <div id="miIosSheetActions"></div>
                 <button id="miIosSheetCancel" type="button"></button>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
             `;
 
@@ -24683,8 +24389,6 @@ setTimeout(checkOwner,1000);
 /* MI AI IOS SAFE BUNDLE JS - END */
 </script>
 
-
-
 <script>
 /* MI AI LOGIN SUCCESS POPUP JS - START */
 
@@ -24814,62 +24518,6 @@ setTimeout(checkOwner,1000);
                     id="miLoginSuccessContinue"
                     type="button"
                 ></button>
-
-<script>
-
-(async()=>{
-
-function currentUser(){
-
-try{
-
-if(window.firebase?.auth){
-return firebase.auth().currentUser;
-}
-
-if(window.miFirebaseAuth){
-return window.miFirebaseAuth.currentUser;
-}
-
-}catch(e){}
-
-return null;
-
-}
-
-async function checkOwner(){
-
-const u=currentUser();
-
-if(!u)return;
-
-const email=(u.email||"").toLowerCase();
-
-if(email==="teamofchatbot.miai@gmail.com"){
-
-const b=document.getElementById("chiefOwnerBtn");
-
-if(b){
-
-b.style.display="block";
-
-b.onclick=function(){
-
-location.href="/chief-owner";
-
-};
-
-}
-
-}
-
-}
-
-setTimeout(checkOwner,1000);
-
-})();
-
-</script>
 
             </section>
         `;
@@ -25109,17 +24757,6 @@ setTimeout(checkOwner,1000);
 
 /* MI AI LOGIN SUCCESS POPUP JS - END */
 </script>
-
-
-
-
-
-
-
-
-
-
-
 
 <script>
 /* MI AI CLEAN CHAT ENGINE V9 JS - START */
@@ -26811,21 +26448,6 @@ setTimeout(checkOwner,1000);
 
 </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- MI AI FIREBASE SHARE AUTH BRIDGE START -->
 <script>
 (function () {
@@ -26963,9 +26585,6 @@ setTimeout(checkOwner,1000);
 })();
 </script>
 <!-- MI AI FIREBASE SHARE AUTH BRIDGE END -->
-
-
-
 
 <style>
 /* MI AI GOLD IDLE DYNAMIC ISLAND V2 CSS - START */
@@ -28207,11 +27826,6 @@ setTimeout(checkOwner,1000);
 </script>
 
 <!-- MI AI CLICKABLE LINKS FINAL END -->
-
-
-
-
-
 
 <script>
 /* MI_AI_CHIEF_OWNER_PERMISSION_UI_START */
@@ -29554,10 +29168,6 @@ function ensurePanel(){
 </div>
 </header>
 
-
-
-
-
 </form>
 <section>
 <h3>Received messages</h3>
@@ -29954,10 +29564,6 @@ window.fetch=function(input,init){
 /* MI AI CHAT SMOOTH V3 JS - END */
 </script>
 
-
-
-
-
 <script>
 /* MI AI STRICT ACCOUNT ISOLATION V1 START */
 (function () {
@@ -30239,8 +29845,6 @@ window.fetch=function(input,init){
 })();
 /* MI AI STRICT ACCOUNT ISOLATION V1 END */
 </script>
-
-
 
 <script>
 
@@ -31160,9 +30764,6 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 </script>
 <!-- MI AI OWNER LOADING FIX END -->
 
-
-
-
 <script>
 /* MI AI ACCOUNT ACTION NOTICE V1 START */
 (function () {
@@ -31847,19 +31448,9 @@ setTimeout(checkOwner,1000);
 /* MI AI ACCOUNT ACTION NOTICE V1 END */
 </script>
 
-
-
-
-
-
-
-
-
 <script>
 
 </script>
-
-
 
 <!-- MI_AI_DYNAMIC_ISLAND_AUTO_HIDE_V1_START -->
 <style id="MI_AI_DYNAMIC_ISLAND_AUTO_HIDE_V1_STYLE">
@@ -32112,9 +31703,6 @@ setTimeout(checkOwner,1000);
   <span class="mi-owner-crown">Ãƒ¢ž¢â‚¬º</span>
   <span>Chief Owner Permissions</span>
 </button>
-
-
-
 
 <div id="miRbacOverlay" role="dialog" aria-modal="true" aria-labelledby="miRbacTitle">
   <div id="miRbacPanel">
@@ -32390,12 +31978,6 @@ setTimeout(checkOwner,1000);
 })();
 </script>
 <!-- MI_AI_CHIEF_OWNER_RBAC_END -->
-
-
-
-
-
-
 
 <script id="MI_AI_PERMANENT_CHAT_DELETE_V3_LOADER" src="/mi-chat-permanent-delete.js" defer></script>
 
@@ -33180,8 +32762,6 @@ setTimeout(checkOwner,1000);
 
 /* MI AI ACCOUNT ISOLATION V2 END */
 </script>
-
-
 
 <!-- MI_AI_SAFE_TEXT_REPAIR_V1_START -->
 <script id="miAiSafeTextRepairV1">
@@ -35066,9 +34646,4 @@ setTimeout(checkOwner,1000);
 })();
 </script></body>
 </html>
-
-
-
-
-
 
