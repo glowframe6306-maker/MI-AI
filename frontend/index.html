@@ -10897,7 +10897,7 @@ textarea:disabled,
 <div id="sidebar">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
   <h3 style="margin:0;text-align:left;flex:1;">MI AI ChatBOT</h3>
-  <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">&#10005;</button>
+  <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">✕</button>
 
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
@@ -10913,7 +10913,7 @@ textarea:disabled,
 
 <button onclick="newChat()">&#10133; New Chat</button>
 <button id="supportBtn" onclick="customerSupport()">&#127911; Customer Support</button>
-<button id="settingsBtn" onclick="toggleSettings()">&#9881;&#65039; Settings</button>
+<button id="settingsBtn" onclick="toggleSettings()">⚙️ Settings</button>
 
 <!-- MI_AI_CHIEF_OWNER_BUTTON -->
 
@@ -10943,14 +10943,14 @@ textarea:disabled,
   <span>MI AI ChatBOT</span>
   <div class="headerActions">
     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
-    <button id="loginBtn" onclick="openLogin()" type="button">&#128274; Login</button>
-    <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">&#10162; Logout</button>
+    <button id="loginBtn" onclick="openLogin()" type="button">🔐 Login</button>
+    <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">↪ Logout</button>
   </div>
 </div>
 
 <div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
   <div style="display:flex;gap:6px;margin-bottom:18px;">
-    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">&#128274; Login</button>
+    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">🔐 Login</button>
     <button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#cbd5e1;font-weight:700;">Register</button>
   </div>
   <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
@@ -10986,8 +10986,8 @@ textarea:disabled,
         data-mi-i18n-ignore="true"
         onchange="window.MIAI18N && window.MIAI18N.setLanguage(this.value)">
         <option value="en">English</option>
-        <option value="si">Ãƒ Ã‚-Ã†'Ãƒ Ã‚-â‚¬â„¢Ãƒ Ã‚¶â‚¬Å¡Ãƒ Ã‚-â‚¬Å¾Ãƒ Ã‚¶Ã‚½</option>
-        <option value="ta">Ãƒ Ã‚(R)Ã‚¤Ãƒ Ã‚(R)Ã‚(R)Ãƒ Ã‚(R)Ã‚¿Ãƒ Ã‚(R)Ã‚´Ãƒ Ã‚¯Ã‚</option>
+        <option value="si">සිංහල</option>
+        <option value="ta">தமிழ்</option>
     </select>
 
 <label data-i18n="settings.theme">Theme</label>
@@ -11008,7 +11008,7 @@ textarea:disabled,
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
-      <button id="sendBtn" type="button" onclick="sendOrStop()">Ãƒ¢Ã…¾Ã‚¤</button>
+      <button id="sendBtn" type="button" onclick="sendOrStop()">➤</button>
 
 
 
@@ -11025,19 +11025,19 @@ textarea:disabled,
 <div id="menu">
 
 <div onclick="renameChat()">
-Ãƒ¢Ã…"Ã…½ Rename
+✎ Rename
 </div>
 
 <div onclick="pinChat()" id="pinOption">
-Ãƒ°Ã…¸â‚¬Å“Ã…' Pin
+📌 Pin
 </div>
 
 <div onclick="shareChat()">
-Ãƒ°Ã…¸â‚¬â‚¬" Share
+🔗 Share
 </div>
 
 <div onclick="deleteChat()" style="color:red">
-Ãƒ°Ã…¸â‚¬"â‚¬Ëœ Delete
+🗑 Delete
 </div>
 
 </div>
@@ -11295,11 +11295,11 @@ function formatFileSize(bytes) {
 
 function getAttachmentDisplayIcon(file) {
   const type = (file && file.type) || '';
-  if (type.startsWith('image/')) return 'Ãƒ°Ã…¸â‚¬"Ã‚¼Ãƒ¯Ã‚¸Ã‚';
-  if (type.includes('pdf')) return 'Ãƒ°Ã…¸â‚¬Å“â‚¬Å¾';
-  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return 'Ãƒ°Ã…¸â‚¬Å“Ã… ';
-  if (type.includes('presentation') || type.includes('powerpoint')) return 'Ãƒ°Ã…¸â‚¬Å“Ã‚½Ãƒ¯Ã‚¸Ã‚';
-  return 'Ãƒ°Ã…¸â‚¬Å“Ã…½';
+  if (type.startsWith('image/')) return '🖼️';
+  if (type.includes('pdf')) return '📄';
+  if (type.includes('spreadsheet') || type.includes('excel') || type.includes('csv')) return '📊';
+  if (type.includes('presentation') || type.includes('powerpoint')) return '📽️';
+  return '📎';
 }
 
 function renderPendingAttachmentPreview() {
@@ -11314,7 +11314,7 @@ function renderPendingAttachmentPreview() {
         <span style="font-size:16px;">${getAttachmentDisplayIcon(file)}</span>
         <div style="min-width:0;">
           <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.name}</div>
-          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} Ãƒ¢š¬Ã‚¢ ${formatFileSize(file.size)}</div>
+          <div style="font-size:12px;color:#94a3b8;">${file.type || 'File'} • ${formatFileSize(file.size)}</div>
         </div>
       </div>
             <button type="button" onclick="removePendingAttachment(${index})" style="border:none;background:transparent;color:#fda4af;cursor:pointer;font-size:13px;">Remove</button>
@@ -11525,33 +11525,33 @@ function sanitizeUiText(value) {
 
     let text = value;
     const replacements = [
-        ['ðŸ‘‘', '👑'],
-        ['ðŸ“Œ', '📂'],
-        ['ðŸ’¬', '🗑'],
-        ['ðŸ“œ', '📄'],
-        ['Œ', '✕'],
-        [''', '’'],
-        ['"', '“'],
-        ['"', '”'],
-        ['-', '–'],
-        ['...', '…'],
-        ['Ãƒ¢Ã…"â‚¬¢', '✕'],
-        ['Ãƒ¢Ã…¾â‚¬¢', '➕'],
-        ['Ãƒ¢Ã…¡ž¢', '⚙️'],
-        ['Ãƒ°Ã…¸â‚¬Å“Ã…¾', '📞'],
-        ['Ãƒ°Ã…¸â‚¬â„¢Ã‚¬', '💬'],
-        ['Ãƒ°Ã…¸â‚¬Å“Ã…'', '📌'],
-        ['Ãƒ°Ã…¸â‚¬"â‚¬Ëœ', '🗑'],
-        ['Ãƒ°Ã…¸â‚¬â‚¬"', '🔗'],
-        ['Ãƒ¢â‚¬¹Ã‚¯', '🔗'],
-        ['Ãƒ¢Ã…¡Ã‚ ', '✎'],
-        ['Ãƒ°Ã…¸â‚¬Å“â‚¬¹', '📋'],
-        ['Ãƒ¢Ã‚¬â‚¬ ', '➤'],
-        ['Ãƒ¢Ã…¾Ã…"', '⏹'],
-        ['Ãƒ°Ã…¸Ã…¡Ã‚ª', '🔓'],
-        ['Ãƒ°Ã…¸â‚¬â‚¬Ëœ', '🔐'],
-        ['Ãƒ°Ã…¸â‚¬Å“Ã‚', '📎'],
-        ['Ãƒ¢š¬Ã‚¢', '•']
+        ['👑', '👑'],
+        ['📂', '📂'],
+        ['🗑', '🗑'],
+        ['📄', '📄'],
+        ['✕', '✕'],
+        ['’', '’'],
+        ['“', '“'],
+        ['”', '”'],
+        ['–', '–'],
+        ['…', '…'],
+        ['✕', '✕'],
+        ['➕', '➕'],
+        ['⚙️', '⚙️'],
+        ['📞', '📞'],
+        ['💬', '💬'],
+        ['📌', '📌'],
+        ['🗑', '🗑'],
+        ['🔗', '🔗'],
+        ['🔗', '🔗'],
+        ['✎', '✎'],
+        ['📋', '📋'],
+        ['➤', '➤'],
+        ['⏹', '⏹'],
+        ['🔓', '🔓'],
+        ['🔐', '🔐'],
+        ['📎', '📎'],
+        ['•', '•']
     ];
 
     replacements.forEach(([from, to]) => {
@@ -13502,7 +13502,7 @@ function createCopyButton(text) {
   button.type = 'button';
   button.className = 'aiCopyButton';
   button.title = 'Copy';
-  button.innerHTML = 'Ãƒ°Ã…¸â‚¬Å“â‚¬¹';
+  button.innerHTML = '📋';
   button.onclick = async (event) => {
     event.stopPropagation();
     await copyTextToClipboard(text || '');
@@ -13970,7 +13970,7 @@ async function send() {
   }
 
   if (uploadErrors.length) {
-    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' Ãƒ¢š¬Ã‚¢ ');
+    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' • ');
     setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
   }
 
@@ -14492,6 +14492,11 @@ VIA WHATSAPP
 </button>
 
 
+<button onclick="openTelegram()">
+VIA TELEGRAM
+</button>
+
+
 <button onclick="this.parentElement.remove()">
 ✕ Close
 </button>
@@ -14522,6 +14527,13 @@ window.open(
 function openWhatsApp(){
 
 location.href="https://wa.me/94756390621";
+}
+
+/* TELEGRAM */
+
+function openTelegram(){
+
+location.href="https://t.me/94756390621";
 }
 
 function openLogin(){
