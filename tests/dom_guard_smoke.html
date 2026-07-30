@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>DOM Guard Smoke Test</title>
+  <script src="../mi_dom_guard.js"></script>
+</head>
+<body>
+  <div id="target"></div>
+  <script>
+    (function () {
+      const target = document.getElementById('target');
+      target.innerHTML = '<div class="ok">hello</div>';
+      const normalHtml = target.innerHTML;
+      target.innerHTML = 'function demo(){ return 1; }';
+      const leaked = target.innerHTML;
+      window.__domGuardTestResult = {
+        normalHtml,
+        leaked
+      };
+    })();
+  </script>
+</body>
+</html>
