@@ -19,7 +19,7 @@
                 element.style.removeProperty("cursor");
             });
         } catch (error) {
-            console.warn("[MI AI] Cursor reset failed:", error);
+            console.warn("[CORTEX CORE AI] Cursor reset failed:", error);
         }
     }
 

@@ -219,7 +219,7 @@ def _handle_chat_request():
     if not isinstance(history, list):
         history = []
 
-    normalized_messages = [{"role": "system", "content": "You are MI AI. Reply helpfully and concisely in the same language as the user."}]
+    normalized_messages = [{"role": "system", "content": "You are CORTEX CORE AI. Reply helpfully and concisely in the same language as the user."}]
     for item in history:
         if not isinstance(item, dict):
             continue
@@ -419,10 +419,10 @@ def send_otp():
     msg = MIMEMultipart()
     msg["From"] = OTP_EMAIL_ADDRESS
     msg["To"] = email
-    msg["Subject"] = "MI AI Login Verification"
+    msg["Subject"] = "CORTEX CORE AI Login Verification"
 
     body = f"""
-Welcome to MI AI.
+WELCOME TO CORTEX CORE AI.
 
 A login attempt was made from a new device or browser.
 
@@ -489,10 +489,10 @@ def api_login():
     msg = MIMEMultipart()
     msg["From"] = OTP_EMAIL_ADDRESS
     msg["To"] = email
-    msg["Subject"] = "MI AI Login Verification"
+    msg["Subject"] = "CORTEX CORE AI Login Verification"
 
     body = f"""
-Welcome to MI AI.
+WELCOME TO CORTEX CORE AI.
 
 A login attempt was made from a new device or browser.
 
@@ -816,7 +816,7 @@ def api_chat_stream():
     if not isinstance(history, list):
         history = []
 
-    normalized_messages = [{"role": "system", "content": "You are MI AI. Reply helpfully and concisely in the same language as the user."}]
+    normalized_messages = [{"role": "system", "content": "You are CORTEX CORE AI. Reply helpfully and concisely in the same language as the user."}]
     for item in history:
         if not isinstance(item, dict):
             continue
@@ -853,7 +853,7 @@ def api_chat_stream():
 @app.route("/api/assistant-info", methods=["GET"])
 def assistant_info():
     return jsonify({
-        "name": "MI AI",
+        "name": "CORTEX CORE AI",
         "creator": "M.I. Muhammadh",
         "owner": "M.I. Muhammadh",
         "developer": "M.I. Muhammadh",

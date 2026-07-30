@@ -309,7 +309,7 @@
                 }
                 catch (error) {
                     console.error(
-                        "[MI AI Firebase register]",
+                        "[CORTEX CORE AI Firebase register]",
                         error
                     );
 
@@ -337,7 +337,7 @@
                 }
                 catch (error) {
                     console.error(
-                        "[MI AI Firebase login]",
+                        "[CORTEX CORE AI Firebase login]",
                         error
                     );
 
@@ -363,7 +363,7 @@
                     }
                     catch (error) {
                         console.error(
-                            "[MI AI Firebase reset]",
+                            "[CORTEX CORE AI Firebase reset]",
                             error
                         );
 
@@ -420,7 +420,7 @@
         );
 
         console.log(
-            "[MI AI] Firebase Authentication connected:",
+            "[CORTEX CORE AI] Firebase Authentication connected:",
             firebaseConfig.projectId
         );
 
@@ -435,7 +435,7 @@
         }
         catch (error) {
             console.error(
-                "[MI AI] Firebase initialization failed:",
+                "[CORTEX CORE AI] Firebase initialization failed:",
                 error
             );
 

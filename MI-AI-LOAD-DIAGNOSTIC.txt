@@ -1,4 +1,4 @@
-MI AI LOAD DIAGNOSTIC - 07/18/2026 21:27:55
+CORTEX CORE AI LOAD DIAGNOSTIC - 07/18/2026 21:27:55
 ===================================
 
 [1] GIT STATUS
@@ -25,10 +25,10 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:6126:html{scroll-behavior:auto!important}
 > C:\Users\Administrator\MI-AI\frontend\index.html:6127:body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-events:none}
   C:\Users\Administrator\MI-AI\frontend\index.html:6128:#chat,#chatList{transition:opacity 120ms ease}
-  C:\Users\Administrator\MI-AI\frontend\index.html:6129:/* MI AI CHAT SMOOTH V3 CSS - END */
+  C:\Users\Administrator\MI-AI\frontend\index.html:6129:/* CORTEX CORE AI CHAT SMOOTH V3 CSS - END */
   C:\Users\Administrator\MI-AI\frontend\index.html:6131:</style>
   C:\Users\Administrator\MI-AI\frontend\index.html:6132:
-> C:\Users\Administrator\MI-AI\frontend\index.html:6133:<!-- MI AI FIREBASE AUTH START -->
+> C:\Users\Administrator\MI-AI\frontend\index.html:6133:<!-- CORTEX CORE AI FIREBASE AUTH START -->
   C:\Users\Administrator\MI-AI\frontend\index.html:6134:
 > C:\Users\Administrator\MI-AI\frontend\index.html:6135:<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 > C:\Users\Administrator\MI-AI\frontend\index.html:6136:<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -172,7 +172,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:6409:            },
   C:\Users\Administrator\MI-AI\frontend\index.html:6447:                catch (error) {
   C:\Users\Administrator\MI-AI\frontend\index.html:6448:                    console.error(
-> C:\Users\Administrator\MI-AI\frontend\index.html:6449:                        "[MI AI Firebase register]",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6449:                        "[CORTEX CORE AI Firebase register]",
   C:\Users\Administrator\MI-AI\frontend\index.html:6450:                        error
   C:\Users\Administrator\MI-AI\frontend\index.html:6451:                    );
   C:\Users\Administrator\MI-AI\frontend\index.html:6452:
@@ -182,7 +182,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:6456:                }
   C:\Users\Administrator\MI-AI\frontend\index.html:6475:                catch (error) {
   C:\Users\Administrator\MI-AI\frontend\index.html:6476:                    console.error(
-> C:\Users\Administrator\MI-AI\frontend\index.html:6477:                        "[MI AI Firebase login]",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6477:                        "[CORTEX CORE AI Firebase login]",
   C:\Users\Administrator\MI-AI\frontend\index.html:6478:                        error
   C:\Users\Administrator\MI-AI\frontend\index.html:6479:                    );
   C:\Users\Administrator\MI-AI\frontend\index.html:6480:
@@ -192,7 +192,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:6484:                }
   C:\Users\Administrator\MI-AI\frontend\index.html:6501:                    catch (error) {
   C:\Users\Administrator\MI-AI\frontend\index.html:6502:                        console.error(
-> C:\Users\Administrator\MI-AI\frontend\index.html:6503:                            "[MI AI Firebase reset]",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6503:                            "[CORTEX CORE AI Firebase reset]",
   C:\Users\Administrator\MI-AI\frontend\index.html:6504:                            error
   C:\Users\Administrator\MI-AI\frontend\index.html:6505:                        );
   C:\Users\Administrator\MI-AI\frontend\index.html:6506:
@@ -212,7 +212,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:6556:            }
   C:\Users\Administrator\MI-AI\frontend\index.html:6558:
   C:\Users\Administrator\MI-AI\frontend\index.html:6559:        console.log(
-> C:\Users\Administrator\MI-AI\frontend\index.html:6560:            "[MI AI] Firebase Authentication connected:",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6560:            "[CORTEX CORE AI] Firebase Authentication connected:",
 > C:\Users\Administrator\MI-AI\frontend\index.html:6561:            firebaseConfig.projectId
   C:\Users\Administrator\MI-AI\frontend\index.html:6562:        );
   C:\Users\Administrator\MI-AI\frontend\index.html:6563:
@@ -227,7 +227,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:6572:        }
   C:\Users\Administrator\MI-AI\frontend\index.html:6573:        catch (error) {
   C:\Users\Administrator\MI-AI\frontend\index.html:6574:            console.error(
-> C:\Users\Administrator\MI-AI\frontend\index.html:6575:                "[MI AI] Firebase initialization failed:",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6575:                "[CORTEX CORE AI] Firebase initialization failed:",
   C:\Users\Administrator\MI-AI\frontend\index.html:6576:                error
   C:\Users\Administrator\MI-AI\frontend\index.html:6577:            );
   C:\Users\Administrator\MI-AI\frontend\index.html:6579:            window.dispatchEvent(
@@ -250,7 +250,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:6604:})();
   C:\Users\Administrator\MI-AI\frontend\index.html:6605:</script>
   C:\Users\Administrator\MI-AI\frontend\index.html:6606:
-> C:\Users\Administrator\MI-AI\frontend\index.html:6607:<!-- MI AI FIREBASE AUTH END -->
+> C:\Users\Administrator\MI-AI\frontend\index.html:6607:<!-- CORTEX CORE AI FIREBASE AUTH END -->
   C:\Users\Administrator\MI-AI\frontend\index.html:6608:
   C:\Users\Administrator\MI-AI\frontend\index.html:6609:
   C:\Users\Administrator\MI-AI\frontend\index.html:9855:    }
@@ -534,7 +534,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:13242:  }
   C:\Users\Administrator\MI-AI\frontend\index.html:13243:
 > C:\Users\Administrator\MI-AI\frontend\index.html:13244:  if (uploadErrors.length) {
-> C:\Users\Administrator\MI-AI\frontend\index.html:13245:    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' • ');
+> C:\Users\Administrator\MI-AI\frontend\index.html:13245:    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' ï¿½ ');
   C:\Users\Administrator\MI-AI\frontend\index.html:13246:    setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
   C:\Users\Administrator\MI-AI\frontend\index.html:13247:  }
   C:\Users\Administrator\MI-AI\frontend\index.html:13261:
@@ -632,7 +632,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:14103:        }
   C:\Users\Administrator\MI-AI\frontend\index.html:14123:// Initialization diagnostics
   C:\Users\Administrator\MI-AI\frontend\index.html:14124:try {
-> C:\Users\Administrator\MI-AI\frontend\index.html:14125:  console.log("MI AI frontend initialized successfully");
+> C:\Users\Administrator\MI-AI\frontend\index.html:14125:  console.log("CORTEX CORE AI frontend initialized successfully");
   C:\Users\Administrator\MI-AI\frontend\index.html:14126:  // Expose existing functions globally so inline handlers can call them
   C:\Users\Administrator\MI-AI\frontend\index.html:14127:  if (typeof newChat === 'function') window.newChat = newChat;
   C:\Users\Administrator\MI-AI\frontend\index.html:14303:            send: "Send",
@@ -888,7 +888,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:25877:            {
   C:\Users\Administrator\MI-AI\frontend\index.html:25909:
   C:\Users\Administrator\MI-AI\frontend\index.html:25910:
-> C:\Users\Administrator\MI-AI\frontend\index.html:25911:<!-- MI AI FIREBASE SHARE AUTH BRIDGE START -->
+> C:\Users\Administrator\MI-AI\frontend\index.html:25911:<!-- CORTEX CORE AI FIREBASE SHARE AUTH BRIDGE START -->
   C:\Users\Administrator\MI-AI\frontend\index.html:25912:<script>
   C:\Users\Administrator\MI-AI\frontend\index.html:25913:(function () {
   C:\Users\Administrator\MI-AI\frontend\index.html:25915:
@@ -957,13 +957,13 @@ FOUND: vercel.json
 > C:\Users\Administrator\MI-AI\frontend\index.html:25996:                await refreshFirebaseToken(true);
   C:\Users\Administrator\MI-AI\frontend\index.html:25997:            }
   C:\Users\Administrator\MI-AI\frontend\index.html:25998:            catch (error) {
-> C:\Users\Administrator\MI-AI\frontend\index.html:25999:                console.error("[MI AI] Firebase token refresh failed:", error);
+> C:\Users\Administrator\MI-AI\frontend\index.html:25999:                console.error("[CORTEX CORE AI] Firebase token refresh failed:", error);
   C:\Users\Administrator\MI-AI\frontend\index.html:26000:            }
   C:\Users\Administrator\MI-AI\frontend\index.html:26001:        });
   C:\Users\Administrator\MI-AI\frontend\index.html:26017:
   C:\Users\Administrator\MI-AI\frontend\index.html:26018:        let token = "";
 > C:\Users\Administrator\MI-AI\frontend\index.html:26019:        try { token = await refreshFirebaseToken(false); }
-  C:\Users\Administrator\MI-AI\frontend\index.html:26020:        catch (error) { console.warn("[MI AI] Normal token refresh failed:", error); }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26020:        catch (error) { console.warn("[CORTEX CORE AI] Normal token refresh failed:", error); }
   C:\Users\Administrator\MI-AI\frontend\index.html:26021:
   C:\Users\Administrator\MI-AI\frontend\index.html:26029:        if (response.status === 401 && token) {
   C:\Users\Administrator\MI-AI\frontend\index.html:26030:            try {
@@ -972,12 +972,12 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:26033:                options.headers = headers;
   C:\Users\Administrator\MI-AI\frontend\index.html:26035:            }
   C:\Users\Administrator\MI-AI\frontend\index.html:26036:            catch (error) {
-> C:\Users\Administrator\MI-AI\frontend\index.html:26037:                console.error("[MI AI] Forced Firebase token refresh failed:", error);
+> C:\Users\Administrator\MI-AI\frontend\index.html:26037:                console.error("[CORTEX CORE AI] Forced Firebase token refresh failed:", error);
   C:\Users\Administrator\MI-AI\frontend\index.html:26038:            }
   C:\Users\Administrator\MI-AI\frontend\index.html:26039:        }
   C:\Users\Administrator\MI-AI\frontend\index.html:26045:})();
   C:\Users\Administrator\MI-AI\frontend\index.html:26046:</script>
-> C:\Users\Administrator\MI-AI\frontend\index.html:26047:<!-- MI AI FIREBASE SHARE AUTH BRIDGE END -->
+> C:\Users\Administrator\MI-AI\frontend\index.html:26047:<!-- CORTEX CORE AI FIREBASE SHARE AUTH BRIDGE END -->
   C:\Users\Administrator\MI-AI\frontend\index.html:26048:
   C:\Users\Administrator\MI-AI\frontend\index.html:26049:
   C:\Users\Administrator\MI-AI\frontend\index.html:26316:                copied: "Copied",
@@ -1332,7 +1332,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:30310:})();
   C:\Users\Administrator\MI-AI\frontend\index.html:30313:
   C:\Users\Administrator\MI-AI\frontend\index.html:30314:
-> C:\Users\Administrator\MI-AI\frontend\index.html:30315:<!-- MI AI OWNER LOADING FIX START -->
+> C:\Users\Administrator\MI-AI\frontend\index.html:30315:<!-- CORTEX CORE AI OWNER LOADING FIX START -->
   C:\Users\Administrator\MI-AI\frontend\index.html:30316:<script>
   C:\Users\Administrator\MI-AI\frontend\index.html:30317:(function () {
   C:\Users\Administrator\MI-AI\frontend\index.html:30410:    function currentUser() {
@@ -1373,7 +1373,7 @@ FOUND: vercel.json
   C:\Users\Administrator\MI-AI\frontend\index.html:30666:            [200, 700, 1500, 3000].forEach(function (delay) {
   C:\Users\Administrator\MI-AI\frontend\index.html:30678:})();
   C:\Users\Administrator\MI-AI\frontend\index.html:30679:</script>
-> C:\Users\Administrator\MI-AI\frontend\index.html:30680:<!-- MI AI OWNER LOADING FIX END -->
+> C:\Users\Administrator\MI-AI\frontend\index.html:30680:<!-- CORTEX CORE AI OWNER LOADING FIX END -->
   C:\Users\Administrator\MI-AI\frontend\index.html:30681:
   C:\Users\Administrator\MI-AI\frontend\index.html:30682:</body>
 

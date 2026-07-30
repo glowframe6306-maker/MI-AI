@@ -1,5 +1,5 @@
 """
-MI AI verified-link guard.
+CORTEX CORE AI verified-link guard.
 
 Prevents guessed, malformed and dead URLs from being displayed as working
 links. Public URLs are checked before they are returned to the frontend.
@@ -52,7 +52,7 @@ REQUEST_HEADERS = {
 }
 
 INVALID_LINK_MESSAGE = (
-    "[This link could not be verified, so MI AI removed it.]"
+    "[This link could not be verified, so CORTEX CORE AI removed it.]"
 )
 
 
@@ -201,7 +201,7 @@ def verify_public_url(url: str) -> bool:
 
     except requests.RequestException as exc:
         LOGGER.info(
-            "MI AI link verification failed for %s: %s",
+            "CORTEX CORE AI link verification failed for %s: %s",
             url,
             exc,
         )
@@ -316,7 +316,7 @@ def sanitize_flask_json_response(response: Any) -> Any:
 
     except Exception as exc:
         LOGGER.warning(
-            "MI AI JSON link sanitization failed: %s",
+            "CORTEX CORE AI JSON link sanitization failed: %s",
             exc,
         )
         return response

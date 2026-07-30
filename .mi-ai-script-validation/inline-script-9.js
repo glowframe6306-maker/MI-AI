@@ -1,5 +1,5 @@
 
-/* MI AI SAFE CHAT ONLY CLEAR V4 START */
+/* CORTEX CORE AI SAFE CHAT ONLY CLEAR V4 START */
 (function () {
     "use strict";
 
@@ -201,7 +201,7 @@
         clearChatIndexedDBOnly();
 
         console.log(
-            "[MI AI] Old chats cleared; settings preserved."
+            "[CORTEX CORE AI] Old chats cleared; settings preserved."
         );
     }
 
@@ -219,4 +219,4 @@
         setTimeout(clearVisibleChatElements, 500);
     }
 })();
-/* MI AI SAFE CHAT ONLY CLEAR V4 END */
+/* CORTEX CORE AI SAFE CHAT ONLY CLEAR V4 END */

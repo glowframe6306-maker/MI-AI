@@ -124,7 +124,7 @@ def test_assistant_info_route_returns_identity_and_contacts():
 
     assert response.status_code == 200
     payload = response.get_json()
-    assert payload["name"] == "MI AI"
+    assert payload["name"] == "CORTEX CORE AI"
     assert payload["creator"] == "M.I. Muhammadh"
     assert payload["owner"] == "M.I. Muhammadh"
     assert payload["developer"] == "M.I. Muhammadh"

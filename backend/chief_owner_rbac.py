@@ -1,4 +1,4 @@
-"""Secure Firebase-backed RBAC system for MI AI.
+"""Secure Firebase-backed RBAC system for CORTEX CORE AI.
 
 Security rules:
 - Firebase ID tokens are verified server-side.
@@ -607,7 +607,7 @@ def assign_staff(actor):
         user_record = auth.get_user_by_email(email)
     except auth.UserNotFoundError:
         raise AuthorizationError(
-            "This email must first have a verified MI AI account.",
+            "This email must first have a verified CORTEX CORE AI account.",
             404,
             "user_not_found",
         )

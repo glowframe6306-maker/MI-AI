@@ -46,7 +46,7 @@ client = genai.Client(api_key=API_KEY)
 try:
     response = client.models.generate_content(
         model=MODEL,
-        contents="Reply with exactly: MI AI OK"
+        contents="Reply with exactly: CORTEX CORE AI OK"
     )
 
     print("=" * 50)

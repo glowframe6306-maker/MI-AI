@@ -1,0 +1,44 @@
+// MI AI SHARE NOTIFICATIONS V1 RULES - START
+
+match /miPublicShareLinks/{shareId} {
+    allow read: if true;
+
+    allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.shareId == shareId;
+
+    allow update: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.shareId == resource.data.shareId;
+
+    allow delete: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+
+    match /opens/{openId} {
+        allow create: if
+            request.resource.data.keys().hasOnly([
+                "shareId",
+                "chatTitle",
+                "viewerId",
+                "openedAt"
+            ])
+            && request.resource.data.shareId == shareId
+            && request.resource.data.chatTitle is string
+            && request.resource.data.chatTitle.size() <= 100
+            && request.resource.data.viewerId is string
+            && request.resource.data.viewerId.size() <= 80
+            && request.resource.data.openedAt == request.time;
+
+        allow read, delete: if
+            request.auth != null
+            && request.auth.uid ==
+                get(
+                    /databases/$(database)/documents/miPublicShareLinks/$(shareId)
+                ).data.ownerUid;
+
+        allow update: if false;
+    }
+}
+
+// MI AI SHARE NOTIFICATIONS V1 RULES - END

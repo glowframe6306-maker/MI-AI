@@ -55,7 +55,7 @@
 010868:                 element.style.removeProperty("cursor");
 010869:             });
 010870:         } catch (error) {
-010871:             console.warn("[MI AI] Cursor reset failed:", error);
+010871:             console.warn("[CORTEX CORE AI] Cursor reset failed:", error);
 010872:         }
 010873:     }
 010874: 
@@ -83,7 +83,7 @@
 010896: <!-- SIDEBAR -->
 010897: <div id="sidebar">
 010898: <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
-010899:   <h3 style="margin:0;text-align:left;flex:1;">MI AI ChatBOT</h3>
+010899:   <h3 style="margin:0;text-align:left;flex:1;">CORTEX CORE AI</h3>
 010900:   <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">&#10005;</button>
 010901: 
 010902: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
@@ -124,10 +124,10 @@
 010937: <img decoding="async" fetchpriority="low"
 010938:     id="headerLogo"
 010939:     src="/MIAI.svg"
-010940:     alt="MI AI Logo"
+010940:     alt="CORTEX CORE AI Logo"
 010941:     width="48"
 010942:     height="48">
-010943:   <span>MI AI ChatBOT</span>
+010943:   <span>CORTEX CORE AI</span>
 010944:   <div class="headerActions">
 010945:     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
 010946:     <button id="loginBtn" onclick="openLogin()" type="button">&#128274; Login</button>
@@ -340,7 +340,7 @@
 011153:     <div id="attachmentPreview" style="display:none;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#e2e8f0;font-size:13px;"></div>
 011154:     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
 011155:     <div style="display:flex;gap:8px;align-items:flex-end;">
-011156:       <textarea id="msg" placeholder="Ask MI AI..."></textarea>
+011156:       <textarea id="msg" placeholder="Ask CORTEX CORE AI..."></textarea>
 011157:       <button id="sendBtn" type="button" onclick="sendOrStop()">Ãƒ¢Ã…¾Ã‚¤</button>
 011158: 
 011159: <!-- MI_AI_CHIEF_OWNER_BUTTON -->
@@ -422,7 +422,7 @@
 011235:     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
 011236:   </div>
 011237: </div>
-011238: <div id="watermark">MI AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION. </div>
+011238: <div id="watermark">CORTEX CORE AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION. </div>
 011239: <div id="watermark">CREATED AND POWERED BY M.I.MUHAMMADH</div>
 011240: 
 011241: </div>
@@ -604,7 +604,7 @@
 011417:   if (applyButton) applyButton.textContent = t('settings.apply', 'Apply');
 011418: 
 011419:   const chatInput = document.getElementById('msg');
-011420:   if (chatInput) chatInput.placeholder = t('chat.placeholder', 'Ask from MI AI...');
+011420:   if (chatInput) chatInput.placeholder = t('chat.placeholder', 'Ask from CORTEX CORE AI...');
 011421: 
 011422:   const sendButton = document.getElementById('sendBtn');
 011423:   if (sendButton) sendButton.title = t('chat.send', 'Send');
@@ -626,7 +626,7 @@
 011439:   document.body.setAttribute('dir', RTL_LANGUAGE_CODES.has(currentLanguage) ? 'rtl' : 'ltr');
 011440:   document.body.classList.toggle('rtl', RTL_LANGUAGE_CODES.has(currentLanguage));
 011441:   document.documentElement.classList.toggle('rtl', RTL_LANGUAGE_CODES.has(currentLanguage));
-011442:   document.title = t('app.title', 'MI AI');
+011442:   document.title = t('app.title', 'CORTEX CORE AI');
 011443: }
 011444: 
 011445: async function applyLanguage(langCode, persist = true) {

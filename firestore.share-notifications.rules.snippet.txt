@@ -1,4 +1,4 @@
-// MI AI SHARE NOTIFICATIONS V1 RULES - START
+// CORTEX CORE AI SHARE NOTIFICATIONS V1 RULES - START
 
 match /miPublicShareLinks/{shareId} {
     allow read: if true;
@@ -41,4 +41,4 @@ match /miPublicShareLinks/{shareId} {
     }
 }
 
-// MI AI SHARE NOTIFICATIONS V1 RULES - END
+// CORTEX CORE AI SHARE NOTIFICATIONS V1 RULES - END

@@ -93,7 +93,7 @@
         installInnerHtmlGuard();
         installInsertAdjacentHtmlGuard();
     } catch (error) {
-        console.warn("[MI AI] DOM guard install failed", error);
+        console.warn("[CORTEX CORE AI] DOM guard install failed", error);
     }
 
     window.MI_DOM_GUARD = {

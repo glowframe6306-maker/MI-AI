@@ -1,0 +1,41 @@
+MI AI JAVASCRIPT ERROR REPORT
+Generated: 07/18/2026 22:27:17
+Frontend: C:\Users\Administrator\MI-AI\frontend\index.html
+Inline scripts checked: 43
+Errors found: 1
+
+================================================================================
+INLINE SCRIPT: 40
+SCRIPT STARTS NEAR HTML LINE: 29070
+ESTIMATED ERROR HTML LINE: 29082
+
+NODE ERROR:
+C:\Users\ADMINI~1\AppData\Local\Temp\MI-AI-REAL-JS-DIAG-20260718-222620\inline-script-40.js:13
+function ensurePanel(){let d=document.getElementById('miAccountChatBackdrop');if(d)return d;d=document.createElement('div');d.id='miAccountChatBackdrop';d.innerHTML='<section id="miAccountChatPanel" role="dialog" aria-modal="true" aria-labelledby="miAccountChatTitle"><header id="miAccountChatHeader">
+                                                                                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+SyntaxError: Invalid or unexpected token
+    at wrapSafe (node:internal/modules/cjs/loader:1787:18)
+    at checkSyntax (node:internal/main/check_syntax:76:3)
+
+Node.js v24.16.0
+
+INDEX.HTML CONTEXT:
+     29074: const api='/api/direct-messages';
+     29075: function user(){return window.miFirebaseUser||(window.firebase&&firebase.auth&&firebase.auth().currentUser)||null}
+     29076: async function token(){const u=user();if(!u||typeof u.getIdToken!=='function')throw new Error('Please login first.');return u.getIdToken(false)}
+     29077: async function headers(json){const h={Authorization:'Bearer '+await token()};if(json)h['Content-Type']='application/json';return h}
+     29078: function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+     29079: function notify(text,error){const s=document.getElementById('miAccountChatStatus');if(s){s.textContent=text||'';s.style.color=error?'#fca5a5':'#bfdbfe'}else if(error)alert(text)}
+     29080: function ensureButton(){let b=document.getElementById('miAccountChatButton');if(b)return b;const actions=document.querySelector('#header .headerActions')||document.getElementById('header');if(!actions)return null;b=document.createElement('button');b.id='miAccountChatButton';b.type='button';b.innerHTML='<span aria-hidden="true">&#128172;</span><span>Chat</span><span id="miAccountChatBadge"></span>';b.addEventListener('click',openPanel);const logout=document.getElementById('logoutBtn');if(logout&&logout.parentNode===actions)actions.insertBefore(b,logout);else actions.appendChild(b);updateBadge();return b}
+     29081: function updateBadge(){const b=document.getElementById('miAccountChatBadge');if(!b)return;b.textContent=String(Math.min(unread,99));b.classList.toggle('mi-show',unread>0);const btn=document.getElementById('miAccountChatButton');if(btn)btn.setAttribute('aria-label',unread>0?'Chat, '+unread+' unread messages':'Chat')}
+>>>  29082: function ensurePanel(){let d=document.getElementById('miAccountChatBackdrop');if(d)return d;d=document.createElement('div');d.id='miAccountChatBackdrop';d.innerHTML='<section id="miAccountChatPanel" role="dialog" aria-modal="true" aria-labelledby="miAccountChatTitle"><header id="miAccountChatHeader">
+     29083: <strong id="miAccountChatTitle">&#128172; Account Chat</strong><div id="miAccountChatHeaderActions"><button id="miAccountChatRefresh" type="button">Refresh</button><button id="miAccountChatClose" type="button" aria-label="Close">&#10005;</button></div></header><div id="miAccountChatBody"><form id="miAccountChatCompose"><label for="miAccountChatTo">To email</label><input id="miAccountChatTo" type="email" required autocomplete="email" placeholder="abcd@gmail.com"><label for="miAccountChatMessage">Message</label><textarea id="miAccountChatMessage" maxlength="5000" required placeholder="Type your message"></textarea><button id="miAccountChatSend" type="submit">&#128228; Send</button><div id="miAccountChatStatus" role="status"></div></form><section><h3>Received messages</h3><div id="miAccountChatRows"></div></section></div></section>';d.addEventListener('click',e=>{if(e.target===d)closePanel()});d.querySelector('#miAccountChatClose').addEventListener('click',closePanel);d.querySelector('#miAccountChatRefresh').addEventListener('click',()=>load(true));d.querySelector('#miAccountChatCompose').addEventListener('submit',send);document.body.appendChild(d);return d}
+     29084: function render(){const rows=document.getElementById('miAccountChatRows');if(!rows)return;if(!items.length){rows.innerHTML='<div class="mi-account-chat-empty">No received messages yet.</div>';return}rows.innerHTML=items.map(x=>'<article class="mi-account-chat-message '+(!x.is_read?'mi-unread':'')+'"><strong>Sender: '+esc(x.sender_email||'Unknown')+'</strong><p>'+esc(x.message||'')+'</p><time>'+esc(x.created_at?new Date(x.created_at).toLocaleString():'')+'</time></article>').join('')}
+     29085: async function load(showError){if(loading||!user())return;loading=true;try{const r=await fetch(api,{headers:await headers(false),cache:'no-store'});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||j.message||'Could not load messages.');items=Array.isArray(j.items)?j.items:[];unread=Number(j.unread||0);updateBadge();render();if(document.getElementById('miAccountChatBackdrop')?.classList.contains('mi-open')&&unread>0)await markRead()}catch(e){if(showError)notify(e.message,true)}finally{loading=false}}
+     29086: async function markRead(){const ids=items.filter(x=>!x.is_read&&x.id).map(x=>x.id);if(!ids.length)return;try{const r=await fetch(api+'/read',{method:'POST',headers:await headers(true),body:JSON.stringify({ids})});if(r.ok){items.forEach(x=>{if(ids.includes(x.id))x.is_read=true});unread=0;updateBadge();render()}}catch(e){}}
+     29087: async function send(e){e.preventDefault();const to=document.getElementById('miAccountChatTo');const msg=document.getElementById('miAccountChatMessage');const button=document.getElementById('miAccountChatSend');const recipient=String(to.value||'').trim().toLowerCase();const message=String(msg.value||'').trim();if(!recipient||!message){notify('Enter the recipient email and message.',true);return}button.disabled=true;notify('Sending...',false);try{const r=await fetch(api,{method:'POST',headers:await headers(true),body:JSON.stringify({to:recipient,message})});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||j.message||'Message could not be sent.');msg.value='';notify('Message sent successfully.',false)}catch(err){notify(err.message,true)}finally{button.disabled=false}}
+     29088: async function openPanel(){if(!user()){if(typeof window.openLogin==='function')window.openLogin();else alert('Please login first.');return}ensurePanel().classList.add('mi-open');await load(true);render();await markRead()}
+     29089: function closePanel(){document.getElementById('miAccountChatBackdrop')?.classList.remove('mi-open')}
+     29090: function start(){ensureButton();ensurePanel();clearInterval(pollTimer);pollTimer=setInterval(()=>{ensureButton();load(false)},15000);load(false)}
+

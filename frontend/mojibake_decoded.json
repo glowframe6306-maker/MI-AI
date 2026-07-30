@@ -392,7 +392,7 @@
     "decoded": "ERROR:UnicodeEncodeError:'charmap' codec can't encode character '\\x8d' in position 22: character maps to <undefined>"
   },
   {
-    "orig": "MI AI à·€à·™à¶­ à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶œà·à¶± à·ƒà·Šà¶­à·”à¶­à·’à¶ºà·’. à¶”à¶¶à¶œà·š chats à·ƒà·„ settings à¶¯à·à¶±à·Š à·ƒà·–à¶¯à·Nameà·Š.",
+    "orig": "CORTEX CORE AI à·€à·™à¶­ à¶´à·’à·€à·’à·ƒà·“à¶¸ à¶œà·à¶± à·ƒà·Šà¶­à·”à¶­à·’à¶ºà·’. à¶”à¶¶à¶œà·š chats à·ƒà·„ settings à¶¯à·à¶±à·Š à·ƒà·–à¶¯à·Nameà·Š.",
     "decoded": "ERROR:UnicodeEncodeError:'charmap' codec can't encode character '\\x90' in position 43: character maps to <undefined>"
   },
   {
@@ -412,7 +412,7 @@
     "decoded": "ERROR:UnicodeEncodeError:'charmap' codec can't encode character '\\x8d' in position 30: character maps to <undefined>"
   },
   {
-    "orig": "MI AI-à®²à¯ à®‰à®³à¯à®¨à¯à®´à¯ˆà®¨à¯à®¤à®¤à®±à¯à®•à¯ à®¨à®©à¯à®±à®¿. à®‰à®™à¯à®•à®³à¯ à®…à®°à®Ÿà¯à®Ÿà¯ˆà®•à®³à¯à®®à¯ à®…à®®à¯ˆà®ªà¯à®ªà¯à®•à®³à¯à®®à¯ à®¤à®¯à®¾à®°à®¾à®• à®‰à®³à¯à®³à®©.",
+    "orig": "CORTEX CORE AI-à®²à¯ à®‰à®³à¯à®¨à¯à®´à¯ˆà®¨à¯à®¤à®¤à®±à¯à®•à¯ à®¨à®©à¯à®±à®¿. à®‰à®™à¯à®•à®³à¯ à®…à®°à®Ÿà¯à®Ÿà¯ˆà®•à®³à¯à®®à¯ à®…à®®à¯ˆà®ªà¯à®ªà¯à®•à®³à¯à®®à¯ à®¤à®¯à®¾à®°à®¾à®• à®‰à®³à¯à®³à®©.",
     "decoded": "ERROR:UnicodeEncodeError:'charmap' codec can't encode character '\\x8d' in position 11: character maps to <undefined>"
   }
 ]

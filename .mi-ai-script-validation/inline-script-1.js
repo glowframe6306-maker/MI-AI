@@ -53,7 +53,7 @@
                             );
                         } catch (error) {
                             console.error(
-                                "[MI AI] Observer callback error:",
+                                "[CORTEX CORE AI] Observer callback error:",
                                 error
                             );
                         }

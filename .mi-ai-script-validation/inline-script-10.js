@@ -1,5 +1,5 @@
 
-/* MI AI CHIEF OWNER FRONTEND RESTORE V1 START */
+/* CORTEX CORE AI CHIEF OWNER FRONTEND RESTORE V1 START */
 (function () {
     "use strict";
 
@@ -302,4 +302,4 @@
         startOwnerSynchronization();
     }
 })();
-/* MI AI CHIEF OWNER FRONTEND RESTORE V1 END */
+/* CORTEX CORE AI CHIEF OWNER FRONTEND RESTORE V1 END */

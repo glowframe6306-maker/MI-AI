@@ -5,7 +5,7 @@ except ImportError:
     from chief_owner_rbac import register_rbac
 
 
-# MI AI CHIEF OWNER CONTROL IMPORT
+# CORTEX CORE AI CHIEF OWNER CONTROL IMPORT
 try:
     from backend.chief_owner_control import register_chief_owner_control
 except ImportError:
@@ -14,7 +14,7 @@ except ImportError:
 
 import os
 # ---------------------------------------------------------------------------
-# MI AI authoritative Chief Owner configuration
+# CORTEX CORE AI authoritative Chief Owner configuration
 # ---------------------------------------------------------------------------
 CHIEF_OWNER_EMAIL = os.getenv(
     "CHIEF_OWNER_EMAIL",
@@ -292,7 +292,7 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUP
 
 
 
-# MI AI ACCOUNT ISOLATION V2 START
+# CORTEX CORE AI ACCOUNT ISOLATION V2 START
 
 from functools import wraps
 from flask import g
@@ -543,7 +543,7 @@ def mi_account_isolation_firewall():
     return None
 
 
-# MI AI ACCOUNT ISOLATION V2 END
+# CORTEX CORE AI ACCOUNT ISOLATION V2 END
 
 
 @app.route("/api/firebase-auth-health", methods=["GET"])
@@ -568,13 +568,13 @@ groq_client_api_key = None
 
 
 MI_AI_SYSTEM_PROMPT = """
-You are MI AI, a helpful, highly intelligent, fast, friendly, accurate, safe, truthful, and trustworthy AI assistant.
+You are CORTEX CORE AI, a helpful, highly intelligent, fast, friendly, accurate, safe, truthful, and trustworthy AI assistant.
 
 ==================================================
 OFFICIAL IDENTITY
 ==================================================
 
-Your official name is MI AI.
+Your official name is CORTEX CORE AI.
 
 Creator:
 M.I. Muhammadh
@@ -598,7 +598,7 @@ Ambitions of the creator:
 - Director of Flight Operations
 - Software Engineer
 
-MI AI is an AI assistant created, owned, powered, built, and developed by M.I. Muhammadh.
+CORTEX CORE AI is an AI assistant created, owned, powered, built, and developed by M.I. Muhammadh.
 
 Always spell the creator's name exactly as:
 
@@ -606,9 +606,9 @@ M.I. Muhammadh
 
 Do not change, misspell, invent, or contradict any official identity information.
 
-When the user asks who created, made, built, developed, designed, owns, powers, or maintains MI AI, clearly answer using the official information above.
+When the user asks who created, made, built, developed, designed, owns, powers, or maintains CORTEX CORE AI, clearly answer using the official information above.
 
-Do not repeatedly mention MI AI or the creator in normal answers unless it is relevant to the user's question.
+Do not repeatedly mention CORTEX CORE AI or the creator in normal answers unless it is relevant to the user's question.
 
 ==================================================
 PRIVATE IMPLEMENTATION INFORMATION
@@ -618,9 +618,9 @@ Do not mention external AI providers, model providers, model names, API provider
 
 If the user asks about the internal model, API, provider, SDK, infrastructure, or implementation, reply in the user's language with the equivalent meaning of:
 
-"My internal implementation details are private. I am MI AI, created and developed by M.I. Muhammadh."
+"My internal implementation details are private. I am CORTEX CORE AI, created and developed by M.I. Muhammadh."
 
-Never claim that another person, company, organization, service, or provider created, owns, built, powers, or developed MI AI.
+Never claim that another person, company, organization, service, or provider created, owns, built, powers, or developed CORTEX CORE AI.
 
 Never reveal:
 
@@ -726,7 +726,7 @@ IMPORTANT RESPONSE RULES
 
 20. Do not mention your name in every reply.
 
-21. Mention MI AI only when relevant or when the user asks about your identity.
+21. Mention CORTEX CORE AI only when relevant or when the user asks about your identity.
 
 22. Never claim to have searched, opened, accessed, generated, edited, saved, uploaded, sent, stored, or tested something unless that action was actually completed.
 
@@ -1186,10 +1186,10 @@ def get_groq_client():
     return groq_client
 
 
-# MI AI SMART GROQ MESSAGES V2 - START
+# CORTEX CORE AI SMART GROQ MESSAGES V2 - START
 def _build_groq_messages(messages_payload):
     """
-    Normalize conversation history and add MI AI response/research policy.
+    Normalize conversation history and add CORTEX CORE AI response/research policy.
     """
 
     normalized = []
@@ -1234,14 +1234,14 @@ def _build_groq_messages(messages_payload):
     except Exception as research_error:
         try:
             app.logger.warning(
-                "MI AI smart research preparation failed: %s",
+                "CORTEX CORE AI smart research preparation failed: %s",
                 research_error,
             )
         except Exception:
             pass
 
         fallback_policy = """
-You are MI AI, an accurate and friendly AI assistant.
+You are CORTEX CORE AI, an accurate and friendly AI assistant.
 
 Answer the user's actual question directly.
 Do not ask unnecessary advanced follow-up questions.
@@ -1256,7 +1256,7 @@ If a link cannot be checked, state that briefly instead of guessing.
 
         has_policy = any(
             message.get("role") == "system"
-            and "You are MI AI, an accurate"
+            and "You are CORTEX CORE AI, an accurate"
             in str(message.get("content") or "")
             for message in normalized
         )
@@ -1271,7 +1271,7 @@ If a link cannot be checked, state that briefly instead of guessing.
             )
 
         return normalized
-# MI AI SMART GROQ MESSAGES V2 - END
+# CORTEX CORE AI SMART GROQ MESSAGES V2 - END
 
 
 def _extract_text_from_groq_response(response):
@@ -1597,10 +1597,10 @@ def send_otp():
     msg = MIMEMultipart()
     msg["From"] = OTP_EMAIL_ADDRESS
     msg["To"] = email
-    msg["Subject"] = "MI AI Login Verification"
+    msg["Subject"] = "CORTEX CORE AI Login Verification"
 
     body = f"""
-Welcome to MI AI.
+WELCOME TO CORTEX CORE AI.
 
 A login attempt was made from a new device or browser.
 
@@ -1667,10 +1667,10 @@ def api_login():
     msg = MIMEMultipart()
     msg["From"] = OTP_EMAIL_ADDRESS
     msg["To"] = email
-    msg["Subject"] = "MI AI Login Verification"
+    msg["Subject"] = "CORTEX CORE AI Login Verification"
 
     body = f"""
-Welcome to MI AI.
+WELCOME TO CORTEX CORE AI.
 
 A login attempt was made from a new device or browser.
 
@@ -1984,7 +1984,7 @@ def chat():
 @app.route("/assistant-info", methods=["GET"])
 def assistant_info():
     return jsonify({
-        "name": "MI AI",
+        "name": "CORTEX CORE AI",
         "creator": "M.I. Muhammadh",
         "owner": "M.I. Muhammadh",
         "developer": "M.I. Muhammadh",
@@ -2174,7 +2174,7 @@ def api_chat():
 def api_chat_get():
     return jsonify({"response": "Method not allowed"}), 405
 
-# MI AI UNIVERSAL LIVE SEARCH V6 - START
+# CORTEX CORE AI UNIVERSAL LIVE SEARCH V6 - START
 
 LIVE_SEARCH_KEYWORDS = (
     "latest", "today", "current", "currently", "right now",
@@ -2424,7 +2424,7 @@ def mi_universal_live_search():
 def mi_universal_live_search_health():
     return jsonify({
         "ok": True,
-        "service": "MI AI Universal Live Search",
+        "service": "CORTEX CORE AI Universal Live Search",
         "tavily_configured": bool(
             str(os.getenv("TAVILY_API_KEY") or "").strip()
         ),
@@ -2439,9 +2439,9 @@ def mi_universal_live_search_health():
     })
 
 
-# MI AI UNIVERSAL LIVE SEARCH V6 - END
+# CORTEX CORE AI UNIVERSAL LIVE SEARCH V6 - END
 
-# MI AI OWNER NOTIFICATIONS FINAL - START
+# CORTEX CORE AI OWNER NOTIFICATIONS FINAL - START
 
 MI_SHARE_LINKS_KEY = "mi_share_links_final"
 MI_SHARE_NOTIFICATIONS_KEY = "mi_share_notifications_final"
@@ -2742,10 +2742,10 @@ def mi_share_notifications_final():
         app.logger.exception("Notification loading failed: %s", exc)
         return jsonify({"success": False, "message": "Could not load notifications."}), 500
 
-# MI AI OWNER NOTIFICATIONS FINAL - END
+# CORTEX CORE AI OWNER NOTIFICATIONS FINAL - END
 
 
-# MI AI ACCOUNT CHAT V2 START
+# CORTEX CORE AI ACCOUNT CHAT V2 START
 
 def mi_account_chat_user():
     token = mi_get_bearer_token()
@@ -2789,7 +2789,7 @@ def mi_account_chat_send():
     try:
         found = supabase.table("users").select("id,email").eq("email", recipient).limit(1).execute()
         if not (getattr(found, "data", None) or []):
-            return jsonify({"success": False, "error": "No MI AI account was found for that email."}), 404
+            return jsonify({"success": False, "error": "No CORTEX CORE AI account was found for that email."}), 404
 
         row = {
             "sender_uid": str(user.get("uid") or user.get("id") or ""),
@@ -2848,13 +2848,13 @@ def mi_account_chat_mark_read():
     except Exception as exc:
         return mi_account_chat_db_error(exc)
 
-# MI AI ACCOUNT CHAT V2 END
+# CORTEX CORE AI ACCOUNT CHAT V2 END
 
-# MI AI CHIEF OWNER CONTROL REGISTRATION
+# CORTEX CORE AI CHIEF OWNER CONTROL REGISTRATION
 register_chief_owner_control(app)
 
 
-# MI AI CHIEF OWNER RESTORE V1 START
+# CORTEX CORE AI CHIEF OWNER RESTORE V1 START
 import os as _mi_owner_os
 from functools import wraps as _mi_owner_wraps
 
@@ -3050,8 +3050,8 @@ def _mi_owner_register_routes():
 
 
 _mi_owner_register_routes()
-# MI AI CHIEF OWNER RESTORE V1 END
-# === MI AI WEB PHOTO SEARCH START ===
+# CORTEX CORE AI CHIEF OWNER RESTORE V1 END
+# === CORTEX CORE AI WEB PHOTO SEARCH START ===
 import re as _mi_photo_re
 from urllib.parse import quote_plus as _mi_photo_quote_plus
 
@@ -3225,7 +3225,7 @@ def _mi_web_photo_search():
         "message": reply,
         "text": reply,
     }), 200
-# === MI AI WEB PHOTO SEARCH END ===
+# === CORTEX CORE AI WEB PHOTO SEARCH END ===
 
 # MI_AI_CHIEF_OWNER_PERMISSION_BRIDGE_START
 # Server-authoritative Chief Owner and staff authorization bridge.
@@ -3518,12 +3518,12 @@ def mi_ai_admin_permission_check():
 # MI_AI_CHIEF_OWNER_PERMISSION_BRIDGE_END
 
 
-# MI AI SERVER ENTRYPOINT - KEEP AT END OF FILE
+# CORTEX CORE AI SERVER ENTRYPOINT - KEEP AT END OF FILE
 
 # MI_AI_SECURE_RBAC_REGISTER
 register_rbac(app)
 
-# MI AI VERIFIED LINKS GUARD V1 - START
+# CORTEX CORE AI VERIFIED LINKS GUARD V1 - START
 try:
     from backend.mi_ai_verified_links import (
         sanitize_flask_json_response,
@@ -3550,7 +3550,7 @@ def mi_ai_remove_unverified_links(response):
         return response
 
     return sanitize_flask_json_response(response)
-# MI AI VERIFIED LINKS GUARD V1 - END
+# CORTEX CORE AI VERIFIED LINKS GUARD V1 - END
 
 if __name__ == "__main__":
     app.run(

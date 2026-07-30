@@ -1,4 +1,4 @@
-MI AI JAVASCRIPT ERROR REPORT
+CORTEX CORE AI JAVASCRIPT ERROR REPORT
 Generated: 07/18/2026 22:27:17
 Frontend: C:\Users\Administrator\MI-AI\frontend\index.html
 Inline scripts checked: 43

@@ -1,0 +1,1431 @@
+MI AI LOAD DIAGNOSTIC - 07/18/2026 21:27:55
+===================================
+
+[1] GIT STATUS
+?? MI-AI-LOAD-DIAGNOSTIC.txt
+
+[2] PYTHON SYNTAX
+
+[3] REQUIRED FILES
+FOUND: frontend\index.html
+FOUND: backend\app.py
+FOUND: api\index.py
+FOUND: requirements.txt
+FOUND: vercel.json
+
+[4] FRONTEND POSSIBLE LOADING CODE
+  C:\Users\Administrator\MI-AI\frontend\index.html:7:
+  C:\Users\Administrator\MI-AI\frontend\index.html:8:<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+> C:\Users\Administrator\MI-AI\frontend\index.html:9:<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+> C:\Users\Administrator\MI-AI\frontend\index.html:10:<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+> C:\Users\Administrator\MI-AI\frontend\index.html:11:<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  C:\Users\Administrator\MI-AI\frontend\index.html:12:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13:<style>
+  C:\Users\Administrator\MI-AI\frontend\index.html:6125:#chat>*,#chatList>*,.messages>*,.chat-messages>*{content-visibility:auto;contain-intrinsic-size:auto 72px}
+  C:\Users\Administrator\MI-AI\frontend\index.html:6126:html{scroll-behavior:auto!important}
+> C:\Users\Administrator\MI-AI\frontend\index.html:6127:body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-events:none}
+  C:\Users\Administrator\MI-AI\frontend\index.html:6128:#chat,#chatList{transition:opacity 120ms ease}
+  C:\Users\Administrator\MI-AI\frontend\index.html:6129:/* MI AI CHAT SMOOTH V3 CSS - END */
+  C:\Users\Administrator\MI-AI\frontend\index.html:6131:</style>
+  C:\Users\Administrator\MI-AI\frontend\index.html:6132:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6133:<!-- MI AI FIREBASE AUTH START -->
+  C:\Users\Administrator\MI-AI\frontend\index.html:6134:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6135:<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+> C:\Users\Administrator\MI-AI\frontend\index.html:6136:<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  C:\Users\Administrator\MI-AI\frontend\index.html:6137:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6138:<script>
+  C:\Users\Administrator\MI-AI\frontend\index.html:6140:    "use strict";
+  C:\Users\Administrator\MI-AI\frontend\index.html:6141:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6142:    const firebaseConfig = {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6143:        apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6144:        authDomain: "mi-ai-99e6a.firebaseapp.com",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6145:        projectId: "mi-ai-99e6a",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6146:        storageBucket: "mi-ai-99e6a.firebasestorage.app",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6147:        messagingSenderId: "845086558623",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6148:        appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
+  C:\Users\Administrator\MI-AI\frontend\index.html:6177:            if (!this.uid) return;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6178:            try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6179:                const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
+  C:\Users\Administrator\MI-AI\frontend\index.html:6180:                await docRef.set({
+  C:\Users\Administrator\MI-AI\frontend\index.html:6181:                    theme: settings.theme || '',
+  C:\Users\Administrator\MI-AI\frontend\index.html:6182:                    fontSize: settings.fontSize || 15,
+  C:\Users\Administrator\MI-AI\frontend\index.html:6183:                    language: settings.language || 'en',
+> C:\Users\Administrator\MI-AI\frontend\index.html:6184:                    updatedAt: window.firebase.firestore.Timestamp.now()
+  C:\Users\Administrator\MI-AI\frontend\index.html:6185:                }, { merge: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:6186:                console.log('[Persistence] Settings saved to Firestore');
+  C:\Users\Administrator\MI-AI\frontend\index.html:6193:            if (!this.uid) return;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6194:            try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6195:                const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+  C:\Users\Administrator\MI-AI\frontend\index.html:6196:                await chatRef.set({
+  C:\Users\Administrator\MI-AI\frontend\index.html:6197:                    title: chatData.title || 'Chat',
+  C:\Users\Administrator\MI-AI\frontend\index.html:6198:                    pin: chatData.pin || false,
+> C:\Users\Administrator\MI-AI\frontend\index.html:6199:                    createdAt: window.firebase.firestore.Timestamp.now(),
+> C:\Users\Administrator\MI-AI\frontend\index.html:6200:                    updatedAt: window.firebase.firestore.Timestamp.now(),
+  C:\Users\Administrator\MI-AI\frontend\index.html:6201:                    messageCount: chatData.messageCount || 0
+  C:\Users\Administrator\MI-AI\frontend\index.html:6202:                }, { merge: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:6210:            if (!this.uid) return;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6211:            try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6212:                const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
+  C:\Users\Administrator\MI-AI\frontend\index.html:6213:                    .collection('chats').doc(chatId)
+  C:\Users\Administrator\MI-AI\frontend\index.html:6214:                    .collection('messages').doc(messageId);
+  C:\Users\Administrator\MI-AI\frontend\index.html:6216:                    role: message.role || 'user',
+  C:\Users\Administrator\MI-AI\frontend\index.html:6217:                    text: message.text || '',
+> C:\Users\Administrator\MI-AI\frontend\index.html:6218:                    createdAt: window.firebase.firestore.Timestamp.now()
+  C:\Users\Administrator\MI-AI\frontend\index.html:6219:                });
+  C:\Users\Administrator\MI-AI\frontend\index.html:6220:                console.log(`[Persistence] Message ${messageId} saved to Firestore`);
+  C:\Users\Administrator\MI-AI\frontend\index.html:6227:            if (!this.uid) return { chats: {}, settings: {} };
+  C:\Users\Administrator\MI-AI\frontend\index.html:6228:            try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6229:                const userRef = window.firebase.firestore().collection('users').doc(this.uid);
+  C:\Users\Administrator\MI-AI\frontend\index.html:6230:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6231:                // Load settings
+  C:\Users\Administrator\MI-AI\frontend\index.html:6259:                return { chats, settings };
+  C:\Users\Administrator\MI-AI\frontend\index.html:6260:            } catch (err) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6261:                console.error('[Persistence] Error loading user data:', err.message);
+  C:\Users\Administrator\MI-AI\frontend\index.html:6262:                return { chats: {}, settings: {} };
+  C:\Users\Administrator\MI-AI\frontend\index.html:6263:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6267:    window.FirestorePersistenceManager = FirestorePersistenceManager;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6268:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6269:    function getFirebaseLanguage() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6270:        const selected =
+  C:\Users\Administrator\MI-AI\frontend\index.html:6271:            document.getElementById("languageSelect")?.value;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6285:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6286:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6287:    function firebaseErrorMessage(error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6288:        const errorCode = String(error?.code || "");
+  C:\Users\Administrator\MI-AI\frontend\index.html:6289:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6317:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6318:            "auth/operation-not-allowed":
+> C:\Users\Administrator\MI-AI\frontend\index.html:6319:                "Email and password login is not enabled in Firebase.",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6320:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6321:            "auth/unauthorized-domain":
+> C:\Users\Administrator\MI-AI\frontend\index.html:6322:                "This website domain is not authorized in Firebase."
+  C:\Users\Administrator\MI-AI\frontend\index.html:6323:        };
+  C:\Users\Administrator\MI-AI\frontend\index.html:6324:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6326:            messages[errorCode] ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:6327:            error?.message ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:6328:            "Firebase authentication failed."
+  C:\Users\Administrator\MI-AI\frontend\index.html:6329:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6330:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6331:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6332:    function initializeMIFirebase() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6333:        if (typeof window.firebase === "undefined") {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6334:            throw new Error("Firebase SDK failed to load.");
+  C:\Users\Administrator\MI-AI\frontend\index.html:6335:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6336:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6338:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6339:        if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:6340:            Array.isArray(window.firebase.apps) &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:6341:            window.firebase.apps.length > 0
+  C:\Users\Administrator\MI-AI\frontend\index.html:6342:        ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6343:            app = window.firebase.app();
+  C:\Users\Administrator\MI-AI\frontend\index.html:6344:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6345:        else {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6346:            app = window.firebase.initializeApp(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6347:                firebaseConfig
+  C:\Users\Administrator\MI-AI\frontend\index.html:6348:            );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6349:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6350:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6351:        const auth = window.firebase.auth(app);
+> C:\Users\Administrator\MI-AI\frontend\index.html:6352:        const db = window.firebase.firestore(app);
+  C:\Users\Administrator\MI-AI\frontend\index.html:6353:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6354:        auth.languageCode = getFirebaseLanguage();
+  C:\Users\Administrator\MI-AI\frontend\index.html:6355:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6356:        window.miFirebaseApp = app;
+> C:\Users\Administrator\MI-AI\frontend\index.html:6357:        window.miFirebaseAuth = auth;
+> C:\Users\Administrator\MI-AI\frontend\index.html:6358:        window.miFirebaseDb = db;
+> C:\Users\Administrator\MI-AI\frontend\index.html:6359:        window.miFirebaseUser = auth.currentUser || null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6360:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6361:        // Initialize persistence manager
+  C:\Users\Administrator\MI-AI\frontend\index.html:6362:        window.firestorePersistence = new window.FirestorePersistenceManager(db);
+  C:\Users\Administrator\MI-AI\frontend\index.html:6363:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6364:        auth.onAuthStateChanged(function (user) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6365:            window.miFirebaseUser = user || null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6366:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6367:            // Update persistence manager with current user
+  C:\Users\Administrator\MI-AI\frontend\index.html:6376:            window.dispatchEvent(
+  C:\Users\Administrator\MI-AI\frontend\index.html:6377:                new CustomEvent(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6378:                    "mi-firebase-auth-changed",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6379:                    {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6380:                        detail: {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6386:        });
+  C:\Users\Administrator\MI-AI\frontend\index.html:6387:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6388:        window.MIFirebase = {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6389:            config: Object.freeze({
+> C:\Users\Administrator\MI-AI\frontend\index.html:6390:                ...firebaseConfig
+  C:\Users\Administrator\MI-AI\frontend\index.html:6391:            }),
+  C:\Users\Administrator\MI-AI\frontend\index.html:6392:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6393:            get auth() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6394:                return window.miFirebaseAuth;
+  C:\Users\Administrator\MI-AI\frontend\index.html:6395:            },
+  C:\Users\Administrator\MI-AI\frontend\index.html:6396:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6397:            get user() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6398:                return (
+> C:\Users\Administrator\MI-AI\frontend\index.html:6399:                    window.miFirebaseAuth?.currentUser ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:6400:                    null
+  C:\Users\Administrator\MI-AI\frontend\index.html:6401:                );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6403:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6404:            updateLanguage: function () {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6405:                if (window.miFirebaseAuth) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6406:                    window.miFirebaseAuth.languageCode =
+> C:\Users\Administrator\MI-AI\frontend\index.html:6407:                        getFirebaseLanguage();
+  C:\Users\Administrator\MI-AI\frontend\index.html:6408:                }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6409:            },
+  C:\Users\Administrator\MI-AI\frontend\index.html:6447:                catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6448:                    console.error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6449:                        "[MI AI Firebase register]",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6450:                        error
+  C:\Users\Administrator\MI-AI\frontend\index.html:6451:                    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6452:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6453:                    throw new Error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6454:                        firebaseErrorMessage(error)
+  C:\Users\Administrator\MI-AI\frontend\index.html:6455:                    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6456:                }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6475:                catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6476:                    console.error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6477:                        "[MI AI Firebase login]",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6478:                        error
+  C:\Users\Administrator\MI-AI\frontend\index.html:6479:                    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6480:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6481:                    throw new Error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6482:                        firebaseErrorMessage(error)
+  C:\Users\Administrator\MI-AI\frontend\index.html:6483:                    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6484:                }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6501:                    catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6502:                        console.error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6503:                            "[MI AI Firebase reset]",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6504:                            error
+  C:\Users\Administrator\MI-AI\frontend\index.html:6505:                        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6506:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6507:                        throw new Error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6508:                            firebaseErrorMessage(error)
+  C:\Users\Administrator\MI-AI\frontend\index.html:6509:                        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6510:                    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6533:                    catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6534:                        throw new Error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6535:                            firebaseErrorMessage(error)
+  C:\Users\Administrator\MI-AI\frontend\index.html:6536:                        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6537:                    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6552:                        "languageSelect"
+  C:\Users\Administrator\MI-AI\frontend\index.html:6553:                ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6554:                    window.MIFirebase.updateLanguage();
+  C:\Users\Administrator\MI-AI\frontend\index.html:6555:                }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6556:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6558:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6559:        console.log(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6560:            "[MI AI] Firebase Authentication connected:",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6561:            firebaseConfig.projectId
+  C:\Users\Administrator\MI-AI\frontend\index.html:6562:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6563:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6564:        window.dispatchEvent(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6565:            new CustomEvent("mi-firebase-ready")
+  C:\Users\Administrator\MI-AI\frontend\index.html:6566:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6567:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6568:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6569:    function startFirebase() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6570:        try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6571:            initializeMIFirebase();
+  C:\Users\Administrator\MI-AI\frontend\index.html:6572:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6573:        catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6574:            console.error(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6575:                "[MI AI] Firebase initialization failed:",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6576:                error
+  C:\Users\Administrator\MI-AI\frontend\index.html:6577:            );
+  C:\Users\Administrator\MI-AI\frontend\index.html:6579:            window.dispatchEvent(
+  C:\Users\Administrator\MI-AI\frontend\index.html:6580:                new CustomEvent(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6581:                    "mi-firebase-error",
+  C:\Users\Administrator\MI-AI\frontend\index.html:6582:                    {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6583:                        detail: {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6590:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6591:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6592:    if (document.readyState === "loading") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6593:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:6594:            "DOMContentLoaded",
+> C:\Users\Administrator\MI-AI\frontend\index.html:6595:            startFirebase,
+  C:\Users\Administrator\MI-AI\frontend\index.html:6596:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:6597:                once: true
+  C:\Users\Administrator\MI-AI\frontend\index.html:6600:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6601:    else {
+> C:\Users\Administrator\MI-AI\frontend\index.html:6602:        startFirebase();
+  C:\Users\Administrator\MI-AI\frontend\index.html:6603:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:6604:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:6605:</script>
+  C:\Users\Administrator\MI-AI\frontend\index.html:6606:
+> C:\Users\Administrator\MI-AI\frontend\index.html:6607:<!-- MI AI FIREBASE AUTH END -->
+  C:\Users\Administrator\MI-AI\frontend\index.html:6608:
+  C:\Users\Administrator\MI-AI\frontend\index.html:6609:
+  C:\Users\Administrator\MI-AI\frontend\index.html:9855:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:9856:
+> C:\Users\Administrator\MI-AI\frontend\index.html:9857:    if (document.readyState === "loading") {
+> C:\Users\Administrator\MI-AI\frontend\index.html:9858:        document.addEventListener("DOMContentLoaded", start, { once: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:9859:    } else {
+  C:\Users\Administrator\MI-AI\frontend\index.html:9860:        start();
+  C:\Users\Administrator\MI-AI\frontend\index.html:9913:
+  C:\Users\Administrator\MI-AI\frontend\index.html:9914:        var protectedWords = [
+> C:\Users\Administrator\MI-AI\frontend\index.html:9915:            "firebase:authuser:",
+> C:\Users\Administrator\MI-AI\frontend\index.html:9916:            "firebase-heartbeat",
+> C:\Users\Administrator\MI-AI\frontend\index.html:9917:            "firebase-installations",
+  C:\Users\Administrator\MI-AI\frontend\index.html:9918:            "auth",
+  C:\Users\Administrator\MI-AI\frontend\index.html:9919:            "token",
+  C:\Users\Administrator\MI-AI\frontend\index.html:10026:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10027:                        var isProtectedDatabase =
+> C:\Users\Administrator\MI-AI\frontend\index.html:10028:                            lower.indexOf("firebase") !== -1 ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:10029:                            lower.indexOf("auth") !== -1 ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:10030:                            lower.indexOf("setting") !== -1;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10077:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10078:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10079:    if (document.readyState === "loading") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10080:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:10081:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:10082:            function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10083:                clearVisibleChatElements();
+  C:\Users\Administrator\MI-AI\frontend\index.html:10206:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10207:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10208:    async function getFirebaseUser() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10209:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10210:            if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:10211:                window.firebase &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:10212:                firebase.auth &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:10213:                typeof firebase.auth === "function"
+  C:\Users\Administrator\MI-AI\frontend\index.html:10214:            ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10215:                return firebase.auth().currentUser || null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10216:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10217:        } catch (error) {}
+  C:\Users\Administrator\MI-AI\frontend\index.html:10219:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10220:            if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:10221:                window.miFirebaseAuth &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:10222:                window.miFirebaseAuth.currentUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:10223:            ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10224:                return window.miFirebaseAuth.currentUser;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10225:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10226:        } catch (error) {}
+  C:\Users\Administrator\MI-AI\frontend\index.html:10232:        forceRefresh
+  C:\Users\Administrator\MI-AI\frontend\index.html:10233:    ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10234:        var user = await getFirebaseUser();
+  C:\Users\Administrator\MI-AI\frontend\index.html:10235:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10236:        if (!user || typeof user.getIdToken !== "function") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10250:            );
+  C:\Users\Administrator\MI-AI\frontend\index.html:10251:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10252:            var response = await fetch(
+  C:\Users\Administrator\MI-AI\frontend\index.html:10253:                "/api/chief-owner/me",
+  C:\Users\Administrator\MI-AI\frontend\index.html:10254:                {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10313:    };
+  C:\Users\Administrator\MI-AI\frontend\index.html:10314:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10315:    function attachFirebaseListener() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10316:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10317:            if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:10318:                window.firebase &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:10319:                firebase.auth &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:10320:                typeof firebase.auth === "function"
+  C:\Users\Administrator\MI-AI\frontend\index.html:10321:            ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10322:                firebase.auth().onAuthStateChanged(
+  C:\Users\Administrator\MI-AI\frontend\index.html:10323:                    function (user) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10324:                        if (user) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10350:            attempts += 1;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10351:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10352:            if (attachFirebaseListener()) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10353:                clearInterval(timer);
+  C:\Users\Administrator\MI-AI\frontend\index.html:10354:                synchronizeChiefOwnerAccess(true);
+  C:\Users\Administrator\MI-AI\frontend\index.html:10389:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10390:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10391:    if (document.readyState === "loading") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10392:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:10393:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:10394:            startOwnerSynchronization,
+  C:\Users\Administrator\MI-AI\frontend\index.html:10395:            { once: true }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10525:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10526:<script>
+> C:\Users\Administrator\MI-AI\frontend\index.html:10527:window.FIREBASE_CONFIG = {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10528:  apiKey: "AIzaSyAxrIAKDz0b9GdHp4K_-jBKZWIcWZTww5g",
+> C:\Users\Administrator\MI-AI\frontend\index.html:10529:  authDomain: "mi-ai-99e6a.firebaseapp.com",
+  C:\Users\Administrator\MI-AI\frontend\index.html:10530:  projectId: "mi-ai-99e6a",
+> C:\Users\Administrator\MI-AI\frontend\index.html:10531:  storageBucket: "mi-ai-99e6a.firebasestorage.app",
+  C:\Users\Administrator\MI-AI\frontend\index.html:10532:  messagingSenderId: "845086558623",
+  C:\Users\Administrator\MI-AI\frontend\index.html:10533:  appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
+  C:\Users\Administrator\MI-AI\frontend\index.html:10534:};
+  C:\Users\Administrator\MI-AI\frontend\index.html:10535:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10536:let firebaseAuth = null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10537:let authMode = 'signin';
+  C:\Users\Administrator\MI-AI\frontend\index.html:10538:let user = null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10546:  { code: 'ta', file: 'ta', label: 'Tamil' }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10547:];
+> C:\Users\Administrator\MI-AI\frontend\index.html:10548:function getFirebaseConfig() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10549:  const config =
+> C:\Users\Administrator\MI-AI\frontend\index.html:10550:    window.FIREBASE_CONFIG &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:10551:    typeof window.FIREBASE_CONFIG === "object"
+> C:\Users\Administrator\MI-AI\frontend\index.html:10552:      ? window.FIREBASE_CONFIG
+  C:\Users\Administrator\MI-AI\frontend\index.html:10553:      : null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10554:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10566:}
+  C:\Users\Administrator\MI-AI\frontend\index.html:10567:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10568:async function initFirebase() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10569:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10570:    if (firebaseAuth) return firebaseAuth;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10571:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10572:    const config = getFirebaseConfig();
+  C:\Users\Administrator\MI-AI\frontend\index.html:10573:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10574:    if (!config || !config.apiKey) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10575:        throw new Error("Firebase configuration is missing.");
+  C:\Users\Administrator\MI-AI\frontend\index.html:10576:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10577:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10578:    if (!window.firebase || !window.firebase.apps) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10579:        throw new Error("Firebase SDK failed to load.");
+  C:\Users\Administrator\MI-AI\frontend\index.html:10580:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10581:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10582:    if (!window.firebase.apps.length) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10583:        window.firebase.initializeApp(config);
+  C:\Users\Administrator\MI-AI\frontend\index.html:10584:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10585:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10586:    firebaseAuth = window.firebase.auth();
+  C:\Users\Administrator\MI-AI\frontend\index.html:10587:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10588:    return firebaseAuth;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10589:}
+  C:\Users\Administrator\MI-AI\frontend\index.html:10590:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10613:  const entry = SUPPORTED_LANGUAGES.find((item) => item.code === normalized) || SUPPORTED_LANGUAGES[0];
+  C:\Users\Administrator\MI-AI\frontend\index.html:10614:  try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10615:    const response = await fetch(`./locales/${entry.file}.json`);
+  C:\Users\Administrator\MI-AI\frontend\index.html:10616:    if (!response.ok) throw new Error('missing locale');
+  C:\Users\Administrator\MI-AI\frontend\index.html:10617:    const data = await response.json();
+  C:\Users\Administrator\MI-AI\frontend\index.html:10719:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10720:    // Auto-save language to Firestore if authenticated
+> C:\Users\Administrator\MI-AI\frontend\index.html:10721:    if (window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10722:        window.firestorePersistence.saveSettings({ language: normalized }).catch(err =>
+  C:\Users\Administrator\MI-AI\frontend\index.html:10723:            console.error('[Persistence] Language save error:', err)
+  C:\Users\Administrator\MI-AI\frontend\index.html:10869:}
+  C:\Users\Administrator\MI-AI\frontend\index.html:10870:
+> C:\Users\Administrator\MI-AI\frontend\index.html:10871:function getUploadErrorMessage(xhr, fallback) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10872:  try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10873:    const parsed = JSON.parse(xhr.responseText || '{}');
+  C:\Users\Administrator\MI-AI\frontend\index.html:10882:  const token = localStorage.getItem('mi_supabase_token');
+  C:\Users\Administrator\MI-AI\frontend\index.html:10883:  if (!token) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10884:    throw new Error('Please sign in before uploading files.');
+  C:\Users\Administrator\MI-AI\frontend\index.html:10885:  }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10886:
+  C:\Users\Administrator\MI-AI\frontend\index.html:10896:      if (event.lengthComputable) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:10897:        attachmentProgress = Math.round((event.loaded / event.total) * 100);
+> C:\Users\Administrator\MI-AI\frontend\index.html:10898:        attachmentStatusText = `Uploading file ${index} of ${total}... ${attachmentProgress}%`;
+  C:\Users\Administrator\MI-AI\frontend\index.html:10899:        setAttachmentUiState(true, `<div style="font-weight:700;">${file.name}</div><div style="font-size:12px;color:#94a3b8;">${attachmentStatusText}</div>`, attachmentStatusText);
+  C:\Users\Administrator\MI-AI\frontend\index.html:10900:      }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10907:            resolve(data.attachment);
+  C:\Users\Administrator\MI-AI\frontend\index.html:10908:          } else {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10909:            reject(new Error(getUploadErrorMessage(xhr, 'Upload failed.')));
+  C:\Users\Administrator\MI-AI\frontend\index.html:10910:          }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10911:        } catch (error) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10912:          reject(new Error(getUploadErrorMessage(xhr, 'Upload failed.')));
+  C:\Users\Administrator\MI-AI\frontend\index.html:10913:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10914:      } else {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10915:        reject(new Error(getUploadErrorMessage(xhr, 'Upload failed.')));
+  C:\Users\Administrator\MI-AI\frontend\index.html:10916:      }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10917:    };
+  C:\Users\Administrator\MI-AI\frontend\index.html:10918:    xhr.onerror = () => {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10919:      reject(new Error('Network error while uploading the file.'));
+  C:\Users\Administrator\MI-AI\frontend\index.html:10920:    };
+  C:\Users\Administrator\MI-AI\frontend\index.html:10921:    xhr.send(formData);
+  C:\Users\Administrator\MI-AI\frontend\index.html:10929:  const token = localStorage.getItem('mi_supabase_token');
+  C:\Users\Administrator\MI-AI\frontend\index.html:10930:  if (!token) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:10931:    return { attachments: [], errors: [{ name: 'auth', message: 'Please sign in before uploading files.' }] };
+  C:\Users\Administrator\MI-AI\frontend\index.html:10932:  }
+  C:\Users\Administrator\MI-AI\frontend\index.html:10933:
+  C:\Users\Administrator\MI-AI\frontend\index.html:11312:
+  C:\Users\Administrator\MI-AI\frontend\index.html:11313:try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:11314:        const auth = await initFirebase();
+  C:\Users\Administrator\MI-AI\frontend\index.html:11315:        await auth.signOut();
+  C:\Users\Administrator\MI-AI\frontend\index.html:11316:    } catch (e) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:11808:
+  C:\Users\Administrator\MI-AI\frontend\index.html:11809:  try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:11810:    const res = await fetch('/api/conversations', {
+  C:\Users\Administrator\MI-AI\frontend\index.html:11811:      headers: {
+  C:\Users\Administrator\MI-AI\frontend\index.html:11812:        Authorization: 'Bearer ' + token,
+  C:\Users\Administrator\MI-AI\frontend\index.html:11831:
+  C:\Users\Administrator\MI-AI\frontend\index.html:11832:        try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:11833:          const messagesRes = await fetch('/api/messages?conversation_id=' + encodeURIComponent(conversationId), {
+  C:\Users\Administrator\MI-AI\frontend\index.html:11834:            headers: {
+  C:\Users\Administrator\MI-AI\frontend\index.html:11835:              Authorization: 'Bearer ' + token,
+  C:\Users\Administrator\MI-AI\frontend\index.html:11856:
+  C:\Users\Administrator\MI-AI\frontend\index.html:11857:        try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:11858:          const attachmentsRes = await fetch('/api/conversations/' + encodeURIComponent(conversationId) + '/attachments', {
+  C:\Users\Administrator\MI-AI\frontend\index.html:11859:            headers: {
+  C:\Users\Administrator\MI-AI\frontend\index.html:11860:              Authorization: 'Bearer ' + token,
+  C:\Users\Administrator\MI-AI\frontend\index.html:12001:
+  C:\Users\Administrator\MI-AI\frontend\index.html:12002:try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:12003:    const auth = await initFirebase();
+  C:\Users\Administrator\MI-AI\frontend\index.html:12004:    if (typeof auth.onAuthStateChanged === 'function') {
+> C:\Users\Administrator\MI-AI\frontend\index.html:12005:        auth.onAuthStateChanged(async (firebaseUser) => {
+> C:\Users\Administrator\MI-AI\frontend\index.html:12006:            if (!firebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12007:                user = null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:12008:                localStorage.removeItem('mi_supabase_token');
+  C:\Users\Administrator\MI-AI\frontend\index.html:12025:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:12026:
+> C:\Users\Administrator\MI-AI\frontend\index.html:12027:            const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
+> C:\Users\Administrator\MI-AI\frontend\index.html:12028:            const nextToken = await firebaseUser.getIdToken();
+  C:\Users\Administrator\MI-AI\frontend\index.html:12029:            user = nextUser;
+  C:\Users\Administrator\MI-AI\frontend\index.html:12030:            localStorage.setItem('mi_supabase_token', nextToken);
+> C:\Users\Administrator\MI-AI\frontend\index.html:12031:            localStorage.setItem('mi_user_id', firebaseUser.uid);
+> C:\Users\Administrator\MI-AI\frontend\index.html:12032:            localStorage.setItem('mi_user_email', firebaseUser.email || '');
+> C:\Users\Administrator\MI-AI\frontend\index.html:12033:            accountId = firebaseUser.uid;
+  C:\Users\Administrator\MI-AI\frontend\index.html:12034:            localStorage.setItem('mi_account', accountId);
+  C:\Users\Administrator\MI-AI\frontend\index.html:12035:
+  C:\Users\Administrator\MI-AI\frontend\index.html:12065:                    console.log('[Persistence] User settings loaded from Firestore');
+  C:\Users\Administrator\MI-AI\frontend\index.html:12066:                } catch (err) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:12067:                    console.error('[Persistence] Error loading user data on login:', err);
+  C:\Users\Administrator\MI-AI\frontend\index.html:12068:                    await loadUserChats();
+  C:\Users\Administrator\MI-AI\frontend\index.html:12069:                }
+  C:\Users\Administrator\MI-AI\frontend\index.html:12173:            .slice(2, 8)}`;
+  C:\Users\Administrator\MI-AI\frontend\index.html:12174:
+> C:\Users\Administrator\MI-AI\frontend\index.html:12175:    function initializeChat(chatId) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12176:        chats[chatId] = [];
+  C:\Users\Administrator\MI-AI\frontend\index.html:12177:
+  C:\Users\Administrator\MI-AI\frontend\index.html:12242:    */
+  C:\Users\Administrator\MI-AI\frontend\index.html:12243:    if (!isAuthenticated()) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:12244:        initializeChat(localId);
+  C:\Users\Administrator\MI-AI\frontend\index.html:12245:
+  C:\Users\Administrator\MI-AI\frontend\index.html:12246:        localStorage.setItem(
+  C:\Users\Administrator\MI-AI\frontend\index.html:12279:    try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12280:        const response =
+> C:\Users\Administrator\MI-AI\frontend\index.html:12281:            await fetch(
+  C:\Users\Administrator\MI-AI\frontend\index.html:12282:                "/api/conversations",
+  C:\Users\Administrator\MI-AI\frontend\index.html:12283:                {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12344:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:12345:
+> C:\Users\Administrator\MI-AI\frontend\index.html:12346:    initializeChat(
+  C:\Users\Administrator\MI-AI\frontend\index.html:12347:        serverId ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:12348:        localId
+  C:\Users\Administrator\MI-AI\frontend\index.html:12520:
+  C:\Users\Administrator\MI-AI\frontend\index.html:12521:// Auto-save chat title to Firestore
+> C:\Users\Administrator\MI-AI\frontend\index.html:12522:if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12523:    window.firestorePersistence.saveChat(selectedChat, { title: name }).catch(err =>
+  C:\Users\Administrator\MI-AI\frontend\index.html:12524:        console.error('[Persistence] Chat rename error:', err)
+  C:\Users\Administrator\MI-AI\frontend\index.html:12557:
+  C:\Users\Administrator\MI-AI\frontend\index.html:12558:// Auto-delete from Firestore
+> C:\Users\Administrator\MI-AI\frontend\index.html:12559:if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12560:    try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:12561:        const db = window.firebase.firestore();
+> C:\Users\Administrator\MI-AI\frontend\index.html:12562:        db.collection('users').doc(window.miFirebaseUser.uid).collection('chats').doc(chatId).delete()
+  C:\Users\Administrator\MI-AI\frontend\index.html:12563:            .catch(err => console.error('[Persistence] Chat delete error:', err));
+  C:\Users\Administrator\MI-AI\frontend\index.html:12564:    } catch (err) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12580:
+  C:\Users\Administrator\MI-AI\frontend\index.html:12581:// Auto-save pin status to Firestore
+> C:\Users\Administrator\MI-AI\frontend\index.html:12582:if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:12583:    window.firestorePersistence.saveChat(selectedChat, { pin: chats[selectedChat].pin }).catch(err =>
+  C:\Users\Administrator\MI-AI\frontend\index.html:12584:        console.error('[Persistence] Chat pin error:', err)
+  C:\Users\Administrator\MI-AI\frontend\index.html:13096:    const endpoint = endpoints[i];
+  C:\Users\Administrator\MI-AI\frontend\index.html:13097:    try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:13098:      const response = await fetch(endpoint, { ...options, signal });
+  C:\Users\Administrator\MI-AI\frontend\index.html:13099:      if (response.ok) return response;
+  C:\Users\Administrator\MI-AI\frontend\index.html:13100:      const text = await response.text().catch(() => '');
+  C:\Users\Administrator\MI-AI\frontend\index.html:13115:    const endpoint = endpoints[i];
+  C:\Users\Administrator\MI-AI\frontend\index.html:13116:    try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:13117:      const response = await fetch(endpoint, {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13118:        method: 'POST',
+  C:\Users\Administrator\MI-AI\frontend\index.html:13119:        headers: { 'Content-Type': 'application/json' },
+  C:\Users\Administrator\MI-AI\frontend\index.html:13160:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13161:    // Auto-save AI message to Firestore if authenticated
+> C:\Users\Administrator\MI-AI\frontend\index.html:13162:    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13163:        const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
+  C:\Users\Administrator\MI-AI\frontend\index.html:13164:        window.firestorePersistence.saveMessage(conversationId, messageId, {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13211:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13212:  let uploadedAttachments = [];
+> C:\Users\Administrator\MI-AI\frontend\index.html:13213:  let uploadErrors = [];
+  C:\Users\Administrator\MI-AI\frontend\index.html:13214:  try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13215:    const uploadResult = pendingAttachments.length ? await uploadPendingAttachments() : { attachments: [], errors: [] };
+  C:\Users\Administrator\MI-AI\frontend\index.html:13216:    uploadedAttachments = uploadResult.attachments || [];
+> C:\Users\Administrator\MI-AI\frontend\index.html:13217:    uploadErrors = uploadResult.errors || [];
+  C:\Users\Administrator\MI-AI\frontend\index.html:13218:    if (pendingAttachments.length && !uploadedAttachments.length) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13219:      replyInProgress = false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:13242:  }
+  C:\Users\Administrator\MI-AI\frontend\index.html:13243:
+> C:\Users\Administrator\MI-AI\frontend\index.html:13244:  if (uploadErrors.length) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:13245:    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' � ');
+  C:\Users\Administrator\MI-AI\frontend\index.html:13246:    setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
+  C:\Users\Administrator\MI-AI\frontend\index.html:13247:  }
+  C:\Users\Administrator\MI-AI\frontend\index.html:13261:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13262:  // Auto-save user message to Firestore if authenticated
+> C:\Users\Administrator\MI-AI\frontend\index.html:13263:  if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13264:      const messageId = `user_msg_${Date.now()}_${Math.random()}`;
+  C:\Users\Administrator\MI-AI\frontend\index.html:13265:      window.firestorePersistence.saveMessage(conversationId, messageId, {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13274:    if (token && conversationId) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13275:      const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
+> C:\Users\Administrator\MI-AI\frontend\index.html:13276:      const messageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'me', content: msg, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [], attachment_meta: uploadedAttachments.length ? uploadedAttachments.map((attachment) => ({ file_name: attachment.file_name, file_type: attachment.file_type, file_size: attachment.file_size, upload_time: attachment.upload_time, uploaded_file_url: attachment.uploaded_file_url || null })) : null }) }).catch(() => {});
+  C:\Users\Administrator\MI-AI\frontend\index.html:13277:      if (messageRes && messageRes.ok) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:13278:        await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: msg, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
+  C:\Users\Administrator\MI-AI\frontend\index.html:13279:      }
+  C:\Users\Administrator\MI-AI\frontend\index.html:13280:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:13303:    }, 45000);
+  C:\Users\Administrator\MI-AI\frontend\index.html:13304:
+> C:\Users\Administrator\MI-AI\frontend\index.html:13305:    const streamResponse = await fetchChatReply({ message: msg, history, conversation_id: conversationId, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [] }, replyAbortController.signal, true);
+  C:\Users\Administrator\MI-AI\frontend\index.html:13306:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13307:    if (!streamResponse.ok) throw new Error('Server returned ' + streamResponse.status);
+  C:\Users\Administrator\MI-AI\frontend\index.html:13409:        if (token && conversationId) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13410:          const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
+> C:\Users\Administrator\MI-AI\frontend\index.html:13411:          const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'ai', content: fullText }) });
+  C:\Users\Administrator\MI-AI\frontend\index.html:13412:          if (aiMessageRes && aiMessageRes.ok) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:13413:            await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: fullText, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
+  C:\Users\Administrator\MI-AI\frontend\index.html:13414:          }
+  C:\Users\Administrator\MI-AI\frontend\index.html:13415:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:13582:    if (!token) return null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:13583:    try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:13584:        const res = await fetch('/api/conversations', {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13585:            method: 'POST',
+  C:\Users\Administrator\MI-AI\frontend\index.html:13586:            headers: {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13613:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13614:    // Save to Firestore if authenticated
+> C:\Users\Administrator\MI-AI\frontend\index.html:13615:    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13616:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13617:            // Save all chats and messages to Firestore
+  C:\Users\Administrator\MI-AI\frontend\index.html:13703:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13704:// Auto-save to Firestore if authenticated
+> C:\Users\Administrator\MI-AI\frontend\index.html:13705:if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13706:    window.firestorePersistence.saveSettings({ theme: c }).catch(err =>
+  C:\Users\Administrator\MI-AI\frontend\index.html:13707:        console.error('[Persistence] Theme save error:', err)
+  C:\Users\Administrator\MI-AI\frontend\index.html:13716:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13717:// Auto-save to Firestore if authenticated
+> C:\Users\Administrator\MI-AI\frontend\index.html:13718:if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13719:    window.firestorePersistence.saveSettings({ fontSize: parseInt(v) }).catch(err =>
+  C:\Users\Administrator\MI-AI\frontend\index.html:13720:        console.error('[Persistence] Font size save error:', err)
+  C:\Users\Administrator\MI-AI\frontend\index.html:13949:
+  C:\Users\Administrator\MI-AI\frontend\index.html:13950:  try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:13951:    const auth = await initFirebase();
+  C:\Users\Administrator\MI-AI\frontend\index.html:13952:    await auth.sendPasswordResetEmail(email, {
+  C:\Users\Administrator\MI-AI\frontend\index.html:13953:      url: window.location.origin || window.location.href,
+  C:\Users\Administrator\MI-AI\frontend\index.html:14000:
+  C:\Users\Administrator\MI-AI\frontend\index.html:14001:  try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:14002:    const auth = await initFirebase();
+  C:\Users\Administrator\MI-AI\frontend\index.html:14003:
+> C:\Users\Administrator\MI-AI\frontend\index.html:14004:    // Create Firebase user
+  C:\Users\Administrator\MI-AI\frontend\index.html:14005:    const result = await auth.createUserWithEmailAndPassword(email, password);
+> C:\Users\Administrator\MI-AI\frontend\index.html:14006:    const firebaseUser = result.user;
+  C:\Users\Administrator\MI-AI\frontend\index.html:14007:
+  C:\Users\Administrator\MI-AI\frontend\index.html:14008:    // Send verification email
+> C:\Users\Administrator\MI-AI\frontend\index.html:14009:    await firebaseUser.sendEmailVerification();
+  C:\Users\Administrator\MI-AI\frontend\index.html:14010:
+  C:\Users\Administrator\MI-AI\frontend\index.html:14011:    // Sign out the user immediately
+  C:\Users\Administrator\MI-AI\frontend\index.html:14053:
+  C:\Users\Administrator\MI-AI\frontend\index.html:14054:  try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:14055:    const auth = await initFirebase();
+  C:\Users\Administrator\MI-AI\frontend\index.html:14056:
+> C:\Users\Administrator\MI-AI\frontend\index.html:14057:    // Sign in with Firebase
+  C:\Users\Administrator\MI-AI\frontend\index.html:14058:    const result = await auth.signInWithEmailAndPassword(email, password);
+> C:\Users\Administrator\MI-AI\frontend\index.html:14059:    const firebaseUser = result.user;
+  C:\Users\Administrator\MI-AI\frontend\index.html:14060:
+  C:\Users\Administrator\MI-AI\frontend\index.html:14061:    // Check if email is verified
+> C:\Users\Administrator\MI-AI\frontend\index.html:14062:    if (!firebaseUser.emailVerified) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:14063:      // Email not verified - send verification email and sign out
+> C:\Users\Administrator\MI-AI\frontend\index.html:14064:      await firebaseUser.sendEmailVerification();
+  C:\Users\Administrator\MI-AI\frontend\index.html:14065:      await auth.signOut();
+  C:\Users\Administrator\MI-AI\frontend\index.html:14066:
+  C:\Users\Administrator\MI-AI\frontend\index.html:14077:    // Email is verified - continue with login
+  C:\Users\Administrator\MI-AI\frontend\index.html:14078:    user = {
+> C:\Users\Administrator\MI-AI\frontend\index.html:14079:      id: firebaseUser.uid,
+> C:\Users\Administrator\MI-AI\frontend\index.html:14080:      email: firebaseUser.email
+  C:\Users\Administrator\MI-AI\frontend\index.html:14081:    };
+  C:\Users\Administrator\MI-AI\frontend\index.html:14082:
+> C:\Users\Administrator\MI-AI\frontend\index.html:14083:    const idToken = await firebaseUser.getIdToken();
+  C:\Users\Administrator\MI-AI\frontend\index.html:14084:    localStorage.setItem('mi_supabase_token', idToken);
+> C:\Users\Administrator\MI-AI\frontend\index.html:14085:    localStorage.setItem('mi_user_id', firebaseUser.uid);
+> C:\Users\Administrator\MI-AI\frontend\index.html:14086:    localStorage.setItem('mi_user_email', firebaseUser.email || '');
+  C:\Users\Administrator\MI-AI\frontend\index.html:14087:    window.dispatchEvent(new Event('mi-chat-user-changed'));
+  C:\Users\Administrator\MI-AI\frontend\index.html:14088:
+  C:\Users\Administrator\MI-AI\frontend\index.html:14098:        {
+  C:\Users\Administrator\MI-AI\frontend\index.html:14099:          detail: {
+> C:\Users\Administrator\MI-AI\frontend\index.html:14100:            email: firebaseUser.email || '',
+> C:\Users\Administrator\MI-AI\frontend\index.html:14101:            user: firebaseUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:14102:          }
+  C:\Users\Administrator\MI-AI\frontend\index.html:14103:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:14123:// Initialization diagnostics
+  C:\Users\Administrator\MI-AI\frontend\index.html:14124:try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:14125:  console.log("MI AI frontend initialized successfully");
+  C:\Users\Administrator\MI-AI\frontend\index.html:14126:  // Expose existing functions globally so inline handlers can call them
+  C:\Users\Administrator\MI-AI\frontend\index.html:14127:  if (typeof newChat === 'function') window.newChat = newChat;
+  C:\Users\Administrator\MI-AI\frontend\index.html:14303:            send: "Send",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14304:            stop: "Stop",
+> C:\Users\Administrator\MI-AI\frontend\index.html:14305:            loading: "Loading...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14306:            pleaseWait: "Please wait...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14307:            verify: "Verify",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14364:            send: "Send",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14365:            stop: "Stop",
+> C:\Users\Administrator\MI-AI\frontend\index.html:14366:            loading: "Loading...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14367:            pleaseWait: "Please wait...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14368:            verify: "Verify",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14425:            send: "Send",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14426:            stop: "Stop",
+> C:\Users\Administrator\MI-AI\frontend\index.html:14427:            loading: "Loading...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14428:            pleaseWait: "Please wait...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14429:            verify: "Verify",
+  C:\Users\Administrator\MI-AI\frontend\index.html:14961:    };
+  C:\Users\Administrator\MI-AI\frontend\index.html:14962:
+> C:\Users\Administrator\MI-AI\frontend\index.html:14963:    function initialize() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:14964:        const languageSelector =
+  C:\Users\Administrator\MI-AI\frontend\index.html:14965:            document.getElementById(
+  C:\Users\Administrator\MI-AI\frontend\index.html:15044:
+  C:\Users\Administrator\MI-AI\frontend\index.html:15045:    if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:15046:        document.readyState === "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:15047:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:15048:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:15049:            "DOMContentLoaded",
+> C:\Users\Administrator\MI-AI\frontend\index.html:15050:            initialize,
+  C:\Users\Administrator\MI-AI\frontend\index.html:15051:            { once: true }
+  C:\Users\Administrator\MI-AI\frontend\index.html:15052:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:15053:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:15054:    else {
+> C:\Users\Administrator\MI-AI\frontend\index.html:15055:        initialize();
+  C:\Users\Administrator\MI-AI\frontend\index.html:15056:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:15057:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:16060:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:16061:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:16062:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:16063:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:16064:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:16065:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:16066:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:16067:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:16233:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:16234:
+> C:\Users\Administrator\MI-AI\frontend\index.html:16235:    function initialize() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:16236:        setViewportVariables();
+  C:\Users\Administrator\MI-AI\frontend\index.html:16237:        autoGrowMessageInput();
+  C:\Users\Administrator\MI-AI\frontend\index.html:16346:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:16347:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:16348:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:16349:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:16350:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:16351:            "DOMContentLoaded",
+> C:\Users\Administrator\MI-AI\frontend\index.html:16352:            initialize,
+  C:\Users\Administrator\MI-AI\frontend\index.html:16353:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:16354:                once: true
+  C:\Users\Administrator\MI-AI\frontend\index.html:16357:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:16358:    else {
+> C:\Users\Administrator\MI-AI\frontend\index.html:16359:        initialize();
+  C:\Users\Administrator\MI-AI\frontend\index.html:16360:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:16361:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:17227:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:17228:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:17229:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:17230:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:17231:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:17232:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:17233:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:17234:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18022:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:18023:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:18024:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:18025:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18026:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:18027:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:18028:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:18029:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18453:
+  C:\Users\Administrator\MI-AI\frontend\index.html:18454:    document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:18455:        "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:18456:        function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18457:            window.setTimeout(
+  C:\Users\Administrator\MI-AI\frontend\index.html:18628:
+  C:\Users\Administrator\MI-AI\frontend\index.html:18629:    if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:18630:        document.readyState === "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:18631:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18632:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:18633:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:18634:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:18635:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18670:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:18671:
+> C:\Users\Administrator\MI-AI\frontend\index.html:18672:    function firebaseUser() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18673:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:18674:            return (
+> C:\Users\Administrator\MI-AI\frontend\index.html:18675:                window.miFirebaseAuth?.currentUser ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:18676:                window.firebaseAuth?.currentUser ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:18677:                (
+> C:\Users\Administrator\MI-AI\frontend\index.html:18678:                    window.firebase &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:18679:                    typeof window.firebase.auth === "function"
+> C:\Users\Administrator\MI-AI\frontend\index.html:18680:                        ? window.firebase.auth().currentUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:18681:                        : null
+  C:\Users\Administrator\MI-AI\frontend\index.html:18682:                ) ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:18690:
+  C:\Users\Administrator\MI-AI\frontend\index.html:18691:    function accountIdentity() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:18692:        const firebaseAccount =
+> C:\Users\Administrator\MI-AI\frontend\index.html:18693:            firebaseUser();
+  C:\Users\Administrator\MI-AI\frontend\index.html:18694:
+  C:\Users\Administrator\MI-AI\frontend\index.html:18695:        return normalize(
+> C:\Users\Administrator\MI-AI\frontend\index.html:18696:            firebaseAccount?.email ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:18697:            localStorage.getItem(
+  C:\Users\Administrator\MI-AI\frontend\index.html:18698:                "mi_user_email"
+  C:\Users\Administrator\MI-AI\frontend\index.html:18699:            ) ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:18700:            firebaseAccount?.uid ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:18701:            localStorage.getItem(
+  C:\Users\Administrator\MI-AI\frontend\index.html:18702:                "mi_user_id"
+  C:\Users\Administrator\MI-AI\frontend\index.html:18710:            accountIdentity() &&
+  C:\Users\Administrator\MI-AI\frontend\index.html:18711:            (
+> C:\Users\Administrator\MI-AI\frontend\index.html:18712:                firebaseUser() ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:18713:                localStorage.getItem(
+  C:\Users\Administrator\MI-AI\frontend\index.html:18714:                    "mi_supabase_token"
+  C:\Users\Administrator\MI-AI\frontend\index.html:19025:        /*
+  C:\Users\Administrator\MI-AI\frontend\index.html:19026:          Never replace a non-empty backup with an
+> C:\Users\Administrator\MI-AI\frontend\index.html:19027:          empty state during initial page loading.
+  C:\Users\Administrator\MI-AI\frontend\index.html:19028:        */
+  C:\Users\Administrator\MI-AI\frontend\index.html:19029:        const previous =
+  C:\Users\Administrator\MI-AI\frontend\index.html:19284:
+  C:\Users\Administrator\MI-AI\frontend\index.html:19285:            /*
+> C:\Users\Administrator\MI-AI\frontend\index.html:19286:              Load server/Firebase data if the app has
+> C:\Users\Administrator\MI-AI\frontend\index.html:19287:              its normal loader. Never allow an empty
+  C:\Users\Administrator\MI-AI\frontend\index.html:19288:              server response to erase local data.
+  C:\Users\Administrator\MI-AI\frontend\index.html:19289:            */
+  C:\Users\Administrator\MI-AI\frontend\index.html:19352:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:19353:            auth =
+> C:\Users\Administrator\MI-AI\frontend\index.html:19354:                window.miFirebaseAuth ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:19355:                window.firebaseAuth ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:19356:                (
+> C:\Users\Administrator\MI-AI\frontend\index.html:19357:                    window.firebase &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:19358:                    typeof window.firebase
+  C:\Users\Administrator\MI-AI\frontend\index.html:19359:                        .auth === "function"
+> C:\Users\Administrator\MI-AI\frontend\index.html:19360:                        ? window.firebase.auth()
+  C:\Users\Administrator\MI-AI\frontend\index.html:19361:                        : null
+  C:\Users\Administrator\MI-AI\frontend\index.html:19362:                );
+  C:\Users\Administrator\MI-AI\frontend\index.html:19625:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:19626:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:19627:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:19628:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:19629:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:19630:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:19631:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:19632:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:19882:
+  C:\Users\Administrator\MI-AI\frontend\index.html:19883:        const response =
+> C:\Users\Administrator\MI-AI\frontend\index.html:19884:            await fetch(
+  C:\Users\Administrator\MI-AI\frontend\index.html:19885:                "/api/live-assist",
+  C:\Users\Administrator\MI-AI\frontend\index.html:19886:                {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20113:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:20114:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:20115:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:20116:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20117:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:20118:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:20119:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:20120:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20261:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:20262:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:20263:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:20264:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20265:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:20266:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:20267:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:20268:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20438:            try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20439:                const response =
+> C:\Users\Administrator\MI-AI\frontend\index.html:20440:                    await fetch(
+  C:\Users\Administrator\MI-AI\frontend\index.html:20441:                        endpoint,
+  C:\Users\Administrator\MI-AI\frontend\index.html:20442:                        {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20682:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:20683:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:20684:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:20685:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20686:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:20687:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:20688:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:20689:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:20756:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:20757:        catch (error) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:20758:            // Continue to the existing URL loader.
+  C:\Users\Administrator\MI-AI\frontend\index.html:20759:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:20760:
+  C:\Users\Administrator\MI-AI\frontend\index.html:21445:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:21446:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:21447:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:21448:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:21449:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:21450:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:21451:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:21452:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:21667:
+  C:\Users\Administrator\MI-AI\frontend\index.html:21668:        window.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:21669:            "mi-firebase-auth-changed",
+  C:\Users\Administrator\MI-AI\frontend\index.html:21670:            blockAccountChatRendering,
+  C:\Users\Administrator\MI-AI\frontend\index.html:21671:            true
+  C:\Users\Administrator\MI-AI\frontend\index.html:21714:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:21715:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:21716:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:21717:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:21718:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:21719:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:21720:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:21721:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:22465:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:22466:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:22467:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:22468:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:22469:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:22470:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:22471:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:22472:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:23799:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:23800:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:23801:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:23802:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:23803:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:23804:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:23805:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:23806:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:23888:            detail?.email ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:23889:            detail?.user?.email ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:23890:            window.miFirebaseAuth
+  C:\Users\Administrator\MI-AI\frontend\index.html:23891:                ?.currentUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:23892:                ?.email ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:23893:            window.miFirebaseUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:23894:                ?.email ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:23895:            localStorage.getItem(
+  C:\Users\Administrator\MI-AI\frontend\index.html:24169:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:24170:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:24171:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:24172:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:24173:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:24174:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:24175:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:24176:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25870:    if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:25871:        document.readyState ===
+> C:\Users\Administrator\MI-AI\frontend\index.html:25872:        "loading"
+  C:\Users\Administrator\MI-AI\frontend\index.html:25873:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25874:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:25875:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:25876:            install,
+  C:\Users\Administrator\MI-AI\frontend\index.html:25877:            {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25909:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25910:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25911:<!-- MI AI FIREBASE SHARE AUTH BRIDGE START -->
+  C:\Users\Administrator\MI-AI\frontend\index.html:25912:<script>
+  C:\Users\Administrator\MI-AI\frontend\index.html:25913:(function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25915:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25916:    const nativeFetch = window.fetch.bind(window);
+> C:\Users\Administrator\MI-AI\frontend\index.html:25917:    let currentFirebaseUser = null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25918:    let authReadyResolve = null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25919:    let authReadyPromise = new Promise(function (resolve) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25934:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:25935:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25936:    async function waitForFirebaseUser() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:25937:        if (currentFirebaseUser) return currentFirebaseUser;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25938:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25939:        await Promise.race([
+  C:\Users\Administrator\MI-AI\frontend\index.html:25943:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25944:        return (
+> C:\Users\Administrator\MI-AI\frontend\index.html:25945:            currentFirebaseUser ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:25946:            window.miFirebaseUser ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:25947:            (window.firebase && firebase.auth && firebase.auth().currentUser) ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:25948:            null
+  C:\Users\Administrator\MI-AI\frontend\index.html:25949:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:25950:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:25951:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25952:    async function refreshFirebaseToken(forceRefresh) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:25953:        const firebaseUser = await waitForFirebaseUser();
+  C:\Users\Administrator\MI-AI\frontend\index.html:25954:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25955:        if (!firebaseUser || typeof firebaseUser.getIdToken !== "function") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25956:            localStorage.removeItem("mi_supabase_token");
+  C:\Users\Administrator\MI-AI\frontend\index.html:25957:            return "";
+  C:\Users\Administrator\MI-AI\frontend\index.html:25958:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:25959:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25960:        const token = await firebaseUser.getIdToken(Boolean(forceRefresh));
+  C:\Users\Administrator\MI-AI\frontend\index.html:25961:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25962:        localStorage.setItem("mi_supabase_token", token);
+> C:\Users\Administrator\MI-AI\frontend\index.html:25963:        localStorage.setItem("mi_user_id", firebaseUser.uid || "");
+  C:\Users\Administrator\MI-AI\frontend\index.html:25964:        localStorage.setItem(
+  C:\Users\Administrator\MI-AI\frontend\index.html:25965:            "mi_user_email",
+> C:\Users\Administrator\MI-AI\frontend\index.html:25966:            String(firebaseUser.email || "").toLowerCase()
+  C:\Users\Administrator\MI-AI\frontend\index.html:25967:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:25968:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25969:        window.miFirebaseUser = firebaseUser;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25970:        return token;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25971:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:25972:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25973:    window.miGetFreshFirebaseToken = refreshFirebaseToken;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25974:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25975:    function connectAuthListener() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:25976:        if (!window.firebase || !firebase.auth || typeof firebase.auth !== "function") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25977:            setTimeout(connectAuthListener, 150);
+  C:\Users\Administrator\MI-AI\frontend\index.html:25978:            return;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25979:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:25980:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25981:        firebase.auth().onAuthStateChanged(async function (firebaseUser) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:25982:            currentFirebaseUser = firebaseUser || null;
+> C:\Users\Administrator\MI-AI\frontend\index.html:25983:            window.miFirebaseUser = firebaseUser || null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25984:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25985:            if (authReadyResolve) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:25986:                authReadyResolve(firebaseUser || null);
+  C:\Users\Administrator\MI-AI\frontend\index.html:25987:                authReadyResolve = null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25988:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:25989:
+> C:\Users\Administrator\MI-AI\frontend\index.html:25990:            if (!firebaseUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:25991:                localStorage.removeItem("mi_supabase_token");
+  C:\Users\Administrator\MI-AI\frontend\index.html:25992:                return;
+  C:\Users\Administrator\MI-AI\frontend\index.html:25994:
+  C:\Users\Administrator\MI-AI\frontend\index.html:25995:            try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:25996:                await refreshFirebaseToken(true);
+  C:\Users\Administrator\MI-AI\frontend\index.html:25997:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:25998:            catch (error) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:25999:                console.error("[MI AI] Firebase token refresh failed:", error);
+  C:\Users\Administrator\MI-AI\frontend\index.html:26000:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26001:        });
+  C:\Users\Administrator\MI-AI\frontend\index.html:26017:
+  C:\Users\Administrator\MI-AI\frontend\index.html:26018:        let token = "";
+> C:\Users\Administrator\MI-AI\frontend\index.html:26019:        try { token = await refreshFirebaseToken(false); }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26020:        catch (error) { console.warn("[MI AI] Normal token refresh failed:", error); }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26021:
+  C:\Users\Administrator\MI-AI\frontend\index.html:26029:        if (response.status === 401 && token) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:26030:            try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:26031:                token = await refreshFirebaseToken(true);
+  C:\Users\Administrator\MI-AI\frontend\index.html:26032:                headers.set("Authorization", "Bearer " + token);
+  C:\Users\Administrator\MI-AI\frontend\index.html:26033:                options.headers = headers;
+  C:\Users\Administrator\MI-AI\frontend\index.html:26035:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26036:            catch (error) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:26037:                console.error("[MI AI] Forced Firebase token refresh failed:", error);
+  C:\Users\Administrator\MI-AI\frontend\index.html:26038:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26039:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26045:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:26046:</script>
+> C:\Users\Administrator\MI-AI\frontend\index.html:26047:<!-- MI AI FIREBASE SHARE AUTH BRIDGE END -->
+  C:\Users\Administrator\MI-AI\frontend\index.html:26048:
+  C:\Users\Administrator\MI-AI\frontend\index.html:26049:
+  C:\Users\Administrator\MI-AI\frontend\index.html:26316:                copied: "Copied",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26317:                saved: "Saved",
+> C:\Users\Administrator\MI-AI\frontend\index.html:26318:                loading: "Loading chats...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26319:                loaded: "Chats loaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26320:                online: "Online",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26344:                copied: "?????? ???",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26345:                saved: "?????? ???",
+> C:\Users\Administrator\MI-AI\frontend\index.html:26346:                loading: "????? ?????????...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26347:                loaded: "????? ????? ???",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26348:                online: "?????????? ?????????",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26372:                copied: "?????????????????",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26373:                saved: "???????????????",
+> C:\Users\Administrator\MI-AI\frontend\index.html:26374:                loading: "????????? ??????????????...",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26375:                loaded: "????????? ???????????",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26376:                online: "???????",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26663:            ["mi-chat-unpinned", "unpinned", "success"],
+  C:\Users\Administrator\MI-AI\frontend\index.html:26664:            ["mi-share-created", "shared", "share"],
+> C:\Users\Administrator\MI-AI\frontend\index.html:26665:            ["mi-chats-loading", "loading", "thinking"],
+  C:\Users\Administrator\MI-AI\frontend\index.html:26666:            ["mi-chats-loaded", "loaded", "success"],
+  C:\Users\Administrator\MI-AI\frontend\index.html:26667:            ["mi-message-sent", "sent", "success"],
+  C:\Users\Administrator\MI-AI\frontend\index.html:26737:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:26738:
+> C:\Users\Administrator\MI-AI\frontend\index.html:26739:    if (document.readyState === "loading") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:26740:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:26741:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:26742:            start,
+  C:\Users\Administrator\MI-AI\frontend\index.html:26743:            { once: true }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27274:    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:27275:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27276:    if (document.readyState === "loading") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27277:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:27278:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:27279:            startClickableFeature,
+  C:\Users\Administrator\MI-AI\frontend\index.html:27280:            { once: true }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27313:
+  C:\Users\Administrator\MI-AI\frontend\index.html:27314:    window.addEventListener("load", releaseBootGuard, { once: true });
+> C:\Users\Administrator\MI-AI\frontend\index.html:27315:    window.addEventListener("mi-firebase-auth-changed", function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27316:        window.setTimeout(releaseBootGuard, 80);
+  C:\Users\Administrator\MI-AI\frontend\index.html:27317:    }, { once: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:27338:        tokenKey: "",
+  C:\Users\Administrator\MI-AI\frontend\index.html:27339:        loaded: false,
+> C:\Users\Administrator\MI-AI\frontend\index.html:27340:        loading: false,
+  C:\Users\Administrator\MI-AI\frontend\index.html:27341:        isStaff: false,
+  C:\Users\Administrator\MI-AI\frontend\index.html:27342:        isChiefOwner: false,
+  C:\Users\Administrator\MI-AI\frontend\index.html:27349:    window.miAdminAccess = state;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27350:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27351:    function findCurrentFirebaseUser() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27352:        const candidates = [];
+  C:\Users\Administrator\MI-AI\frontend\index.html:27353:
+  C:\Users\Administrator\MI-AI\frontend\index.html:27360:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27361:            if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:27362:                window.firebaseAuth &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:27363:                window.firebaseAuth.currentUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:27364:            ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:27365:                candidates.push(window.firebaseAuth.currentUser);
+  C:\Users\Administrator\MI-AI\frontend\index.html:27366:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27367:        } catch (_) {}
+  C:\Users\Administrator\MI-AI\frontend\index.html:27369:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27370:            if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:27371:                window.firebase &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:27372:                typeof window.firebase.auth === "function"
+  C:\Users\Administrator\MI-AI\frontend\index.html:27373:            ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27374:                const legacyUser =
+> C:\Users\Administrator\MI-AI\frontend\index.html:27375:                    window.firebase.auth().currentUser;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27376:
+  C:\Users\Administrator\MI-AI\frontend\index.html:27377:                if (legacyUser) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27421:        state.tokenKey = "";
+  C:\Users\Administrator\MI-AI\frontend\index.html:27422:        state.loaded = false;
+> C:\Users\Administrator\MI-AI\frontend\index.html:27423:        state.loading = false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27424:        state.isStaff = false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27425:        state.isChiefOwner = false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27756:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27757:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27758:    async function loadAdminAccess(user) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27759:        if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:27760:            !user ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:27765:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27766:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27767:        if (state.loading) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27768:            return;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27769:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27780:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27781:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27782:        state.loading = true;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27783:
+  C:\Users\Administrator\MI-AI\frontend\index.html:27784:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27785:            const token = await user.getIdToken(true);
+  C:\Users\Administrator\MI-AI\frontend\index.html:27786:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27787:            const response = await fetch(
+  C:\Users\Administrator\MI-AI\frontend\index.html:27788:                "/api/admin/me",
+  C:\Users\Administrator\MI-AI\frontend\index.html:27789:                {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27809:                throw new Error(
+  C:\Users\Administrator\MI-AI\frontend\index.html:27810:                    data.message ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:27811:                    "Permission loading failed."
+  C:\Users\Administrator\MI-AI\frontend\index.html:27812:                );
+  C:\Users\Administrator\MI-AI\frontend\index.html:27813:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27815:            state.uid = uid;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27816:            state.loaded = true;
+> C:\Users\Administrator\MI-AI\frontend\index.html:27817:            state.loading = false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27818:            state.isStaff =
+  C:\Users\Administrator\MI-AI\frontend\index.html:27819:                data.isStaff === true;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27857:            clearAdminState();
+  C:\Users\Administrator\MI-AI\frontend\index.html:27858:        } finally {
+> C:\Users\Administrator\MI-AI\frontend\index.html:27859:            state.loading = false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:27860:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27861:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27862:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27863:    async function synchronizeAuthorization() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:27864:        const user = findCurrentFirebaseUser();
+  C:\Users\Administrator\MI-AI\frontend\index.html:27865:
+  C:\Users\Administrator\MI-AI\frontend\index.html:27866:        if (!user) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:27878:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27879:
+> C:\Users\Administrator\MI-AI\frontend\index.html:27880:        await loadAdminAccess(user);
+  C:\Users\Administrator\MI-AI\frontend\index.html:27881:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:27882:
+  C:\Users\Administrator\MI-AI\frontend\index.html:28039:    window.addEventListener(
+  C:\Users\Administrator\MI-AI\frontend\index.html:28040:        "mi-auth-state-changed",
+> C:\Users\Administrator\MI-AI\frontend\index.html:28041:        synchronizeAuthorization
+  C:\Users\Administrator\MI-AI\frontend\index.html:28042:    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:28043:
+  C:\Users\Administrator\MI-AI\frontend\index.html:28044:    window.addEventListener(
+  C:\Users\Administrator\MI-AI\frontend\index.html:28045:        "storage",
+> C:\Users\Administrator\MI-AI\frontend\index.html:28046:        synchronizeAuthorization
+  C:\Users\Administrator\MI-AI\frontend\index.html:28047:    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:28048:
+  C:\Users\Administrator\MI-AI\frontend\index.html:28051:        function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:28052:            if (!document.hidden) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:28053:                synchronizeAuthorization();
+  C:\Users\Administrator\MI-AI\frontend\index.html:28054:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:28055:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:28057:
+  C:\Users\Administrator\MI-AI\frontend\index.html:28058:    setInterval(
+> C:\Users\Administrator\MI-AI\frontend\index.html:28059:        synchronizeAuthorization,
+  C:\Users\Administrator\MI-AI\frontend\index.html:28060:        1800
+  C:\Users\Administrator\MI-AI\frontend\index.html:28061:    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:28062:
+  C:\Users\Administrator\MI-AI\frontend\index.html:28063:    setTimeout(
+> C:\Users\Administrator\MI-AI\frontend\index.html:28064:        synchronizeAuthorization,
+  C:\Users\Administrator\MI-AI\frontend\index.html:28065:        300
+  C:\Users\Administrator\MI-AI\frontend\index.html:28066:    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:28624:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:28625:
+> C:\Users\Administrator\MI-AI\frontend\index.html:28626:    if (document.readyState === "loading") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:28627:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:28628:            "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:28629:            startIconSystem,
+  C:\Users\Administrator\MI-AI\frontend\index.html:28630:            { once: true }
+  C:\Users\Administrator\MI-AI\frontend\index.html:28670:(function(){
+  C:\Users\Administrator\MI-AI\frontend\index.html:28671:'use strict';
+> C:\Users\Administrator\MI-AI\frontend\index.html:28672:let items=[],unread=0,pollTimer=null,loading=false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:28673:const api='/api/direct-messages';
+> C:\Users\Administrator\MI-AI\frontend\index.html:28674:function user(){return window.miFirebaseUser||(window.firebase&&firebase.auth&&firebase.auth().currentUser)||null}
+  C:\Users\Administrator\MI-AI\frontend\index.html:28675:async function token(){const u=user();if(!u||typeof u.getIdToken!=='function')throw new Error('Please login first.');return u.getIdToken(false)}
+  C:\Users\Administrator\MI-AI\frontend\index.html:28676:async function headers(json){const h={Authorization:'Bearer '+await token()};if(json)h['Content-Type']='application/json';return h}
+  C:\Users\Administrator\MI-AI\frontend\index.html:28681:function ensurePanel(){let d=document.getElementById('miAccountChatBackdrop');if(d)return d;d=document.createElement('div');d.id='miAccountChatBackdrop';d.innerHTML='<section id="miAccountChatPanel" role="dialog" aria-modal="true" aria-labelledby="miAccountChatTitle"><header id="miAccountChatHeader"><strong id="miAccountChatTitle">&#128172; Account Chat</strong><div id="miAccountChatHeaderActions"><button id="miAccountChatRefresh" type="button">Refresh</button><button id="miAccountChatClose" type="button" aria-label="Close">&#10005;</button></div></header><div id="miAccountChatBody"><form id="miAccountChatCompose"><label for="miAccountChatTo">To email</label><input id="miAccountChatTo" type="email" required autocomplete="email" placeholder="abcd@gmail.com"><label for="miAccountChatMessage">Message</label><textarea id="miAccountChatMessage" maxlength="5000" required placeholder="Type your message"></textarea><button id="miAccountChatSend" type="submit">&#128228; Send</button><div id="miAccountChatStatus" role="status"></div></form><section><h3>Received messages</h3><div id="miAccountChatRows"></div></section></div></section>';d.addEventListener('click',e=>{if(e.target===d)closePanel()});d.querySelector('#miAccountChatClose').addEventListener('click',closePanel);d.querySelector('#miAccountChatRefresh').addEventListener('click',()=>load(true));d.querySelector('#miAccountChatCompose').addEventListener('submit',send);document.body.appendChild(d);return d}
+  C:\Users\Administrator\MI-AI\frontend\index.html:28682:function render(){const rows=document.getElementById('miAccountChatRows');if(!rows)return;if(!items.length){rows.innerHTML='<div class="mi-account-chat-empty">No received messages yet.</div>';return}rows.innerHTML=items.map(x=>'<article class="mi-account-chat-message '+(!x.is_read?'mi-unread':'')+'"><strong>Sender: '+esc(x.sender_email||'Unknown')+'</strong><p>'+esc(x.message||'')+'</p><time>'+esc(x.created_at?new Date(x.created_at).toLocaleString():'')+'</time></article>').join('')}
+> C:\Users\Administrator\MI-AI\frontend\index.html:28683:async function load(showError){if(loading||!user())return;loading=true;try{const r=await fetch(api,{headers:await headers(false),cache:'no-store'});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||j.message||'Could not load messages.');items=Array.isArray(j.items)?j.items:[];unread=Number(j.unread||0);updateBadge();render();if(document.getElementById('miAccountChatBackdrop')?.classList.contains('mi-open')&&unread>0)await markRead()}catch(e){if(showError)notify(e.message,true)}finally{loading=false}}
+> C:\Users\Administrator\MI-AI\frontend\index.html:28684:async function markRead(){const ids=items.filter(x=>!x.is_read&&x.id).map(x=>x.id);if(!ids.length)return;try{const r=await fetch(api+'/read',{method:'POST',headers:await headers(true),body:JSON.stringify({ids})});if(r.ok){items.forEach(x=>{if(ids.includes(x.id))x.is_read=true});unread=0;updateBadge();render()}}catch(e){}}
+> C:\Users\Administrator\MI-AI\frontend\index.html:28685:async function send(e){e.preventDefault();const to=document.getElementById('miAccountChatTo');const msg=document.getElementById('miAccountChatMessage');const button=document.getElementById('miAccountChatSend');const recipient=String(to.value||'').trim().toLowerCase();const message=String(msg.value||'').trim();if(!recipient||!message){notify('Enter the recipient email and message.',true);return}button.disabled=true;notify('Sending...',false);try{const r=await fetch(api,{method:'POST',headers:await headers(true),body:JSON.stringify({to:recipient,message})});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||j.message||'Message could not be sent.');msg.value='';notify('Message sent successfully.',false)}catch(err){notify(err.message,true)}finally{button.disabled=false}}
+  C:\Users\Administrator\MI-AI\frontend\index.html:28686:async function openPanel(){if(!user()){if(typeof window.openLogin==='function')window.openLogin();else alert('Please login first.');return}ensurePanel().classList.add('mi-open');await load(true);render();await markRead()}
+  C:\Users\Administrator\MI-AI\frontend\index.html:28687:function closePanel(){document.getElementById('miAccountChatBackdrop')?.classList.remove('mi-open')}
+  C:\Users\Administrator\MI-AI\frontend\index.html:28688:function start(){ensureButton();ensurePanel();clearInterval(pollTimer);pollTimer=setInterval(()=>{ensureButton();load(false)},15000);load(false)}
+> C:\Users\Administrator\MI-AI\frontend\index.html:28689:if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+> C:\Users\Administrator\MI-AI\frontend\index.html:28690:window.addEventListener('mi-firebase-auth-changed',()=>setTimeout(()=>{ensureButton();load(false)},150));
+  C:\Users\Administrator\MI-AI\frontend\index.html:28691:window.miOpenAccountChat=openPanel;
+  C:\Users\Administrator\MI-AI\frontend\index.html:28692:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:28996:    window.miApplyLanguage = applyLanguage;
+  C:\Users\Administrator\MI-AI\frontend\index.html:28997:
+> C:\Users\Administrator\MI-AI\frontend\index.html:28998:    if (document.readyState === "loading") {
+> C:\Users\Administrator\MI-AI\frontend\index.html:28999:        document.addEventListener("DOMContentLoaded", start, { once: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:29000:    } else {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29001:        start();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29009:(function(){
+  C:\Users\Administrator\MI-AI\frontend\index.html:29010:"use strict";
+> C:\Users\Administrator\MI-AI\frontend\index.html:29011:document.body.classList.add("mi-smooth-loading");
+  C:\Users\Administrator\MI-AI\frontend\index.html:29012:let released=false;
+> C:\Users\Administrator\MI-AI\frontend\index.html:29013:function release(){if(released)return;released=true;requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove("mi-smooth-loading")})})}
+  C:\Users\Administrator\MI-AI\frontend\index.html:29014:window.addEventListener("load",release,{once:true});
+> C:\Users\Administrator\MI-AI\frontend\index.html:29015:window.addEventListener("mi-firebase-ready",function(){setTimeout(release,50)},{once:true});
+> C:\Users\Administrator\MI-AI\frontend\index.html:29016:window.addEventListener("mi-firebase-auth-changed",function(){setTimeout(release,50)},{once:true});
+  C:\Users\Administrator\MI-AI\frontend\index.html:29017:setTimeout(release,1400);
+  C:\Users\Administrator\MI-AI\frontend\index.html:29018:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29050:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29051:    function auth() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:29052:        try { return window.firebase.auth(); } catch (error) { return null; }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29053:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29054:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29066:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29067:    function db() {
+> C:\Users\Administrator\MI-AI\frontend\index.html:29068:        try { return window.firebase.firestore(); } catch (error) { return null; }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29069:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29070:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29155:                pin: Boolean(raw.pin || raw.pinned),
+  C:\Users\Administrator\MI-AI\frontend\index.html:29156:                messageCount: messages.length,
+> C:\Users\Administrator\MI-AI\frontend\index.html:29157:                updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  C:\Users\Administrator\MI-AI\frontend\index.html:29158:            }, { merge: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:29159:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29172:                    content: text,
+  C:\Users\Administrator\MI-AI\frontend\index.html:29173:                    order: index,
+> C:\Users\Administrator\MI-AI\frontend\index.html:29174:                    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  C:\Users\Administrator\MI-AI\frontend\index.html:29175:                });
+  C:\Users\Administrator\MI-AI\frontend\index.html:29176:                count += 1;
+  C:\Users\Administrator\MI-AI\frontend\index.html:29182:            uid: expectedUid,
+  C:\Users\Administrator\MI-AI\frontend\index.html:29183:            email: String(user.email || "").toLowerCase(),
+> C:\Users\Administrator\MI-AI\frontend\index.html:29184:            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  C:\Users\Administrator\MI-AI\frontend\index.html:29185:        }, { merge: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:29186:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29192:            fontSize: settings.fontSize,
+  C:\Users\Administrator\MI-AI\frontend\index.html:29193:            language: settings.language,
+> C:\Users\Administrator\MI-AI\frontend\index.html:29194:            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+  C:\Users\Administrator\MI-AI\frontend\index.html:29195:        }, { merge: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:29196:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29340:        window.fetch.bind(window);
+  C:\Users\Administrator\MI-AI\frontend\index.html:29341:
+> C:\Users\Administrator\MI-AI\frontend\index.html:29342:    function getCurrentFirebaseUser() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29343:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29344:            if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:29345:                window.miFirebaseAuth &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:29346:                window.miFirebaseAuth.currentUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:29347:            ) {
+> C:\Users\Administrator\MI-AI\frontend\index.html:29348:                return window.miFirebaseAuth.currentUser;
+  C:\Users\Administrator\MI-AI\frontend\index.html:29349:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29350:        } catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29351:            console.warn(
+> C:\Users\Administrator\MI-AI\frontend\index.html:29352:                "[MI Account] miFirebaseAuth unavailable.",
+  C:\Users\Administrator\MI-AI\frontend\index.html:29353:                error
+  C:\Users\Administrator\MI-AI\frontend\index.html:29354:            );
+  C:\Users\Administrator\MI-AI\frontend\index.html:29357:        try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29358:            if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:29359:                window.firebase &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:29360:                typeof window.firebase.auth === "function"
+  C:\Users\Administrator\MI-AI\frontend\index.html:29361:            ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29362:                return (
+> C:\Users\Administrator\MI-AI\frontend\index.html:29363:                    window.firebase.auth().currentUser
+  C:\Users\Administrator\MI-AI\frontend\index.html:29364:                    || null
+  C:\Users\Administrator\MI-AI\frontend\index.html:29365:                );
+  C:\Users\Administrator\MI-AI\frontend\index.html:29367:        } catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29368:            console.warn(
+> C:\Users\Administrator\MI-AI\frontend\index.html:29369:                "[MI Account] Firebase auth unavailable.",
+  C:\Users\Administrator\MI-AI\frontend\index.html:29370:                error
+  C:\Users\Administrator\MI-AI\frontend\index.html:29371:            );
+  C:\Users\Administrator\MI-AI\frontend\index.html:29372:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29373:
+> C:\Users\Administrator\MI-AI\frontend\index.html:29374:        return window.miFirebaseUser || null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:29375:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29376:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29408:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29409:
+> C:\Users\Administrator\MI-AI\frontend\index.html:29410:    async function getFirebaseIdToken(
+  C:\Users\Administrator\MI-AI\frontend\index.html:29411:        forceRefresh
+  C:\Users\Administrator\MI-AI\frontend\index.html:29412:    ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29413:        const user =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29414:            getCurrentFirebaseUser();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29415:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29416:        if (
+  C:\Users\Administrator\MI-AI\frontend\index.html:29517:        function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29518:            const user =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29519:                getCurrentFirebaseUser();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29520:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29521:            return user && user.uid
+  C:\Users\Administrator\MI-AI\frontend\index.html:29550:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29551:            const user =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29552:                getCurrentFirebaseUser();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29553:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29554:            if (!user || !user.uid) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29583:            try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29584:                token =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29585:                    await getFirebaseIdToken(
+  C:\Users\Administrator\MI-AI\frontend\index.html:29586:                        false
+  C:\Users\Administrator\MI-AI\frontend\index.html:29587:                    );
+  C:\Users\Administrator\MI-AI\frontend\index.html:29667:                try {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29668:                    const refreshedToken =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29669:                        await getFirebaseIdToken(
+  C:\Users\Administrator\MI-AI\frontend\index.html:29670:                            true
+  C:\Users\Administrator\MI-AI\frontend\index.html:29671:                        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:29702:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29703:        try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:29704:            if (window.miFirebaseAuth) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29705:                auth =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29706:                    window.miFirebaseAuth;
+  C:\Users\Administrator\MI-AI\frontend\index.html:29707:            } else if (
+> C:\Users\Administrator\MI-AI\frontend\index.html:29708:                window.firebase &&
+> C:\Users\Administrator\MI-AI\frontend\index.html:29709:                typeof window.firebase.auth ===
+  C:\Users\Administrator\MI-AI\frontend\index.html:29710:                    "function"
+  C:\Users\Administrator\MI-AI\frontend\index.html:29711:            ) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29712:                auth =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29713:                    window.firebase.auth();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29714:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29715:        } catch (error) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29731:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29732:        let previousUid =
+> C:\Users\Administrator\MI-AI\frontend\index.html:29733:            getCurrentFirebaseUser()?.uid
+  C:\Users\Administrator\MI-AI\frontend\index.html:29734:            || "";
+  C:\Users\Administrator\MI-AI\frontend\index.html:29735:
+  C:\Users\Administrator\MI-AI\frontend\index.html:29788:(function(){
+  C:\Users\Administrator\MI-AI\frontend\index.html:29789:const API="/api/chief-owner";let meta={roles:[],permissions:[]};const $=x=>document.getElementById(x);const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+> C:\Users\Administrator\MI-AI\frontend\index.html:29790:async function tok(){const a=window.miFirebaseAuth||(window.firebase&&firebase.auth?firebase.auth():null),u=(a&&a.currentUser)||window.miFirebaseUser||window.currentFirebaseUser;if(!u)throw new Error("Please login again.");return u.getIdToken(true)}
+> C:\Users\Administrator\MI-AI\frontend\index.html:29791:async function api(p,o={}){const h=new Headers(o.headers||{});h.set("Authorization","Bearer "+await tok());h.set("Content-Type","application/json");const r=await fetch(API+p,{...o,headers:h,cache:"no-store"}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||"Request failed.");return d}
+  C:\Users\Administrator\MI-AI\frontend\index.html:29792:function stat(m,e=false){const x=$("miFOStatus");if(x){x.textContent=m;x.style.color=e?"#ff9ba5":"#bdf5d7"}}
+  C:\Users\Administrator\MI-AI\frontend\index.html:29793:function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.textContent="👑 Chief Owner Permissions";b.onclick=open;s.appendChild(b)}return b}
+> C:\Users\Administrator\MI-AI\frontend\index.html:29794:async function vis(){const b=launcher();if(!b)return;try{const r=await fetch("/api/admin/me",{headers:{Authorization:"Bearer "+await tok()}}),d=await r.json();b.style.display=r.ok&&d.isChiefOwner?"block":"none"}catch(_){b.style.display="none"}}
+  C:\Users\Administrator\MI-AI\frontend\index.html:29795:function opts(a){return a.map(x=>`<option value="${esc(x)}">${esc(x.replaceAll("_"," "))}</option>`).join("")}function checks(){return meta.permissions.map(x=>`<label><input type="checkbox" value="${esc(x)}"> ${esc(x)}</label>`).join("")}
+  C:\Users\Administrator\MI-AI\frontend\index.html:29796:function panel(){if($("miFinalOwnerOverlay"))return;const o=document.createElement("div");o.id="miFinalOwnerOverlay";o.innerHTML=`<section id="miFinalOwnerPanel"><header class="miFOHead"><h2>Chief Owner Permissions</h2><button id="miFOClose">✕</button></header><div class="miFOBody"><nav id="miFONav" class="miFONav"><button class="active" data-p="users">Users</button><button data-p="chats">Chats</button><button data-p="staff">Staff</button><button data-p="roles">New Role</button><button data-p="permissions">Permissions</button><button data-p="audit">Audit</button></nav><main class="miFOContent"><div id="miFOStatus" class="miFOStatus">Ready.</div>
+  C:\Users\Administrator\MI-AI\frontend\index.html:29810:async function chats(){const email=$("fcEmail").value.trim(),reason=$("fcReason").value.trim();try{const d=await api("/chats?email="+encodeURIComponent(email)+"&reason="+encodeURIComponent(reason)),rows=d.chats||[];$("fcOut").innerHTML=rows.length?`<div class="miFOTableWrap"><table class="miFOTable"><tbody>${rows.map(r=>`<tr><td>${esc(r.title)}</td><td>${esc(r.id)}</td><td><button class="fdc" data-id="${esc(r.id)}" data-col="${esc(r.collection)}">Delete</button></td></tr>`).join("")}</tbody></table></div>`:"<p>No chats.</p>";document.querySelectorAll(".fdc").forEach(b=>b.onclick=async()=>{if(!confirm("Delete chat?"))return;const x=await api("/chats/delete",{method:"POST",body:JSON.stringify({email,reason,chatId:b.dataset.id,collection:b.dataset.col})});stat(x.message);chats()})}catch(e){stat(e.message,true)}}
+  C:\Users\Administrator\MI-AI\frontend\index.html:29811:async function audit(){try{const d=await api("/audit-logs");$("faOut").innerHTML=table(d.logs||[],["timestamp","actorEmail","action","targetType","targetId","reason","success"])}catch(e){stat(e.message,true)}}
+> C:\Users\Administrator\MI-AI\frontend\index.html:29812:new MutationObserver(launcher).observe(document.documentElement,{childList:true,subtree:true});document.addEventListener("DOMContentLoaded",()=>setTimeout(vis,700));window.addEventListener("mi-admin-access-loaded",()=>setTimeout(vis,100));setTimeout(vis,2200);
+  C:\Users\Administrator\MI-AI\frontend\index.html:29813:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29814:</script>
+  C:\Users\Administrator\MI-AI\frontend\index.html:29835:    function authObject() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29836:        try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:29837:            if (window.miFirebaseAuth) return window.miFirebaseAuth;
+> C:\Users\Administrator\MI-AI\frontend\index.html:29838:            if (window.firebase && typeof firebase.auth === "function") {
+> C:\Users\Administrator\MI-AI\frontend\index.html:29839:                return firebase.auth();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29840:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29841:        } catch (_) {}
+  C:\Users\Administrator\MI-AI\frontend\index.html:29846:        const auth = authObject();
+  C:\Users\Administrator\MI-AI\frontend\index.html:29847:        return (auth && auth.currentUser) ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:29848:            window.miFirebaseUser ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:29849:            window.currentFirebaseUser ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:29850:            null;
+  C:\Users\Administrator\MI-AI\frontend\index.html:29851:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:29868:        if (!user || typeof user.getIdToken !== "function") return false;
+  C:\Users\Administrator\MI-AI\frontend\index.html:29869:        try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:29870:            const response = await fetch("/api/admin/me", {
+  C:\Users\Administrator\MI-AI\frontend\index.html:29871:                headers: { Authorization: "Bearer " + await user.getIdToken(true) },
+  C:\Users\Administrator\MI-AI\frontend\index.html:29872:                cache: "no-store"
+  C:\Users\Administrator\MI-AI\frontend\index.html:29911:    }).observe(document.documentElement, { childList: true, subtree: true });
+  C:\Users\Administrator\MI-AI\frontend\index.html:29912:
+> C:\Users\Administrator\MI-AI\frontend\index.html:29913:    document.addEventListener("DOMContentLoaded", schedule);
+> C:\Users\Administrator\MI-AI\frontend\index.html:29914:    window.addEventListener("mi-firebase-ready", schedule);
+  C:\Users\Administrator\MI-AI\frontend\index.html:29915:    window.addEventListener("mi-admin-access-loaded", schedule);
+  C:\Users\Administrator\MI-AI\frontend\index.html:29916:    window.addEventListener("focus", repair);
+  C:\Users\Administrator\MI-AI\frontend\index.html:30286:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:30287:
+> C:\Users\Administrator\MI-AI\frontend\index.html:30288:    function initialize() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30289:        findSendButtons().forEach(function (button) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30290:            rememberOriginalButton(button);
+  C:\Users\Administrator\MI-AI\frontend\index.html:30299:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:30300:
+> C:\Users\Administrator\MI-AI\frontend\index.html:30301:    if (document.readyState === "loading") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30302:        document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:30303:            "DOMContentLoaded",
+> C:\Users\Administrator\MI-AI\frontend\index.html:30304:            initialize,
+  C:\Users\Administrator\MI-AI\frontend\index.html:30305:            { once: true }
+  C:\Users\Administrator\MI-AI\frontend\index.html:30306:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:30307:    } else {
+> C:\Users\Administrator\MI-AI\frontend\index.html:30308:        initialize();
+  C:\Users\Administrator\MI-AI\frontend\index.html:30309:    }
+  C:\Users\Administrator\MI-AI\frontend\index.html:30310:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:30313:
+  C:\Users\Administrator\MI-AI\frontend\index.html:30314:
+> C:\Users\Administrator\MI-AI\frontend\index.html:30315:<!-- MI AI OWNER LOADING FIX START -->
+  C:\Users\Administrator\MI-AI\frontend\index.html:30316:<script>
+  C:\Users\Administrator\MI-AI\frontend\index.html:30317:(function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30410:    function currentUser() {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30411:        try {
+> C:\Users\Administrator\MI-AI\frontend\index.html:30412:            if (window.firebase && typeof firebase.auth === "function") {
+> C:\Users\Administrator\MI-AI\frontend\index.html:30413:                return firebase.auth().currentUser;
+  C:\Users\Administrator\MI-AI\frontend\index.html:30414:            }
+  C:\Users\Administrator\MI-AI\frontend\index.html:30415:        } catch (_) {}
+  C:\Users\Administrator\MI-AI\frontend\index.html:30416:
+  C:\Users\Administrator\MI-AI\frontend\index.html:30417:        return (
+> C:\Users\Administrator\MI-AI\frontend\index.html:30418:            window.currentFirebaseUser ||
+> C:\Users\Administrator\MI-AI\frontend\index.html:30419:            window.miFirebaseUser ||
+  C:\Users\Administrator\MI-AI\frontend\index.html:30420:            null
+  C:\Users\Administrator\MI-AI\frontend\index.html:30421:        );
+  C:\Users\Administrator\MI-AI\frontend\index.html:30453:            );
+  C:\Users\Administrator\MI-AI\frontend\index.html:30454:
+> C:\Users\Administrator\MI-AI\frontend\index.html:30455:            const response = await fetch(
+  C:\Users\Administrator\MI-AI\frontend\index.html:30456:                url,
+  C:\Users\Administrator\MI-AI\frontend\index.html:30457:                Object.assign({}, options || {}, {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30515:        if (status) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30516:            status.textContent =
+> C:\Users\Administrator\MI-AI\frontend\index.html:30517:                "Chief Owner panel opened. Loading latest roles...";
+  C:\Users\Administrator\MI-AI\frontend\index.html:30518:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:30519:
+  C:\Users\Administrator\MI-AI\frontend\index.html:30610:        const button = ownerButton();
+  C:\Users\Administrator\MI-AI\frontend\index.html:30611:
+> C:\Users\Administrator\MI-AI\frontend\index.html:30612:        if (!button || button.dataset.miLoadingRescue === "1") {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30613:            return;
+  C:\Users\Administrator\MI-AI\frontend\index.html:30614:        }
+  C:\Users\Administrator\MI-AI\frontend\index.html:30615:
+> C:\Users\Administrator\MI-AI\frontend\index.html:30616:        button.dataset.miLoadingRescue = "1";
+  C:\Users\Administrator\MI-AI\frontend\index.html:30617:
+  C:\Users\Administrator\MI-AI\frontend\index.html:30618:        button.addEventListener(
+  C:\Users\Administrator\MI-AI\frontend\index.html:30662:
+  C:\Users\Administrator\MI-AI\frontend\index.html:30663:    document.addEventListener(
+> C:\Users\Administrator\MI-AI\frontend\index.html:30664:        "DOMContentLoaded",
+  C:\Users\Administrator\MI-AI\frontend\index.html:30665:        function () {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30666:            [200, 700, 1500, 3000].forEach(function (delay) {
+  C:\Users\Administrator\MI-AI\frontend\index.html:30678:})();
+  C:\Users\Administrator\MI-AI\frontend\index.html:30679:</script>
+> C:\Users\Administrator\MI-AI\frontend\index.html:30680:<!-- MI AI OWNER LOADING FIX END -->
+  C:\Users\Administrator\MI-AI\frontend\index.html:30681:
+  C:\Users\Administrator\MI-AI\frontend\index.html:30682:</body>
+
+[5] BACKEND ROUTES
+C:\Users\Administrator\MI-AI\backend\app.py:294:    "/api/direct-messages",
+C:\Users\Administrator\MI-AI\backend\app.py:537:@app.route("/api/firebase-auth-health", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:550:@app.route('/images/<path:filename>')
+C:\Users\Administrator\MI-AI\backend\app.py:1444:@app.route("/api/account-service-health", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:1461:@app.route("/")
+C:\Users\Administrator\MI-AI\backend\app.py:1465:@app.route("/send-otp", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1548:@app.route("/login", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1619:@app.route("/verify-login", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:1644:@app.route("/logout", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1651:@app.route("/verify-otp", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1691:@app.route("/api/auth/register", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1766:@app.route("/supabase-config", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:1785:@app.route("/conversations", methods=["GET", "POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1836:@app.route("/messages", methods=["GET", "POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1890:@app.route("/chat", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:1895:@app.route("/api/assistant-info", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:1896:@app.route("/assistant-info", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:1914:@app.route("/api/chat/stream", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:2065:@app.route("/debug/chat", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:2080:@app.route("/api/chat", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:2085:@app.route("/api/chat", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:2246:@app.route("/api/live-assist", methods=["POST", "OPTIONS"])
+C:\Users\Administrator\MI-AI\backend\app.py:2335:@app.route("/api/live-assist/health", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:2479:@app.route("/api/share-links", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:2480:@app.route("/share-links", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:2533:@app.route("/api/share-links/open", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:2534:@app.route("/share-links/open", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:2609:@app.route("/api/share-notifications", methods=["GET", "PATCH"])
+C:\Users\Administrator\MI-AI\backend\app.py:2610:@app.route("/share-notifications", methods=["GET", "PATCH"])
+C:\Users\Administrator\MI-AI\backend\app.py:2682:@app.route("/api/direct-messages", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:2720:@app.route("/api/direct-messages", methods=["GET"])
+C:\Users\Administrator\MI-AI\backend\app.py:2741:@app.route("/api/direct-messages/read", methods=["POST"])
+C:\Users\Administrator\MI-AI\backend\app.py:3119:@app.route("/api/image-search", methods=["POST", "OPTIONS"])
+C:\Users\Administrator\MI-AI\backend\app.py:3386:@app.route("/api/admin/me", methods=["GET", "OPTIONS"])
+C:\Users\Administrator\MI-AI\backend\app.py:3408:@app.route("/api/admin/permission-check", methods=["POST"])
+
+[6] LIVE DOMAIN TESTS
+https://mi-ai-assistant-of-mi.vercel.app/ -> HTTP 200, bytes=751616
+https://mi-ai-assistant-of-mi.vercel.app/api/health -> ERROR HTTP=404 : The remote server returned an error: (404) Not Found.
+https://mi-ai-assistant-of-mi.vercel.app/api/live-assist/health -> HTTP 200, bytes=161
+https://mi-ai-assistant-of-mi.vercel.app/api/admin/me -> ERROR HTTP=401 : The remote server returned an error: (401) Unauthorized.
+
+[7] RECENT COMMITS
+2e82ca3f Fix Chief Owner panel endless loading
+218e95b0 Add Send to Stop button during AI replies
+0181374c Fix Chief Owner button visibility in Settings
+23b91695 Enable Chief Owner actions and custom role paths
+3c42ddd8 Restore Chief Owner permissions
+67eb40fb Restore previous settings and clear chats only
+e26ce72d Undo one-time chat purge patch
+ea8798e6 Force clear all existing browser chats and messages
