@@ -35271,6 +35271,385 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 
 
 
+
+
+<!-- CORTEX_PROFILE_RUNTIME_ICON_FIX_V1_START -->
+<style id="CORTEX_PROFILE_RUNTIME_ICON_FIX_V1_STYLE">
+#profilePanel .cortex-profile-field-icon {
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    flex: 0 0 30px !important;
+
+    margin-right: 10px !important;
+
+    font-size: 18px !important;
+    line-height: 1 !important;
+
+    overflow: visible !important;
+    white-space: nowrap !important;
+
+    color: #ffffff !important;
+}
+
+#profilePanel .cortex-profile-close-button {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 50% !important;
+
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif !important;
+
+    font-size: 24px !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+
+    color: #ffffff !important;
+}
+
+#profilePanel .cortex-profile-close-button::before,
+#profilePanel .cortex-profile-close-button::after {
+    pointer-events: none !important;
+}
+</style>
+
+<script id="CORTEX_PROFILE_RUNTIME_ICON_FIX_V1_SCRIPT">
+(function () {
+    "use strict";
+
+    const fieldIcons = {
+        profileName: "👤",
+        profileAge: "🎂",
+        profileEmail: "✉️"
+    };
+
+    function findIconElement(input) {
+        if (!input) {
+            return null;
+        }
+
+        const parent = input.parentElement;
+
+        if (!parent) {
+            return null;
+        }
+
+        const directCandidates =
+            Array.from(parent.children)
+                .filter(function (element) {
+                    return element !== input;
+                });
+
+        const directIcon =
+            directCandidates.find(function (element) {
+                return (
+                    element.tagName === "SPAN" ||
+                    element.classList.contains("icon") ||
+                    element.getAttribute("aria-hidden") === "true"
+                );
+            });
+
+        if (directIcon) {
+            return directIcon;
+        }
+
+        const previous =
+            input.previousElementSibling;
+
+        if (previous) {
+            return previous;
+        }
+
+        return null;
+    }
+
+    function repairFieldIcon(
+        inputId,
+        icon
+    ) {
+        const input =
+            document.getElementById(inputId);
+
+        if (!input) {
+            return false;
+        }
+
+        let iconElement =
+            findIconElement(input);
+
+        if (!iconElement) {
+            iconElement =
+                document.createElement("span");
+
+            input.insertAdjacentElement(
+                "beforebegin",
+                iconElement
+            );
+        }
+
+        iconElement.textContent = icon;
+
+        iconElement.classList.add(
+            "cortex-profile-field-icon"
+        );
+
+        iconElement.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        return true;
+    }
+
+    function repairCloseButton(panel) {
+        if (!panel) {
+            return false;
+        }
+
+        const buttons =
+            Array.from(
+                panel.querySelectorAll("button")
+            );
+
+        const closeButton =
+            buttons.find(function (button) {
+                const onclick =
+                    String(
+                        button.getAttribute("onclick") ||
+                        ""
+                    );
+
+                const ariaLabel =
+                    String(
+                        button.getAttribute("aria-label") ||
+                        ""
+                    ).toLowerCase();
+
+                return (
+                    onclick.includes(
+                        "closeProfilePanel"
+                    ) ||
+                    ariaLabel.includes("close")
+                );
+            });
+
+        if (!closeButton) {
+            return false;
+        }
+
+        closeButton.textContent = "×";
+
+        closeButton.classList.add(
+            "cortex-profile-close-button"
+        );
+
+        closeButton.setAttribute(
+            "aria-label",
+            "Close profile"
+        );
+
+        closeButton.setAttribute(
+            "title",
+            "Close"
+        );
+
+        closeButton.type = "button";
+
+        return true;
+    }
+
+    function repairProfilePanel() {
+        const panel =
+            document.getElementById(
+                "profilePanel"
+            );
+
+        if (!panel) {
+            return false;
+        }
+
+        repairFieldIcon(
+            "profileName",
+            fieldIcons.profileName
+        );
+
+        repairFieldIcon(
+            "profileAge",
+            fieldIcons.profileAge
+        );
+
+        repairFieldIcon(
+            "profileEmail",
+            fieldIcons.profileEmail
+        );
+
+        repairCloseButton(panel);
+
+        panel.querySelectorAll("*")
+            .forEach(function (element) {
+                if (
+                    element.matches(
+                        "input, textarea, button, " +
+                        ".cortex-profile-field-icon"
+                    )
+                ) {
+                    return;
+                }
+
+                Array.from(element.childNodes)
+                    .filter(function (node) {
+                        return (
+                            node.nodeType ===
+                            Node.TEXT_NODE
+                        );
+                    })
+                    .forEach(function (node) {
+                        const value =
+                            String(
+                                node.nodeValue || ""
+                            );
+
+                        if (
+                            /(?:├|┬|┼|ΓÇ|Γé|Ã|Â|�)/
+                                .test(value)
+                        ) {
+                            node.nodeValue = "";
+                        }
+                    });
+            });
+
+        panel.setAttribute(
+            "data-profile-icons-repaired",
+            "true"
+        );
+
+        return true;
+    }
+
+    const originalOpenProfilePanel =
+        window.openProfilePanel;
+
+    if (
+        typeof originalOpenProfilePanel ===
+        "function"
+    ) {
+        window.openProfilePanel =
+            function () {
+                const result =
+                    originalOpenProfilePanel.apply(
+                        this,
+                        arguments
+                    );
+
+                repairProfilePanel();
+
+                window.setTimeout(
+                    repairProfilePanel,
+                    0
+                );
+
+                window.setTimeout(
+                    repairProfilePanel,
+                    100
+                );
+
+                return result;
+            };
+    }
+
+    function start() {
+        repairProfilePanel();
+
+        const observer =
+            new MutationObserver(
+                function (records) {
+                    const profileAdded =
+                        records.some(
+                            function (record) {
+                                return Array.from(
+                                    record.addedNodes
+                                ).some(
+                                    function (node) {
+                                        return (
+                                            node.nodeType ===
+                                                Node.ELEMENT_NODE &&
+                                            (
+                                                node.id ===
+                                                    "profilePanel" ||
+                                                (
+                                                    node.querySelector &&
+                                                    node.querySelector(
+                                                        "#profilePanel"
+                                                    )
+                                                )
+                                            )
+                                        );
+                                    }
+                                );
+                            }
+                        );
+
+                    if (profileAdded) {
+                        window.requestAnimationFrame(
+                            repairProfilePanel
+                        );
+                    }
+                }
+            );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.setTimeout(
+            repairProfilePanel,
+            500
+        );
+
+        window.setTimeout(
+            repairProfilePanel,
+            1500
+        );
+    }
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- CORTEX_PROFILE_RUNTIME_ICON_FIX_V1_END -->
+
 </body>
 </html>
 
