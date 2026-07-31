@@ -20837,426 +20837,7 @@ document.addEventListener(
 /* CORTEX CORE AI SHARE DROPDOWN FIX V7 - END */
 </script>
 
-<script>
-/* CORTEX CORE AI RESPONSE FORMAT ADAPTER V1 - START */
 
-(function () {
-    "use strict";
-
-    let installed = false;
-    let installAttempts = 0;
-
-    function questionFromPayload(payload) {
-        if (!payload || typeof payload !== "object") {
-            return "";
-        }
-
-        if (typeof payload.message === "string") {
-            return payload.message.trim();
-        }
-
-        if (typeof payload.prompt === "string") {
-            return payload.prompt.trim();
-        }
-
-        if (typeof payload.text === "string") {
-            return payload.text.trim();
-        }
-
-        if (Array.isArray(payload.messages)) {
-            const lastUserMessage =
-                [...payload.messages]
-                    .reverse()
-                    .find(function (item) {
-                        return (
-                            item &&
-                            (
-                                item.role === "user" ||
-                                item.role === "me"
-                            )
-                        );
-                    });
-
-            return String(
-                lastUserMessage?.content ||
-                lastUserMessage?.text ||
-                ""
-            ).trim();
-        }
-
-        return "";
-    }
-
-    function objectToResponse(result) {
-        if (result instanceof Response) {
-            return result;
-        }
-
-        if (
-            typeof result === "string" &&
-            result.trim()
-        ) {
-            result = {
-                reply: result.trim(),
-                response: result.trim()
-            };
-        }
-
-        if (
-            result &&
-            typeof result === "object"
-        ) {
-            const answer =
-                String(
-                    result.reply ||
-                    result.response ||
-                    result.answer ||
-                    result.message ||
-                    result.text ||
-                    result.content ||
-                    ""
-                ).trim();
-
-            if (answer) {
-                return new Response(
-                    JSON.stringify({
-                        ...result,
-                        reply: answer,
-                        response: answer,
-                        message: answer,
-                        text: answer
-                    }),
-                    {
-                        status: 200,
-                        headers: {
-                            "Content-Type":
-                                "application/json; charset=utf-8"
-                        }
-                    }
-                );
-            }
-        }
-
-        return null;
-    }
-
-    async function normalChatFallback(
-        payload,
-        signal
-    ) {
-        const question =
-            questionFromPayload(payload);
-
-        const fallbackPayload = {
-            ...(payload || {})
-        };
-
-        if (
-            !fallbackPayload.message &&
-            question
-        ) {
-            fallbackPayload.message =
-                question;
-        }
-
-        if (
-            !fallbackPayload.prompt &&
-            question
-        ) {
-            fallbackPayload.prompt =
-                question;
-        }
-
-        const candidates = [];
-
-        const configuredBase =
-            String(
-                window.__MI_BACKEND_URL__ ||
-                ""
-            )
-                .trim()
-                .replace(/\/$/, "");
-
-        if (configuredBase) {
-            candidates.push(
-                configuredBase + "/api/chat"
-            );
-        }
-
-        candidates.push("/api/chat");
-
-        const uniqueCandidates =
-            [...new Set(candidates)];
-
-        let lastError = null;
-
-        for (
-            const endpoint
-            of uniqueCandidates
-        ) {
-            try {
-                const response =
-                    await fetch(
-                        endpoint,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify(
-                                    fallbackPayload
-                                ),
-
-                            signal: signal
-                        }
-                    );
-
-                if (response.ok) {
-                    return response;
-                }
-
-                const body =
-                    await response
-                        .text()
-                        .catch(function () {
-                            return "";
-                        });
-
-                lastError =
-                    new Error(
-                        body ||
-                        (
-                            "Server returned " +
-                            response.status
-                        )
-                    );
-            }
-            catch (error) {
-                lastError = error;
-            }
-        }
-
-        throw (
-            lastError ||
-            new Error(
-                "Unable to contact the AI server."
-            )
-        );
-    }
-
-    function installAdapter() {
-        if (installed) {
-            return true;
-        }
-
-        let currentFetchChatReply = null;
-
-        try {
-            currentFetchChatReply =
-                window.fetchChatReply ||
-                (
-                    typeof fetchChatReply ===
-                        "function"
-                        ? fetchChatReply
-                        : null
-                );
-        }
-        catch (error) {
-            currentFetchChatReply =
-                window.fetchChatReply ||
-                null;
-        }
-
-        if (
-            typeof currentFetchChatReply !==
-                "function"
-        ) {
-            return false;
-        }
-
-        if (
-            currentFetchChatReply
-                .__miResponseAdapterV1 ===
-                true
-        ) {
-            installed = true;
-            return true;
-        }
-
-        const previousFetchChatReply =
-            currentFetchChatReply;
-
-        const adaptedFetchChatReply =
-            async function (
-                payload,
-                signal,
-                useStreaming
-            ) {
-                try {
-                    const result =
-                        await previousFetchChatReply(
-                            payload,
-                            signal,
-                            useStreaming
-                        );
-
-                    /* CORTEX CORE AI LIVE SSE ADAPTER V2 */
-                    if (
-                        useStreaming &&
-                        !(result instanceof Response) &&
-                        result &&
-                        typeof result === "object"
-                    ) {
-                        const streamAnswer =
-                            String(
-                                result.reply ||
-                                result.response ||
-                                result.answer ||
-                                result.message ||
-                                result.text ||
-                                result.content ||
-                                ""
-                            ).trim();
-
-                        if (streamAnswer) {
-                            const streamPayload =
-                                JSON.stringify({
-                                    ...result,
-                                    reply: streamAnswer
-                                });
-
-                            return new Response(
-                                "event: done\\n" +
-                                "data: " +
-                                streamPayload +
-                                "\\n\\n",
-                                {
-                                    status: 200,
-                                    headers: {
-                                        "Content-Type":
-                                            "text/event-stream; charset=utf-8",
-                                        "Cache-Control":
-                                            "no-cache",
-                                        "X-Accel-Buffering":
-                                            "no"
-                                    }
-                                }
-                            );
-                        }
-                    }
-
-                    const converted =
-                        objectToResponse(result);
-
-                    if (converted) {
-                        return converted;
-                    }
-
-                    console.warn(
-                        "[CORTEX CORE AI] Reply function returned no usable Response. Falling back to /api/chat.",
-                        result
-                    );
-
-                    return await normalChatFallback(
-                        payload,
-                        signal
-                    );
-                }
-                catch (error) {
-                    console.warn(
-                        "[CORTEX CORE AI] Live/time reply failed. Falling back to /api/chat.",
-                        error
-                    );
-
-                    return await normalChatFallback(
-                        payload,
-                        signal
-                    );
-                }
-            };
-
-        adaptedFetchChatReply
-            .__miResponseAdapterV1 =
-            true;
-
-        window.fetchChatReply =
-            adaptedFetchChatReply;
-
-        try {
-            fetchChatReply =
-                adaptedFetchChatReply;
-        }
-        catch (error) {
-            /*
-              A global lexical binding may not be writable.
-              window.fetchChatReply remains available.
-            */
-        }
-
-        installed = true;
-
-        console.log(
-            "[CORTEX CORE AI] Response format adapter installed."
-        );
-
-        return true;
-    }
-
-    function start() {
-        if (installAdapter()) {
-            return;
-        }
-
-        const timer =
-            setInterval(
-                function () {
-                    installAttempts += 1;
-
-                    if (
-                        installAdapter() ||
-                        installAttempts >= 100
-                    ) {
-                        clearInterval(timer);
-                    }
-                },
-                100
-            );
-    }
-
-    window.MIResponseFormatAdapter = {
-        install:
-            installAdapter,
-
-        convert:
-            objectToResponse,
-
-        fallback:
-            normalChatFallback
-    };
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once: true
-            }
-        );
-    }
-    else {
-        start();
-    }
-})();
-
-/* CORTEX CORE AI RESPONSE FORMAT ADAPTER V1 - END */
-</script>
 
 <script>
 /* CORTEX CORE AI SHARED SINGLE CHAT JS - START */
@@ -34411,6 +33992,264 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 })();
 </script>
 <!-- CORTEX_CHAT_HISTORY_FIX_V1_END -->
+
+
+
+<!-- CORTEX_AI_REQUEST_REPAIR_V2_START -->
+<script id="CORTEX_AI_REQUEST_REPAIR_V2">
+(function () {
+    "use strict";
+
+    const PRIMARY_ENDPOINT =
+        "/api/chat";
+
+    const ENDPOINTS = Array.from(
+        new Set([
+            PRIMARY_ENDPOINT,
+            "/api/chat",
+            "/api/live-assist"
+        ])
+    );
+
+    function extractAnswer(payload) {
+        if (payload === null || payload === undefined) {
+            return "";
+        }
+
+        if (typeof payload === "string") {
+            return payload.trim();
+        }
+
+        if (typeof payload !== "object") {
+            return String(payload).trim();
+        }
+
+        const direct =
+            payload.reply ||
+            payload.response ||
+            payload.answer ||
+            payload.message ||
+            payload.text ||
+            payload.content ||
+            payload.output ||
+            payload.result;
+
+        if (
+            typeof direct === "string" &&
+            direct.trim()
+        ) {
+            return direct.trim();
+        }
+
+        if (payload.data) {
+            return extractAnswer(payload.data);
+        }
+
+        if (
+            Array.isArray(payload.choices) &&
+            payload.choices.length
+        ) {
+            const choice = payload.choices[0] || {};
+
+            return extractAnswer(
+                choice.message ||
+                choice.delta ||
+                choice.text ||
+                choice
+            );
+        }
+
+        return "";
+    }
+
+    function makePayload(payload) {
+        const source =
+            payload &&
+            typeof payload === "object"
+                ? payload
+                : {
+                    message: String(payload || "")
+                };
+
+        const message =
+            String(
+                source.message ||
+                source.prompt ||
+                source.text ||
+                source.query ||
+                ""
+            ).trim();
+
+        return {
+            ...source,
+            message: message,
+            prompt: source.prompt || message,
+            text: source.text || message,
+            query: source.query || message
+        };
+    }
+
+    async function requestAiReply(
+        payload,
+        signal
+    ) {
+        const body = makePayload(payload);
+        let lastError = null;
+
+        for (const endpoint of ENDPOINTS) {
+            try {
+                const response = await fetch(
+                    endpoint,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                            "Accept":
+                                "application/json"
+                        },
+                        body: JSON.stringify(body),
+                        signal: signal
+                    }
+                );
+
+                const contentType =
+                    String(
+                        response.headers.get(
+                            "content-type"
+                        ) || ""
+                    ).toLowerCase();
+
+                let responseBody;
+
+                if (
+                    contentType.includes(
+                        "application/json"
+                    )
+                ) {
+                    responseBody =
+                        await response.json();
+                }
+                else {
+                    responseBody =
+                        await response.text();
+                }
+
+                if (!response.ok) {
+                    let errorMessage =
+                        extractAnswer(responseBody);
+
+                    if (
+                        !errorMessage ||
+                        errorMessage.includes(
+                            "NOT_FOUND"
+                        ) ||
+                        errorMessage.includes(
+                            "The page could not be found"
+                        )
+                    ) {
+                        errorMessage =
+                            "AI endpoint returned HTTP " +
+                            response.status +
+                            " from " +
+                            endpoint;
+                    }
+
+                    lastError =
+                        new Error(errorMessage);
+
+                    continue;
+                }
+
+                const answer =
+                    extractAnswer(responseBody);
+
+                if (!answer) {
+                    lastError =
+                        new Error(
+                            "The AI server returned an empty response."
+                        );
+
+                    continue;
+                }
+
+                return new Response(
+                    JSON.stringify({
+                        reply: answer,
+                        response: answer,
+                        answer: answer
+                    }),
+                    {
+                        status: 200,
+                        headers: {
+                            "Content-Type":
+                                "application/json; charset=utf-8"
+                        }
+                    }
+                );
+            }
+            catch (error) {
+                if (
+                    error &&
+                    error.name === "AbortError"
+                ) {
+                    throw error;
+                }
+
+                lastError = error;
+            }
+        }
+
+        throw (
+            lastError ||
+            new Error(
+                "Unable to contact the AI server."
+            )
+        );
+    }
+
+    function install() {
+        window.fetchChatReply =
+            requestAiReply;
+
+        try {
+            fetchChatReply =
+                requestAiReply;
+        }
+        catch (_) {}
+
+        window.CORTEX_AI_REQUEST_REPAIR_V2 = {
+            endpoint: PRIMARY_ENDPOINT,
+            endpoints: ENDPOINTS.slice(),
+            request: requestAiReply
+        };
+
+        console.log(
+            "[CORTEX CORE AI] AI request repair installed:",
+            PRIMARY_ENDPOINT
+        );
+    }
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            install,
+            {
+                once: true
+            }
+        );
+    }
+    else {
+        install();
+    }
+
+    window.setTimeout(install, 300);
+    window.setTimeout(install, 1200);
+})();
+</script>
+<!-- CORTEX_AI_REQUEST_REPAIR_V2_END -->
 
 </body>
 </html>
