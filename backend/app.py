@@ -740,11 +740,11 @@ Detect the language and script of the user's latest message.
 
 Always follow these final language rules:
 
-- English message Ã¢â€ â€™ reply only in English.
-- Sinhala Unicode message Ã¢â€ â€™ reply only in Sinhala Unicode.
-- Roman Sinhala or Singlish message Ã¢â€ â€™ reply in natural Sinhala Unicode.
-- Tamil Unicode message Ã¢â€ â€™ reply only in Tamil Unicode.
-- Another language Ã¢â€ â€™ reply in that same language.
+- English message Ã¢â€ ’ reply only in English.
+- Sinhala Unicode message Ã¢â€ ’ reply only in Sinhala Unicode.
+- Roman Sinhala or Singlish message Ã¢â€ ’ reply in natural Sinhala Unicode.
+- Tamil Unicode message Ã¢â€ ’ reply only in Tamil Unicode.
+- Another language Ã¢â€ ’ reply in that same language.
 - Do not translate unless the user asks for translation.
 
 Never use Singlish when replying to a Sinhala or Singlish message.
@@ -780,16 +780,16 @@ Reply:
 I am doing well.
 
 User:
-Ã Â¶â€Ã Â¶ÂºÃ Â·Â Ã Â¶Å¡Ã Â·Å“Ã Â·â€žÃ Â·Å“Ã Â¶Â¸Ã Â¶Â¯?
+Ã Â¶”Ã Â¶ÂºÃ Â·Â Ã Â¶Å¡Ã Â·Å“Ã Â·â€žÃ Â·Å“Ã Â¶Â¸Ã Â¶Â¯?
 
 Reply:
-Ã Â¶Â¸Ã Â¶Â¸ Ã Â·â€žÃ Â·Å“Ã Â¶Â³Ã Â·â€™Ã Â¶Â±Ã Â·Å  Ã Â¶â€°Ã Â¶Â±Ã Â·Å Ã Â¶Â±Ã Â·â‚¬Ã Â·Â.
+Ã Â¶Â¸Ã Â¶Â¸ Ã Â·â€žÃ Â·Å“Ã Â¶Â³Ã Â·’Ã Â¶Â±Ã Â·Å  Ã Â¶â€°Ã Â¶Â±Ã Â·Å Ã Â¶Â±Ã Â·â‚¬Ã Â·Â.
 
 User:
 mata udaw karanna
 
 Reply:
-Ã Â¶Â¸Ã Â¶Â¸ Ã Â¶â€Ã Â¶Â¶Ã Â¶Â§ Ã Â¶â€¹Ã Â¶Â¯Ã Â·â‚¬Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±Ã Â¶Â¸Ã Â·Å .
+Ã Â¶Â¸Ã Â¶Â¸ Ã Â¶”Ã Â¶Â¶Ã Â¶Â§ Ã Â¶â€¹Ã Â¶Â¯Ã Â·â‚¬Ã Â·Å  Ã Â¶Å¡Ã Â¶Â»Ã Â¶Â±Ã Â·Å Ã Â¶Â±Ã Â¶Â¸Ã Â·Å .
 
 User:
 Ã Â®Â¨Ã Â¯â‚¬ Ã Â®Å½Ã Â®ÂªÃ Â¯ÂÃ Â®ÂªÃ Â®Å¸Ã Â®Â¿ Ã Â®â€¡Ã Â®Â°Ã Â¯ÂÃ Â®â€¢Ã Â¯ÂÃ Â®â€¢Ã Â®Â¿Ã Â®Â±Ã Â®Â¾Ã Â®Â¯Ã Â¯Â?
@@ -2184,13 +2184,13 @@ LIVE_SEARCH_KEYWORDS = (
     "election", "stock", "crypto", "bitcoin", "cricket",
     "football", "soccer", "ipl", "world cup",
     "premier league", "champions league", "ada", "dan",
-    "keeyada", "kiyada", "Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â½Ã Â·ÂÃ Â·â‚¬", "Ã Â¶Â¯Ã Â·ÂÃ Â¶Â±Ã Â·Å ", "Ã Â¶â€¦Ã Â¶Â¯",
-    "Ã Â¶Â½Ã Â¶Å¡Ã Â·â€Ã Â¶Â«Ã Â·â€", "Ã Â¶Â­Ã Â¶Â»Ã Â¶Å“", "Ã Â¶Â´Ã Â·Å Ã¢â‚¬ÂÃ Â¶Â»Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­Ã Â·Å Ã Â¶Â­Ã Â·â€™", "Ã Â·Æ’Ã Â·Å Ã Â¶Å¡Ã Â·ÂÃ Â¶Â»Ã Â·Å ",
+    "keeyada", "kiyada", "Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â½Ã Â·ÂÃ Â·â‚¬", "Ã Â¶Â¯Ã Â·ÂÃ Â¶Â±Ã Â·Å ", "Ã Â¶…Ã Â¶Â¯",
+    "Ã Â¶Â½Ã Â¶Å¡Ã Â·”Ã Â¶Â«Ã Â·”", "Ã Â¶Â­Ã Â¶Â»Ã Â¶Å“", "Ã Â¶Â´Ã Â·Å Ã¢â‚¬ÂÃ Â¶Â»Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­Ã Â·Å Ã Â¶Â­Ã Â·’", "Ã Â·Æ’Ã Â·Å Ã Â¶Å¡Ã Â·ÂÃ Â¶Â»Ã Â·Å ",
 )
 
 LIVE_NEWS_KEYWORDS = (
     "news", "breaking", "headline", "headlines",
-    "latest news", "Ã Â¶Â´Ã Â·Å Ã¢â‚¬ÂÃ Â¶Â»Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­Ã Â·Å Ã Â¶Â­Ã Â·â€™",
+    "latest news", "Ã Â¶Â´Ã Â·Å Ã¢â‚¬ÂÃ Â¶Â»Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­Ã Â·Å Ã Â¶Â­Ã Â·’",
 )
 
 LIVE_FINANCE_KEYWORDS = (
@@ -2201,7 +2201,7 @@ LIVE_FINANCE_KEYWORDS = (
 LIVE_SPORTS_KEYWORDS = (
     "score", "scores", "match", "fixture", "cricket",
     "football", "soccer", "ipl", "world cup",
-    "premier league", "Ã Â¶Â½Ã Â¶Å¡Ã Â·â€Ã Â¶Â«Ã Â·â€", "Ã Â¶Â­Ã Â¶Â»Ã Â¶Å“", "Ã Â·Æ’Ã Â·Å Ã Â¶Å¡Ã Â·ÂÃ Â¶Â»Ã Â·Å ",
+    "premier league", "Ã Â¶Â½Ã Â¶Å¡Ã Â·”Ã Â¶Â«Ã Â·”", "Ã Â¶Â­Ã Â¶Â»Ã Â¶Å“", "Ã Â·Æ’Ã Â·Å Ã Â¶Å¡Ã Â·ÂÃ Â¶Â»Ã Â·Å ",
 )
 
 
@@ -3558,4 +3558,3 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", "5000")),
         debug=False,
     )
-
