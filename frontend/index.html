@@ -35263,6 +35263,396 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 </script>
 <!-- CORTEX_WORKING_SETTINGS_CONTROLS_V1_END -->
 
+
+
+<!-- CORTEX_SHARE_PERMISSION_FIX_V1_START -->
+<style id="CORTEX_SHARE_PERMISSION_FIX_V1_STYLE">
+.mi-ios-popup-option,
+.mi-ios-popup-option *,
+[role="option"],
+[role="option"] * {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+</style>
+
+<script id="CORTEX_SHARE_PERMISSION_FIX_V1_SCRIPT">
+(function () {
+    "use strict";
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function permissionFromText(value) {
+        const text = normalize(value);
+
+        if (
+            text === "view only" ||
+            text.includes("view only")
+        ) {
+            return "view";
+        }
+
+        if (
+            text === "can edit" ||
+            text.includes("can edit")
+        ) {
+            return "edit";
+        }
+
+        return "";
+    }
+
+    function findPermissionSelect() {
+        const selectors = [
+            "#sharePermission",
+            "#sharePermissionSelect",
+            "#permissionSelect",
+            "select[name='permission']",
+            "select[data-share-permission]",
+            "#shareModal select",
+            ".share-modal select",
+            "[data-share-modal] select"
+        ];
+
+        for (const selector of selectors) {
+            const element =
+                document.querySelector(selector);
+
+            if (element) {
+                return element;
+            }
+        }
+
+        const selects =
+            Array.from(
+                document.querySelectorAll("select")
+            );
+
+        return selects.find(function (select) {
+            const values =
+                Array.from(select.options)
+                    .map(function (option) {
+                        return normalize(
+                            option.value +
+                            " " +
+                            option.textContent
+                        );
+                    })
+                    .join(" ");
+
+            return (
+                values.includes("view") &&
+                values.includes("edit")
+            );
+        }) || null;
+    }
+
+    function updateSelectedOptionUI(
+        selectedElement,
+        permission
+    ) {
+        const popup =
+            selectedElement.closest(
+                ".mi-ios-popup-menu, " +
+                ".mi-ios-popup, " +
+                "[role='listbox'], " +
+                ".dropdown-menu"
+            ) ||
+            selectedElement.parentElement;
+
+        if (popup) {
+            popup.querySelectorAll(
+                ".mi-ios-popup-option, [role='option']"
+            ).forEach(function (option) {
+                const optionPermission =
+                    permissionFromText(
+                        option.textContent
+                    );
+
+                const selected =
+                    optionPermission === permission;
+
+                option.classList.toggle(
+                    "mi-selected",
+                    selected
+                );
+
+                option.setAttribute(
+                    "aria-selected",
+                    selected ? "true" : "false"
+                );
+            });
+        }
+
+        const visibleText =
+            permission === "view"
+                ? "View only"
+                : "Can edit";
+
+        const modal =
+            selectedElement.closest(
+                "#shareModal, .share-modal, " +
+                "[data-share-modal], " +
+                ".modal-content, .dialog"
+            ) ||
+            document;
+
+        const triggers =
+            modal.querySelectorAll(
+                ".mi-ios-popup-trigger, " +
+                "[aria-haspopup='listbox'], " +
+                "[data-popup-trigger], " +
+                ".custom-select-trigger"
+            );
+
+        triggers.forEach(function (trigger) {
+            const text =
+                normalize(trigger.textContent);
+
+            if (
+                text.includes("can edit") ||
+                text.includes("view only")
+            ) {
+                const label =
+                    trigger.querySelector(
+                        ".mi-ios-popup-trigger-label, " +
+                        ".selected-value, " +
+                        ".mi-ios-option-label"
+                    );
+
+                if (label) {
+                    label.textContent = visibleText;
+                } else {
+                    const icon =
+                        trigger.querySelector(
+                            "svg, .mi-ios-icon"
+                        );
+
+                    if (icon) {
+                        Array.from(trigger.childNodes)
+                            .filter(function (node) {
+                                return (
+                                    node.nodeType ===
+                                    Node.TEXT_NODE
+                                );
+                            })
+                            .forEach(function (node) {
+                                node.nodeValue =
+                                    " " + visibleText + " ";
+                            });
+                    } else {
+                        trigger.textContent =
+                            visibleText;
+                    }
+                }
+
+                trigger.setAttribute(
+                    "data-value",
+                    permission
+                );
+
+                trigger.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+            }
+        });
+
+        if (popup) {
+            popup.hidden = true;
+            popup.style.display = "none";
+            popup.classList.remove(
+                "open",
+                "show",
+                "mi-open",
+                "active"
+            );
+        }
+    }
+
+    function applyPermission(
+        permission,
+        selectedElement
+    ) {
+        const select =
+            findPermissionSelect();
+
+        if (select) {
+            const matchingOption =
+                Array.from(select.options)
+                    .find(function (option) {
+                        const optionText =
+                            normalize(
+                                option.value +
+                                " " +
+                                option.textContent
+                            );
+
+                        return permission === "view"
+                            ? optionText.includes("view")
+                            : optionText.includes("edit");
+                    });
+
+            select.value =
+                matchingOption
+                    ? matchingOption.value
+                    : permission;
+
+            select.setAttribute(
+                "data-selected-permission",
+                permission
+            );
+
+            select.dispatchEvent(
+                new Event("input", {
+                    bubbles: true
+                })
+            );
+
+            select.dispatchEvent(
+                new Event("change", {
+                    bubbles: true
+                })
+            );
+        }
+
+        window.sharePermission = permission;
+        window.selectedSharePermission = permission;
+        window.currentSharePermission = permission;
+
+        try {
+            localStorage.setItem(
+                "cortex_share_permission",
+                permission
+            );
+        } catch (_) {}
+
+        if (selectedElement) {
+            updateSelectedOptionUI(
+                selectedElement,
+                permission
+            );
+        }
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "cortex-share-permission-change",
+                {
+                    detail: {
+                        permission: permission
+                    }
+                }
+            )
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        function (event) {
+            const option =
+                event.target.closest(
+                    ".mi-ios-popup-option, " +
+                    "[role='option'], " +
+                    "[data-value='view'], " +
+                    "[data-value='edit'], " +
+                    "[data-permission='view'], " +
+                    "[data-permission='edit']"
+                );
+
+            if (!option) {
+                return;
+            }
+
+            const permission =
+                option.getAttribute(
+                    "data-permission"
+                ) ||
+                option.getAttribute(
+                    "data-value"
+                ) ||
+                permissionFromText(
+                    option.textContent
+                );
+
+            if (
+                permission !== "view" &&
+                permission !== "edit"
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            applyPermission(
+                permission,
+                option
+            );
+        },
+        true
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+            if (
+                event.key !== "Enter" &&
+                event.key !== " "
+            ) {
+                return;
+            }
+
+            const option =
+                event.target.closest(
+                    ".mi-ios-popup-option, " +
+                    "[role='option']"
+                );
+
+            if (!option) {
+                return;
+            }
+
+            const permission =
+                permissionFromText(
+                    option.textContent
+                );
+
+            if (!permission) {
+                return;
+            }
+
+            event.preventDefault();
+
+            applyPermission(
+                permission,
+                option
+            );
+        },
+        true
+    );
+
+    window.setSharePermission =
+        function (permission) {
+            const normalized =
+                permission === "view"
+                    ? "view"
+                    : "edit";
+
+            applyPermission(
+                normalized,
+                null
+            );
+        };
+})();
+</script>
+<!-- CORTEX_SHARE_PERMISSION_FIX_V1_END -->
+
 </body>
 </html>
 
