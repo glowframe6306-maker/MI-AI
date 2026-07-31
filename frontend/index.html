@@ -34526,6 +34526,101 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 </script>
 <!-- CORTEX_UNKNOWN_CHARACTER_REPAIR_V2_END -->
 
+
+
+<!-- CHIEF_OWNER_SETTINGS_BUTTON_REMOVAL_START -->
+<style id="CHIEF_OWNER_SETTINGS_BUTTON_REMOVAL_STYLE">
+#settingsPanel #miChiefOwnerSettingsButton,
+#settingsPanel #chiefOwnerPermissionsButton,
+#settingsPanel [data-action="chief-owner-permissions"],
+#settingsPanel [data-action="chief-owner"],
+#settingsPanel .chief-owner-permissions-button {
+    display: none !important;
+}
+</style>
+
+<script id="CHIEF_OWNER_SETTINGS_BUTTON_REMOVAL_SCRIPT">
+(function () {
+    "use strict";
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function removeChiefOwnerButton() {
+        const settingsPanel =
+            document.getElementById("settingsPanel");
+
+        if (!settingsPanel) {
+            return;
+        }
+
+        const candidates =
+            settingsPanel.querySelectorAll(
+                "button, a, [role='button']"
+            );
+
+        candidates.forEach(function (element) {
+            const text = normalize(
+                element.textContent ||
+                element.getAttribute("aria-label") ||
+                element.getAttribute("title")
+            );
+
+            const id = normalize(element.id);
+
+            const action = normalize(
+                element.getAttribute("data-action")
+            );
+
+            const isChiefOwnerButton =
+                text === "chief owner permissions" ||
+                text === "chief owner permission" ||
+                id === "michiefownersettingsbutton" ||
+                id === "chiefownerpermissionsbutton" ||
+                action === "chief-owner-permissions" ||
+                action === "chief-owner";
+
+            if (isChiefOwnerButton) {
+                element.remove();
+            }
+        });
+    }
+
+    function start() {
+        removeChiefOwnerButton();
+
+        const observer =
+            new MutationObserver(function () {
+                removeChiefOwnerButton();
+            });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+
+        window.setTimeout(removeChiefOwnerButton, 300);
+        window.setTimeout(removeChiefOwnerButton, 1000);
+        window.setTimeout(removeChiefOwnerButton, 2500);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- CHIEF_OWNER_SETTINGS_BUTTON_REMOVAL_END -->
+
 </body>
 </html>
 
