@@ -33288,6 +33288,174 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 </script>
 <!-- MI_AI_CHAT_MULTI_DELETE_AZ_V1_END -->
 
+
+<!-- SETTINGS-BOTTOM-THREE-BUTTONS-REMOVAL-START -->
+<script>
+(function () {
+    "use strict";
+
+    function normalizeText(value) {
+        return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+
+    function isVisible(element) {
+        if (!(element instanceof HTMLElement)) return false;
+
+        const style = window.getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+
+        return (
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            rect.width > 0 &&
+            rect.height > 0
+        );
+    }
+
+    function getClickableElements(container) {
+        if (!(container instanceof Element)) return [];
+
+        const selector = [
+            "button",
+            "a",
+            "[role='button']",
+            "input[type='button']",
+            "input[type='submit']"
+        ].join(",");
+
+        const elements = [];
+
+        if (container.matches(selector)) {
+            elements.push(container);
+        }
+
+        elements.push(...container.querySelectorAll(selector));
+
+        return [...new Set(elements)].filter(isVisible);
+    }
+
+    function findSettingsButton() {
+        const clickables = getClickableElements(document.body);
+
+        return clickables.find(function (element) {
+            const text = normalizeText(
+                element.innerText ||
+                element.textContent ||
+                element.value ||
+                element.getAttribute("aria-label")
+            );
+
+            return text === "settings" || text.endsWith(" settings");
+        }) || null;
+    }
+
+    function removeThreeButtonsBelowSettings() {
+        const settingsButton = findSettingsButton();
+        if (!settingsButton) return false;
+
+        const settingsRect = settingsButton.getBoundingClientRect();
+        const maximumBottom = settingsRect.bottom + 150;
+
+        let ancestor = settingsButton;
+
+        for (let level = 0; level < 5 && ancestor; level += 1) {
+            let sibling = ancestor.nextElementSibling;
+            let siblingChecks = 0;
+
+            while (sibling && siblingChecks < 6) {
+                const buttons = getClickableElements(sibling).filter(function (button) {
+                    const rect = button.getBoundingClientRect();
+
+                    return (
+                        rect.top >= settingsRect.bottom - 8 &&
+                        rect.top <= maximumBottom &&
+                        rect.left < settingsRect.right + 80
+                    );
+                });
+
+                if (buttons.length === 3) {
+                    buttons.forEach(function (button) {
+                        button.remove();
+                    });
+
+                    if (
+                        sibling instanceof HTMLElement &&
+                        sibling.children.length === 0 &&
+                        normalizeText(sibling.textContent) === ""
+                    ) {
+                        sibling.remove();
+                    }
+
+                    return true;
+                }
+
+                sibling = sibling.nextElementSibling;
+                siblingChecks += 1;
+            }
+
+            ancestor = ancestor.parentElement;
+        }
+
+        const fallbackButtons = getClickableElements(document.body)
+            .filter(function (button) {
+                if (button === settingsButton || settingsButton.contains(button)) {
+                    return false;
+                }
+
+                const rect = button.getBoundingClientRect();
+
+                return (
+                    rect.top >= settingsRect.bottom + 5 &&
+                    rect.top <= maximumBottom &&
+                    rect.left >= settingsRect.left - 30 &&
+                    rect.right <= settingsRect.right + 40
+                );
+            })
+            .sort(function (first, second) {
+                const firstRect = first.getBoundingClientRect();
+                const secondRect = second.getBoundingClientRect();
+
+                return firstRect.top - secondRect.top ||
+                    firstRect.left - secondRect.left;
+            });
+
+        if (fallbackButtons.length === 3) {
+            fallbackButtons.forEach(function (button) {
+                button.remove();
+            });
+
+            return true;
+        }
+
+        return false;
+    }
+
+    function runRemoval() {
+        if (removeThreeButtonsBelowSettings()) {
+            document.documentElement.setAttribute(
+                "data-settings-bottom-buttons-removed",
+                "true"
+            );
+        }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", runRemoval, {
+            once: true
+        });
+    } else {
+        runRemoval();
+    }
+
+    window.addEventListener("load", runRemoval, {
+        once: true
+    });
+
+    setTimeout(runRemoval, 300);
+    setTimeout(runRemoval, 1000);
+})();
+</script>
+<!-- SETTINGS-BOTTOM-THREE-BUTTONS-REMOVAL-END -->
 </body>
 </html>
 
