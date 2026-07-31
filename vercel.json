@@ -1,12 +1,8 @@
-{
+﻿{
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
-    },
     {
       "source": "/",
       "destination": "/index.html"
@@ -30,10 +26,25 @@
           "value": "no-cache, no-store, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
     }
   ],
   "functions": {
     "api/index.py": {
+      "maxDuration": 60
+    },
+    "api/chat.py": {
+      "maxDuration": 60
+    },
+    "api/live-assist.py": {
       "maxDuration": 60
     }
   }
