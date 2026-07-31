@@ -10988,7 +10988,7 @@ textarea:disabled,
   </div>
 </div>
 <div id="watermark">CORTEX CORE AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION. </div>
-<div id="watermark">CREATED BY MI CORTEX X</div>
+
 
 </div>
 
@@ -33456,8 +33456,85 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 })();
 </script>
 <!-- SETTINGS-BOTTOM-THREE-BUTTONS-REMOVAL-END -->
+
+<!-- CREATED-BY-FOOTER-REMOVAL-START -->
+<script>
+(function () {
+    "use strict";
+
+    const blockedFooterTexts = new Set([
+        "created by mi cortex x",
+        "create by mi cortex x",
+        "created by cortex core ai",
+        "create by cortex core ai"
+    ]);
+
+    function normalizeFooterText(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function removeCreatedByFooter() {
+        const elements = document.querySelectorAll(
+            "footer, p, div, span, small, strong, label"
+        );
+
+        elements.forEach(function (element) {
+            const text = normalizeFooterText(element.textContent);
+
+            if (!blockedFooterTexts.has(text)) {
+                return;
+            }
+
+            const childElements = Array.from(element.children);
+
+            const hasUnrelatedChildContent = childElements.some(
+                function (child) {
+                    const childText = normalizeFooterText(child.textContent);
+                    return childText && !blockedFooterTexts.has(childText);
+                }
+            );
+
+            if (!hasUnrelatedChildContent) {
+                element.remove();
+            }
+        });
+    }
+
+    function startFooterRemoval() {
+        removeCreatedByFooter();
+
+        const observer = new MutationObserver(function () {
+            removeCreatedByFooter();
+        });
+
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+
+        window.setTimeout(removeCreatedByFooter, 250);
+        window.setTimeout(removeCreatedByFooter, 1000);
+        window.setTimeout(removeCreatedByFooter, 2500);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startFooterRemoval,
+            { once: true }
+        );
+    } else {
+        startFooterRemoval();
+    }
+})();
+</script>
+<!-- CREATED-BY-FOOTER-REMOVAL-END -->
 </body>
 </html>
+
 
 
 
