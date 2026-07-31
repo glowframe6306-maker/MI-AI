@@ -34621,6 +34621,648 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 </script>
 <!-- CHIEF_OWNER_SETTINGS_BUTTON_REMOVAL_END -->
 
+
+
+<!-- CORTEX_WORKING_SETTINGS_CONTROLS_V1_START -->
+<style id="CORTEX_WORKING_SETTINGS_CONTROLS_V1_STYLE">
+#settingsPanel select,
+#settingsPanel input,
+#settingsPanel button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+#settingsPanel input[type="range"] {
+    cursor: ew-resize !important;
+}
+
+#settingsPanel .cortex-setting-row {
+    cursor: pointer;
+}
+
+#cortexSettingsStatus {
+    display: none;
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #dcfce7;
+    background: rgba(34, 197, 94, 0.16);
+    border: 1px solid rgba(34, 197, 94, 0.28);
+}
+</style>
+
+<script id="CORTEX_WORKING_SETTINGS_CONTROLS_V1_SCRIPT">
+(function () {
+    "use strict";
+
+    const THEME_STORAGE_KEY = "cortex_core_theme_color";
+    const FONT_STORAGE_KEY = "cortex_core_font_size";
+    const LANGUAGE_STORAGE_KEY = "cortex_core_language";
+
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
+    function clamp(value, minimum, maximum) {
+        return Math.min(
+            maximum,
+            Math.max(minimum, Number(value))
+        );
+    }
+
+    function validHexColor(value) {
+        return /^#[0-9a-f]{6}$/i.test(
+            String(value || "")
+        );
+    }
+
+    function hexToRgb(hex) {
+        const normalized = String(hex || "")
+            .replace("#", "")
+            .trim();
+
+        if (!/^[0-9a-f]{6}$/i.test(normalized)) {
+            return {
+                red: 30,
+                green: 136,
+                blue: 229
+            };
+        }
+
+        return {
+            red: parseInt(normalized.slice(0, 2), 16),
+            green: parseInt(normalized.slice(2, 4), 16),
+            blue: parseInt(normalized.slice(4, 6), 16)
+        };
+    }
+
+    function showSettingsStatus(message) {
+        const panel = getElement("settingsPanel");
+
+        if (!panel) {
+            return;
+        }
+
+        let status = getElement("cortexSettingsStatus");
+
+        if (!status) {
+            status = document.createElement("div");
+            status.id = "cortexSettingsStatus";
+
+            const applyButton =
+                panel.querySelector(
+                    'button[onclick*="applyTheme"], ' +
+                    'button[data-i18n="settings.apply"]'
+                );
+
+            if (applyButton) {
+                applyButton.insertAdjacentElement(
+                    "afterend",
+                    status
+                );
+            } else {
+                panel.appendChild(status);
+            }
+        }
+
+        status.textContent = message;
+        status.style.display = "block";
+
+        window.clearTimeout(
+            window.__cortexSettingsStatusTimer
+        );
+
+        window.__cortexSettingsStatusTimer =
+            window.setTimeout(function () {
+                status.style.display = "none";
+            }, 1800);
+    }
+
+    function applyThemeColor(color, persist) {
+        const normalized = validHexColor(color)
+            ? String(color).toLowerCase()
+            : "#1e88e5";
+
+        const rgb = hexToRgb(normalized);
+
+        document.documentElement.style.setProperty(
+            "--main",
+            normalized
+        );
+
+        document.documentElement.style.setProperty(
+            "--mi-theme-color",
+            normalized
+        );
+
+        document.documentElement.style.setProperty(
+            "--mi-theme-rgb",
+            rgb.red + ", " + rgb.green + ", " + rgb.blue
+        );
+
+        document.body.style.setProperty(
+            "--main",
+            normalized
+        );
+
+        const picker = getElement("themeColor");
+
+        if (picker && picker.value !== normalized) {
+            picker.value = normalized;
+        }
+
+        if (persist !== false) {
+            try {
+                localStorage.setItem(
+                    THEME_STORAGE_KEY,
+                    normalized
+                );
+            } catch (_) {}
+
+            try {
+                if (
+                    window.firestorePersistence &&
+                    window.miFirebaseUser
+                ) {
+                    window.firestorePersistence
+                        .saveSettings({
+                            themeColor: normalized
+                        })
+                        .catch(function (error) {
+                            console.warn(
+                                "[CORTEX CORE AI] Theme save warning:",
+                                error
+                            );
+                        });
+                }
+            } catch (_) {}
+        }
+
+        return normalized;
+    }
+
+    function applyFontSize(value, persist) {
+        const size = clamp(value, 12, 25);
+
+        document.documentElement.style.fontSize =
+            size + "px";
+
+        document.body.style.fontSize =
+            size + "px";
+
+        const slider =
+            document.querySelector(
+                '#settingsPanel input[type="range"]'
+            );
+
+        if (slider) {
+            slider.value = String(size);
+            slider.setAttribute(
+                "aria-valuenow",
+                String(size)
+            );
+        }
+
+        if (persist !== false) {
+            try {
+                localStorage.setItem(
+                    FONT_STORAGE_KEY,
+                    String(size)
+                );
+            } catch (_) {}
+
+            try {
+                if (
+                    window.firestorePersistence &&
+                    window.miFirebaseUser
+                ) {
+                    window.firestorePersistence
+                        .saveSettings({
+                            fontSize: size
+                        })
+                        .catch(function (error) {
+                            console.warn(
+                                "[CORTEX CORE AI] Font save warning:",
+                                error
+                            );
+                        });
+                }
+            } catch (_) {}
+        }
+
+        return size;
+    }
+
+    async function applyLanguage(language, persist) {
+        const allowedLanguages =
+            new Set(["en", "si", "ta"]);
+
+        const normalized =
+            allowedLanguages.has(language)
+                ? language
+                : "en";
+
+        const select = getElement("languageSelect");
+
+        if (select) {
+            select.value = normalized;
+        }
+
+        let applied = false;
+
+        try {
+            if (
+                window.MIAI18N &&
+                typeof window.MIAI18N.setLanguage ===
+                    "function"
+            ) {
+                await window.MIAI18N.setLanguage(
+                    normalized
+                );
+
+                applied = true;
+            }
+        } catch (error) {
+            console.warn(
+                "[CORTEX CORE AI] Language system warning:",
+                error
+            );
+        }
+
+        if (
+            !applied &&
+            typeof window.applyLanguage === "function"
+        ) {
+            try {
+                await window.applyLanguage(
+                    normalized,
+                    persist !== false
+                );
+
+                applied = true;
+            } catch (error) {
+                console.warn(
+                    "[CORTEX CORE AI] Language fallback warning:",
+                    error
+                );
+            }
+        }
+
+        document.documentElement.lang = normalized;
+
+        if (persist !== false) {
+            try {
+                localStorage.setItem(
+                    LANGUAGE_STORAGE_KEY,
+                    normalized
+                );
+            } catch (_) {}
+
+            try {
+                if (
+                    window.firestorePersistence &&
+                    window.miFirebaseUser
+                ) {
+                    window.firestorePersistence
+                        .saveSettings({
+                            language: normalized
+                        })
+                        .catch(function (error) {
+                            console.warn(
+                                "[CORTEX CORE AI] Language save warning:",
+                                error
+                            );
+                        });
+                }
+            } catch (_) {}
+        }
+
+        return normalized;
+    }
+
+    window.applyTheme = function () {
+        const picker = getElement("themeColor");
+
+        const slider =
+            document.querySelector(
+                '#settingsPanel input[type="range"]'
+            );
+
+        const languageSelect =
+            getElement("languageSelect");
+
+        const color = picker
+            ? picker.value
+            : "#1e88e5";
+
+        const fontSize = slider
+            ? slider.value
+            : 15;
+
+        const language = languageSelect
+            ? languageSelect.value
+            : "en";
+
+        applyThemeColor(color, true);
+        applyFontSize(fontSize, true);
+
+        Promise.resolve(
+            applyLanguage(language, true)
+        ).finally(function () {
+            showSettingsStatus(
+                "Settings applied successfully."
+            );
+        });
+    };
+
+    window.setFont = function (value) {
+        applyFontSize(value, true);
+    };
+
+    function closeSettingsSafely() {
+        const panel = getElement("settingsPanel");
+        const backdrop = getElement("settingsBackdrop");
+
+        if (panel) {
+            panel.classList.remove("settings-open");
+            panel.setAttribute("aria-hidden", "true");
+            panel.style.display = "none";
+        }
+
+        if (backdrop) {
+            backdrop.classList.remove("settings-open");
+            backdrop.setAttribute("aria-hidden", "true");
+        }
+
+        document.body.classList.remove(
+            "settings-modal-open"
+        );
+    }
+
+    if (typeof window.closeSettings !== "function") {
+        window.closeSettings = closeSettingsSafely;
+    }
+
+    function repairSettingsHtml() {
+        const panel = getElement("settingsPanel");
+
+        if (!panel) {
+            return;
+        }
+
+        const closeButton =
+            getElement("settingsCloseBtn");
+
+        if (closeButton) {
+            closeButton.type = "button";
+            closeButton.textContent = "×";
+            closeButton.setAttribute(
+                "aria-label",
+                "Close Settings"
+            );
+
+            closeButton.onclick = function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (
+                    typeof window.closeSettings ===
+                        "function"
+                ) {
+                    window.closeSettings();
+                } else {
+                    closeSettingsSafely();
+                }
+            };
+        }
+
+        const backdrop =
+            getElement("settingsBackdrop");
+
+        if (backdrop) {
+            backdrop.onclick = function (event) {
+                if (event.target !== backdrop) {
+                    return;
+                }
+
+                if (
+                    typeof window.closeSettings ===
+                        "function"
+                ) {
+                    window.closeSettings();
+                } else {
+                    closeSettingsSafely();
+                }
+            };
+        }
+
+        const languageSelect =
+            getElement("languageSelect");
+
+        if (languageSelect) {
+            const optionNames = {
+                en: "English",
+                si: "සිංහල",
+                ta: "தமிழ்"
+            };
+
+            Array.from(languageSelect.options)
+                .forEach(function (option) {
+                    if (optionNames[option.value]) {
+                        option.textContent =
+                            optionNames[option.value];
+                    }
+                });
+
+            languageSelect.onchange =
+                function () {
+                    applyLanguage(
+                        languageSelect.value,
+                        true
+                    );
+
+                    showSettingsStatus(
+                        "Language changed."
+                    );
+                };
+        }
+
+        const picker = getElement("themeColor");
+
+        if (picker) {
+            picker.oninput = function () {
+                applyThemeColor(
+                    picker.value,
+                    false
+                );
+            };
+
+            picker.onchange = function () {
+                applyThemeColor(
+                    picker.value,
+                    true
+                );
+
+                showSettingsStatus(
+                    "Theme colour changed."
+                );
+            };
+        }
+
+        const slider =
+            panel.querySelector(
+                'input[type="range"]'
+            );
+
+        if (slider) {
+            slider.oninput = function () {
+                applyFontSize(
+                    slider.value,
+                    false
+                );
+            };
+
+            slider.onchange = function () {
+                applyFontSize(
+                    slider.value,
+                    true
+                );
+
+                showSettingsStatus(
+                    "Font size changed."
+                );
+            };
+        }
+
+        const applyButton =
+            panel.querySelector(
+                'button[onclick*="applyTheme"], ' +
+                'button[data-i18n="settings.apply"]'
+            );
+
+        if (applyButton) {
+            applyButton.type = "button";
+
+            applyButton.onclick = function (event) {
+                event.preventDefault();
+                window.applyTheme();
+            };
+        }
+
+        panel.querySelectorAll("label")
+            .forEach(function (label) {
+                const text =
+                    String(
+                        label.textContent || ""
+                    ).trim().toLowerCase();
+
+                if (
+                    text.includes("language") &&
+                    languageSelect
+                ) {
+                    label.onclick = function () {
+                        languageSelect.focus();
+                        languageSelect.click();
+                    };
+                }
+
+                if (
+                    text.includes("theme") &&
+                    picker
+                ) {
+                    label.onclick = function () {
+                        picker.focus();
+                        picker.click();
+                    };
+                }
+
+                if (
+                    text.includes("font") &&
+                    slider
+                ) {
+                    label.onclick = function () {
+                        slider.focus();
+                    };
+                }
+            });
+    }
+
+    function restoreSavedSettings() {
+        let color = "#1e88e5";
+        let fontSize = 15;
+        let language = "en";
+
+        try {
+            color =
+                localStorage.getItem(
+                    THEME_STORAGE_KEY
+                ) || color;
+
+            fontSize =
+                localStorage.getItem(
+                    FONT_STORAGE_KEY
+                ) || fontSize;
+
+            language =
+                localStorage.getItem(
+                    LANGUAGE_STORAGE_KEY
+                ) || language;
+        } catch (_) {}
+
+        applyThemeColor(color, false);
+        applyFontSize(fontSize, false);
+
+        Promise.resolve(
+            applyLanguage(language, false)
+        ).catch(function () {});
+    }
+
+    function start() {
+        repairSettingsHtml();
+        restoreSavedSettings();
+
+        window.setTimeout(
+            repairSettingsHtml,
+            300
+        );
+
+        window.setTimeout(
+            repairSettingsHtml,
+            1200
+        );
+
+        window.setTimeout(
+            repairSettingsHtml,
+            3000
+        );
+
+        window.addEventListener(
+            "mi-chat-user-changed",
+            repairSettingsHtml
+        );
+
+        window.addEventListener(
+            "mi-ai-main-started",
+            repairSettingsHtml
+        );
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- CORTEX_WORKING_SETTINGS_CONTROLS_V1_END -->
+
 </body>
 </html>
 
