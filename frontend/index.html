@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -35650,8 +35650,1247 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 </script>
 <!-- CORTEX_PROFILE_RUNTIME_ICON_FIX_V1_END -->
 
+
+
+<!-- CORTEX_FINAL_UI_CONTROLS_FIX_V1_START -->
+<style id="CORTEX_FINAL_UI_CONTROLS_FIX_V1_STYLE">
+
+/* All interactive controls respond immediately. */
+button,
+select,
+option,
+[role="button"],
+[role="option"],
+[aria-haspopup="listbox"],
+[data-value],
+[data-permission] {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+}
+
+/* Keep custom menus above their own modal only. */
+[role="listbox"],
+.mi-ios-popup-menu,
+.mi-ios-popup,
+.custom-select-menu,
+.dropdown-menu {
+    z-index: 50000 !important;
+}
+
+/* Account Chat clean row-by-row layout. */
+.cortex-account-chat-fixed {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+}
+
+.cortex-account-chat-fixed form,
+.cortex-account-chat-fixed .account-chat-form,
+.cortex-account-chat-fixed .direct-message-form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.cortex-account-chat-fixed label,
+.cortex-account-chat-fixed input,
+.cortex-account-chat-fixed textarea,
+.cortex-account-chat-fixed button {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.cortex-account-chat-fixed label {
+    display: block !important;
+    margin: 0 0 6px !important;
+}
+
+.cortex-account-chat-fixed input,
+.cortex-account-chat-fixed textarea {
+    margin: 0 !important;
+}
+
+.cortex-account-chat-fixed textarea {
+    min-height: 92px !important;
+}
+
+.cortex-account-chat-fixed .cortex-account-chat-row {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 6px !important;
+}
+
+.cortex-account-chat-fixed .cortex-account-chat-unnecessary {
+    display: none !important;
+}
+
+/* Stable icons. */
+.cortex-fixed-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    margin-right: 7px !important;
+    line-height: 1 !important;
+    font-family: "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+}
+
+/* Settings options stay clean and readable. */
+#settingsPanel .cortex-settings-control {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 7px !important;
+}
+
+#settingsPanel select,
+#settingsPanel input[type="color"],
+#settingsPanel input[type="range"] {
+    pointer-events: auto !important;
+    width: 100% !important;
+}
+
+/* Prevent old broken characters from taking space. */
+.cortex-corrupted-text-hidden {
+    display: none !important;
+}
+</style>
+
+<script id="CORTEX_FINAL_UI_CONTROLS_FIX_V1_SCRIPT">
+(function () {
+    "use strict";
+
+    if (window.__CORTEX_FINAL_UI_CONTROLS_FIX_V1__) {
+        return;
+    }
+
+    window.__CORTEX_FINAL_UI_CONTROLS_FIX_V1__ = true;
+
+    const translations = {
+        en: {
+            newChat: "New Chat",
+            customerSupport: "Customer Support",
+            settings: "Settings",
+            language: "Language",
+            theme: "Theme",
+            fontSize: "Font Size",
+            apply: "Apply",
+            shareChat: "Share chat",
+            permission: "Permission",
+            canEdit: "Can edit",
+            viewOnly: "View only",
+            cancel: "Cancel",
+            accountChat: "Account Chat",
+            refresh: "Refresh",
+            toEmail: "To email",
+            message: "Message",
+            send: "Send",
+            receivedMessages: "Received messages",
+            noMessages: "No received messages yet.",
+            emailSupport: "Email",
+            requestEmail: "Request via email",
+            whatsapp: "WhatsApp",
+            viaWhatsapp: "Via WhatsApp",
+            close: "Close",
+            yourProfile: "Your profile",
+            name: "Name",
+            age: "Age",
+            email: "Email",
+            saveChanges: "Save changes",
+            logout: "Logout"
+        },
+
+        si: {
+            newChat: "නව සංවාදය",
+            customerSupport: "පාරිභෝගික සහාය",
+            settings: "සැකසුම්",
+            language: "භාෂාව",
+            theme: "තේමාව",
+            fontSize: "අකුරු ප්‍රමාණය",
+            apply: "යොදන්න",
+            shareChat: "සංවාදය බෙදාගන්න",
+            permission: "අවසරය",
+            canEdit: "සංස්කරණය කළ හැක",
+            viewOnly: "බැලීම පමණයි",
+            cancel: "අවලංගු කරන්න",
+            accountChat: "ගිණුම් සංවාදය",
+            refresh: "නැවුම් කරන්න",
+            toEmail: "ලබන්නාගේ ඊමේල් ලිපිනය",
+            message: "පණිවිඩය",
+            send: "යවන්න",
+            receivedMessages: "ලැබුණු පණිවිඩ",
+            noMessages: "තවම ලැබුණු පණිවිඩ නොමැත.",
+            emailSupport: "ඊමේල්",
+            requestEmail: "ඊමේල් මගින් ඉල්ලන්න",
+            whatsapp: "WhatsApp",
+            viaWhatsapp: "WhatsApp මගින්",
+            close: "වසන්න",
+            yourProfile: "ඔබගේ පැතිකඩ",
+            name: "නම",
+            age: "වයස",
+            email: "ඊමේල්",
+            saveChanges: "වෙනස්කම් සුරකින්න",
+            logout: "ඉවත් වන්න"
+        },
+
+        ta: {
+            newChat: "புதிய உரையாடல்",
+            customerSupport: "வாடிக்கையாளர் ஆதரவு",
+            settings: "அமைப்புகள்",
+            language: "மொழி",
+            theme: "தீம்",
+            fontSize: "எழுத்து அளவு",
+            apply: "பயன்படுத்து",
+            shareChat: "உரையாடலைப் பகிர்",
+            permission: "அனுமதி",
+            canEdit: "திருத்தலாம்",
+            viewOnly: "பார்க்க மட்டும்",
+            cancel: "ரத்து செய்",
+            accountChat: "கணக்கு உரையாடல்",
+            refresh: "புதுப்பி",
+            toEmail: "பெறுநரின் மின்னஞ்சல்",
+            message: "செய்தி",
+            send: "அனுப்பு",
+            receivedMessages: "பெறப்பட்ட செய்திகள்",
+            noMessages: "பெறப்பட்ட செய்திகள் இன்னும் இல்லை.",
+            emailSupport: "மின்னஞ்சல்",
+            requestEmail: "மின்னஞ்சல் மூலம் கோரவும்",
+            whatsapp: "WhatsApp",
+            viaWhatsapp: "WhatsApp மூலம்",
+            close: "மூடு",
+            yourProfile: "உங்கள் சுயவிவரம்",
+            name: "பெயர்",
+            age: "வயது",
+            email: "மின்னஞ்சல்",
+            saveChanges: "மாற்றங்களை சேமி",
+            logout: "வெளியேறு"
+        }
+    };
+
+    const brokenPattern =
+        /(?:├|┬|┼|ΓÇ|Γé|Ã|Â|â€|â‚|â„|�)/;
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function getLanguage() {
+        const select =
+            document.getElementById("languageSelect");
+
+        if (select && translations[select.value]) {
+            return select.value;
+        }
+
+        try {
+            const stored =
+                localStorage.getItem("cortex_core_language") ||
+                localStorage.getItem("mi_language") ||
+                localStorage.getItem("language");
+
+            if (translations[stored]) {
+                return stored;
+            }
+        } catch (_) {}
+
+        return "en";
+    }
+
+    function dictionary() {
+        return translations[getLanguage()] || translations.en;
+    }
+
+    function replaceOwnText(element, text) {
+        if (!element) {
+            return;
+        }
+
+        const textNodes =
+            Array.from(element.childNodes)
+                .filter(function (node) {
+                    return node.nodeType === Node.TEXT_NODE;
+                });
+
+        if (textNodes.length) {
+            textNodes[0].nodeValue = text + " ";
+            return;
+        }
+
+        const label =
+            element.querySelector(
+                ".label, .text, .button-label, " +
+                ".selected-value, .selected-label, " +
+                "[data-label]"
+            );
+
+        if (label) {
+            label.textContent = text;
+            return;
+        }
+
+        element.appendChild(
+            document.createTextNode(text)
+        );
+    }
+
+    function setIcon(element, icon) {
+        if (!element) {
+            return;
+        }
+
+        let iconElement =
+            element.querySelector(
+                ":scope > .cortex-fixed-icon"
+            );
+
+        if (!iconElement) {
+            iconElement =
+                document.createElement("span");
+
+            iconElement.className =
+                "cortex-fixed-icon";
+
+            iconElement.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            element.insertBefore(
+                iconElement,
+                element.firstChild
+            );
+        }
+
+        iconElement.textContent = icon;
+    }
+
+    function cleanCorruptedText(root) {
+        const target = root || document.body;
+
+        if (!target) {
+            return;
+        }
+
+        const walker =
+            document.createTreeWalker(
+                target,
+                NodeFilter.SHOW_TEXT
+            );
+
+        const nodes = [];
+
+        while (walker.nextNode()) {
+            nodes.push(walker.currentNode);
+        }
+
+        nodes.forEach(function (node) {
+            if (
+                !node.parentElement ||
+                node.parentElement.closest(
+                    "script, style, code, pre, textarea, input"
+                )
+            ) {
+                return;
+            }
+
+            const value =
+                String(node.nodeValue || "");
+
+            if (!brokenPattern.test(value)) {
+                return;
+            }
+
+            node.nodeValue = "";
+        });
+    }
+
+    function findButtonByText(text) {
+        const wanted = normalize(text);
+
+        return Array.from(
+            document.querySelectorAll(
+                "button, [role='button']"
+            )
+        ).find(function (element) {
+            return normalize(
+                element.textContent
+            ) === wanted;
+        }) || null;
+    }
+
+    function repairMainIcons() {
+        const d = dictionary();
+
+        const newChat =
+            document.getElementById("newChatBtn") ||
+            findButtonByText("New Chat") ||
+            findButtonByText("නව සංවාදය") ||
+            findButtonByText("புதிய உரையாடல்");
+
+        if (newChat) {
+            setIcon(newChat, "＋");
+            replaceOwnText(newChat, d.newChat);
+        }
+
+        const support =
+            document.getElementById("supportBtn") ||
+            document.getElementById("customerSupportBtn") ||
+            findButtonByText("Customer Support");
+
+        if (support) {
+            setIcon(support, "🎧");
+            replaceOwnText(
+                support,
+                d.customerSupport
+            );
+        }
+
+        const settings =
+            document.getElementById("settingsBtn") ||
+            findButtonByText("Settings");
+
+        if (settings) {
+            setIcon(settings, "⚙");
+            replaceOwnText(
+                settings,
+                d.settings
+            );
+        }
+
+        const chat =
+            document.getElementById("headerChatBtn") ||
+            document.getElementById("chatBtn") ||
+            findButtonByText("Chat");
+
+        if (chat) {
+            setIcon(chat, "💬");
+        }
+
+        const logout =
+            document.getElementById("logoutBtn");
+
+        if (logout) {
+            setIcon(logout, "↪");
+            replaceOwnText(logout, d.logout);
+        }
+    }
+
+    function permissionFromOption(option) {
+        const value = normalize(
+            option.getAttribute("data-value") ||
+            option.getAttribute("data-permission") ||
+            option.getAttribute("value") ||
+            option.textContent
+        );
+
+        if (
+            value.includes("view") ||
+            value.includes("බැලීම") ||
+            value.includes("பார்க்க")
+        ) {
+            return "view";
+        }
+
+        if (
+            value.includes("edit") ||
+            value.includes("සංස්කරණ") ||
+            value.includes("திருத்த")
+        ) {
+            return "edit";
+        }
+
+        return "";
+    }
+
+    function findPermissionSelect() {
+        return (
+            document.getElementById(
+                "sharePermissionSelect"
+            ) ||
+            document.getElementById(
+                "sharePermission"
+            ) ||
+            document.querySelector(
+                "select[name='permission']"
+            )
+        );
+    }
+
+    function updatePermissionSelect(permission) {
+        const select =
+            findPermissionSelect();
+
+        if (select) {
+            const option =
+                Array.from(select.options)
+                    .find(function (item) {
+                        return (
+                            permissionFromOption(item) ===
+                            permission
+                        );
+                    });
+
+            if (option) {
+                select.value = option.value;
+            } else {
+                select.value = permission;
+            }
+
+            select.dispatchEvent(
+                new Event("input", {
+                    bubbles: true
+                })
+            );
+
+            select.dispatchEvent(
+                new Event("change", {
+                    bubbles: true
+                })
+            );
+        }
+
+        window.sharePermission = permission;
+        window.selectedSharePermission = permission;
+        window.currentSharePermission = permission;
+
+        try {
+            localStorage.setItem(
+                "cortex_share_permission",
+                permission
+            );
+        } catch (_) {}
+    }
+
+    function closePermissionMenu(option) {
+        const menu =
+            option.closest(
+                "[role='listbox'], " +
+                ".mi-ios-popup-menu, " +
+                ".mi-ios-popup, " +
+                ".custom-select-menu, " +
+                ".dropdown-menu"
+            );
+
+        if (!menu) {
+            return;
+        }
+
+        menu.hidden = true;
+        menu.style.display = "none";
+
+        menu.classList.remove(
+            "open",
+            "show",
+            "active",
+            "mi-open"
+        );
+    }
+
+    function updatePermissionTrigger(
+        option,
+        permission
+    ) {
+        const d = dictionary();
+
+        const dialog =
+            option.closest(
+                "#shareModal, #shareOverlay, " +
+                ".share-modal, .share-dialog, " +
+                "[role='dialog']"
+            ) || document;
+
+        const triggers =
+            dialog.querySelectorAll(
+                "[aria-haspopup='listbox'], " +
+                ".mi-ios-popup-trigger, " +
+                ".custom-select-trigger, " +
+                ".select-trigger, " +
+                ".dropdown-trigger"
+            );
+
+        triggers.forEach(function (trigger) {
+            const current =
+                normalize(trigger.textContent);
+
+            if (
+                current.includes("edit") ||
+                current.includes("view") ||
+                current.includes("සංස්කරණ") ||
+                current.includes("බැලීම") ||
+                current.includes("திருத்த") ||
+                current.includes("பார்க்க")
+            ) {
+                replaceOwnText(
+                    trigger,
+                    permission === "view"
+                        ? d.viewOnly
+                        : d.canEdit
+                );
+
+                trigger.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+            }
+        });
+    }
+
+    function handleOneClickPermission(event) {
+        const option =
+            event.target.closest(
+                "[role='option'], " +
+                ".mi-ios-popup-option, " +
+                "[data-permission], " +
+                "[data-value]"
+            );
+
+        if (!option) {
+            return;
+        }
+
+        const permission =
+            permissionFromOption(option);
+
+        if (!permission) {
+            return;
+        }
+
+        const hasShareContext =
+            option.closest(
+                "#shareModal, #shareOverlay, " +
+                ".share-modal, .share-dialog, " +
+                "[role='listbox'], " +
+                ".mi-ios-popup-menu"
+            );
+
+        if (!hasShareContext) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        updatePermissionSelect(permission);
+        updatePermissionTrigger(
+            option,
+            permission
+        );
+        closePermissionMenu(option);
+    }
+
+    function repairAccountChat() {
+        const candidates =
+            Array.from(
+                document.querySelectorAll(
+                    "[role='dialog'], .modal, " +
+                    ".modal-content, .dialog, " +
+                    ".account-chat-modal"
+                )
+            );
+
+        const modal =
+            candidates.find(function (element) {
+                const text =
+                    normalize(element.textContent);
+
+                return (
+                    text.includes("account chat") ||
+                    text.includes("ගිණුම් සංවාදය") ||
+                    text.includes("கணக்கு உரையாடல்")
+                );
+            });
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.add(
+            "cortex-account-chat-fixed"
+        );
+
+        const inputs =
+            modal.querySelectorAll(
+                "input, textarea"
+            );
+
+        inputs.forEach(function (input) {
+            let row =
+                input.closest(
+                    ".field, .form-group, " +
+                    ".input-group, .account-chat-field"
+                );
+
+            if (!row) {
+                row = input.parentElement;
+            }
+
+            if (row) {
+                row.classList.add(
+                    "cortex-account-chat-row"
+                );
+            }
+        });
+
+        const d = dictionary();
+
+        const headings =
+            modal.querySelectorAll(
+                "h1, h2, h3, h4"
+            );
+
+        headings.forEach(function (heading) {
+            const text =
+                normalize(heading.textContent);
+
+            if (text.includes("account chat")) {
+                heading.textContent =
+                    "💬 " + d.accountChat;
+            }
+
+            if (
+                text.includes("received messages")
+            ) {
+                heading.textContent =
+                    d.receivedMessages;
+            }
+        });
+
+        modal.querySelectorAll("button")
+            .forEach(function (button) {
+                const text =
+                    normalize(button.textContent);
+
+                if (text.includes("refresh")) {
+                    setIcon(button, "↻");
+                    replaceOwnText(
+                        button,
+                        d.refresh
+                    );
+                }
+
+                if (text === "send") {
+                    setIcon(button, "➤");
+                    replaceOwnText(
+                        button,
+                        d.send
+                    );
+                }
+            });
+    }
+
+    function repairCustomerSupport() {
+        const candidates =
+            Array.from(
+                document.querySelectorAll(
+                    "[role='dialog'], .modal, " +
+                    ".modal-content, .dialog, .support-card"
+                )
+            );
+
+        const panel =
+            candidates.find(function (element) {
+                return normalize(
+                    element.textContent
+                ).includes("customer support");
+            });
+
+        if (!panel) {
+            return;
+        }
+
+        const d = dictionary();
+
+        panel.querySelectorAll(
+            "h1, h2, h3, h4"
+        ).forEach(function (heading) {
+            if (
+                normalize(
+                    heading.textContent
+                ).includes(
+                    "customer support"
+                )
+            ) {
+                heading.textContent =
+                    "🎧 " + d.customerSupport;
+            }
+        });
+
+        panel.querySelectorAll("button")
+            .forEach(function (button) {
+                const text =
+                    normalize(button.textContent);
+
+                if (text.includes("email")) {
+                    setIcon(button, "✉");
+                    replaceOwnText(
+                        button,
+                        d.requestEmail
+                    );
+                }
+
+                if (
+                    text.includes("whatsapp")
+                ) {
+                    setIcon(button, "☎");
+                    replaceOwnText(
+                        button,
+                        d.viaWhatsapp
+                    );
+                }
+
+                if (text === "close") {
+                    setIcon(button, "×");
+                    replaceOwnText(
+                        button,
+                        d.close
+                    );
+                }
+            });
+    }
+
+    function repairProfile() {
+        const panel =
+            document.getElementById(
+                "profilePanel"
+            );
+
+        if (!panel) {
+            return;
+        }
+
+        const d = dictionary();
+
+        const fields = [
+            {
+                id: "profileName",
+                icon: "👤",
+                label: d.name
+            },
+            {
+                id: "profileAge",
+                icon: "🎂",
+                label: d.age
+            },
+            {
+                id: "profileEmail",
+                icon: "✉",
+                label: d.email
+            }
+        ];
+
+        fields.forEach(function (field) {
+            const input =
+                document.getElementById(
+                    field.id
+                );
+
+            if (!input) {
+                return;
+            }
+
+            const parent =
+                input.parentElement;
+
+            if (!parent) {
+                return;
+            }
+
+            let icon =
+                parent.querySelector(
+                    ".cortex-fixed-icon"
+                );
+
+            if (!icon) {
+                icon =
+                    document.createElement(
+                        "span"
+                    );
+
+                icon.className =
+                    "cortex-fixed-icon";
+
+                parent.insertBefore(
+                    icon,
+                    input
+                );
+            }
+
+            icon.textContent = field.icon;
+
+            const label =
+                parent.previousElementSibling;
+
+            if (
+                label &&
+                label.tagName === "LABEL"
+            ) {
+                label.textContent =
+                    field.label;
+            }
+        });
+
+        panel.querySelectorAll("button")
+            .forEach(function (button) {
+                const text =
+                    normalize(button.textContent);
+
+                if (
+                    text.includes(
+                        "save changes"
+                    )
+                ) {
+                    setIcon(button, "✓");
+                    replaceOwnText(
+                        button,
+                        d.saveChanges
+                    );
+                }
+
+                if (text === "logout") {
+                    setIcon(button, "↪");
+                    replaceOwnText(
+                        button,
+                        d.logout
+                    );
+                }
+
+                const onclick =
+                    String(
+                        button.getAttribute(
+                            "onclick"
+                        ) || ""
+                    );
+
+                if (
+                    onclick.includes(
+                        "closeProfile"
+                    )
+                ) {
+                    button.textContent = "×";
+                }
+            });
+    }
+
+    function translateCommonPage(language) {
+        const d =
+            translations[language] ||
+            translations.en;
+
+        document.documentElement.lang =
+            language === "si"
+                ? "si"
+                : language === "ta"
+                    ? "ta"
+                    : "en";
+
+        const selectorTranslations = [
+            ["#newChatBtn", d.newChat],
+            ["#supportBtn", d.customerSupport],
+            ["#customerSupportBtn", d.customerSupport],
+            ["#settingsBtn", d.settings],
+            ["#settingsPanel h3", d.settings],
+            [
+                "#settingsPanel [data-setting='language']",
+                d.language
+            ]
+        ];
+
+        selectorTranslations.forEach(
+            function (item) {
+                const element =
+                    document.querySelector(
+                        item[0]
+                    );
+
+                if (element) {
+                    replaceOwnText(
+                        element,
+                        item[1]
+                    );
+                }
+            }
+        );
+
+        document.querySelectorAll(
+            "[data-i18n]"
+        ).forEach(function (element) {
+            const key =
+                element.getAttribute(
+                    "data-i18n"
+                );
+
+            const keyName =
+                String(key || "")
+                    .split(".")
+                    .pop();
+
+            const mapped = {
+                newChat: d.newChat,
+                settings: d.settings,
+                customerSupport:
+                    d.customerSupport,
+                language: d.language,
+                theme: d.theme,
+                fontSize: d.fontSize,
+                apply: d.apply,
+                cancel: d.cancel,
+                saveChanges: d.saveChanges,
+                yourProfile: d.yourProfile,
+                name: d.name,
+                age: d.age,
+                email: d.email,
+                logout: d.logout,
+                close: d.close,
+                send: d.send
+            };
+
+            if (mapped[keyName]) {
+                element.textContent =
+                    mapped[keyName];
+            }
+        });
+
+        repairMainIcons();
+        repairAccountChat();
+        repairCustomerSupport();
+        repairProfile();
+    }
+
+    async function changeLanguage(language) {
+        if (!translations[language]) {
+            language = "en";
+        }
+
+        try {
+            localStorage.setItem(
+                "cortex_core_language",
+                language
+            );
+
+            localStorage.setItem(
+                "mi_language",
+                language
+            );
+
+            localStorage.setItem(
+                "language",
+                language
+            );
+        } catch (_) {}
+
+        const select =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (select) {
+            select.value = language;
+        }
+
+        let existingSystemWorked = false;
+
+        try {
+            if (
+                window.MIAI18N &&
+                typeof window.MIAI18N
+                    .setLanguage ===
+                    "function"
+            ) {
+                await window.MIAI18N
+                    .setLanguage(language);
+
+                existingSystemWorked = true;
+            }
+        } catch (error) {
+            console.warn(
+                "[CORTEX CORE AI] Existing translation system warning:",
+                error
+            );
+        }
+
+        translateCommonPage(language);
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "cortex-language-changed",
+                {
+                    detail: {
+                        language: language,
+                        existingSystemWorked:
+                            existingSystemWorked
+                    }
+                }
+            )
+        );
+    }
+
+    function repairLanguageControl() {
+        const select =
+            document.getElementById(
+                "languageSelect"
+            );
+
+        if (!select) {
+            return;
+        }
+
+        Array.from(select.options)
+            .forEach(function (option) {
+                if (option.value === "en") {
+                    option.textContent =
+                        "English";
+                }
+
+                if (option.value === "si") {
+                    option.textContent =
+                        "සිංහල";
+                }
+
+                if (option.value === "ta") {
+                    option.textContent =
+                        "தமிழ்";
+                }
+            });
+
+        if (
+            select.dataset
+                .cortexLanguageFixed ===
+            "true"
+        ) {
+            return;
+        }
+
+        select.dataset.cortexLanguageFixed =
+            "true";
+
+        select.addEventListener(
+            "change",
+            function () {
+                changeLanguage(
+                    select.value
+                );
+            }
+        );
+
+        select.addEventListener(
+            "input",
+            function () {
+                changeLanguage(
+                    select.value
+                );
+            }
+        );
+    }
+
+    function repairEverything() {
+        cleanCorruptedText(document.body);
+        repairMainIcons();
+        repairAccountChat();
+        repairCustomerSupport();
+        repairProfile();
+        repairLanguageControl();
+
+        translateCommonPage(
+            getLanguage()
+        );
+    }
+
+    document.addEventListener(
+        "click",
+        handleOneClickPermission,
+        true
+    );
+
+    document.addEventListener(
+        "pointerup",
+        function (event) {
+            const option =
+                event.target.closest(
+                    "[role='option'], " +
+                    ".mi-ios-popup-option, " +
+                    "[data-permission], " +
+                    "[data-value]"
+                );
+
+            if (
+                option &&
+                permissionFromOption(option)
+            ) {
+                handleOneClickPermission(
+                    event
+                );
+            }
+        },
+        true
+    );
+
+    function start() {
+        repairEverything();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    window.requestAnimationFrame(
+                        repairEverything
+                    );
+                }
+            );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.setTimeout(
+            repairEverything,
+            300
+        );
+
+        window.setTimeout(
+            repairEverything,
+            1000
+        );
+
+        window.setTimeout(
+            repairEverything,
+            2500
+        );
+    }
+
+    window.CortexChangeLanguage =
+        changeLanguage;
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- CORTEX_FINAL_UI_CONTROLS_FIX_V1_END -->
+
 </body>
 </html>
+
 
 
 
