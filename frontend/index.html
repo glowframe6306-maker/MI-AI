@@ -33532,6 +33532,886 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 })();
 </script>
 <!-- CREATED-BY-FOOTER-REMOVAL-END -->
+
+
+<!-- CORTEX_CHAT_HISTORY_FIX_V1_START -->
+<style id="CORTEX_CHAT_HISTORY_FIX_V1_STYLE">
+/* Remove only the header Chat button next to Login or Logout. */
+#header #chatBtn,
+#header #headerChatBtn,
+#header #miChatButton,
+#header #directMessageBtn,
+#header [data-action="chat"],
+#header [data-action="direct-message"] {
+    display: none !important;
+}
+</style>
+
+<script id="CORTEX_CHAT_HISTORY_FIX_V1">
+(function () {
+    "use strict";
+
+    const TOMBSTONE_KEY_PREFIX =
+        "cortex_permanently_deleted_chats_";
+
+    const GENERIC_TITLES = new Set([
+        "",
+        "new chat",
+        "new conversation",
+        "chat",
+        "untitled",
+        "user greeting"
+    ]);
+
+    function normalizeText(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function normalizeLower(value) {
+        return normalizeText(value).toLowerCase();
+    }
+
+    /*
+       Removes mojibake and unknown prefix characters without changing
+       normal English, Sinhala or Tamil letters.
+    */
+    function cleanUnknownCharacters(value) {
+        let text = String(value || "");
+
+        text = text
+            .replace(/\uFEFF/g, "")
+            .replace(/\uFFFD/g, "")
+            .replace(/â[\u0080-\u00BF]*/g, "")
+            .replace(/Ã[\u0080-\u00BF]*/g, "")
+            .replace(/Â/g, "")
+            .replace(/ΓÇ[^\s]*/g, "")
+            .replace(/├[^\s]*/g, "")
+            .replace(/┬[^\s]*/g, "")
+            .replace(/[\u2500-\u259F]+/g, "")
+            .replace(/^[^A-Za-z0-9\u0D80-\u0DFF\u0B80-\u0BFF]+/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        return text;
+    }
+
+    function getAccountIdentity() {
+        try {
+            return (
+                localStorage.getItem("mi_user_id") ||
+                localStorage.getItem("mi_user_email") ||
+                localStorage.getItem("mi_account") ||
+                "guest"
+            );
+        } catch (_) {
+            return "guest";
+        }
+    }
+
+    function getTombstoneKey() {
+        return (
+            TOMBSTONE_KEY_PREFIX +
+            encodeURIComponent(getAccountIdentity())
+        );
+    }
+
+    function getDeletedChatIds() {
+        try {
+            const parsed = JSON.parse(
+                localStorage.getItem(getTombstoneKey()) || "[]"
+            );
+
+            if (!Array.isArray(parsed)) {
+                return new Set();
+            }
+
+            return new Set(
+                parsed
+                    .map(function (id) {
+                        return String(id || "").trim();
+                    })
+                    .filter(Boolean)
+            );
+        } catch (_) {
+            return new Set();
+        }
+    }
+
+    function saveDeletedChatIds(ids) {
+        try {
+            localStorage.setItem(
+                getTombstoneKey(),
+                JSON.stringify(Array.from(ids))
+            );
+        } catch (_) {}
+    }
+
+    function markChatPermanentlyDeleted(chatId) {
+        const id = String(chatId || "").trim();
+
+        if (!id) {
+            return;
+        }
+
+        const deletedIds = getDeletedChatIds();
+        deletedIds.add(id);
+        saveDeletedChatIds(deletedIds);
+    }
+
+    function removeDeletedChatsFromMemory() {
+        if (
+            typeof chats === "undefined" ||
+            !chats ||
+            typeof chats !== "object"
+        ) {
+            return false;
+        }
+
+        const deletedIds = getDeletedChatIds();
+        let changed = false;
+
+        deletedIds.forEach(function (chatId) {
+            if (
+                Object.prototype.hasOwnProperty.call(
+                    chats,
+                    chatId
+                )
+            ) {
+                delete chats[chatId];
+                changed = true;
+            }
+        });
+
+        return changed;
+    }
+
+    function findFirstUserMessage(chatData) {
+        if (!Array.isArray(chatData)) {
+            return "";
+        }
+
+        for (const message of chatData) {
+            if (!message || typeof message !== "object") {
+                continue;
+            }
+
+            const role = normalizeLower(message.role);
+
+            if (
+                role === "me" ||
+                role === "user" ||
+                role === "human"
+            ) {
+                const text = cleanUnknownCharacters(
+                    message.text ||
+                    message.content ||
+                    message.message ||
+                    ""
+                );
+
+                if (text) {
+                    return text;
+                }
+            }
+        }
+
+        return "";
+    }
+
+    function makeTitleFromFirstMessage(message) {
+        const cleanMessage =
+            cleanUnknownCharacters(message);
+
+        const lower =
+            normalizeLower(cleanMessage)
+                .replace(/[.!?,;:'"()[\]{}]+/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+
+        if (!lower) {
+            return "NEW CHAT";
+        }
+
+        const greetingPatterns = [
+            /^(hi|hello|hey|hiya|howdy)\b/,
+            /^(good morning|good afternoon|good evening)\b/,
+            /^(ayubowan|vanakkam)\b/,
+            /^(හායි|හෙලෝ|ආයුබෝවන්)\b/,
+            /^(வணக்கம்|ஹாய்|ஹலோ)\b/
+        ];
+
+        if (
+            greetingPatterns.some(function (pattern) {
+                return pattern.test(lower);
+            })
+        ) {
+            return "User Greeting";
+        }
+
+        const specialTitles = [
+            {
+                pattern:
+                    /\b(weather|rain|temperature|forecast)\b/,
+                title:
+                    "Weather Question"
+            },
+            {
+                pattern:
+                    /\b(code|coding|python|javascript|html|css|java)\b/,
+                title:
+                    "Coding Help"
+            },
+            {
+                pattern:
+                    /\b(error|failed|failure|bug|fix|issue|problem)\b/,
+                title:
+                    "Technical Support"
+            },
+            {
+                pattern:
+                    /\b(pilot|aviation|aircraft|flight)\b/,
+                title:
+                    "Aviation Question"
+            },
+            {
+                pattern:
+                    /\b(translate|translation)\b/,
+                title:
+                    "Translation Request"
+            },
+            {
+                pattern:
+                    /\b(write|rewrite|letter|email|essay)\b/,
+                title:
+                    "Writing Request"
+            },
+            {
+                pattern:
+                    /\b(image|photo|picture|logo|design)\b/,
+                title:
+                    "Image Request"
+            }
+        ];
+
+        for (const item of specialTitles) {
+            if (item.pattern.test(lower)) {
+                return item.title;
+            }
+        }
+
+        const words = cleanMessage
+            .replace(/[\r\n\t]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 7);
+
+        let title = words.join(" ");
+
+        if (title.length > 52) {
+            title = title.slice(0, 52).trim();
+        }
+
+        if (!title) {
+            return "NEW CHAT";
+        }
+
+        return title.charAt(0).toUpperCase() + title.slice(1);
+    }
+
+    function shouldReplaceTitle(title) {
+        const cleanTitle =
+            cleanUnknownCharacters(title);
+
+        if (!cleanTitle) {
+            return true;
+        }
+
+        if (
+            cleanTitle !== normalizeText(title)
+        ) {
+            return true;
+        }
+
+        return GENERIC_TITLES.has(
+            normalizeLower(cleanTitle)
+        );
+    }
+
+    function repairChatTitles() {
+        if (
+            typeof chats === "undefined" ||
+            !chats ||
+            typeof chats !== "object"
+        ) {
+            return false;
+        }
+
+        let changed = false;
+
+        Object.keys(chats).forEach(function (chatId) {
+            const chatData = chats[chatId];
+
+            if (!chatData) {
+                return;
+            }
+
+            const oldTitle =
+                chatData.title ||
+                chatData.name ||
+                chatData.chatName ||
+                "";
+
+            let nextTitle =
+                cleanUnknownCharacters(oldTitle);
+
+            const firstUserMessage =
+                findFirstUserMessage(chatData);
+
+            if (
+                firstUserMessage &&
+                shouldReplaceTitle(oldTitle)
+            ) {
+                nextTitle =
+                    makeTitleFromFirstMessage(
+                        firstUserMessage
+                    );
+            }
+
+            if (!nextTitle) {
+                nextTitle = "NEW CHAT";
+            }
+
+            const fields = [
+                "title",
+                "name",
+                "chatName"
+            ];
+
+            fields.forEach(function (field) {
+                if (chatData[field] !== nextTitle) {
+                    chatData[field] = nextTitle;
+                    changed = true;
+                }
+            });
+        });
+
+        return changed;
+    }
+
+    function cleanVisibleChatNames() {
+        const chatList =
+            document.getElementById("chatList");
+
+        if (!chatList) {
+            return;
+        }
+
+        const candidates =
+            chatList.querySelectorAll(
+                ".chatItem, .chat-item, " +
+                "[data-chat-id], [data-conversation-id]"
+            );
+
+        candidates.forEach(function (item) {
+            const walker =
+                document.createTreeWalker(
+                    item,
+                    NodeFilter.SHOW_TEXT
+                );
+
+            const textNodes = [];
+
+            while (walker.nextNode()) {
+                textNodes.push(
+                    walker.currentNode
+                );
+            }
+
+            textNodes.forEach(function (node) {
+                const original =
+                    String(node.nodeValue || "");
+
+                const cleaned =
+                    cleanUnknownCharacters(original);
+
+                if (
+                    cleaned &&
+                    cleaned !==
+                        normalizeText(original)
+                ) {
+                    node.nodeValue = cleaned;
+                }
+            });
+        });
+    }
+
+    function removeHeaderChatButton() {
+        const header =
+            document.getElementById("header");
+
+        if (!header) {
+            return;
+        }
+
+        const candidates =
+            header.querySelectorAll(
+                "button, a, [role='button']"
+            );
+
+        candidates.forEach(function (element) {
+            const id =
+                normalizeLower(element.id);
+
+            const action =
+                normalizeLower(
+                    element.getAttribute(
+                        "data-action"
+                    )
+                );
+
+            const text =
+                normalizeLower(
+                    element.textContent ||
+                    element.getAttribute(
+                        "aria-label"
+                    )
+                );
+
+            const isLoginOrLogout =
+                id === "loginbtn" ||
+                id === "logoutbtn" ||
+                text === "login" ||
+                text === "log in" ||
+                text === "logout" ||
+                text === "log out";
+
+            if (isLoginOrLogout) {
+                return;
+            }
+
+            const explicitChatButton =
+                id === "chatbtn" ||
+                id === "headerchatbtn" ||
+                id === "michatbutton" ||
+                id === "directmessagebtn" ||
+                action === "chat" ||
+                action === "direct-message" ||
+                text === "chat" ||
+                text === "💬 chat" ||
+                text === "chat 💬";
+
+            if (explicitChatButton) {
+                element.remove();
+            }
+        });
+    }
+
+    async function deleteFromServer(chatId) {
+        const token =
+            localStorage.getItem(
+                "mi_supabase_token"
+            );
+
+        if (!token) {
+            return true;
+        }
+
+        try {
+            const response =
+                await fetch(
+                    "/api/conversations/" +
+                    encodeURIComponent(chatId),
+                    {
+                        method:
+                            "DELETE",
+
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token,
+
+                            "X-User-Id":
+                                localStorage.getItem(
+                                    "mi_user_id"
+                                ) || "",
+
+                            "X-User-Email":
+                                localStorage.getItem(
+                                    "mi_user_email"
+                                ) || ""
+                        }
+                    }
+                );
+
+            return (
+                response.ok ||
+                response.status === 404
+            );
+        } catch (error) {
+            console.error(
+                "[CORTEX CORE AI] Server chat deletion failed:",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    async function deleteFromFirestore(chatId) {
+        try {
+            if (
+                !window.firebase ||
+                !window.firebase.firestore ||
+                !window.miFirebaseUser
+            ) {
+                return true;
+            }
+
+            const chatRef =
+                window.firebase
+                    .firestore()
+                    .collection("users")
+                    .doc(
+                        window.miFirebaseUser.uid
+                    )
+                    .collection("chats")
+                    .doc(chatId);
+
+            try {
+                const messagesSnapshot =
+                    await chatRef
+                        .collection("messages")
+                        .get();
+
+                const batch =
+                    window.firebase
+                        .firestore()
+                        .batch();
+
+                messagesSnapshot.docs.forEach(
+                    function (messageDoc) {
+                        batch.delete(
+                            messageDoc.ref
+                        );
+                    }
+                );
+
+                if (
+                    messagesSnapshot.docs.length
+                ) {
+                    await batch.commit();
+                }
+            } catch (messageError) {
+                console.warn(
+                    "[CORTEX CORE AI] Message cleanup warning:",
+                    messageError
+                );
+            }
+
+            await chatRef.delete();
+
+            return true;
+        } catch (error) {
+            console.error(
+                "[CORTEX CORE AI] Firestore chat deletion failed:",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    async function permanentDeleteChat(chatId) {
+        const id =
+            String(chatId || "").trim();
+
+        if (!id) {
+            return false;
+        }
+
+        /*
+           The tombstone is saved first. Therefore an older server copy
+           cannot restore the chat during a later synchronization.
+        */
+        markChatPermanentlyDeleted(id);
+
+        if (
+            typeof chats !== "undefined" &&
+            chats &&
+            typeof chats === "object"
+        ) {
+            delete chats[id];
+        }
+
+        if (
+            typeof currentChat !== "undefined" &&
+            currentChat === id
+        ) {
+            currentChat = null;
+
+            if (
+                typeof chatBox !== "undefined" &&
+                chatBox
+            ) {
+                chatBox.innerHTML = "";
+            }
+        }
+
+        const results =
+            await Promise.allSettled([
+                deleteFromServer(id),
+                deleteFromFirestore(id)
+            ]);
+
+        try {
+            if (
+                typeof save === "function"
+            ) {
+                await save();
+            }
+        } catch (error) {
+            console.warn(
+                "[CORTEX CORE AI] Local save warning:",
+                error
+            );
+        }
+
+        try {
+            if (
+                typeof renderList ===
+                    "function"
+            ) {
+                renderList();
+            }
+        } catch (_) {}
+
+        cleanVisibleChatNames();
+
+        try {
+            window.dispatchEvent(
+                new CustomEvent(
+                    "mi-chat-deleted",
+                    {
+                        detail: {
+                            chatIds: [id],
+                            permanent: true,
+                            results:
+                                results.map(
+                                    function (result) {
+                                        return result.status;
+                                    }
+                                )
+                        }
+                    }
+                )
+            );
+        } catch (_) {}
+
+        return true;
+    }
+
+    function installDeleteOverride() {
+        /*
+           This replaces the normal context-menu Delete action.
+           It deletes locally, from the API and from Firestore.
+        */
+        window.deleteChat =
+            async function () {
+                if (
+                    typeof selectedChat ===
+                        "undefined" ||
+                    !selectedChat
+                ) {
+                    return;
+                }
+
+                const chatId =
+                    String(selectedChat);
+
+                if (
+                    !window.confirm(
+                        "Delete this chat permanently?"
+                    )
+                ) {
+                    return;
+                }
+
+                await permanentDeleteChat(
+                    chatId
+                );
+
+                try {
+                    selectedChat = null;
+                } catch (_) {}
+
+                try {
+                    if (
+                        typeof menu !==
+                            "undefined" &&
+                        menu
+                    ) {
+                        menu.style.display =
+                            "none";
+                    }
+                } catch (_) {}
+            };
+    }
+
+    function applyFixes() {
+        const removed =
+            removeDeletedChatsFromMemory();
+
+        const repaired =
+            repairChatTitles();
+
+        if (removed || repaired) {
+            try {
+                if (
+                    typeof save === "function"
+                ) {
+                    save();
+                }
+            } catch (_) {}
+
+            try {
+                if (
+                    typeof renderList ===
+                        "function"
+                ) {
+                    renderList();
+                }
+            } catch (_) {}
+        }
+
+        cleanVisibleChatNames();
+        removeHeaderChatButton();
+        installDeleteOverride();
+    }
+
+    /*
+       Save tombstones for chats deleted through the multi-delete feature.
+    */
+    window.addEventListener(
+        "mi-chat-deleted",
+        function (event) {
+            const ids =
+                event &&
+                event.detail &&
+                Array.isArray(
+                    event.detail.chatIds
+                )
+                    ? event.detail.chatIds
+                    : [];
+
+            ids.forEach(
+                markChatPermanentlyDeleted
+            );
+
+            removeDeletedChatsFromMemory();
+
+            try {
+                if (
+                    typeof save === "function"
+                ) {
+                    save();
+                }
+            } catch (_) {}
+        }
+    );
+
+    /*
+       Run after authentication or persistence restoration because those
+       operations may load an older copy of a deleted chat.
+    */
+    [
+        "mi-chat-user-changed",
+        "mi-firebase-ready",
+        "mi-ai-main-started",
+        "mi-new-chat-created"
+    ].forEach(function (eventName) {
+        window.addEventListener(
+            eventName,
+            function () {
+                window.setTimeout(
+                    applyFixes,
+                    80
+                );
+
+                window.setTimeout(
+                    applyFixes,
+                    700
+                );
+            }
+        );
+    });
+
+    function start() {
+        applyFixes();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    cleanVisibleChatNames();
+                    removeHeaderChatButton();
+                }
+            );
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.setInterval(
+            function () {
+                removeDeletedChatsFromMemory();
+                repairChatTitles();
+                cleanVisibleChatNames();
+                removeHeaderChatButton();
+                installDeleteOverride();
+            },
+            1500
+        );
+
+        window.setTimeout(
+            applyFixes,
+            250
+        );
+
+        window.setTimeout(
+            applyFixes,
+            1200
+        );
+
+        window.setTimeout(
+            applyFixes,
+            3000
+        );
+    }
+
+    if (
+        document.readyState ===
+            "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            {
+                once: true
+            }
+        );
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- CORTEX_CHAT_HISTORY_FIX_V1_END -->
+
 </body>
 </html>
 
