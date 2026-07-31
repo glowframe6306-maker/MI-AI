@@ -36888,8 +36888,180 @@ option,
 </script>
 <!-- CORTEX_FINAL_UI_CONTROLS_FIX_V1_END -->
 
+
+
+<!-- CORTEX_SETTINGS_LANGUAGE_THEME_ICONS_START -->
+<style id="CORTEX_SETTINGS_LANGUAGE_THEME_ICONS_STYLE">
+#settingsPanel .cortex-settings-row-icon {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    margin-right: 10px !important;
+
+    border-radius: 11px !important;
+
+    background: rgba(255,255,255,0.14) !important;
+    border: 1px solid rgba(255,255,255,0.20) !important;
+
+    font-family:
+        "Segoe UI Emoji",
+        "Segoe UI Symbol",
+        sans-serif !important;
+
+    font-size: 18px !important;
+    line-height: 1 !important;
+
+    flex: 0 0 34px !important;
+}
+
+#settingsPanel .cortex-settings-row-with-icon {
+    display: flex !important;
+    align-items: center !important;
+}
+</style>
+
+<script id="CORTEX_SETTINGS_LANGUAGE_THEME_ICONS_SCRIPT">
+(function () {
+    "use strict";
+
+    function normalize(value) {
+        return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function findSettingsRow(keywords) {
+        const panel =
+            document.getElementById("settingsPanel");
+
+        if (!panel) {
+            return null;
+        }
+
+        const candidates =
+            panel.querySelectorAll(
+                "label, button, div, section"
+            );
+
+        return Array.from(candidates)
+            .find(function (element) {
+                const text =
+                    normalize(element.textContent);
+
+                return keywords.some(
+                    function (keyword) {
+                        return text === keyword ||
+                            text.includes(keyword);
+                    }
+                );
+            }) || null;
+    }
+
+    function addIcon(row, icon) {
+        if (!row) {
+            return;
+        }
+
+        row.classList.add(
+            "cortex-settings-row-with-icon"
+        );
+
+        let iconElement =
+            row.querySelector(
+                ":scope > .cortex-settings-row-icon"
+            );
+
+        if (!iconElement) {
+            iconElement =
+                document.createElement("span");
+
+            iconElement.className =
+                "cortex-settings-row-icon";
+
+            iconElement.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            row.insertBefore(
+                iconElement,
+                row.firstChild
+            );
+        }
+
+        iconElement.textContent = icon;
+    }
+
+    function repairSettingsIcons() {
+        const languageRow =
+            findSettingsRow([
+                "language",
+                "භාෂාව",
+                "மொழி"
+            ]);
+
+        const themeRow =
+            findSettingsRow([
+                "theme",
+                "තේමාව",
+                "தீம்"
+            ]);
+
+        addIcon(languageRow, "🌐");
+        addIcon(themeRow, "🎨");
+    }
+
+    function start() {
+        repairSettingsIcons();
+
+        const observer =
+            new MutationObserver(function () {
+                window.requestAnimationFrame(
+                    repairSettingsIcons
+                );
+            });
+
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+        window.setTimeout(
+            repairSettingsIcons,
+            300
+        );
+
+        window.setTimeout(
+            repairSettingsIcons,
+            1000
+        );
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            start,
+            { once: true }
+        );
+    } else {
+        start();
+    }
+})();
+</script>
+<!-- CORTEX_SETTINGS_LANGUAGE_THEME_ICONS_END -->
+
 </body>
 </html>
+
 
 
 
