@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 
@@ -20441,7 +20441,7 @@ document.addEventListener(
 
         const response =
             await fetch(
-                "/api/live-assist",
+                "/api/chat",
                 {
                     method: "POST",
 
@@ -29868,7 +29868,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
         return (
             url.indexOf("/api/chat") !== -1 ||
-            url.indexOf("/api/live-assist") !== -1 ||
+            url.indexOf("/api/chat") !== -1 ||
             url.indexOf("/api/generate") !== -1 ||
             url.indexOf("/chat/completions") !== -1
         );
@@ -34007,7 +34007,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
         new Set([
             PRIMARY_ENDPOINT,
             "/api/chat",
-            "/api/live-assist"
+            "/api/chat"
         ])
     );
 
