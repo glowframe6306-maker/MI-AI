@@ -40214,6 +40214,164 @@ function miShouldUseCopyableBlock(text) {
 
 })();
 </script>
+
+<!-- CORTEX_CORE_AI_REAL_MARKDOWN_RENDER_V1 -->
+<script>
+(function () {
+    "use strict";
+
+    function cortexRenderMarkdown(root) {
+
+        if (!root) {
+            return;
+        }
+
+        const elements = root.querySelectorAll(
+            ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
+        );
+
+        elements.forEach(function (element) {
+
+            if (element.dataset.cortexMarkdownFixed === "1") {
+                return;
+            }
+
+            element.dataset.cortexMarkdownFixed = "1";
+
+            /*
+             * Convert escaped Markdown symbols back into real formatting.
+             * IMPORTANT:
+             * The visible response must NEVER show ** or ###.
+             */
+
+            let html = element.innerHTML;
+
+            /*
+             * Bold
+             * **Sri Lanka** -> <strong>Sri Lanka</strong>
+             */
+            html = html.replace(
+                /\*\*([^*\n]+?)\*\*/g,
+                "<strong>$1</strong>"
+            );
+
+            /*
+             * Headings
+             * ### Geography -> heading
+             */
+            html = html.replace(
+                /(^|<br\s*\/?>)\s*###\s+([^<]+?)(?=<br|$)/gi,
+                '$1<h3 class="ai-heading ai-heading-3">$2</h3>'
+            );
+
+            html = html.replace(
+                /(^|<br\s*\/?>)\s*##\s+([^<]+?)(?=<br|$)/gi,
+                '$1<h2 class="ai-heading ai-heading-2">$2</h2>'
+            );
+
+            html = html.replace(
+                /(^|<br\s*\/?>)\s*#\s+([^<]+?)(?=<br|$)/gi,
+                '$1<h1 class="ai-heading ai-heading-1">$2</h1>'
+            );
+
+            /*
+             * Italic
+             * *text* -> <em>text</em>
+             */
+            html = html.replace(
+                /(?<!\*)\*([^*\n]+)\*(?!\*)/g,
+                "<em>$1</em>"
+            );
+
+            /*
+             * Safety cleanup:
+             * remove remaining heading markers only when they
+             * are at the beginning of a visible line.
+             */
+            html = html.replace(
+                /(^|<br\s*\/?>)\s*#{1,6}\s+/gi,
+                "$1"
+            );
+
+            element.innerHTML = html;
+        });
+    }
+
+    function cortexScan() {
+        cortexRenderMarkdown(document);
+    }
+
+    if (document.readyState === "loading") {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            cortexScan,
+            { once: true }
+        );
+
+    } else {
+
+        cortexScan();
+    }
+
+    /*
+     * New AI responses are dynamically inserted into the chat.
+     * Observe only the chat area and render new responses.
+     */
+    const observer = new MutationObserver(function (mutations) {
+
+        let shouldScan = false;
+
+        mutations.forEach(function (mutation) {
+
+            if (
+                mutation.type === "childList" &&
+                mutation.addedNodes.length
+            ) {
+                shouldScan = true;
+            }
+        });
+
+        if (shouldScan) {
+            requestAnimationFrame(cortexScan);
+        }
+    });
+
+    function startObserver() {
+
+        const target =
+            document.body ||
+            document.documentElement;
+
+        if (!target) {
+            return;
+        }
+
+        observer.observe(
+            target,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+    }
+
+    if (document.readyState === "loading") {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            startObserver,
+            { once: true }
+        );
+
+    } else {
+
+        startObserver();
+    }
+
+})();
+</script>
+<!-- CORTEX_CORE_AI_REAL_MARKDOWN_RENDER_V1_END -->
 </body>
 </html>
 
