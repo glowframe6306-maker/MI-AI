@@ -39976,7 +39976,9 @@ function miCreateCopyableResponse(text) {
 
     const content = document.createElement("div");
     content.className = "mi-copyable-response-content";
-    content.textContent = String(text || "");
+    content.innerHTML = typeof renderAIResponse === "function"
+    ? renderAIResponse(String(text || ""))
+    : String(text || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     const copyButton = document.createElement("button");
     copyButton.type = "button";
@@ -40723,14 +40725,4 @@ if (false) {
 
 })();
 </script>
-
-
-
-
-
-
-
-
-
-
 
