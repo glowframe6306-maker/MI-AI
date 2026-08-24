@@ -14997,11 +14997,19 @@ async function send() {
       setReplyControlState(false);
 
       return;
-    }  } catch (e) {}
+    }
 
-scroll();
+    console.error("[CORTEX CORE AI] Send error:", e);
+
+    const thinking = document.querySelector('.thinking');
+    if (thinking) {
+        thinking.remove();
+    }
+
+    replyInProgress = false;
+    setReplyControlState(false);
+  }
 }
-
 /* SCROLL */
 function scroll(){
 chatBox.scrollTop=chatBox.scrollHeight;
