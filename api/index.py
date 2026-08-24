@@ -1,11 +1,12 @@
-﻿import os
+import os
 import sys
-from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BACKEND_DIR = os.path.join(ROOT_DIR, "backend")
 
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+for path in (ROOT_DIR, BACKEND_DIR):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 from backend.app import app
 
