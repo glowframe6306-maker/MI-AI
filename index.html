@@ -21,6 +21,23 @@ function renderAIResponse(text) {
         .trim();
 
     /*
+     * Normalize compact Markdown before parsing.
+     *
+     * This handles AI output such as:
+     *
+     * ---### 1. Geography
+     * ---**Conclusion**
+     * Text**Heading**Text
+     *
+     * without changing the actual Markdown renderer.
+     */
+    source = source
+        .replace(/---(?=#{1,6}\s+)/g, "---\n")
+        .replace(/---(?=\*\*)/g, "---\n")
+        .replace(/([^\n])(?=#{1,6}\s+)/g, "$1\n")
+        .replace(/([^\n])(?=\*\*[^*\n]+\*\*)/g, "$1\n");
+
+    /*
      * Normalize Markdown that arrives without line breaks.
      * Example:
      * ---### Heading
@@ -40940,6 +40957,7 @@ function miShouldUseCopyableBlock(text) {
 
 })();
 </script>
+
 
 
 
