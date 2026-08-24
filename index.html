@@ -40024,6 +40024,196 @@ function miShouldUseCopyableBlock(text) {
     );
 }
 </script>
+<script id="MI_AI_FINAL_BOLD_RENDER_FIX_V1">
+(function () {
+    "use strict";
+
+    function cleanBoldMarkers(root) {
+
+        if (!root) {
+            return;
+        }
+
+        const elements = root.querySelectorAll
+            ? root.querySelectorAll(".ai-response, .ai-paragraph, .ai-heading, .ai-list, strong")
+            : [];
+
+        const targets = [];
+
+        if (root.matches && root.matches(".ai-response, .ai-paragraph, .ai-heading, .ai-list")) {
+            targets.push(root);
+        }
+
+        for (const element of elements) {
+            targets.push(element);
+        }
+
+        for (const element of targets) {
+
+            const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT
+            );
+
+            const nodes = [];
+
+            let node;
+
+            while ((node = walker.nextNode())) {
+
+                if (
+                    node.parentElement &&
+                    node.parentElement.closest("code, pre, script, style")
+                ) {
+                    continue;
+                }
+
+                if (node.nodeValue && node.nodeValue.includes("**")) {
+                    nodes.push(node);
+                }
+            }
+
+            for (const textNode of nodes) {
+
+                const value = textNode.nodeValue;
+
+                const pattern = /\*\*([^*\n]+?)\*\*/g;
+
+                if (!pattern.test(value)) {
+                    continue;
+                }
+
+                pattern.lastIndex = 0;
+
+                const fragment = document.createDocumentFragment();
+
+                let lastIndex = 0;
+                let match;
+
+                while ((match = pattern.exec(value)) !== null) {
+
+                    if (match.index > lastIndex) {
+                        fragment.appendChild(
+                            document.createTextNode(
+                                value.slice(lastIndex, match.index)
+                            )
+                        );
+                    }
+
+                    const strong = document.createElement("strong");
+                    strong.textContent = match[1];
+
+                    fragment.appendChild(strong);
+
+                    lastIndex = pattern.lastIndex;
+                }
+
+                if (lastIndex < value.length) {
+                    fragment.appendChild(
+                        document.createTextNode(
+                            value.slice(lastIndex)
+                        )
+                    );
+                }
+
+                textNode.parentNode.replaceChild(
+                    fragment,
+                    textNode
+                );
+            }
+        }
+    }
+
+    function runBoldCleanup() {
+
+        const roots = document.querySelectorAll(
+            ".ai-response, .ai-paragraph, .ai-heading, .ai-list"
+        );
+
+        for (const root of roots) {
+            cleanBoldMarkers(root);
+        }
+    }
+
+    if (document.readyState === "loading") {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            runBoldCleanup,
+            { once: true }
+        );
+
+    } else {
+
+        runBoldCleanup();
+    }
+
+    window.addEventListener(
+        "mi-ai-main-started",
+        runBoldCleanup
+    );
+
+    /*
+     * Run shortly after AI messages are inserted.
+     * This does not modify the existing send() function.
+     */
+    setTimeout(runBoldCleanup, 100);
+    setTimeout(runBoldCleanup, 500);
+    setTimeout(runBoldCleanup, 1200);
+
+    /*
+     * Observe only AI response containers.
+     * The observer is throttled to avoid repeated processing.
+     */
+    let scheduled = false;
+
+    const observer = new MutationObserver(function () {
+
+        if (scheduled) {
+            return;
+        }
+
+        scheduled = true;
+
+        requestAnimationFrame(function () {
+
+            scheduled = false;
+
+            runBoldCleanup();
+        });
+    });
+
+    function startObserver() {
+
+        const target =
+            document.querySelector("#chat") ||
+            document.body;
+
+        if (!target) {
+            return;
+        }
+
+        observer.observe(target, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    if (document.readyState === "loading") {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            startObserver,
+            { once: true }
+        );
+
+    } else {
+
+        startObserver();
+    }
+
+})();
+</script>
 </body>
 </html>
 
