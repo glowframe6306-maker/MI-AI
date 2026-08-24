@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 
@@ -154,6 +154,77 @@ input,
 textarea,
 [contenteditable="true"] {
     cursor: text !important;
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
 }
 </style>
 <!-- MI_AI_LOADING_RESCUE_V2_END -->
@@ -356,34 +427,9 @@ background:linear-gradient(135deg,#0f766e,#14b8a6);
 transform:translateY(-1px);
 }
 
-#header #headerLogo{
-width:28px;
-height:28px;
-flex-shrink:0;
-border-radius:14px;
-overflow:hidden;
+#header 
 
-border:2px solid rgba(255,255,255,0.24);
-background:#000;
 
-padding:4px;
-margin-right:10px;
-
-display:block;
-object-fit:contain;
-
-box-shadow:
-0 8px 24px rgba(0,0,0,0.25);
-transition:transform .2s ease, box-shadow .2s ease;
-}
-
-.cortex-brand-logo{
-width:28px;
-height:28px;
-object-fit:contain;
-display:block;
-flex-shrink:0;
-}
 
 #header #headerLogo:hover {
   transform:translateY(-1px) scale(1.02);
@@ -790,11 +836,7 @@ background:var(--main);
     border-bottom:1px solid rgba(255,255,255,0.08);
   }
 
-  #header #headerLogo {
-    width:44px;
-    height:44px;
-    margin-right:8px;
-  }
+  #header 
 
   #header span {
     font-size:1rem;
@@ -953,11 +995,7 @@ body.force-mobile-layout #header {
   border-bottom:1px solid rgba(255,255,255,0.08);
 }
 
-body.force-mobile-layout #header #headerLogo {
-  width:44px;
-  height:44px;
-  margin-right:8px;
-}
+body.force-mobile-layout #header 
 
 body.force-mobile-layout #header span {
   font-size:1rem;
@@ -4076,24 +4114,7 @@ select,
             hidden;
     }
 
-    #headerLogo {
-        width:
-            clamp(
-                38px,
-                11vw,
-                48px
-            ) !important;
-
-        height:
-            clamp(
-                38px,
-                11vw,
-                48px
-            ) !important;
-
-        flex:
-            0 0 auto;
-    }
+    
 
     #header h1,
     #header h2,
@@ -5143,16 +5164,7 @@ body.mi-keyboard-visible .composer {
             !important;
     }
 
-    #headerLogo {
-        width:
-            50px !important;
-
-        height:
-            50px !important;
-
-        flex:
-            0 0 50px;
-    }
+    
 
     #header h1,
     #header h2,
@@ -6194,23 +6206,7 @@ body.mi-shared-single-chat #miSharedSingleChatBadge {
 }
 
 /* Header logo glass frame */
-#headerLogo {
-    border-radius:
-        14px !important;
 
-    background:
-        rgba(255, 255, 255, 0.08);
-
-    border:
-        1px solid
-        rgba(255, 255, 255, 0.18);
-
-    box-shadow:
-        inset 0 1px 0
-            rgba(255, 255, 255, 0.18),
-        0 7px 20px
-            rgba(0, 0, 0, 0.20);
-}
 
 /* Header text remains clear */
 #header > span,
@@ -6296,16 +6292,7 @@ body.mi-shared-single-chat #miSharedSingleChatBadge {
             !important;
     }
 
-    #headerLogo {
-        width:
-            46px !important;
-
-        height:
-            46px !important;
-
-        border-radius:
-            13px !important;
-    }
+    
 
     #header > span {
         font-size:
@@ -6355,6 +6342,77 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 #chat,#chatList{transition:opacity 120ms ease}
 /* CORTEX CORE AI CHAT SMOOTH V3 CSS - END */
 
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <!-- CORTEX CORE AI FIREBASE AUTH START -->
@@ -6889,6 +6947,77 @@ body.mi-shared-chat-viewer.mi-view-only .composer {
 }
 
 /* CORTEX CORE AI SHARED CHAT ISOLATION V1 - END */
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <style>
@@ -7031,6 +7160,77 @@ body.mi-shared-chat-viewer.mi-view-only .composer {
 }
 
 /* CORTEX CORE AI REAL HEADER GLASS BLUR V2 - END */
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <style>
@@ -7198,6 +7398,77 @@ body.mi-share-password-locked .composer {
 }
 
 /* CORTEX CORE AI MANDATORY SHARE PASSWORD V1 - END */
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <style>
@@ -9810,6 +10081,77 @@ span:nth-child(3) {
 
 
 
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 <!-- CORTEX CORE AI MOBILE LARGE NOTCH START -->
 <style id="mi-mobile-large-notch-style">
@@ -10022,6 +10364,77 @@ span:nth-child(3) {
     .assistant-message,
     .message-bubble {
         max-width: 95% !important;
+    }
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
     }
 }
 </style>
@@ -10791,6 +11204,77 @@ body.mi-account-blocked {
     overflow: hidden;
 }
 /* CORTEX CORE AI ACCOUNT ACTION NOTICE STYLE V1 END */
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <!-- MI_AI_INSTANT_OPEN_V5 START -->
@@ -10855,6 +11339,77 @@ textarea:disabled,
     cursor: not-allowed !important;
 }
 
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <script>
@@ -10922,13 +11477,7 @@ textarea:disabled,
 <div id="main">
 <div id="header">
 <button id="mobileMenuToggle" type="button" onclick="toggleMobileMenu()" aria-label="Open menu">&#9776;</button>
-<img decoding="async" fetchpriority="low" 
-    id="headerLogo"
-    src="/assets/Logo/Cortex.png"
-    alt="CORTEX CORE AI Logo"
-    class="cortex-brand-logo"
-    width="28"
-    height="28">
+
   <span>CORTEX CORE AI</span>
   <div class="headerActions">
     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
@@ -26406,6 +26955,77 @@ document.addEventListener(
 }
 
 /* CORTEX CORE AI GOLD IDLE DYNAMIC ISLAND V2 CSS - END */
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 <script>
 /* CORTEX CORE AI GOLD IDLE DYNAMIC ISLAND V2 JS - START */
@@ -27027,6 +27647,77 @@ document.addEventListener(
 
 .miClickableLink:active {
     opacity: 0.65;
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
 }
 </style>
 
@@ -28200,6 +28891,77 @@ document.addEventListener(
         white-space: nowrap;
         vertical-align: middle;
     }
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <script id="miFullIconController">
@@ -28758,6 +29520,77 @@ document.addEventListener(
 .mi-account-chat-message time{display:block;margin-top:8px;font-size:11px;opacity:.62}
 .mi-account-chat-empty{text-align:center;padding:20px;opacity:.68}
 @media(max-width:600px){#miAccountChatBackdrop{padding:0;align-items:flex-end}#miAccountChatPanel{width:100%;max-height:92vh;border-radius:24px 24px 0 0}#miAccountChatBody{max-height:calc(92vh - 68px)}}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 <script id="miAccountChatV2Controller">
 (function(){
@@ -29496,6 +30329,77 @@ window.fetch=function(input,init){
 .miFOChecks{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:6px;max-height:260px;overflow:auto;padding:8px;border:1px solid rgba(255,255,255,.1);border-radius:12px}.miFOChecks label{font-size:12px}.miFOChecks input{width:auto}
 .miFOTableWrap{overflow:auto;margin-top:12px}.miFOTable{width:100%;border-collapse:collapse;font-size:13px}.miFOTable th,.miFOTable td{padding:9px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
 @media(max-width:760px){#miFinalOwnerOverlay{padding:0}#miFinalOwnerPanel{height:100vh;border-radius:0}.miFOBody{grid-template-columns:1fr}.miFONav{display:flex;border-right:0;border-bottom:1px solid rgba(255,255,255,.08)}.miFONav button{width:auto;white-space:nowrap}}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 <script>
 (function(){
@@ -29538,6 +30442,77 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
     color: #f7d769 !important;
     border: 1px solid rgba(247,215,105,.55) !important;
     font-weight: 800 !important;
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
 }
 </style>
 <script>
@@ -31503,6 +32478,77 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 #miDynamicIsland.mi-island-visible {
     visibility: visible !important;
 }
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <script id="MI_AI_DYNAMIC_ISLAND_AUTO_HIDE_V1">
@@ -31733,6 +32779,77 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 .mi-role-badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:rgba(240,180,41,.14);color:#ffd873;font-weight:700}
 .mi-rbac-empty{padding:28px;text-align:center;color:#aeb5c7;font:14px system-ui}
 @media(max-width:700px){#miRbacOverlay{padding:0}#miRbacPanel{min-height:100vh;margin:0;border-radius:0}.mi-rbac-grid{grid-template-columns:1fr}.mi-rbac-span{grid-column:auto}.mi-rbac-body{padding:14px}}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <button id="miChiefOwnerEntry" type="button">
@@ -32131,6 +33248,77 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
     #miChatManageToolbar button {
         padding: 7px 6px;
         font-size: 11px;
+    }
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
     }
 }
 </style>
@@ -33105,6 +34293,77 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 #header [data-action="chat"],
 #header [data-action="direct-message"] {
     display: none !important;
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
 }
 </style>
 
@@ -34499,6 +35758,77 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 #settingsPanel .chief-owner-permissions-button {
     display: none !important;
 }
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <script id="CHIEF_OWNER_SETTINGS_BUTTON_REMOVAL_SCRIPT">
@@ -34613,6 +35943,77 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
     color: #dcfce7;
     background: rgba(34, 197, 94, 0.16);
     border: 1px solid rgba(34, 197, 94, 0.28);
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
 }
 </style>
 
@@ -35289,6 +36690,77 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 #profilePanel .cortex-profile-close-button::after {
     pointer-events: none !important;
 }
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
+}
 </style>
 
 <script id="CORTEX_PROFILE_RUNTIME_ICON_FIX_V1_SCRIPT">
@@ -35719,6 +37191,77 @@ option,
 /* Prevent old broken characters from taking space. */
 .cortex-corrupted-text-hidden {
     display: none !important;
+}
+/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    #headerLogo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
+    }
 }
 </style>
 
@@ -36895,38 +38438,10 @@ option,
    ========================================================= */
 
 #headerLogo.cortex-brand-logo,
-img#headerLogo.cortex-brand-logo {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    width: 38px !important;
-    height: 38px !important;
-
-    min-width: 38px !important;
-    min-height: 38px !important;
-    max-width: 38px !important;
-    max-height: 38px !important;
-
-    object-fit: cover !important;
-    object-position: center center !important;
-
-    border-radius: 50% !important;
-
-    overflow: hidden !important;
-
-    flex: 0 0 38px !important;
-
-    background: transparent !important;
-
-    box-sizing: border-box !important;
-}
+img#headerLogo
 
 /* Header logo container must not hide Cortex */
-#headerLogo.cortex-brand-logo {
-    position: relative !important;
-    z-index: 9999 !important;
-}
+#headerLogo
 
 /* Make sure header branding remains visible */
 #headerLogo.cortex-brand-logo:hover {
@@ -36937,48 +38452,13 @@ img#headerLogo.cortex-brand-logo {
 /* Mobile */
 @media (max-width: 768px) {
     #headerLogo.cortex-brand-logo,
-    img#headerLogo.cortex-brand-logo {
-        width: 34px !important;
-        height: 34px !important;
-        min-width: 34px !important;
-        min-height: 34px !important;
-        max-width: 34px !important;
-        max-height: 34px !important;
-        flex-basis: 34px !important;
-    }
+    img#headerLogo
 }
 
 /* =========================================================
    END FINAL CORTEX LOGO FIX
    ========================================================= *//* FINAL HEADER CORTEX LOGO */
-#headerLogo {
-    content: url("/assets/Logo/Cortex.png") !important;
 
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-
-    width: 40px !important;
-    height: 40px !important;
-
-    min-width: 40px !important;
-    min-height: 40px !important;
-    max-width: 40px !important;
-    max-height: 40px !important;
-
-    object-fit: cover !important;
-    object-position: center !important;
-
-    border-radius: 50% !important;
-
-    overflow: hidden !important;
-
-    flex-shrink: 0 !important;
-
-    background: transparent !important;
-
-    z-index: 99999 !important;
-}
 
 #headerLogo img {
     width: 100% !important;
@@ -36989,15 +38469,79 @@ img#headerLogo.cortex-brand-logo {
 }
 
 @media (max-width: 768px) {
+    
+}/* ============================================================
+   CORTEX CORE AI - FINAL HEADER LOGO
+   ============================================================ */
+
+#headerLogo {
+    display: block !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid rgba(255,255,255,0.18) !important;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.20),
+        0 0 0 2px rgba(255,255,255,0.08) !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 32px !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 99999 !important;
+}
+
+#headerLogo::before,
+#headerLogo::after {
+    display: none !important;
+}
+
+#headerLogo + *,
+#headerLogo ~ * {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Remove accidental old logo backgrounds */
+#header .logo,
+#header .brand-logo,
+#header .header-logo,
+#header .logo-container,
+#header .brand,
+#header .brand-icon {
+    background-image: none !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
     #headerLogo {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
-        max-width: 36px !important;
-        max-height: 36px !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        flex-basis: 30px !important;
     }
-}</style>
+}
+</style>
 
 <script id="CORTEX_SETTINGS_LANGUAGE_THEME_ICONS_SCRIPT">
 (function () {
