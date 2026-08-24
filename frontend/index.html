@@ -36889,7 +36889,68 @@ option,
     display: flex !important;
     align-items: center !important;
 }
-</style>
+
+/* =========================================================
+   CORTEX CORE AI — FINAL CORTEX LOGO FIX
+   ========================================================= */
+
+#headerLogo.cortex-brand-logo,
+img#headerLogo.cortex-brand-logo {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    width: 38px !important;
+    height: 38px !important;
+
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
+
+    object-fit: cover !important;
+    object-position: center center !important;
+
+    border-radius: 50% !important;
+
+    overflow: hidden !important;
+
+    flex: 0 0 38px !important;
+
+    background: transparent !important;
+
+    box-sizing: border-box !important;
+}
+
+/* Header logo container must not hide Cortex */
+#headerLogo.cortex-brand-logo {
+    position: relative !important;
+    z-index: 9999 !important;
+}
+
+/* Make sure header branding remains visible */
+#headerLogo.cortex-brand-logo:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    #headerLogo.cortex-brand-logo,
+    img#headerLogo.cortex-brand-logo {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
+        max-width: 34px !important;
+        max-height: 34px !important;
+        flex-basis: 34px !important;
+    }
+}
+
+/* =========================================================
+   END FINAL CORTEX LOGO FIX
+   ========================================================= */</style>
 
 <script id="CORTEX_SETTINGS_LANGUAGE_THEME_ICONS_SCRIPT">
 (function () {
@@ -37027,6 +37088,7 @@ option,
 
 </body>
 </html>
+
 
 
 
