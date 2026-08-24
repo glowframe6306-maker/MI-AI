@@ -56,11 +56,14 @@ function renderAIResponse(text) {
     const inline = (value) => {
         let html = escapeHTML(value);
 
-        /* Bold */
+        /* Bold - NEVER expose Markdown markers */
         html = html.replace(
-            /\*\*(.+?)\*\*/g,
+            /\*\*([\s\S]*?)\*\*/g,
             "<strong>$1</strong>"
         );
+
+        /* Remove any unmatched bold markers that could remain visible */
+        html = html.replace(/\*\*/g, "");
 
         /* Italic */
         html = html.replace(
@@ -40937,6 +40940,7 @@ function miShouldUseCopyableBlock(text) {
 
 })();
 </script>
+
 
 
 
