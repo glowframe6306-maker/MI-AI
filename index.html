@@ -12161,6 +12161,66 @@ textarea:disabled,
     height: 17px !important;
 }
 </style>
+<style id="cortex-inline-more-css">
+/* CORTEX AI INLINE MORE ICONS V1 */
+
+/* All reply controls stay directly under the reply */
+.cortex-reply-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin-top: 7px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border:  0 !important;
+    box-shadow: none !important;
+    width: max-content !important;
+    overflow: visible !important;
+}
+
+/* Small icon-only buttons */
+.cortex-reply-action {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 7px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: currentColor !important;
+    cursor: pointer !important;
+    opacity: .68 !important;
+    visibility: visible !important;
+}
+
+.cortex-reply-action:hover {
+    background: rgba(128,128,128,.13) !important;
+    opacity: 1 !important;
+}
+
+.cortex-reply-action svg {
+    width: 16px !important;
+    height: 16px !important;
+    display: block !important;
+}
+
+/* No popup/menu */
+.cortex-reply-more-menu {
+    display: none !important;
+}
+
+/* Copy success */
+.cortex-reply-action.copy-success {
+    color: #35d878 !important;
+    opacity: 1 !important;
+}
+</style>
 </head>
 
 <body>
@@ -41202,4 +41262,198 @@ img#headerLogo
 })();
 </script>
 
+
+
+<script id="cortex-inline-more-script">
+/* CORTEX AI INLINE MORE ICONS V1 */
+(function () {
+
+    function getReplyText(button) {
+
+        const reply =
+            button.closest(".ai") ||
+            button.closest(".message") ||
+            button.closest(".chat-message") ||
+            button.closest(".cortex-ai-message") ||
+            button.parentElement;
+
+        if (!reply) return "";
+
+        const clone = reply.cloneNode(true);
+
+        clone.querySelectorAll(
+            ".cortex-reply-actions, .cortex-ai-message-actions, button"
+        ).forEach(function (el) {
+            el.remove();
+        });
+
+        return String(
+            clone.innerText ||
+            clone.textContent ||
+            ""
+        ).trim();
+    }
+
+    function copyReply(button) {
+
+        const text = getReplyText(button);
+
+        if (!text) return;
+
+        const success = function () {
+
+            const oldHTML = button.innerHTML;
+
+            button.classList.add("copy-success");
+
+            button.innerHTML =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<path d="M5 12l4 4L19 6"></path>' +
+                '</svg>';
+
+            setTimeout(function () {
+                button.classList.remove("copy-success");
+                button.innerHTML = oldHTML;
+            }, 1200);
+        };
+
+        if (
+            navigator.clipboard &&
+            navigator.clipboard.writeText
+        ) {
+            navigator.clipboard.writeText(text)
+                .then(success)
+                .catch(function () {
+                    fallbackCopy(text);
+                    success();
+                });
+        } else {
+            fallbackCopy(text);
+            success();
+        }
+    }
+
+    function fallbackCopy(text) {
+
+        const area = document.createElement("textarea");
+
+        area.value = text;
+        area.style.position = "fixed";
+        area.style.left = "-9999px";
+
+        document.body.appendChild(area);
+
+        area.focus();
+        area.select();
+
+        try {
+            document.execCommand("copy");
+        } catch (e) {}
+
+        area.remove();
+    }
+
+    function readAloud(button) {
+
+        const text = getReplyText(button);
+
+        if (!text) return;
+
+        if ("speechSynthesis" in window) {
+
+            window.speechSynthesis.cancel();
+
+            const speech =
+                new SpeechSynthesisUtterance(text);
+
+            speech.rate = 1;
+            speech.pitch = 1;
+
+            window.speechSynthesis.speak(speech);
+        }
+    }
+
+    function branchNewChat(button) {
+
+        const text = getReplyText(button);
+
+        if (!text) return;
+
+        const newChatButton =
+            document.querySelector(
+                "#newChatBtn, " +
+                "[data-action='new-chat'], " +
+                "[onclick*='newChat'], " +
+                "[onclick*='createNewChat']"
+            );
+
+        if (newChatButton) {
+            newChatButton.click();
+        }
+
+        setTimeout(function () {
+
+            const input =
+                document.querySelector("#messageInput") ||
+                document.querySelector("#chatInput") ||
+                document.querySelector("textarea");
+
+            if (input) {
+
+                input.value = text;
+
+                input.dispatchEvent(
+                    new Event("input", {
+                        bubbles: true
+                    })
+                );
+
+                input.focus();
+            }
+
+        }, 200);
+    }
+
+    document.addEventListener("click", function (event) {
+
+        const copy =
+            event.target.closest(
+                ".cortex-reply-copy"
+            );
+
+        if (copy) {
+            event.preventDefault();
+            event.stopPropagation();
+            copyReply(copy);
+            return;
+        }
+
+        const read =
+            event.target.closest(
+                ".cortex-reply-read"
+            );
+
+        if (read) {
+            event.preventDefault();
+            event.stopPropagation();
+            readAloud(read);
+            return;
+        }
+
+        const branch =
+            event.target.closest(
+                ".cortex-reply-branch"
+            );
+
+        if (branch) {
+            event.preventDefault();
+            event.stopPropagation();
+            branchNewChat(branch);
+            return;
+        }
+
+    });
+
+})();
+</script>
 
