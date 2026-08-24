@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -13597,202 +13597,180 @@ async function fetchJsonWithFallback(path, options = {}, signal) {
   throw lastError || new Error('Unable to contact the AI server.');
 }
 
-async function fetchChatReply(payload, signal, useStreaming = false) {
-  const endpoints = useStreaming ? getStreamingChatApiCandidates() : getChatApiCandidates();
-  let lastError = null;
+async function fetchChatReply(options = {}, signal = null) {
+    const message = String(options.message || "").trim();
+    const history = Array.isArray(options.history) ? options.history : [];
+    const conversation_id = options.conversation_id || null;
+    const attachment_ids = Array.isArray(options.attachment_ids)
+        ? options.attachment_ids
+        : [];
 
-  for (let i = 0; i < endpoints.length; i++) {
-    const endpoint = endpoints[i];
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal,
-      });
-
-      if (response.ok) return response;
-
-      const text = await response.text().catch(() => '');
-      lastError = new Error(text || `Server returned ${response.status}`);
-    } catch (err) {
-      lastError = err;
+    if (!message) {
+        throw new Error("Message is empty.");
     }
-  }
 
-  throw lastError || new Error('Unable to contact the AI server.');
+    const payload = {
+        message,
+        history,
+        conversation_id,
+        attachment_ids
+    };
+
+    const response = await fetch("/api/chat/stream", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream"
+        },
+        body: JSON.stringify(payload),
+        signal: signal || undefined
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new Error(
+            errorText || `Server returned ${response.status}`
+        );
+    }
+
+    if (!response.body || !response.body.getReader) {
+        throw new Error(
+            "Streaming responses are not supported by this browser."
+        );
+    }
+
+    return response;
 }
 
 function createStreamingReplyBubble(initialText = '') {
-  const d = document.createElement('div');
-  d.className = 'ai';
-  const contentBox = document.createElement('div');
-  contentBox.className = isLongWritingResponse(initialText) ? 'aiWritingCard' : 'aiMessageBody';
-  contentBox.textContent = initialText;
-  d.appendChild(contentBox);
-  d.appendChild(createCopyButton(initialText));
-  chatBox.appendChild(d);
-  scroll();
-  return { container: d, contentBox };
+    const d = document.createElement('div');
+    d.className = 'ai';
+    const contentBox = document.createElement('div');
+    contentBox.className = isLongWritingResponse(initialText) ? 'aiWritingCard' : 'aiMessageBody';
+    contentBox.textContent = initialText;
+    d.appendChild(contentBox);
+    d.appendChild(createCopyButton(initialText));
+    chatBox.appendChild(d);
+    scroll();
+    return { container: d, contentBox };
 }
 
 function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
-  if (!contentBox) return;
-  contentBox.innerHTML = linkifyText(text);
-  contentBox.dataset.finalText = text;
-  const existingText = String(text || '').trim();
-  if (conversationId && chats[conversationId]) {
-    chats[conversationId].push({ role: 'ai', text: existingText });
-    chats[conversationId].updatedAt = Date.now();
-    chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
-    chats[conversationId].lastPreview = existingText;
-    save();
-
-    // Auto-save AI message to Firestore if authenticated
-    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-        const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
-        window.firestorePersistence.saveMessage(conversationId, messageId, {
-            role: 'ai',
-            text: existingText
-        }).catch(err => console.error('[Persistence] AI message save error:', err));
+    if (!contentBox) return;
+    contentBox.innerHTML = linkifyText(text);
+    contentBox.dataset.finalText = text;
+    const existingText = String(text || '').trim();
+    if (conversationId && chats[conversationId]) {
+        chats[conversationId].push({ role: 'ai', text: existingText });
+        chats[conversationId].updatedAt = Date.now();
+        chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+        chats[conversationId].lastPreview = existingText;
+        save();
+        if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+            const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
+            window.firestorePersistence.saveMessage(conversationId, messageId, { role: 'ai', text: existingText }).catch(err => console.error('[Persistence] AI message save error:', err));
+        }
+        scroll();
+        maybeShowLoginPrompt(conversationId);
     }
-
-    scroll();
-    maybeShowLoginPrompt(conversationId);
-  }
 }
 
-/* SEND */
 function sendOrStop() {
-  if (replyInProgress) {
-    stopReply();
-    return;
-  }
-  send();
+    if (replyInProgress) {
+        stopReply();
+        return;
+    }
+    send();
 }
 
 async function send() {
-  if (replyInProgress) return;
-
-  if (sharedChatData && sharedChatData.permission === 'view') {
-    applySharedChatUi('view');
-    return;
-  }
-
-  const msg = (input && input.value || '').trim();
-  if (!msg) return;
-
-  if (!currentChat) {
-    const fallbackId = `chat_${Date.now()}`;
-    chats[fallbackId] = [];
-    currentChat = fallbackId;
-    save();
-    renderList();
-  }
-
-  const conversationId = currentChat;
-  const token = localStorage.getItem('mi_supabase_token');
-  const userId = localStorage.getItem('mi_user_id') || '';
-  const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-
-  input.value = '';
-  replyInProgress = true;
-  setReplyControlState(true);
-
-  let uploadedAttachments = [];
-  let uploadErrors = [];
-  try {
-    const uploadResult = pendingAttachments.length ? await uploadPendingAttachments() : { attachments: [], errors: [] };
-    uploadedAttachments = uploadResult.attachments || [];
-    uploadErrors = uploadResult.errors || [];
-    if (pendingAttachments.length && !uploadedAttachments.length) {
-      replyInProgress = false;
-      setReplyControlState(false);
-      setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
-      return;
+    if (replyInProgress) return;
+    if (sharedChatData && sharedChatData.permission === 'view') {
+        applySharedChatUi('view');
+        return;
     }
-  } catch (err) {
-    replyInProgress = false;
-    setReplyControlState(false);
-    setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
-    console.error(err);
-    return;
-  }
-
-  if (uploadedAttachments.length) {
-    if (!Array.isArray(chats[conversationId].attachments)) chats[conversationId].attachments = [];
-    uploadedAttachments.forEach((a) => {
-      chats[conversationId].attachments = chats[conversationId].attachments.filter((i) => i.id !== a.id);
-      chats[conversationId].attachments.push(a);
-    });
+    const msg = (input && input.value || '').trim();
+    if (!msg) return;
+    if (!currentChat) {
+        const fallbackId = `chat_${Date.now()}`;
+        chats[fallbackId] = [];
+        currentChat = fallbackId;
+        save();
+        renderList();
+    }
+    const conversationId = currentChat;
+    const token = localStorage.getItem('mi_supabase_token');
+    const userId = localStorage.getItem('mi_user_id') || '';
+    const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
+    input.value = '';
+    replyInProgress = true;
+    setReplyControlState(true);
+    let uploadedAttachments = [];
+    let uploadErrors = [];
+    try {
+        const uploadResult = pendingAttachments.length ? await uploadPendingAttachments() : { attachments: [], errors: [] };
+        uploadedAttachments = uploadResult.attachments || [];
+        uploadErrors = uploadResult.errors || [];
+        if (pendingAttachments.length && !uploadedAttachments.length) {
+            replyInProgress = false;
+            setReplyControlState(false);
+            setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
+            return;
+        }
+    } catch (err) {
+        replyInProgress = false;
+        setReplyControlState(false);
+        setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
+        console.error(err);
+        return;
+    }
+    if (uploadedAttachments.length) {
+        if (!Array.isArray(chats[conversationId].attachments)) chats[conversationId].attachments = [];
+        uploadedAttachments.forEach((a) => {
+            chats[conversationId].attachments = chats[conversationId].attachments.filter((i) => i.id !== a.id);
+            chats[conversationId].attachments.push(a);
+        });
+        chats[conversationId].updatedAt = Date.now();
+        save();
+        pendingAttachment = null;
+        renderPendingAttachmentPreview();
+    }
+    if (uploadErrors.length) {
+        const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' • ');
+        setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
+    }
+    const history = (chats[conversationId] || []).map((message) => ({ role: message.role === 'me' ? 'user' : 'assistant', content: message.text || '' }));
+    const userBubble = document.createElement('div');
+    userBubble.className = 'me';
+    userBubble.innerText = msg;
+    chatBox.appendChild(userBubble);
+    chats[conversationId].push({ role: 'me', text: msg });
     chats[conversationId].updatedAt = Date.now();
+    chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
+    chats[conversationId].lastPreview = msg;
     save();
-    pendingAttachment = null;
-    renderPendingAttachmentPreview();
-  }
-
-  if (uploadErrors.length) {
-    const errorSummary = uploadErrors.slice(0, 3).map((e) => `${e.name}: ${e.message}`).join(' ├óΓé¼┬ó ');
-    setAttachmentUiState(true, `<div style="color:#fda4af;">${errorSummary}</div>`, '');
-  }
-
-  const history = (chats[conversationId] || []).map((message) => ({ role: message.role === 'me' ? 'user' : 'assistant', content: message.text || '' }));
-
-  const userBubble = document.createElement('div');
-  userBubble.className = 'me';
-  userBubble.innerText = msg;
-  chatBox.appendChild(userBubble);
-
-  chats[conversationId].push({ role: 'me', text: msg });
-  chats[conversationId].updatedAt = Date.now();
-  chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
-  chats[conversationId].lastPreview = msg;
-  save();
-
-  // Auto-save user message to Firestore if authenticated
-  if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-      const messageId = `user_msg_${Date.now()}_${Math.random()}`;
-      window.firestorePersistence.saveMessage(conversationId, messageId, {
-          role: 'me',
-          text: msg
-      }).catch(err => console.error('[Persistence] User message save error:', err));
-  }
-
-  scroll();
-
-  try {
-    if (token && conversationId) {
-      const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
-      const messageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'me', content: msg, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [], attachment_meta: uploadedAttachments.length ? uploadedAttachments.map((attachment) => ({ file_name: attachment.file_name, file_type: attachment.file_type, file_size: attachment.file_size, upload_time: attachment.upload_time, uploaded_file_url: attachment.uploaded_file_url || null })) : null }) }).catch(() => {});
-      if (messageRes && messageRes.ok) {
-        await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: msg, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
-      }
-    }
-  } catch (err) {
-    console.error('Failed to save user message', err);
-  }
-
-  /* THINKING */
-  const t = document.createElement('div');
-  t.className = 'thinking';
-  t.innerHTML = `<span class="label">CORTEX CORE AI</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
-  chatBox.appendChild(t);
-  scroll();
-
-  try {
-    replyAbortController = new AbortController();
-    const firstTokenTimeoutId = setTimeout(() => {
-      if (replyAbortController && replyInProgress) {
-        replyAbortController.abort();
-      }
-    }, 10000);
-    const overallTimeoutId = setTimeout(() => {
-      if (replyAbortController && replyInProgress) {
-        replyAbortController.abort();
-      }
-    }, 45000);
-
-    const streamResponse = await fetchChatReply({ message: msg, history, conversation_id: conversationId, attachment_ids: uploadedAttachments.length ? uploadedAttachments.map((a) => a.id) : [] }, replyAbortController.signal, true);
+    scroll();
+    const t = document.createElement('div');
+    t.className = 'thinking';
+    t.innerHTML = `<span class="label">MI AI</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+    chatBox.appendChild(t);
+    scroll();
+    try {
+        replyAbortController = new AbortController();
+        const firstTokenTimeoutId = setTimeout(() => {
+            if (replyAbortController && replyInProgress) replyAbortController.abort();
+        }, 10000);
+        const overallTimeoutId = setTimeout(() => {
+            if (replyAbortController && replyInProgress) replyAbortController.abort();
+        }, 45000);
+        const streamResponse = await fetchChatReply({
+            message: msg,
+            history,
+            conversation_id: conversationId,
+            attachment_ids: uploadedAttachments.length
+                ? uploadedAttachments.map((a) => a.id)
+                : []
+        }, replyAbortController.signal);
 
     if (!streamResponse.ok) throw new Error('Server returned ' + streamResponse.status);
 
@@ -13829,25 +13807,20 @@ async function send() {
         }
         const eventType = eventLine.replace(/^event:\s*/, '');
         const payloadText = dataLine.replace(/^data:\s*/, '');
-        try {
-          const payload = JSON.parse(payloadText);
-          if (eventType === 'delta' && payload.delta) {
-            fullText += payload.delta;
-            contentBox.textContent = fullText;
-            scroll();
-          }
-          if (eventType === 'done' && payload.reply) {
-            fullText = payload.reply || fullText;
-            contentBox.textContent = fullText;
-            scroll();
-            streamCompleted = true;
-          }
-          if (eventType === 'error') {
-            throw new Error(payload.error || 'Stream failed');
-          }
-        } catch (err) {
-          console.error('Failed to parse stream payload', err);
-        }
+                const payload = JSON.parse(payloadText);
+                if (eventType === 'delta') {
+                    if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
+                    fullText += payload.delta;
+                    contentBox.textContent = fullText;
+                    scroll();
+                } else if (eventType === 'done') {
+                    if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
+                    contentBox.textContent = fullText;
+                    scroll();
+                    streamCompleted = true;
+                } else if (eventType === 'error') {
+                    throw new Error(payload.error || 'Stream failed');
+                }
         boundary = buffer.indexOf('\n\n');
       }
       if (replyAbortController && replyAbortController.signal.aborted) {
@@ -13864,21 +13837,19 @@ async function send() {
       const eventLine = lines.find((line) => line.startsWith('event:'));
       const dataLine = lines.find((line) => line.startsWith('data:'));
       if (eventLine && dataLine) {
-        try {
-          const payload = JSON.parse(dataLine.replace(/^data:\s*/, ''));
-          if (payload.delta) {
-            fullText += payload.delta;
-            contentBox.textContent = fullText;
-            scroll();
-          }
-          if (payload.reply) {
-            fullText = payload.reply;
-            contentBox.textContent = fullText;
-            scroll();
-          }
-        } catch (err) {
-          console.error('Failed to parse stream tail', err);
-        }
+                const payload = JSON.parse(dataLine.replace(/^data:\s*/, ''));
+                if (eventType === 'delta') {
+                    if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
+                    fullText += payload.delta;
+                    contentBox.textContent = fullText;
+                    scroll();
+                } else if (eventType === 'done') {
+                    if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
+                    contentBox.textContent = fullText;
+                    scroll();
+                } else if (eventType === 'error') {
+                    throw new Error(payload.error || 'Stream failed');
+                }
       }
     }
 
@@ -34209,25 +34180,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
     }
 
     function install() {
-        window.fetchChatReply =
-            requestAiReply;
-
-        try {
-            fetchChatReply =
-                requestAiReply;
-        }
-        catch (_) {}
-
-        window.CORTEX_AI_REQUEST_REPAIR_V2 = {
-            endpoint: PRIMARY_ENDPOINT,
-            endpoints: ENDPOINTS.slice(),
-            request: requestAiReply
-        };
-
-        console.log(
-            "[CORTEX CORE AI] AI request repair installed:",
-            PRIMARY_ENDPOINT
-        );
+        return false;
     }
 
     if (
@@ -37065,6 +37018,17 @@ option,
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 
 
 
