@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -11658,6 +11658,408 @@ textarea:disabled,
 
 /* CORTEX AI MESSAGE ACTION BAR V1 END */
 </style>
+<!-- CORTEX AI REPLY ACTIONS V1 -->
+<style>
+.cortex-reply-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+    min-height: 30px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.cortex-reply-action {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: rgba(128,128,128,.10) !important;
+    color: currentColor !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    opacity: .85 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    transition: all .15s ease !important;
+}
+
+.cortex-reply-action:hover {
+    background: rgba(128,128,128,.20) !important;
+    opacity: 1 !important;
+    transform: translateY(-1px) !important;
+}
+
+.cortex-reply-action:active {
+    transform: scale(.92) !important;
+}
+
+.cortex-reply-action svg {
+    width: 15px !important;
+    height: 15px !important;
+    display: block !important;
+    pointer-events: none !important;
+}
+
+.cortex-reply-more-menu {
+    position: absolute !important;
+    z-index: 999999 !important;
+    min-width: 190px !important;
+    padding: 6px !important;
+    border-radius: 12px !important;
+    background: rgba(30,30,30,.96) !important;
+    color: white !important;
+    box-shadow: 0 12px 35px rgba(0,0,0,.30) !important;
+    backdrop-filter: blur(18px) !important;
+}
+
+.cortex-reply-more-item {
+    width: 100% !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: inherit !important;
+    padding: 9px 10px !important;
+    border-radius: 8px !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+}
+
+.cortex-reply-more-item:hover {
+    background: rgba(255,255,255,.12) !important;
+}
+</style>
+<script>
+(function () {
+
+    function cortexIcon(name) {
+        const icons = {
+            copy:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
+
+            share:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4"></path><path d="m15.4 6.5-6.8 4"></path></svg>',
+
+            regenerate:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"></path><path d="M3 4v6h6"></path><path d="M4 13a8 8 0 0 0 14.8 4L21 14"></path><path d="M21 20v-6h-6"></path></svg>',
+
+            more:
+                '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>'
+        };
+
+        return icons[name] || "";
+    }
+
+    function cortexGetReplyText(actionButton) {
+        const bubble =
+            actionButton.closest(".message, .message-bubble, .chat-message, .ai-message, [class*='message']") ||
+            actionButton.parentElement?.parentElement;
+
+        if (!bubble) return "";
+
+        const clone = bubble.cloneNode(true);
+
+        clone.querySelectorAll(
+            ".cortex-reply-actions, .cortex-reply-more-menu, button"
+        ).forEach(el => el.remove());
+
+        return (clone.innerText || clone.textContent || "").trim();
+    }
+
+    function cortexCreateActions(replyElement) {
+
+        if (!replyElement) return;
+
+        if (replyElement.querySelector(".cortex-reply-actions")) return;
+
+        const actions = document.createElement("div");
+        actions.className = "cortex-reply-actions";
+
+        const copy = document.createElement("button");
+        copy.type = "button";
+        copy.className = "cortex-reply-action";
+        copy.title = "Copy";
+        copy.setAttribute("aria-label", "Copy");
+        copy.innerHTML = cortexIcon("copy");
+
+        const share = document.createElement("button");
+        share.type = "button";
+        share.className = "cortex-reply-action";
+        share.title = "Share";
+        share.setAttribute("aria-label", "Share");
+        share.innerHTML = cortexIcon("share");
+
+        const regenerate = document.createElement("button");
+        regenerate.type = "button";
+        regenerate.className = "cortex-reply-action";
+        regenerate.title = "Regenerate";
+        regenerate.setAttribute("aria-label", "Regenerate");
+        regenerate.innerHTML = cortexIcon("regenerate");
+
+        const more = document.createElement("button");
+        more.type = "button";
+        more.className = "cortex-reply-action";
+        more.title = "More";
+        more.setAttribute("aria-label", "More");
+        more.innerHTML = cortexIcon("more");
+
+        copy.onclick = async function () {
+            const text = cortexGetReplyText(copy);
+
+            if (!text) return;
+
+            try {
+                await navigator.clipboard.writeText(text);
+                copy.title = "Copied";
+
+                setTimeout(() => {
+                    copy.title = "Copy";
+                }, 1200);
+            } catch (e) {
+                console.error("Copy failed:", e);
+            }
+        };
+
+        share.onclick = async function () {
+            const text = cortexGetReplyText(share);
+
+            if (!text) return;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: "CORTEX CORE AI",
+                        text: text
+                    });
+                    return;
+                } catch (e) {
+                    if (e && e.name === "AbortError") return;
+                }
+            }
+
+            try {
+                await navigator.clipboard.writeText(text);
+                alert("Response copied. You can now share it.");
+            } catch (e) {
+                console.error("Share failed:", e);
+            }
+        };
+
+        regenerate.onclick = function () {
+
+            const messageContainer =
+                regenerate.closest(".message, .chat-message, [class*='message']");
+
+            let regenerateButton =
+                document.querySelector(
+                    '[data-action="regenerate"], [aria-label*="Regenerate" i], [title*="Regenerate" i]'
+                );
+
+            if (regenerateButton) {
+                regenerateButton.click();
+                return;
+            }
+
+            const text = cortexGetReplyText(regenerate);
+
+            if (text && window.fetchChatReply) {
+                window.dispatchEvent(
+                    new CustomEvent("cortex-regenerate", {
+                        detail: { text }
+                    })
+                );
+            }
+        };
+
+        more.onclick = function (event) {
+
+            event.stopPropagation();
+
+            document
+                .querySelectorAll(".cortex-reply-more-menu")
+                .forEach(el => el.remove());
+
+            const menu = document.createElement("div");
+            menu.className = "cortex-reply-more-menu";
+
+            const read = document.createElement("button");
+            read.type = "button";
+            read.className = "cortex-reply-more-item";
+            read.textContent = "Read Aloud";
+
+            const branch = document.createElement("button");
+            branch.type = "button";
+            branch.className = "cortex-reply-more-item";
+            branch.textContent = "Branch in New Chat";
+
+            read.onclick = function () {
+
+                const text = cortexGetReplyText(read);
+
+                if (!text) return;
+
+                if ("speechSynthesis" in window) {
+                    speechSynthesis.cancel();
+
+                    const utterance =
+                        new SpeechSynthesisUtterance(text);
+
+                    speechSynthesis.speak(utterance);
+                }
+
+                menu.remove();
+            };
+
+            branch.onclick = function () {
+
+                const text = cortexGetReplyText(branch);
+
+                if (!text) return;
+
+                const newChatButton =
+                    document.querySelector(
+                        '#newChatBtn, [data-action="new-chat"], [aria-label*="New Chat" i], [title*="New Chat" i]'
+                    );
+
+                if (newChatButton) {
+                    newChatButton.click();
+                }
+
+                setTimeout(() => {
+
+                    const input =
+                        document.querySelector(
+                            'textarea, input[type="text"], [contenteditable="true"]'
+                        );
+
+                    if (input) {
+
+                        if (input.tagName === "TEXTAREA" ||
+                            input.tagName === "INPUT") {
+
+                            input.value = text;
+                            input.dispatchEvent(
+                                new Event("input", { bubbles: true })
+                            );
+
+                        } else {
+
+                            input.textContent = text;
+                            input.dispatchEvent(
+                                new InputEvent("input", {
+                                    bubbles: true,
+                                    inputType: "insertText",
+                                    data: text
+                                })
+                            );
+                        }
+
+                        input.focus();
+                    }
+
+                }, 300);
+
+                menu.remove();
+            };
+
+            menu.appendChild(read);
+            menu.appendChild(branch);
+
+            document.body.appendChild(menu);
+
+            const rect = more.getBoundingClientRect();
+
+            menu.style.left =
+                Math.max(
+                    8,
+                    Math.min(
+                        window.innerWidth - 200,
+                        rect.left
+                    )
+                ) + "px";
+
+            menu.style.top =
+                Math.min(
+                    window.innerHeight - 100,
+                    rect.bottom + 5
+                ) + "px";
+        };
+
+        actions.appendChild(copy);
+        actions.appendChild(share);
+        actions.appendChild(regenerate);
+        actions.appendChild(more);
+
+        replyElement.appendChild(actions);
+    }
+
+    function cortexFindReplyElements() {
+
+        const selectors = [
+            ".assistant-message",
+            ".ai-message",
+            ".bot-message",
+            ".message.assistant",
+            ".message.ai",
+            "[data-role='assistant']",
+            "[data-role='ai']",
+            ".chat-message.assistant"
+        ];
+
+        const found = [];
+
+        selectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => {
+                if (!found.includes(el)) {
+                    found.push(el);
+                }
+            });
+        });
+
+        return found;
+    }
+
+    function cortexInstall() {
+
+        cortexFindReplyElements().forEach(el => {
+            cortexCreateActions(el);
+        });
+    }
+
+    const observer = new MutationObserver(() => {
+        cortexInstall();
+    });
+
+    function start() {
+
+        cortexInstall();
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        setInterval(cortexInstall, 1000);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
+    }
+
+})();
+</script>
 </head>
 
 <body>
@@ -39848,6 +40250,7 @@ img#headerLogo
 </script>
 </body>
 </html>
+
 
 
 
