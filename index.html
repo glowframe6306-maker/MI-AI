@@ -11749,6 +11749,45 @@ textarea:disabled,
 }
 
 </style>
+<style>
+/* MI_AI_COPYABLE_RESPONSE_BLOCK_V1 */
+
+.mi-copyable-response {
+    position: relative;
+    margin: 12px 0;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    background: rgba(255,255,255,.045);
+}
+
+.mi-copyable-response-content {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    padding-right: 52px;
+}
+
+.mi-copyable-response-copy {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.08);
+    color: inherit;
+    border-radius: 9px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.mi-copyable-response-copy:hover {
+    background: rgba(255,255,255,.15);
+}
+
+.mi-copyable-response-copy.copied {
+    opacity: .8;
+}
+</style>
 </head>
 
 <body>
@@ -39492,6 +39531,95 @@ img#headerLogo
 
 <script>
 window.MI_AI_WRITING_STYLE_RULE = ;
+</script>
+<script>
+/* MI_AI_COPYABLE_RESPONSE_BLOCK_V1 */
+
+function miCreateCopyableResponse(text) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "mi-copyable-response";
+
+    const content = document.createElement("div");
+    content.className = "mi-copyable-response-content";
+    content.textContent = String(text || "");
+
+    const copyButton = document.createElement("button");
+    copyButton.type = "button";
+    copyButton.className = "mi-copyable-response-copy";
+    copyButton.textContent = "Copy";
+    copyButton.title = "Copy response";
+
+    copyButton.addEventListener("click", async function () {
+        try {
+            await navigator.clipboard.writeText(String(text || ""));
+
+            copyButton.textContent = "Copied";
+            copyButton.classList.add("copied");
+
+            setTimeout(function () {
+                copyButton.textContent = "Copy";
+                copyButton.classList.remove("copied");
+            }, 1500);
+        }
+        catch (error) {
+            console.error("[MI AI] Copy failed:", error);
+
+            const area = document.createElement("textarea");
+            area.value = String(text || "");
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+
+            document.body.appendChild(area);
+            area.select();
+
+            try {
+                document.execCommand("copy");
+                copyButton.textContent = "Copied";
+
+                setTimeout(function () {
+                    copyButton.textContent = "Copy";
+                }, 1500);
+            }
+            finally {
+                area.remove();
+            }
+        }
+    });
+
+    wrapper.appendChild(copyButton);
+    wrapper.appendChild(content);
+
+    return wrapper;
+}
+
+function miShouldUseCopyableBlock(text) {
+    const value = String(text || "").trim();
+
+    if (!value) return false;
+
+    const lines = value.split(/\r?\n/);
+
+    const headingCount = lines.filter(function (line) {
+        return /^#{1,6}\s+/.test(line.trim());
+    }).length;
+
+    const paragraphCount = value
+        .split(/\r?\n\s*\r?\n/)
+        .filter(function (part) {
+            return part.trim().length > 80;
+        }).length;
+
+    const essayWords = value
+        .split(/\s+/)
+        .filter(Boolean)
+        .length;
+
+    return (
+        headingCount >= 2 ||
+        paragraphCount >= 3 ||
+        essayWords >= 350
+    );
+}
 </script>
 </body>
 </html>
