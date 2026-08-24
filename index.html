@@ -40024,7 +40024,7 @@ function miShouldUseCopyableBlock(text) {
     );
 }
 </script>
-<script id="MI_AI_FINAL_BOLD_RENDER_FIX_V1">
+<script id="MI_AI_FINAL_BOLD_RENDER_FIX_V1_DISABLED">
 (function () {
     "use strict";
 
@@ -40215,125 +40215,253 @@ function miShouldUseCopyableBlock(text) {
 })();
 </script>
 
-<!-- CORTEX_CORE_AI_REAL_MARKDOWN_RENDER_V1 -->
+<!-- CORTEX_CORE_AI_DYNAMIC_MARKDOWN_V2 -->
+<style id="CORTEX_CORE_AI_DYNAMIC_MARKDOWN_STYLE">
+.ai-response strong {
+    font-weight: 700 !important;
+}
+
+.ai-response em {
+    font-style: italic !important;
+}
+
+.ai-response h1,
+.ai-response h2,
+.ai-response h3 {
+    display: block !important;
+    margin-top: 18px !important;
+    margin-bottom: 10px !important;
+    font-weight: 700 !important;
+}
+
+.ai-response h1 {
+    font-size: 1.55em !important;
+}
+
+.ai-response h2 {
+    font-size: 1.30em !important;
+}
+
+.ai-response h3 {
+    font-size: 1.12em !important;
+}
+</style>
+
 <script>
 (function () {
     "use strict";
 
-    function cortexRenderMarkdown(root) {
+    function processElement(element) {
 
-        if (!root) {
+        if (!element) {
             return;
         }
 
-        const elements = root.querySelectorAll(
-            ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
+        if (
+            !element.matches ||
+            !element.matches(
+                ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
+            )
+        ) {
+            return;
+        }
+
+        let html = element.innerHTML;
+
+        if (!html) {
+            return;
+        }
+
+        let changed = false;
+
+        /*
+         * =====================================================
+         * BOLD
+         * **text**
+         * =====================================================
+         */
+        const boldResult = html.replace(
+            /\*\*([^*\n]+?)\*\*/g,
+            "<strong>$1</strong>"
         );
 
-        elements.forEach(function (element) {
+        if (boldResult !== html) {
+            html = boldResult;
+            changed = true;
+        }
 
-            if (element.dataset.cortexMarkdownFixed === "1") {
-                return;
-            }
+        /*
+         * =====================================================
+         * HEADINGS
+         * ### Heading
+         * ## Heading
+         * # Heading
+         * =====================================================
+         */
+        const h3Result = html.replace(
+            /(^|<br\s*\/?>)\s*###\s+([^<]+?)(?=<br\s*\/?>|$)/gi,
+            '$1<h3 class="ai-heading ai-heading-3">$2</h3>'
+        );
 
-            element.dataset.cortexMarkdownFixed = "1";
+        if (h3Result !== html) {
+            html = h3Result;
+            changed = true;
+        }
 
-            /*
-             * Convert escaped Markdown symbols back into real formatting.
-             * IMPORTANT:
-             * The visible response must NEVER show ** or ###.
-             */
+        const h2Result = html.replace(
+            /(^|<br\s*\/?>)\s*##\s+([^<]+?)(?=<br\s*\/?>|$)/gi,
+            '$1<h2 class="ai-heading ai-heading-2">$2</h2>'
+        );
 
-            let html = element.innerHTML;
+        if (h2Result !== html) {
+            html = h2Result;
+            changed = true;
+        }
 
-            /*
-             * Bold
-             * **Sri Lanka** -> <strong>Sri Lanka</strong>
-             */
-            html = html.replace(
-                /\*\*([^*\n]+?)\*\*/g,
-                "<strong>$1</strong>"
-            );
+        const h1Result = html.replace(
+            /(^|<br\s*\/?>)\s*#\s+([^<]+?)(?=<br\s*\/?>|$)/gi,
+            '$1<h1 class="ai-heading ai-heading-1">$2</h1>'
+        );
 
-            /*
-             * Headings
-             * ### Geography -> heading
-             */
-            html = html.replace(
-                /(^|<br\s*\/?>)\s*###\s+([^<]+?)(?=<br|$)/gi,
-                '$1<h3 class="ai-heading ai-heading-3">$2</h3>'
-            );
+        if (h1Result !== html) {
+            html = h1Result;
+            changed = true;
+        }
 
-            html = html.replace(
-                /(^|<br\s*\/?>)\s*##\s+([^<]+?)(?=<br|$)/gi,
-                '$1<h2 class="ai-heading ai-heading-2">$2</h2>'
-            );
+        /*
+         * =====================================================
+         * ITALIC
+         * *text*
+         * =====================================================
+         */
+        const italicResult = html.replace(
+            /(?<!\*)\*([^*\n]+?)\*(?!\*)/g,
+            "<em>$1</em>"
+        );
 
-            html = html.replace(
-                /(^|<br\s*\/?>)\s*#\s+([^<]+?)(?=<br|$)/gi,
-                '$1<h1 class="ai-heading ai-heading-1">$2</h1>'
-            );
+        if (italicResult !== html) {
+            html = italicResult;
+            changed = true;
+        }
 
-            /*
-             * Italic
-             * *text* -> <em>text</em>
-             */
-            html = html.replace(
-                /(?<!\*)\*([^*\n]+)\*(?!\*)/g,
-                "<em>$1</em>"
-            );
+        /*
+         * =====================================================
+         * CLEAN REMAINING MARKDOWN HEADING SYMBOLS
+         * =====================================================
+         */
+        const cleanResult = html.replace(
+            /(^|<br\s*\/?>)\s*#{1,6}\s+/gi,
+            "$1"
+        );
 
-            /*
-             * Safety cleanup:
-             * remove remaining heading markers only when they
-             * are at the beginning of a visible line.
-             */
-            html = html.replace(
-                /(^|<br\s*\/?>)\s*#{1,6}\s+/gi,
-                "$1"
-            );
+        if (cleanResult !== html) {
+            html = cleanResult;
+            changed = true;
+        }
 
+        /*
+         * =====================================================
+         * APPLY ONLY WHEN SOMETHING ACTUALLY CHANGED
+         *
+         * This prevents MutationObserver loops.
+         * =====================================================
+         */
+        if (changed && html !== element.innerHTML) {
             element.innerHTML = html;
-        });
+        }
     }
 
-    function cortexScan() {
-        cortexRenderMarkdown(document);
+    function scanResponses(root) {
+
+        const container =
+            root && root.querySelectorAll
+                ? root
+                : document;
+
+        if (
+            container.matches &&
+            container.matches(
+                ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
+            )
+        ) {
+            processElement(container);
+        }
+
+        container
+            .querySelectorAll(
+                ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
+            )
+            .forEach(processElement);
     }
+
+    function initialScan() {
+        scanResponses(document);
+    }
+
+    /*
+     * =========================================================
+     * INITIAL RENDER
+     * =========================================================
+     */
 
     if (document.readyState === "loading") {
 
         document.addEventListener(
             "DOMContentLoaded",
-            cortexScan,
+            initialScan,
             { once: true }
         );
 
     } else {
 
-        cortexScan();
+        initialScan();
     }
 
     /*
-     * New AI responses are dynamically inserted into the chat.
-     * Observe only the chat area and render new responses.
+     * =========================================================
+     * DYNAMIC AI RESPONSE SUPPORT
+     *
+     * Important:
+     * No permanent "already processed" flag is used.
+     * Therefore newly updated AI messages are processed too.
+     * =========================================================
      */
+
+    let scheduled = false;
+
+    function scheduleScan() {
+
+        if (scheduled) {
+            return;
+        }
+
+        scheduled = true;
+
+        requestAnimationFrame(function () {
+
+            scheduled = false;
+
+            scanResponses(document);
+        });
+    }
+
     const observer = new MutationObserver(function (mutations) {
 
-        let shouldScan = false;
-
-        mutations.forEach(function (mutation) {
+        for (const mutation of mutations) {
 
             if (
                 mutation.type === "childList" &&
+                mutation.addedNodes &&
                 mutation.addedNodes.length
             ) {
-                shouldScan = true;
+                scheduleScan();
+                return;
             }
-        });
 
-        if (shouldScan) {
-            requestAnimationFrame(cortexScan);
+            if (mutation.type === "characterData") {
+                scheduleScan();
+                return;
+            }
         }
     });
 
@@ -40351,7 +40479,8 @@ function miShouldUseCopyableBlock(text) {
             target,
             {
                 childList: true,
-                subtree: true
+                subtree: true,
+                characterData: true
             }
         );
     }
@@ -40371,7 +40500,7 @@ function miShouldUseCopyableBlock(text) {
 
 })();
 </script>
-<!-- CORTEX_CORE_AI_REAL_MARKDOWN_RENDER_V1_END -->
+<!-- CORTEX_CORE_AI_DYNAMIC_MARKDOWN_V2_END -->
 </body>
 </html>
 
@@ -40796,6 +40925,7 @@ function miShouldUseCopyableBlock(text) {
 
 })();
 </script>
+
 
 
 
