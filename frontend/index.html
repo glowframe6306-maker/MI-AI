@@ -40248,66 +40248,69 @@ img#headerLogo
 
 /* CORTEX AI MESSAGE ACTION BAR V1 END */
 </script>
-<!-- CORTEX_REPLY_ACTIONS_V2 -->
-<style id="cortex-reply-actions-css">
-.cortex-reply-actions {
+<!-- CORTEX ALWAYS VISIBLE AI REPLY ICONS START -->
+<style>
+.cortex-ai-reply-actions {
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
-    margin-top: 8px !important;
-    padding: 2px 0 !important;
-    visibility: visible !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    width: 100% !important;
+    margin: 8px 0 0 0 !important;
+    padding: 0 !important;
     opacity: 1 !important;
+    visibility: visible !important;
 }
 
-.cortex-reply-action {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    color: inherit !important;
+.cortex-ai-reply-action {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 8px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: inherit !important;
+    border-radius: 7px !important;
     cursor: pointer !important;
-    font-size: 15px !important;
-    line-height: 1 !important;
-    opacity: .72 !important;
+    opacity: .62 !important;
     visibility: visible !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
 }
 
-.cortex-reply-action:hover {
+.cortex-ai-reply-action:hover {
     opacity: 1 !important;
-    background: rgba(128,128,128,.12) !important;
+    background: rgba(128,128,128,.13) !important;
 }
 
-.cortex-reply-more-menu {
-    position: absolute !important;
-    z-index: 999999 !important;
+.cortex-ai-more-menu {
+    position: fixed !important;
+    z-index: 2147483647 !important;
     min-width: 190px !important;
-    padding: 6px !important;
+    padding: 5px !important;
     border-radius: 12px !important;
-    background: rgba(30,30,30,.96) !important;
-    box-shadow: 0 10px 35px rgba(0,0,0,.3) !important;
+    background: rgba(35,35,35,.97) !important;
+    box-shadow: 0 12px 35px rgba(0,0,0,.35) !important;
 }
 
-.cortex-reply-more-item {
-    display: block !important;
+.cortex-ai-more-item {
     width: 100% !important;
+    display: block !important;
+    padding: 9px 12px !important;
     border: 0 !important;
     background: transparent !important;
     color: white !important;
     text-align: left !important;
-    padding: 9px 12px !important;
     border-radius: 8px !important;
     cursor: pointer !important;
 }
 
-.cortex-reply-more-item:hover {
+.cortex-ai-more-item:hover {
     background: rgba(255,255,255,.12) !important;
 }
 </style>
@@ -40316,46 +40319,116 @@ img#headerLogo
 (function () {
     "use strict";
 
-    function getReplyText(container) {
-        if (!container) return "";
+    const ACTION_CLASS = "cortex-ai-reply-actions";
+
+    function getText(root) {
         const box =
-            container.querySelector(".contentBox") ||
-            container.querySelector(".message-content") ||
-            container.querySelector(".message-text") ||
-            container;
-        return String(box.innerText || box.textContent || "").trim();
+            root.querySelector(".contentBox") ||
+            root.querySelector(".message-content") ||
+            root.querySelector(".message-text") ||
+            root;
+
+        return (box.innerText || box.textContent || "").trim();
     }
 
-    function addReplyActions(replyContainer) {
-        if (!replyContainer) return;
-        if (replyContainer.querySelector(".cortex-reply-actions")) return;
+    function findReplyRoots() {
+        const selectors = [
+            ".ai-message",
+            ".assistant-message",
+            ".message.ai",
+            ".message.assistant",
+            ".bot-message",
+            "[data-role='assistant']",
+            "[data-role='ai']"
+        ];
+
+        const found = [];
+
+        selectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => {
+                if (!found.includes(el)) found.push(el);
+            });
+        });
+
+        return found;
+    }
+
+    function createActions(reply) {
+        if (!reply || reply.querySelector("." + ACTION_CLASS)) return;
 
         const actions = document.createElement("div");
-        actions.className = "cortex-reply-actions";
+        actions.className = ACTION_CLASS;
 
         actions.innerHTML = `
-            <button class="cortex-reply-action" data-action="copy" title="Copy" aria-label="Copy">⧉</button>
-            <button class="cortex-reply-action" data-action="share" title="Share" aria-label="Share">↗</button>
-            <button class="cortex-reply-action" data-action="regenerate" title="Regenerate" aria-label="Regenerate">↻</button>
-            <button class="cortex-reply-action" data-action="more" title="More" aria-label="More">•••</button>
+            <button type="button"
+                    class="cortex-ai-reply-action"
+                    data-cortex-action="copy"
+                    title="Copy"
+                    aria-label="Copy">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                    <path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"></path>
+                </svg>
+            </button>
+
+            <button type="button"
+                    class="cortex-ai-reply-action"
+                    data-cortex-action="share"
+                    title="Share"
+                    aria-label="Share">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="18" cy="5" r="2"></circle>
+                    <circle cx="6" cy="12" r="2"></circle>
+                    <circle cx="18" cy="19" r="2"></circle>
+                    <path d="m8 11 8-5"></path>
+                    <path d="m8 13 8 5"></path>
+                </svg>
+            </button>
+
+            <button type="button"
+                    class="cortex-ai-reply-action"
+                    data-cortex-action="regenerate"
+                    title="Regenerate"
+                    aria-label="Regenerate">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M20 11a8 8 0 0 0-14.8-4L3 10"></path>
+                    <path d="M3 5v5h5"></path>
+                    <path d="M4 13a8 8 0 0 0 14.8 4L21 14"></path>
+                    <path d="M21 19v-5h-5"></path>
+                </svg>
+            </button>
+
+            <button type="button"
+                    class="cortex-ai-reply-action"
+                    data-cortex-action="more"
+                    title="More"
+                    aria-label="More">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="1.7"></circle>
+                    <circle cx="12" cy="12" r="1.7"></circle>
+                    <circle cx="19" cy="12" r="1.7"></circle>
+                </svg>
+            </button>
         `;
 
-        replyContainer.appendChild(actions);
+        reply.appendChild(actions);
 
         actions.addEventListener("click", async function (event) {
-            const button = event.target.closest("[data-action]");
+            const button = event.target.closest("[data-cortex-action]");
             if (!button) return;
 
-            const action = button.dataset.action;
-            const text = getReplyText(replyContainer);
+            const action = button.dataset.cortexAction;
+            const text = getText(reply);
 
             if (action === "copy") {
                 try {
                     await navigator.clipboard.writeText(text);
-                    button.textContent = "✓";
-                    setTimeout(() => button.textContent = "⧉", 1200);
-                } catch (e) {
-                    console.error("Copy failed:", e);
+                    button.style.opacity = "1";
+                    setTimeout(() => {
+                        button.style.opacity = "";
+                    }, 900);
+                } catch (error) {
+                    console.error("CORTEX copy failed:", error);
                 }
             }
 
@@ -40366,10 +40439,11 @@ img#headerLogo
                             title: "CORTEX CORE AI",
                             text: text
                         });
-                    } catch (e) {}
+                    } catch (_) {}
                 } else {
-                    await navigator.clipboard.writeText(text);
-                    alert("Reply copied to clipboard.");
+                    try {
+                        await navigator.clipboard.writeText(text);
+                    } catch (_) {}
                 }
             }
 
@@ -40380,37 +40454,39 @@ img#headerLogo
                     window.handleRegenerate;
 
                 if (typeof regenerate === "function") {
-                    regenerate();
+                    await regenerate();
                 } else {
-                    const sendButton =
+                    const send =
                         document.querySelector("#sendButton") ||
-                        document.querySelector('[type="submit"]');
+                        document.querySelector("#send-btn") ||
+                        document.querySelector("[data-send]");
 
-                    if (sendButton) sendButton.click();
+                    if (send) send.click();
                 }
             }
 
             if (action === "more") {
-                document.querySelectorAll(".cortex-reply-more-menu")
+                document.querySelectorAll(".cortex-ai-more-menu")
                     .forEach(x => x.remove());
 
                 const menu = document.createElement("div");
-                menu.className = "cortex-reply-more-menu";
+                menu.className = "cortex-ai-more-menu";
 
                 menu.innerHTML = `
-                    <button class="cortex-reply-more-item" data-more="read">
-                        🔊 Read Aloud
+                    <button class="cortex-ai-more-item" data-more="read">
+                        Read Aloud
                     </button>
-                    <button class="cortex-reply-more-item" data-more="branch">
-                        ↗ Branch in New Chat
+                    <button class="cortex-ai-more-item" data-more="branch">
+                        Branch in New Chat
                     </button>
                 `;
 
                 document.body.appendChild(menu);
 
-                const rect = button.getBoundingClientRect();
-                menu.style.left = Math.max(8, rect.left) + "px";
-                menu.style.top = (rect.bottom + 6) + "px";
+                const r = button.getBoundingClientRect();
+
+                menu.style.left = Math.max(8, r.left) + "px";
+                menu.style.top = (r.bottom + 5) + "px";
 
                 menu.addEventListener("click", function (e) {
                     const item = e.target.closest("[data-more]");
@@ -40418,17 +40494,14 @@ img#headerLogo
 
                     if (item.dataset.more === "read") {
                         if ("speechSynthesis" in window && text) {
-                            window.speechSynthesis.cancel();
-                            const utterance = new SpeechSynthesisUtterance(text);
-                            window.speechSynthesis.speak(utterance);
+                            speechSynthesis.cancel();
+                            speechSynthesis.speak(
+                                new SpeechSynthesisUtterance(text)
+                            );
                         }
                     }
 
                     if (item.dataset.more === "branch") {
-                        const input =
-                            document.querySelector("textarea") ||
-                            document.querySelector("input[type='text']");
-
                         const newChat =
                             document.querySelector("#newChat") ||
                             document.querySelector('[data-action="new-chat"]');
@@ -40436,18 +40509,18 @@ img#headerLogo
                         if (newChat) newChat.click();
 
                         setTimeout(() => {
-                            const target =
+                            const input =
                                 document.querySelector("textarea") ||
                                 document.querySelector("input[type='text']");
 
-                            if (target) {
-                                target.value = text;
-                                target.dispatchEvent(new Event("input", {
-                                    bubbles: true
-                                }));
-                                target.focus();
+                            if (input) {
+                                input.value = text;
+                                input.dispatchEvent(
+                                    new Event("input", { bubbles: true })
+                                );
+                                input.focus();
                             }
-                        }, 300);
+                        }, 350);
                     }
 
                     menu.remove();
@@ -40456,30 +40529,36 @@ img#headerLogo
         });
     }
 
-    function scanReplies() {
-        const candidates = document.querySelectorAll(
-            ".ai-message, .assistant-message, .message.ai, .message.assistant, .bot-message"
-        );
-
-        candidates.forEach(addReplyActions);
+    function scan() {
+        findReplyRoots().forEach(createActions);
     }
 
-    const observer = new MutationObserver(function () {
-        scanReplies();
-    });
+    function start() {
+        scan();
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
+        const observer = new MutationObserver(() => {
+            scan();
+        });
 
-    document.addEventListener("DOMContentLoaded", scanReplies);
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
 
-    window.CORTEX_ADD_REPLY_ACTIONS = addReplyActions;
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
+    }
+
+    window.CORTEX_REPLY_ICONS_READY = true;
 })();
 </script>
+<!-- CORTEX ALWAYS VISIBLE AI REPLY ICONS END -->
 </body>
 </html>
+
 
 
 
