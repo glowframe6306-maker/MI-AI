@@ -1,4 +1,4 @@
-# MI_AI_SECURE_RBAC_IMPORT
+﻿# MI_AI_SECURE_RBAC_IMPORT
 try:
     from backend.chief_owner_rbac import register_rbac
 except ImportError:
@@ -93,6 +93,7 @@ except ImportError:
 
 try:
     from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 except ImportError:
     def load_dotenv(*args, **kwargs):
         return False
@@ -1278,30 +1279,34 @@ def _extract_text_from_groq_response(response):
     if response is None:
         return ""
 
-    if getattr(response, "choices", None):
-        choice = response.choices[0]
-        message = getattr(choice, "message", None)
-        if message is not None:
-            content = getattr(message, "content", None)
-            if content:
-                return str(content)
+    try:
+        choices = getattr(response, "choices", None) or []
+        if choices:
+            message = getattr(choices[0], "message", None)
+            if message is not None:
+                content = getattr(message, "content", None)
 
-    text = getattr(response, "text", None)
-    if text:
-        return str(text)
+                if isinstance(content, str) and content.strip():
+                    return content.strip()
 
-    candidates = getattr(response, "candidates", None) or []
-    for candidate in candidates:
-        content = getattr(candidate, "content", None)
-        parts = getattr(content, "parts", None) or []
-        for part in parts:
-            part_text = getattr(part, "text", None)
-            if part_text:
-                return str(part_text)
+                if isinstance(content, list):
+                    parts = []
+                    for item in content:
+                        if isinstance(item, dict):
+                            value = item.get("text") or item.get("content")
+                        else:
+                            value = getattr(item, "text", None) or getattr(item, "content", None)
 
-    return str(response)
+                        if value:
+                            parts.append(str(value))
 
+                    if parts:
+                        return "\n".join(parts).strip()
+    except Exception as exc:
+        app.logger.exception("Groq response extraction failed: %s", exc)
 
+    return ""
+    
 def _extract_text_from_groq_chunk(chunk):
     if chunk is None:
         return ""
@@ -2047,9 +2052,7 @@ def api_chat_stream():
         if not isinstance(item, dict):
             continue
 
-        role = str(
-            item.get("role") or "user"
-        ).strip() or "user"
+        role = str(item.get("role") or "user").strip() or "user"
 
         if role not in {"user", "assistant", "system"}:
             continue
@@ -2073,57 +2076,84 @@ def api_chat_stream():
 
     def generate_stream():
         try:
-            try:
-                client = get_groq_client()
-            except RuntimeError:
-                message = "The AI service is not configured correctly."
+            client = get_groq_client()
 
-                yield _sse_event(
-                    "error",
-                    {
-                        "reply": message,
-                        "response": message,
-                        "error": message,
-                        "done": True,
-                        "error_code": "AI_NOT_CONFIGURED",
-                    },
-                )
-                return
+            models_to_try = [
+                _get_groq_model(),
+                _get_groq_fallback_model(),
+            ]
+
+            models_to_try = list(dict.fromkeys(
+                x.strip()
+                for x in models_to_try
+                if x and x.strip()
+            ))
+
+            if not models_to_try:
+                raise RuntimeError("No Groq model configured")
 
             collected_text = []
+            last_error = None
 
-            for chunk_text in _iter_groq_stream(
-                client,
-                normalized_messages,
-                model_name=_get_groq_model(),
-            ):
-                if not chunk_text:
+            for model_name in models_to_try:
+                try:
+                    collected_text = []
+
+                    for chunk_text in _iter_groq_stream(
+                        client,
+                        normalized_messages,
+                        model_name=model_name,
+                    ):
+                        if not chunk_text:
+                            continue
+
+                        collected_text.append(str(chunk_text))
+
+                        yield _sse_event(
+                            "delta",
+                            {
+                                "delta": str(chunk_text),
+                            },
+                        )
+
+                    reply = "".join(collected_text).strip()
+
+                    if reply:
+                        yield _sse_event(
+                            "done",
+                            {
+                                "reply": reply,
+                                "response": reply,
+                                "done": True,
+                            },
+                        )
+                        return
+
+                    last_error = RuntimeError(
+                        f"Groq model returned empty response: {model_name}"
+                    )
+
+                except Exception as exc:
+                    last_error = exc
+                    app.logger.exception(
+                        "CORTEX STREAM MODEL FAILED [%s]: %s",
+                        model_name,
+                        exc,
+                    )
                     continue
 
-                collected_text.append(chunk_text)
-
-                yield _sse_event(
-                    "delta",
-                    {
-                        "delta": chunk_text,
-                    },
-                )
-
-            reply = "".join(collected_text).strip()
-
-            if not reply:
-                reply = "No response received from the AI service."
-
-            yield _sse_event(
-                "done",
-                {
-                    "reply": reply,
-                    "response": reply,
-                    "done": True,
-                },
+            raise last_error or RuntimeError(
+                "All Groq models failed"
             )
 
-        except Exception:
+        except Exception as exc:
+            error_detail = f"{type(exc).__name__}: {str(exc)}"
+
+            app.logger.exception(
+                "CORTEX STREAM AI ERROR: %s",
+                error_detail,
+            )
+
             message = (
                 "The AI service is temporarily unavailable. "
                 "Please try again."
@@ -2135,6 +2165,7 @@ def api_chat_stream():
                     "reply": message,
                     "response": message,
                     "error": message,
+                    "error_detail": error_detail,
                     "done": True,
                     "error_code": "AI_SERVICE_UNAVAILABLE",
                 },
@@ -2144,11 +2175,12 @@ def api_chat_stream():
         stream_with_context(generate_stream()),
         mimetype="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
             "X-Accel-Buffering": "no",
         },
     )
-
 
 @app.route("/debug/chat", methods=["GET"])
 def debug_chat():
@@ -3558,3 +3590,6 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", "5000")),
         debug=False,
     )
+
+
+
