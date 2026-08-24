@@ -13145,6 +13145,64 @@ function showShareFeedback(message) {
   setTimeout(() => box.remove(), 1800);
 }
 
+function normalizeAIResponseEmojis(text) {
+    const value = String(text || '');
+    if (!value) return value;
+
+    const protectedParts = [];
+    const protect = (match) => {
+        const index = protectedParts.push(match) - 1;
+        return `__MI_AI_PROTECTED_${index}__`;
+    };
+
+    let safeText = value
+        .replace(/```[\s\S]*?```/g, protect)
+        .replace(/`[^`\n]*`/g, protect)
+        .replace(/\b(?:https?|ftp):\/\/[^\s<>]+/gi, protect)
+        .replace(/\b(?:www\.)[^\s<>]+/gi, protect);
+
+    const emojiPattern = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator})[\uFE0F\u20E3\p{Emoji_Modifier}]*(?:\u200D(?:\p{Extended_Pictographic}|\p{Regional_Indicator})[\uFE0F\u20E3\p{Emoji_Modifier}]*)*/gu;
+    const normalizeLine = (line) => {
+        if (/^\s*(?:[$>#]|(?:npm|pip|python|node|git|curl|docker)\b)/i.test(line)) return line;
+
+        const misplaced = [];
+        let normalized = line.replace(emojiPattern, (emoji, offset, source) => {
+            const before = source.slice(0, offset).trimEnd();
+            const after = source.slice(offset + emoji.length).trimStart();
+            if (!after) return emoji;
+            const followingPunctuation = after.match(/^[,;:!?.)\]}]+/);
+            if (followingPunctuation) {
+                misplaced.push({ emoji, punctuationOffset: before.length + followingPunctuation[0].length });
+                return '';
+            }
+            if (/[.!?]$/.test(before)) {
+                misplaced.push({ emoji, punctuationOffset: before.length });
+                return '';
+            }
+            if (/^[\w]/u.test(after)) {
+                misplaced.push({ emoji, punctuationOffset: null });
+                return '';
+            }
+            return emoji;
+        });
+
+        misplaced.reverse().forEach(({ emoji, punctuationOffset }) => {
+            if (punctuationOffset !== null) {
+                normalized = normalized.slice(0, punctuationOffset) + ' ' + emoji + normalized.slice(punctuationOffset);
+            } else {
+                normalized = normalized.trimEnd() + ' ' + emoji;
+            }
+        });
+        return normalized;
+    };
+
+    safeText = safeText.split('\n').map(normalizeLine).join('\n');
+    protectedParts.forEach((part, index) => {
+        safeText = safeText.replace(`__MI_AI_PROTECTED_${index}__`, part);
+    });
+    return safeText;
+}
+
 function linkifyText(text) {
   if (!text || typeof text !== 'string') return text;
 
@@ -13281,7 +13339,7 @@ function appendAiMessage(container, text) {
   wrap.className = 'ai';
   const body = document.createElement('div');
   body.className = isLongWritingResponse(text) ? 'aiWritingCard' : 'aiMessageBody';
-  body.innerHTML = linkifyText(text) || '';
+    body.innerHTML = linkifyText(normalizeAIResponseEmojis(text)) || '';
   wrap.appendChild(body);
   wrap.appendChild(createCopyButton(text));
   container.appendChild(wrap);
@@ -13657,7 +13715,7 @@ function createStreamingReplyBubble(initialText = '') {
 
 function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
     if (!contentBox) return;
-    contentBox.innerHTML = linkifyText(text);
+    contentBox.innerHTML = linkifyText(normalizeAIResponseEmojis(text));
     contentBox.dataset.finalText = text;
     const existingText = String(text || '').trim();
     if (conversationId && chats[conversationId]) {
@@ -13811,11 +13869,11 @@ async function send() {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.textContent = fullText;
+                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
-                    contentBox.textContent = fullText;
+                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
                     scroll();
                     streamCompleted = true;
                 } else if (eventType === 'error') {
@@ -13841,11 +13899,11 @@ async function send() {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.textContent = fullText;
+                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
-                    contentBox.textContent = fullText;
+                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
                     scroll();
                 } else if (eventType === 'error') {
                     throw new Error(payload.error || 'Stream failed');
@@ -13861,7 +13919,7 @@ async function send() {
       throw new Error('No response received');
     }
 
-    contentBox.innerHTML = linkifyText(fullText);
+    contentBox.innerHTML = linkifyText(normalizeAIResponseEmojis(fullText));
     finalizeStreamingReplyBubble(contentBox, fullText, conversationId);
     replyInProgress = false; setReplyControlState(false);
 
@@ -13959,7 +14017,7 @@ function type(text){
     let lastScroll = 0;
 
     function finishTyping(){
-        contentBox.innerHTML = linkifyText(fullText);
+        contentBox.innerHTML = linkifyText(normalizeAIResponseEmojis(fullText));
         replyTypingTimer = null;
         replyInProgress = false;
         setReplyControlState(false);
@@ -13981,7 +14039,7 @@ function type(text){
         }
 
         index = Math.min(fullText.length, index + chunkSize);
-        contentBox.textContent = fullText.slice(0, index);
+        contentBox.textContent = normalizeAIResponseEmojis(fullText.slice(0, index));
 
         if (!lastScroll || now - lastScroll >= 80) {
             scroll();
