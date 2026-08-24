@@ -20,6 +20,18 @@ function renderAIResponse(text) {
         .replace(/\r/g, "\n")
         .trim();
 
+    /*
+     * Normalize Markdown that arrives without line breaks.
+     * Example:
+     * ---### Heading
+     * becomes:
+     * ---
+     * ### Heading
+     */
+    source = source
+        .replace(/---(?=#{1,6}\s+)/g, "---\n")
+        .replace(/([^\n])(\#{1,6}\s+)/g, "$1\n$2");
+
     if (!source) {
         return "";
     }
@@ -40925,6 +40937,7 @@ function miShouldUseCopyableBlock(text) {
 
 })();
 </script>
+
 
 
 
