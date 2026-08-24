@@ -13145,9 +13145,16 @@ function showShareFeedback(message) {
   setTimeout(() => box.remove(), 1800);
 }
 
-function normalizeAIResponseEmojis(text) {
+function normalizeAIResponseEmojiPlacement(text) {
     const value = String(text || '');
     if (!value) return value;
+
+    try {
+        JSON.parse(value);
+        return value;
+    } catch (error) {
+        // Ordinary conversational text is normalized below.
+    }
 
     const protectedParts = [];
     const protect = (match) => {
@@ -13339,7 +13346,7 @@ function appendAiMessage(container, text) {
   wrap.className = 'ai';
   const body = document.createElement('div');
   body.className = isLongWritingResponse(text) ? 'aiWritingCard' : 'aiMessageBody';
-    body.innerHTML = linkifyText(normalizeAIResponseEmojis(text)) || '';
+    body.innerHTML = linkifyText(normalizeAIResponseEmojiPlacement(text)) || '';
   wrap.appendChild(body);
   wrap.appendChild(createCopyButton(text));
   container.appendChild(wrap);
@@ -13715,7 +13722,7 @@ function createStreamingReplyBubble(initialText = '') {
 
 function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
     if (!contentBox) return;
-    contentBox.innerHTML = linkifyText(normalizeAIResponseEmojis(text));
+    contentBox.innerHTML = linkifyText(normalizeAIResponseEmojiPlacement(text));
     contentBox.dataset.finalText = text;
     const existingText = String(text || '').trim();
     if (conversationId && chats[conversationId]) {
@@ -13869,11 +13876,11 @@ async function send() {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
+                    contentBox.textContent = fullText;
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
-                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
+                    contentBox.textContent = fullText;
                     scroll();
                     streamCompleted = true;
                 } else if (eventType === 'error') {
@@ -13899,11 +13906,11 @@ async function send() {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
+                    contentBox.textContent = fullText;
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
-                    contentBox.textContent = normalizeAIResponseEmojis(fullText);
+                    contentBox.textContent = fullText;
                     scroll();
                 } else if (eventType === 'error') {
                     throw new Error(payload.error || 'Stream failed');
@@ -13919,17 +13926,18 @@ async function send() {
       throw new Error('No response received');
     }
 
-    contentBox.innerHTML = linkifyText(normalizeAIResponseEmojis(fullText));
-    finalizeStreamingReplyBubble(contentBox, fullText, conversationId);
+        const finalAIText = normalizeAIResponseEmojiPlacement(fullText);
+        contentBox.innerHTML = linkifyText(finalAIText);
+        finalizeStreamingReplyBubble(contentBox, finalAIText, conversationId);
     replyInProgress = false; setReplyControlState(false);
 
     (async () => {
       try {
         if (token && conversationId) {
           const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
-          const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'ai', content: fullText }) });
+          const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'ai', content: finalAIText }) });
           if (aiMessageRes && aiMessageRes.ok) {
-            await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: fullText, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
+            await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: finalAIText, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
           }
         }
       } catch (e) { console.error('Failed to save AI reply', e); }
@@ -14017,7 +14025,7 @@ function type(text){
     let lastScroll = 0;
 
     function finishTyping(){
-        contentBox.innerHTML = linkifyText(normalizeAIResponseEmojis(fullText));
+        contentBox.innerHTML = linkifyText(normalizeAIResponseEmojiPlacement(fullText));
         replyTypingTimer = null;
         replyInProgress = false;
         setReplyControlState(false);
@@ -14039,7 +14047,7 @@ function type(text){
         }
 
         index = Math.min(fullText.length, index + chunkSize);
-        contentBox.textContent = normalizeAIResponseEmojis(fullText.slice(0, index));
+        contentBox.textContent = fullText.slice(0, index);
 
         if (!lastScroll || now - lastScroll >= 80) {
             scroll();
