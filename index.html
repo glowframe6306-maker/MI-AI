@@ -40056,7 +40056,10 @@ function miShouldUseCopyableBlock(text) {
     );
 }
 </script>
-<script id="MI_AI_FINAL_BOLD_RENDER_FIX_V1_DISABLED">
+<!-- MI_AI_DISABLED_BLOCK: duplicate bold cleanup disabled -->
+<script id="MI_AI_FINAL_BOLD_RENDER_FIX_V1_DISABLED" data-disabled="true">
+if (false) {
+
 (function () {
     "use strict";
 
@@ -40245,6 +40248,8 @@ function miShouldUseCopyableBlock(text) {
     }
 
 })();
+
+}
 </script>
 
 <!-- CORTEX_CORE_AI_DYNAMIC_MARKDOWN_V2 -->
@@ -40283,255 +40288,16 @@ function miShouldUseCopyableBlock(text) {
 (function () {
     "use strict";
 
-    function processElement(element) {
-
-        if (!element) {
-            return;
-        }
-
-        if (
-            !element.matches ||
-            !element.matches(
-                ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
-            )
-        ) {
-            return;
-        }
-
-        let html = element.innerHTML;
-
-        if (!html) {
-            return;
-        }
-
-        let changed = false;
-
-        /*
-         * =====================================================
-         * BOLD
-         * **text**
-         * =====================================================
-         */
-        const boldResult = html.replace(
-            /\*\*([^*\n]+?)\*\*/g,
-            "<strong>$1</strong>"
-        );
-
-        if (boldResult !== html) {
-            html = boldResult;
-            changed = true;
-        }
-
-        /*
-         * =====================================================
-         * HEADINGS
-         * ### Heading
-         * ## Heading
-         * # Heading
-         * =====================================================
-         */
-        const h3Result = html.replace(
-            /(^|<br\s*\/?>)\s*###\s+([^<]+?)(?=<br\s*\/?>|$)/gi,
-            '$1<h3 class="ai-heading ai-heading-3">$2</h3>'
-        );
-
-        if (h3Result !== html) {
-            html = h3Result;
-            changed = true;
-        }
-
-        const h2Result = html.replace(
-            /(^|<br\s*\/?>)\s*##\s+([^<]+?)(?=<br\s*\/?>|$)/gi,
-            '$1<h2 class="ai-heading ai-heading-2">$2</h2>'
-        );
-
-        if (h2Result !== html) {
-            html = h2Result;
-            changed = true;
-        }
-
-        const h1Result = html.replace(
-            /(^|<br\s*\/?>)\s*#\s+([^<]+?)(?=<br\s*\/?>|$)/gi,
-            '$1<h1 class="ai-heading ai-heading-1">$2</h1>'
-        );
-
-        if (h1Result !== html) {
-            html = h1Result;
-            changed = true;
-        }
-
-        /*
-         * =====================================================
-         * ITALIC
-         * *text*
-         * =====================================================
-         */
-        const italicResult = html.replace(
-            /(?<!\*)\*([^*\n]+?)\*(?!\*)/g,
-            "<em>$1</em>"
-        );
-
-        if (italicResult !== html) {
-            html = italicResult;
-            changed = true;
-        }
-
-        /*
-         * =====================================================
-         * CLEAN REMAINING MARKDOWN HEADING SYMBOLS
-         * =====================================================
-         */
-        const cleanResult = html.replace(
-            /(^|<br\s*\/?>)\s*#{1,6}\s+/gi,
-            "$1"
-        );
-
-        if (cleanResult !== html) {
-            html = cleanResult;
-            changed = true;
-        }
-
-        /*
-         * =====================================================
-         * APPLY ONLY WHEN SOMETHING ACTUALLY CHANGED
-         *
-         * This prevents MutationObserver loops.
-         * =====================================================
-         */
-        if (changed && html !== element.innerHTML) {
-            element.innerHTML = html;
-        }
-    }
-
-    function scanResponses(root) {
-
-        const container =
-            root && root.querySelectorAll
-                ? root
-                : document;
-
-        if (
-            container.matches &&
-            container.matches(
-                ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
-            )
-        ) {
-            processElement(container);
-        }
-
-        container
-            .querySelectorAll(
-                ".ai-response, .ai-paragraph, .ai-list, .ai-heading"
-            )
-            .forEach(processElement);
-    }
-
-    function initialScan() {
-        scanResponses(document);
-    }
-
     /*
-     * =========================================================
-     * INITIAL RENDER
-     * =========================================================
-     */
-
-    if (document.readyState === "loading") {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initialScan,
-            { once: true }
-        );
-
-    } else {
-
-        initialScan();
-    }
-
-    /*
-     * =========================================================
-     * DYNAMIC AI RESPONSE SUPPORT
+     * CORTEX_CORE_AI_DYNAMIC_MARKDOWN_V2
+     * DISABLED
      *
-     * Important:
-     * No permanent "already processed" flag is used.
-     * Therefore newly updated AI messages are processed too.
-     * =========================================================
+     * renderAIResponse() is the single source of truth.
+     * No duplicate post-render Markdown processing.
      */
 
-    let scheduled = false;
-
-    function scheduleScan() {
-
-        if (scheduled) {
-            return;
-        }
-
-        scheduled = true;
-
-        requestAnimationFrame(function () {
-
-            scheduled = false;
-
-            scanResponses(document);
-        });
-    }
-
-    const observer = new MutationObserver(function (mutations) {
-
-        for (const mutation of mutations) {
-
-            if (
-                mutation.type === "childList" &&
-                mutation.addedNodes &&
-                mutation.addedNodes.length
-            ) {
-                scheduleScan();
-                return;
-            }
-
-            if (mutation.type === "characterData") {
-                scheduleScan();
-                return;
-            }
-        }
-    });
-
-    function startObserver() {
-
-        const target =
-            document.body ||
-            document.documentElement;
-
-        if (!target) {
-            return;
-        }
-
-        observer.observe(
-            target,
-            {
-                childList: true,
-                subtree: true,
-                characterData: true
-            }
-        );
-    }
-
-    if (document.readyState === "loading") {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            startObserver,
-            { once: true }
-        );
-
-    } else {
-
-        startObserver();
-    }
-
-})();
-</script>
+    window.CORTEX_DYNAMIC_MARKDOWN_DISABLED = true;
+})();</script>
 <!-- CORTEX_CORE_AI_DYNAMIC_MARKDOWN_V2_END -->
 </body>
 </html>
@@ -40957,6 +40723,7 @@ function miShouldUseCopyableBlock(text) {
 
 })();
 </script>
+
 
 
 
