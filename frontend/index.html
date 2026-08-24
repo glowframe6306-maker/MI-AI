@@ -11684,6 +11684,71 @@ textarea:disabled,
 }
 
 </style>
+<style id="cortex-final-reply-actions-css">
+
+.cortex-final-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 3px !important;
+    width: 100% !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    margin-top: 6px !important;
+    padding: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+.cortex-final-action {
+    display: inline-flex !important;
+    position: relative !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: currentColor !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: .72 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    border-radius: 7px !important;
+}
+
+.cortex-final-action:hover {
+    opacity: 1 !important;
+    background: rgba(128,128,128,.13) !important;
+}
+
+.cortex-final-action:active {
+    transform: scale(.9) !important;
+}
+
+.cortex-final-action svg {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    pointer-events: none !important;
+}
+
+.cortex-final-action.speaking {
+    opacity: 1 !important;
+}
+
+</style>
 </head>
 
 <body>
@@ -39960,6 +40025,7 @@ img#headerLogo
 
 })();
 </script>
+
 
 
 
