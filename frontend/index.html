@@ -12060,6 +12060,107 @@ textarea:disabled,
 
 })();
 </script>
+<style>
+/* CORTEX AI REPLY ACTIONS V2 */
+.cortex-reply-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+    min-height: 30px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.cortex-reply-action {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: rgba(128,128,128,.10) !important;
+    color: currentColor !important;
+    cursor: pointer !important;
+    opacity: .9 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.cortex-reply-action:hover {
+    background: rgba(128,128,128,.22) !important;
+    opacity: 1 !important;
+}
+
+.cortex-reply-action svg {
+    width: 16px !important;
+    height: 16px !important;
+    display: block !important;
+    pointer-events: none !important;
+}
+
+/* MORE MENU — CLEAR AND EASY TO SEE */
+.cortex-reply-more-menu {
+    position: absolute !important;
+    z-index: 9999999 !important;
+    min-width: 230px !important;
+    padding: 6px !important;
+    border-radius: 14px !important;
+    background: rgba(28,28,30,.98) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,.16) !important;
+    box-shadow: 0 16px 45px rgba(0,0,0,.45) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.cortex-reply-more-item {
+    width: 100% !important;
+    min-height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 11px !important;
+    box-sizing: border-box !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #fff !important;
+    padding: 10px 12px !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.cortex-reply-more-item:hover {
+    background: rgba(255,255,255,.14) !important;
+}
+
+.cortex-reply-more-item svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+}
+
+/* COPY SUCCESS */
+.cortex-reply-action.copy-success {
+    background: rgba(50,190,100,.22) !important;
+    color: #4ade80 !important;
+    transform: scale(1.05) !important;
+}
+
+.cortex-reply-action.copy-success svg {
+    width: 17px !important;
+    height: 17px !important;
+}
+</style>
 </head>
 
 <body>
@@ -40898,3 +40999,205 @@ img#headerLogo
 
 
 
+
+<script>
+/* CORTEX AI REPLY ACTIONS V2 - CLEAR MENU + COPY FEEDBACK */
+(function () {
+
+    function getReplyText(button) {
+        const reply =
+            button.closest(".ai") ||
+            button.closest(".cortex-ai-message") ||
+            button.parentElement;
+
+        if (!reply) return "";
+
+        const clone = reply.cloneNode(true);
+
+        clone.querySelectorAll(
+            ".cortex-reply-actions, .cortex-reply-more-menu, button"
+        ).forEach(el => el.remove());
+
+        return (clone.innerText || clone.textContent || "").trim();
+    }
+
+    function copyReply(button) {
+        const text = getReplyText(button);
+
+        if (!text) return;
+
+        navigator.clipboard.writeText(text).then(function () {
+
+            const oldHTML = button.innerHTML;
+
+            button.classList.add("copy-success");
+
+            button.innerHTML =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<path d="M5 12l4 4L19 6"></path>' +
+                '</svg>';
+
+            setTimeout(function () {
+                button.classList.remove("copy-success");
+                button.innerHTML = oldHTML;
+            }, 1200);
+
+        }).catch(function () {
+            const area = document.createElement("textarea");
+            area.value = text;
+            document.body.appendChild(area);
+            area.select();
+            document.execCommand("copy");
+            area.remove();
+
+            const oldHTML = button.innerHTML;
+
+            button.classList.add("copy-success");
+
+            button.innerHTML =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<path d="M5 12l4 4L19 6"></path>' +
+                '</svg>';
+
+            setTimeout(function () {
+                button.classList.remove("copy-success");
+                button.innerHTML = oldHTML;
+            }, 1200);
+        });
+    }
+
+    function createMoreMenu(button) {
+
+        document.querySelectorAll(".cortex-reply-more-menu").forEach(function(menu) {
+            menu.remove();
+        });
+
+        const menu = document.createElement("div");
+        menu.className = "cortex-reply-more-menu";
+
+        const readButton = document.createElement("button");
+        readButton.type = "button";
+        readButton.className = "cortex-reply-more-item";
+
+        readButton.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M4 10v4"></path>' +
+            '<path d="M8 7v10"></path>' +
+            '<path d="M12 5v14"></path>' +
+            '<path d="M16 8v8"></path>' +
+            '<path d="M20 10v4"></path>' +
+            '</svg>' +
+            '<span>Read Aloud</span>';
+
+        const branchButton = document.createElement("button");
+        branchButton.type = "button";
+        branchButton.className = "cortex-reply-more-item";
+
+        branchButton.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M6 4v16"></path>' +
+            '<path d="M6 8h7a5 5 0 0 1 5 5v7"></path>' +
+            '<path d="m15 17 3 3 3-3"></path>' +
+            '</svg>' +
+            '<span>Branch in New Chat</span>';
+
+        readButton.addEventListener("click", function() {
+            const text = getReplyText(button);
+
+            if (!text) return;
+
+            if ("speechSynthesis" in window) {
+                window.speechSynthesis.cancel();
+
+                const speech = new SpeechSynthesisUtterance(text);
+                speech.rate = 1;
+                speech.pitch = 1;
+
+                window.speechSynthesis.speak(speech);
+            }
+
+            menu.remove();
+        });
+
+        branchButton.addEventListener("click", function() {
+            const text = getReplyText(button);
+
+            if (!text) return;
+
+            menu.remove();
+
+            /*
+             * Use existing new-chat functionality when available.
+             * The reply text is placed into the input automatically.
+             */
+            try {
+                if (typeof newChat === "function") {
+                    newChat();
+                } else if (typeof createNewChat === "function") {
+                    createNewChat();
+                } else if (typeof openNewChat === "function") {
+                    openNewChat();
+                }
+            } catch (e) {
+                console.warn("Branch new chat:", e);
+            }
+
+            setTimeout(function() {
+                const input =
+                    document.querySelector("#messageInput") ||
+                    document.querySelector("#chatInput") ||
+                    document.querySelector("textarea") ||
+                    document.querySelector("input[type='text']");
+
+                if (input) {
+                    input.value = text;
+                    input.dispatchEvent(new Event("input", { bubbles: true }));
+                    input.focus();
+                }
+            }, 150);
+        });
+
+        menu.appendChild(readButton);
+        menu.appendChild(branchButton);
+
+        const parent = button.parentElement;
+        if (parent) {
+            parent.style.position = "relative";
+            parent.appendChild(menu);
+        }
+
+        requestAnimationFrame(function() {
+            menu.style.display = "block";
+            menu.style.visibility = "visible";
+        });
+    }
+
+    document.addEventListener("click", function(event) {
+
+        const copyButton = event.target.closest(".cortex-reply-copy");
+
+        if (copyButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            copyReply(copyButton);
+            return;
+        }
+
+        const moreButton = event.target.closest(".cortex-reply-more");
+
+        if (moreButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            createMoreMenu(moreButton);
+            return;
+        }
+
+        if (!event.target.closest(".cortex-reply-more-menu")) {
+            document.querySelectorAll(".cortex-reply-more-menu").forEach(function(menu) {
+                menu.remove();
+            });
+        }
+    });
+
+})();
+</script>
