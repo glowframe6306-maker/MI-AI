@@ -14846,12 +14846,21 @@ async function send() {
     scroll();
     try {
         replyAbortController = new AbortController();
-        const firstTokenTimeoutId = setTimeout(() => {
-            if (replyAbortController && replyInProgress) replyAbortController.abort();
-        }, 10000);
-        const overallTimeoutId = setTimeout(() => {
-            if (replyAbortController && replyInProgress) replyAbortController.abort();
-        }, 45000);
+                /*
+         * CORTEX CORE AI RESPONSE TIMEOUT POLICY
+         *
+         * Do NOT abort the AI request because the first token
+         * or the complete response takes longer than expected.
+         *
+         * The backend is allowed to continue until it produces
+         * a real answer or a genuine network/server failure occurs.
+         *
+         * This prevents the frontend from generating fake
+         * "The AI is taking longer..." messages.
+         */
+
+        const firstTokenTimeoutId = null;
+        const overallTimeoutId = null;
         const streamResponse = await fetchChatReply({
             message: msg,
             history,
@@ -14967,157 +14976,28 @@ async function send() {
     })();
   } catch (e) {
     if (e && e.name === 'AbortError') {
+      console.warn("[CORTEX CORE AI] Request was aborted.");
+
+      const thinking = document.querySelector('.thinking');
+      if (thinking) {
+        thinking.remove();
+      }
+
+      /*
+        IMPORTANT:
+        Never create or save a fake AI reply for timeout/abort.
+
+        The old:
+        "The AI is taking longer than expected..."
+
+        message is intentionally NOT displayed or saved.
+      */
+
       replyInProgress = false;
       setReplyControlState(false);
-      const thinking = document.querySelector('.thinking'); if (thinking) thinking.remove();
-      const fallbackBubble = document.createElement('div');
-      fallbackBubble.className = 'ai';
-      fallbackBubble.innerText = 'The AI is taking longer than expected. Please try again in a moment.';
-      chatBox.appendChild(fallbackBubble);
-      chats[conversationId].push({ role: 'ai', text: 'The AI is taking longer than expected. Please try again in a moment.' });
-      chats[conversationId].updatedAt = Date.now(); chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1; chats[conversationId].lastPreview = 'The AI is taking longer than expected. Please try again in a moment.'; save(); scroll();
+
       return;
-    }
-    console.error("[CORTEX CORE AI] Reply request failed:", e);
-
-    const thinking =
-      document.querySelector('.thinking');
-
-    if (thinking) {
-      thinking.remove();
-    }
-
-    replyInProgress = false;
-    setReplyControlState(false);
-
-    /*
-      Do not save a fake AI reply when both requests fail.
-      Show the real server reason instead of the old generic message.
-    */
-    let serverMessage =
-      String(
-        e?.message ||
-        "Unable to get an AI response."
-      ).trim();
-
-    try {
-      const parsedError =
-        JSON.parse(serverMessage);
-
-      serverMessage =
-        String(
-          parsedError.error ||
-          parsedError.message ||
-          serverMessage
-        ).trim();
-    }
-    catch (parseError) {
-      // The error was plain text.
-    }
-
-    const errorBubble =
-      document.createElement('div');
-
-    errorBubble.className = 'ai';
-    errorBubble.innerText =
-      "Unable to get an answer: " +
-      serverMessage;
-
-    chatBox.appendChild(errorBubble);
-    scroll();
-  }
-}
-
-/* TYPE */
-function type(text){
-    const d = document.createElement("div");
-    d.className = "ai";
-
-    const contentBox = document.createElement("div");
-    contentBox.className = isLongWritingResponse(text)
-        ? "aiWritingCard"
-        : "aiMessageBody";
-
-    d.appendChild(contentBox);
-    d.appendChild(createCopyButton(text));
-    chatBox.appendChild(d);
-
-    const fullText = String(text || "");
-    const chunkSize = Math.max(8, Math.min(40, Math.ceil(fullText.length / 90)));
-    let index = 0;
-    let lastScroll = 0;
-
-    function finishTyping(){
-        contentBox.innerHTML = linkifyText(fullText);
-        replyTypingTimer = null;
-        replyInProgress = false;
-        setReplyControlState(false);
-
-        if (!Array.isArray(chats[currentChat])) {
-            chats[currentChat] = [];
-        }
-
-        chats[currentChat].push({role:"ai", text:fullText});
-        save();
-        maybeShowLoginPrompt(currentChat);
-        scroll();
-    }
-
-    function renderChunk(now){
-        if (!replyInProgress) {
-            replyTypingTimer = null;
-            return;
-        }
-
-        index = Math.min(fullText.length, index + chunkSize);
-        contentBox.textContent = fullText.slice(0, index);
-
-        if (!lastScroll || now - lastScroll >= 80) {
-            scroll();
-            lastScroll = now;
-        }
-
-        if (index >= fullText.length) {
-            finishTyping();
-            return;
-        }
-
-        replyTypingTimer = requestAnimationFrame(renderChunk);
-    }
-
-    replyTypingTimer = requestAnimationFrame(renderChunk);
-}
-
-/* ADD */
-function add(role,text){
-let d=document.createElement("div");
-d.className=role;
-if (role === 'ai') {
-    appendAiMessage(chatBox, text);
-    return;
-}
-d.textContent=text;
-chatBox.appendChild(d);
-
-chats[currentChat].push({role,text});
-chats[currentChat].updatedAt = Date.now();
-chats[currentChat].messageCount = (chats[currentChat].messageCount || 0) + 1;
-chats[currentChat].lastPreview = text;
-save();
-
-// If the user is authenticated, persist the message to the server as well
-try {
-    const token = localStorage.getItem('mi_supabase_token');
-    const userId = localStorage.getItem('mi_user_id') || '';
-    const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-    if (token) {
-        fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' },
-            body: JSON.stringify({ conversation_id: currentChat, session_id: accountId, role: role === 'me' ? 'me' : 'ai', content: text })
-        }).catch(() => {});
-    }
-} catch (e) {}
+    }  } catch (e) {}
 
 scroll();
 }
