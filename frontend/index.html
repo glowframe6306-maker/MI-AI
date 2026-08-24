@@ -11619,6 +11619,71 @@ textarea:disabled,
     opacity: 1 !important;
 }
 </style>
+<style id="cortex-final-reply-actions-css">
+
+.cortex-final-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 3px !important;
+    width: 100% !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    margin-top: 6px !important;
+    padding: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+.cortex-final-action {
+    display: inline-flex !important;
+    position: relative !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: currentColor !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: .72 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    border-radius: 7px !important;
+}
+
+.cortex-final-action:hover {
+    opacity: 1 !important;
+    background: rgba(128,128,128,.13) !important;
+}
+
+.cortex-final-action:active {
+    transform: scale(.9) !important;
+}
+
+.cortex-final-action svg {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    pointer-events: none !important;
+}
+
+.cortex-final-action.speaking {
+    opacity: 1 !important;
+}
+
+</style>
 </head>
 
 <body>
@@ -14370,7 +14435,6 @@ function createStreamingReplyBubble(initialText = '') {
     d.className = 'ai';
 
     const contentBox = document.createElement('div');
-
     contentBox.className =
         isLongWritingResponse(initialText)
             ? 'aiWritingCard'
@@ -14380,228 +14444,230 @@ function createStreamingReplyBubble(initialText = '') {
 
     d.appendChild(contentBox);
 
+    /*
+     * CORTEX CORE AI
+     * ALWAYS VISIBLE REPLY ACTIONS
+     */
     const actions = document.createElement('div');
-    actions.className = 'cortex-reply-actions';
+    actions.className = 'cortex-final-actions';
 
-    function actionButton(title, icon) {
+    function icon(name) {
+        const icons = {
+
+            copy:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+
+            check:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6"/></svg>',
+
+            share:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/></svg>',
+
+            regenerate:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"/><path d="M3 4v6h6"/><path d="M4 13a8 8 0 0 0 14.8 4L21 14"/><path d="M21 20v-6h-6"/></svg>',
+
+            read:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10v4"/><path d="M7 8v8"/><path d="M11 5v14"/><path d="M15 8v8"/><path d="M19 10v4"/></svg>',
+
+            branch:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v12"/><path d="M6 9h6a6 6 0 0 1 6 6v6"/><circle cx="6" cy="3" r="2"/><circle cx="6" cy="21" r="2"/><circle cx="18" cy="21" r="2"/></svg>'
+        };
+
+        return icons[name] || '';
+    }
+
+    function button(name, title) {
         const b = document.createElement('button');
 
         b.type = 'button';
-        b.className = 'cortex-reply-action';
+        b.className = 'cortex-final-action';
         b.title = title;
         b.setAttribute('aria-label', title);
-        b.innerHTML = icon;
+        b.innerHTML = icon(name);
+
+        actions.appendChild(b);
 
         return b;
     }
 
-    const copy = actionButton(
-        'Copy',
-        '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M5 16H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"></path></svg>'
-    );
+    const copyBtn = button('copy', 'Copy');
+    const shareBtn = button('share', 'Share');
+    const regenerateBtn = button('regenerate', 'Regenerate');
+    const readBtn = button('read', 'Read Aloud');
+    const branchBtn = button('branch', 'Branch in New Chat');
 
-    const share = actionButton(
-        'Share',
-        '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="M8.2 10.8 15.8 6.5"></path><path d="M8.2 13.2 15.8 17.5"></path></svg>'
-    );
+    copyBtn.onclick = async function () {
 
-    const regenerate = actionButton(
-        'Regenerate',
-        '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"></path><path d="M3 5v5h5"></path><path d="M4 13a8 8 0 0 0 14.8 4L21 14"></path><path d="M21 19v-5h-5"></path></svg>'
-    );
-
-    const moreWrap = document.createElement('div');
-    moreWrap.className = 'cortex-reply-more-wrap';
-
-    const more = actionButton(
-        'More',
-        '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle><circle cx="19" cy="12" r="1.5" fill="currentColor"></circle></svg>'
-    );
-
-    const menu = document.createElement('div');
-    menu.className = 'cortex-reply-more-menu';
-
-    const readAloud = document.createElement('button');
-    readAloud.type = 'button';
-    readAloud.className = 'cortex-reply-menu-item';
-    readAloud.textContent = 'Read Aloud';
-
-    const branch = document.createElement('button');
-    branch.type = 'button';
-    branch.className = 'cortex-reply-menu-item';
-    branch.textContent = 'Branch in New Chat';
-
-    menu.appendChild(readAloud);
-    menu.appendChild(branch);
-
-    moreWrap.appendChild(more);
-    moreWrap.appendChild(menu);
-
-    actions.appendChild(copy);
-    actions.appendChild(share);
-    actions.appendChild(regenerate);
-    actions.appendChild(moreWrap);
-
-    d.appendChild(actions);
-
-    const getReplyText = () => {
-        return String(
+        const text =
             contentBox.dataset.finalText ||
             contentBox.innerText ||
             contentBox.textContent ||
-            ''
-        ).trim();
-    };
+            '';
 
-    copy.addEventListener('click', async () => {
-        const text = getReplyText();
-
-        if (!text) return;
+        if (!text.trim()) return;
 
         try {
             await navigator.clipboard.writeText(text);
-        } catch {
-            const area = document.createElement('textarea');
 
+            copyBtn.innerHTML = icon('check');
+
+            setTimeout(function () {
+                copyBtn.innerHTML = icon('copy');
+            }, 1400);
+
+        } catch (error) {
+
+            const area = document.createElement('textarea');
             area.value = text;
             area.style.position = 'fixed';
-            area.style.opacity = '0';
+            area.style.left = '-9999px';
 
             document.body.appendChild(area);
-
             area.select();
-            document.execCommand('copy');
 
-            area.remove();
+            try {
+                document.execCommand('copy');
+                copyBtn.innerHTML = icon('check');
+
+                setTimeout(function () {
+                    copyBtn.innerHTML = icon('copy');
+                }, 1400);
+
+            } finally {
+                area.remove();
+            }
         }
-    });
+    };
 
-    share.addEventListener('click', async () => {
-        const text = getReplyText();
+    shareBtn.onclick = function () {
 
-        if (!text) return;
+        const text =
+            contentBox.dataset.finalText ||
+            contentBox.innerText ||
+            contentBox.textContent ||
+            '';
+
+        if (!text.trim()) return;
 
         if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'CORTEX CORE AI',
-                    text: text
-                });
-            } catch {}
+            navigator.share({
+                title: 'CORTEX CORE AI',
+                text: text
+            }).catch(function () {});
         } else {
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch {}
+            navigator.clipboard.writeText(text).catch(function () {});
         }
-    });
+    };
 
-    regenerate.addEventListener('click', () => {
-        if (!currentChat || !chats[currentChat]) return;
+    regenerateBtn.onclick = function () {
 
-        const chat = chats[currentChat];
+        const previous =
+            d.previousElementSibling;
 
-        let userMessage = '';
+        if (!previous || !previous.classList.contains('me')) {
+            return;
+        }
 
-        for (let i = chat.length - 1; i >= 0; i--) {
-            if (chat[i].role === 'me') {
-                userMessage = String(chat[i].text || '').trim();
-                break;
+        const message =
+            String(
+                previous.innerText ||
+                previous.textContent ||
+                ''
+            ).trim();
+
+        if (!message) return;
+
+        if (typeof send === 'function') {
+
+            if (input) {
+                input.value = message;
+
+                input.dispatchEvent(
+                    new Event('input', {
+                        bubbles: true
+                    })
+                );
+            }
+
+            send();
+        }
+    };
+
+    readBtn.onclick = function () {
+
+        const text =
+            contentBox.dataset.finalText ||
+            contentBox.innerText ||
+            contentBox.textContent ||
+            '';
+
+        if (!text.trim()) return;
+
+        if (!window.speechSynthesis) return;
+
+        window.speechSynthesis.cancel();
+
+        const speech =
+            new SpeechSynthesisUtterance(text);
+
+        speech.rate = 1;
+        speech.pitch = 1;
+        speech.volume = 1;
+
+        readBtn.classList.add('speaking');
+
+        speech.onend = function () {
+            readBtn.classList.remove('speaking');
+        };
+
+        speech.onerror = function () {
+            readBtn.classList.remove('speaking');
+        };
+
+        window.speechSynthesis.speak(speech);
+    };
+
+    branchBtn.onclick = function () {
+
+        const text =
+            contentBox.dataset.finalText ||
+            contentBox.innerText ||
+            contentBox.textContent ||
+            '';
+
+        if (!text.trim()) return;
+
+        if (typeof newChat === 'function') {
+            newChat();
+        } else {
+
+            const newChatBtn =
+                document.querySelector(
+                    '#newChatBtn,[id*="newChat"],[onclick*="newChat"]'
+                );
+
+            if (newChatBtn) {
+                newChatBtn.click();
             }
         }
 
-        if (!userMessage) return;
+        setTimeout(function () {
 
-        d.remove();
+            if (!input) return;
 
-        while (
-            chat.length &&
-            chat[chat.length - 1] &&
-            chat[chat.length - 1].role === 'ai'
-        ) {
-            chat.pop();
-        }
-
-        save();
-
-        if (input) {
-            input.value = userMessage;
-        }
-
-        send();
-    });
-
-    more.addEventListener('click', (event) => {
-        event.stopPropagation();
-
-        document
-            .querySelectorAll('.cortex-reply-more-menu.open')
-            .forEach((m) => {
-                if (m !== menu) {
-                    m.classList.remove('open');
-                }
-            });
-
-        menu.classList.toggle('open');
-    });
-
-    readAloud.addEventListener('click', () => {
-        menu.classList.remove('open');
-
-        const text = getReplyText();
-
-        if (!text) return;
-
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-
-            const speech = new SpeechSynthesisUtterance(text);
-
-            speech.rate = 1;
-            speech.pitch = 1;
-            speech.volume = 1;
-
-            window.speechSynthesis.speak(speech);
-        }
-    });
-
-    branch.addEventListener('click', () => {
-        menu.classList.remove('open');
-
-        const text = getReplyText();
-
-        if (!text) return;
-
-        const newChatId = 'chat_' + Date.now();
-
-        chats[newChatId] = [];
-
-        chats[newChatId].title =
-            text.length > 40
-                ? text.substring(0, 40) + '...'
-                : text;
-
-        chats[newChatId].push({
-            role: 'me',
-            text: text
-        });
-
-        currentChat = newChatId;
-
-        save();
-
-        if (typeof renderList === 'function') {
-            renderList();
-        }
-
-        if (typeof openChat === 'function') {
-            openChat(newChatId);
-        }
-
-        if (input) {
             input.value = text;
             input.focus();
-        }
-    });
+
+            input.dispatchEvent(
+                new Event('input', {
+                    bubbles: true
+                })
+            );
+
+        }, 200);
+    };
+
+    d.appendChild(actions);
 
     chatBox.appendChild(d);
 
@@ -14609,7 +14675,7 @@ function createStreamingReplyBubble(initialText = '') {
 
     return {
         container: d,
-        contentBox: contentBox
+        contentBox
     };
 }
 
@@ -39468,964 +39534,8 @@ img#headerLogo
 })();
 </script>
 <!-- CORTEX ALWAYS VISIBLE AI REPLY ICONS END -->
-<!-- CORTEX CORE AI - ALWAYS VISIBLE REPLY ACTIONS -->
-<style id="cortex-five-reply-actions">
 
-.cortex-five-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    width: 100% !important;
-    margin-top: 7px !important;
-    padding: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-}
 
-.cortex-five-action {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    min-height: 30px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    background: transparent !important;
-    color: currentColor !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    opacity: .72 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    transition: background .15s ease, opacity .15s ease, transform .15s ease !important;
-}
-
-.cortex-five-action:hover {
-    opacity: 1 !important;
-    background: rgba(128,128,128,.13) !important;
-}
-
-.cortex-five-action:active {
-    transform: scale(.90) !important;
-}
-
-.cortex-five-action svg {
-    width: 17px !important;
-    height: 17px !important;
-    display: block !important;
-    pointer-events: none !important;
-}
-
-.cortex-five-action.copied {
-    opacity: 1 !important;
-}
-
-@media (max-width:600px) {
-    .cortex-five-actions {
-        gap: 3px !important;
-    }
-
-    .cortex-five-action {
-        width: 29px !important;
-        height: 29px !important;
-        min-width: 29px !important;
-        min-height: 29px !important;
-    }
-}
-
-</style>
-
-<script>
-(function () {
-
-    function cortexFiveIcon(name) {
-        const icons = {
-
-            copy:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-
-            check:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"></path></svg>',
-
-            share:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4"></path><path d="m15.4 6.5-6.8 4"></path></svg>',
-
-            regenerate:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"></path><path d="M3 4v6h6"></path><path d="M4 13a8 8 0 0 0 14.8 4L21 14"></path><path d="M21 20v-6h-6"></path></svg>',
-
-            read:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10v4"></path><path d="M7 8v8"></path><path d="M11 5v14"></path><path d="M15 8v8"></path><path d="M19 10v4"></path></svg>',
-
-            branch:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v12"></path><path d="M6 9h6a6 6 0 0 1 6 6v6"></path><circle cx="6" cy="3" r="2"></circle><circle cx="6" cy="21" r="2"></circle><circle cx="18" cy="21" r="2"></circle></svg>'
-        };
-
-        return icons[name] || "";
-    }
-
-    function cortexGetFiveReplyText(button) {
-
-        const actionBar = button.closest(".cortex-five-actions");
-
-        if (!actionBar) return "";
-
-        const reply =
-            actionBar.closest(".ai") ||
-            actionBar.parentElement;
-
-        if (!reply) return "";
-
-        const content =
-            reply.querySelector(".aiMessageBody, .aiWritingCard");
-
-        if (content) {
-            return String(
-                content.dataset.finalText ||
-                content.innerText ||
-                content.textContent ||
-                ""
-            ).trim();
-        }
-
-        return "";
-    }
-
-    function cortexCopyReply(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        navigator.clipboard.writeText(text).then(function () {
-
-            button.innerHTML = cortexFiveIcon("check");
-            button.classList.add("copied");
-
-            setTimeout(function () {
-                button.innerHTML = cortexFiveIcon("copy");
-                button.classList.remove("copied");
-            }, 1400);
-
-        }).catch(function () {
-
-            const area = document.createElement("textarea");
-            area.value = text;
-            area.style.position = "fixed";
-            area.style.opacity = "0";
-            document.body.appendChild(area);
-            area.select();
-
-            try {
-                document.execCommand("copy");
-
-                button.innerHTML = cortexFiveIcon("check");
-                button.classList.add("copied");
-
-                setTimeout(function () {
-                    button.innerHTML = cortexFiveIcon("copy");
-                    button.classList.remove("copied");
-                }, 1400);
-
-            } finally {
-                area.remove();
-            }
-        });
-    }
-
-    function cortexShareReply(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        if (navigator.share) {
-            navigator.share({
-                title: "CORTEX CORE AI",
-                text: text
-            }).catch(function () {});
-            return;
-        }
-
-        if (typeof window.openShareDialog === "function") {
-            window.openShareDialog(text);
-            return;
-        }
-
-        navigator.clipboard.writeText(text).catch(function () {});
-    }
-
-    function cortexRegenerateReply(button) {
-
-        const actionBar = button.closest(".cortex-five-actions");
-        if (!actionBar) return;
-
-        const reply =
-            actionBar.closest(".ai") ||
-            actionBar.parentElement;
-
-        if (!reply) return;
-
-        const previous =
-            reply.previousElementSibling;
-
-        if (!previous || !previous.classList.contains("me")) return;
-
-        const message =
-            String(previous.innerText || previous.textContent || "").trim();
-
-        if (!message) return;
-
-        if (typeof window.send === "function") {
-            const originalInput =
-                document.querySelector("textarea, input[type='text']");
-
-            if (originalInput) {
-                originalInput.value = message;
-            }
-
-            window.send();
-        }
-    }
-
-    function cortexReadAloud(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        if (!("speechSynthesis" in window)) return;
-
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-
-        button.classList.add("speaking");
-
-        utterance.onend = function () {
-            button.classList.remove("speaking");
-        };
-
-        utterance.onerror = function () {
-            button.classList.remove("speaking");
-        };
-
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function cortexBranchNewChat(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        try {
-
-            if (typeof window.newChat === "function") {
-                window.newChat();
-            } else if (typeof window.createNewChat === "function") {
-                window.createNewChat();
-            } else {
-
-                const newButton =
-                    document.querySelector(
-                        "#newChatBtn, [id*='newChat'], [onclick*='newChat']"
-                    );
-
-                if (newButton) {
-                    newButton.click();
-                }
-            }
-
-            setTimeout(function () {
-
-                const input =
-                    document.querySelector(
-                        "textarea, input[type='text']"
-                    );
-
-                if (input) {
-                    input.value = text;
-                    input.focus();
-
-                    input.dispatchEvent(
-                        new Event("input", { bubbles: true })
-                    );
-
-                    input.dispatchEvent(
-                        new Event("change", { bubbles: true })
-                    );
-                }
-
-            }, 150);
-
-        } catch (error) {
-            console.error(
-                "[CORTEX CORE AI] Branch failed:",
-                error
-            );
-        }
-    }
-
-    function cortexCreateFiveActions(replyElement) {
-
-        if (!replyElement) return;
-
-        if (
-            replyElement.querySelector(
-                ".cortex-five-actions"
-            )
-        ) return;
-
-        const content =
-            replyElement.querySelector(
-                ".aiMessageBody, .aiWritingCard"
-            );
-
-        if (!content) return;
-
-        const actions =
-            document.createElement("div");
-
-        actions.className =
-            "cortex-five-actions";
-
-        const copy =
-            document.createElement("button");
-
-        copy.className =
-            "cortex-five-action";
-
-        copy.type = "button";
-        copy.title = "Copy";
-        copy.setAttribute("aria-label", "Copy");
-
-        copy.innerHTML =
-            cortexFiveIcon("copy");
-
-        copy.onclick = function () {
-            cortexCopyReply(copy);
-        };
-
-        const share =
-            document.createElement("button");
-
-        share.className =
-            "cortex-five-action";
-
-        share.type = "button";
-        share.title = "Share";
-        share.setAttribute("aria-label", "Share");
-
-        share.innerHTML =
-            cortexFiveIcon("share");
-
-        share.onclick = function () {
-            cortexShareReply(share);
-        };
-
-        const regenerate =
-            document.createElement("button");
-
-        regenerate.className =
-            "cortex-five-action";
-
-        regenerate.type = "button";
-        regenerate.title = "Regenerate";
-        regenerate.setAttribute(
-            "aria-label",
-            "Regenerate"
-        );
-
-        regenerate.innerHTML =
-            cortexFiveIcon("regenerate");
-
-        regenerate.onclick = function () {
-            cortexRegenerateReply(regenerate);
-        };
-
-        const read =
-            document.createElement("button");
-
-        read.className =
-            "cortex-five-action";
-
-        read.type = "button";
-        read.title = "Read Aloud";
-        read.setAttribute(
-            "aria-label",
-            "Read Aloud"
-        );
-
-        read.innerHTML =
-            cortexFiveIcon("read");
-
-        read.onclick = function () {
-            cortexReadAloud(read);
-        };
-
-        const branch =
-            document.createElement("button");
-
-        branch.className =
-            "cortex-five-action";
-
-        branch.type = "button";
-        branch.title = "Branch in New Chat";
-        branch.setAttribute(
-            "aria-label",
-            "Branch in New Chat"
-        );
-
-        branch.innerHTML =
-            cortexFiveIcon("branch");
-
-        branch.onclick = function () {
-            cortexBranchNewChat(branch);
-        };
-
-        actions.appendChild(copy);
-        actions.appendChild(share);
-        actions.appendChild(regenerate);
-        actions.appendChild(read);
-        actions.appendChild(branch);
-
-        content.insertAdjacentElement(
-            "afterend",
-            actions
-        );
-    }
-
-    function cortexScanReplies() {
-
-        document
-            .querySelectorAll(".ai")
-            .forEach(function (reply) {
-                cortexCreateFiveActions(reply);
-            });
-    }
-
-    const observer =
-        new MutationObserver(function () {
-            cortexScanReplies();
-        });
-
-    observer.observe(
-        document.body,
-        {
-            childList: true,
-            subtree: true
-        }
-    );
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        cortexScanReplies
-    );
-
-    setTimeout(
-        cortexScanReplies,
-        500
-    );
-
-    setTimeout(
-        cortexScanReplies,
-        1500
-    );
-
-    setTimeout(
-        cortexScanReplies,
-        3000
-    );
-
-})();
-</script>
-<!-- CORTEX CORE AI - ALWAYS VISIBLE REPLY ACTIONS -->
-<style id="cortex-five-reply-actions">
-
-.cortex-five-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    width: 100% !important;
-    margin-top: 7px !important;
-    padding: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-}
-
-.cortex-five-action {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    min-height: 30px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    background: transparent !important;
-    color: currentColor !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    opacity: .72 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    transition: background .15s ease, opacity .15s ease, transform .15s ease !important;
-}
-
-.cortex-five-action:hover {
-    opacity: 1 !important;
-    background: rgba(128,128,128,.13) !important;
-}
-
-.cortex-five-action:active {
-    transform: scale(.90) !important;
-}
-
-.cortex-five-action svg {
-    width: 17px !important;
-    height: 17px !important;
-    display: block !important;
-    pointer-events: none !important;
-}
-
-.cortex-five-action.copied {
-    opacity: 1 !important;
-}
-
-@media (max-width:600px) {
-    .cortex-five-actions {
-        gap: 3px !important;
-    }
-
-    .cortex-five-action {
-        width: 29px !important;
-        height: 29px !important;
-        min-width: 29px !important;
-        min-height: 29px !important;
-    }
-}
-
-</style>
-
-<script>
-(function () {
-
-    function cortexFiveIcon(name) {
-        const icons = {
-
-            copy:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-
-            check:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"></path></svg>',
-
-            share:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4"></path><path d="m15.4 6.5-6.8 4"></path></svg>',
-
-            regenerate:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"></path><path d="M3 4v6h6"></path><path d="M4 13a8 8 0 0 0 14.8 4L21 14"></path><path d="M21 20v-6h-6"></path></svg>',
-
-            read:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10v4"></path><path d="M7 8v8"></path><path d="M11 5v14"></path><path d="M15 8v8"></path><path d="M19 10v4"></path></svg>',
-
-            branch:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v12"></path><path d="M6 9h6a6 6 0 0 1 6 6v6"></path><circle cx="6" cy="3" r="2"></circle><circle cx="6" cy="21" r="2"></circle><circle cx="18" cy="21" r="2"></circle></svg>'
-        };
-
-        return icons[name] || "";
-    }
-
-    function cortexGetFiveReplyText(button) {
-
-        const actionBar = button.closest(".cortex-five-actions");
-
-        if (!actionBar) return "";
-
-        const reply =
-            actionBar.closest(".ai") ||
-            actionBar.parentElement;
-
-        if (!reply) return "";
-
-        const content =
-            reply.querySelector(".aiMessageBody, .aiWritingCard");
-
-        if (content) {
-            return String(
-                content.dataset.finalText ||
-                content.innerText ||
-                content.textContent ||
-                ""
-            ).trim();
-        }
-
-        return "";
-    }
-
-    function cortexCopyReply(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        navigator.clipboard.writeText(text).then(function () {
-
-            button.innerHTML = cortexFiveIcon("check");
-            button.classList.add("copied");
-
-            setTimeout(function () {
-                button.innerHTML = cortexFiveIcon("copy");
-                button.classList.remove("copied");
-            }, 1400);
-
-        }).catch(function () {
-
-            const area = document.createElement("textarea");
-            area.value = text;
-            area.style.position = "fixed";
-            area.style.opacity = "0";
-            document.body.appendChild(area);
-            area.select();
-
-            try {
-                document.execCommand("copy");
-
-                button.innerHTML = cortexFiveIcon("check");
-                button.classList.add("copied");
-
-                setTimeout(function () {
-                    button.innerHTML = cortexFiveIcon("copy");
-                    button.classList.remove("copied");
-                }, 1400);
-
-            } finally {
-                area.remove();
-            }
-        });
-    }
-
-    function cortexShareReply(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        if (navigator.share) {
-            navigator.share({
-                title: "CORTEX CORE AI",
-                text: text
-            }).catch(function () {});
-            return;
-        }
-
-        if (typeof window.openShareDialog === "function") {
-            window.openShareDialog(text);
-            return;
-        }
-
-        navigator.clipboard.writeText(text).catch(function () {});
-    }
-
-    function cortexRegenerateReply(button) {
-
-        const actionBar = button.closest(".cortex-five-actions");
-        if (!actionBar) return;
-
-        const reply =
-            actionBar.closest(".ai") ||
-            actionBar.parentElement;
-
-        if (!reply) return;
-
-        const previous =
-            reply.previousElementSibling;
-
-        if (!previous || !previous.classList.contains("me")) return;
-
-        const message =
-            String(previous.innerText || previous.textContent || "").trim();
-
-        if (!message) return;
-
-        if (typeof window.send === "function") {
-            const originalInput =
-                document.querySelector("textarea, input[type='text']");
-
-            if (originalInput) {
-                originalInput.value = message;
-            }
-
-            window.send();
-        }
-    }
-
-    function cortexReadAloud(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        if (!("speechSynthesis" in window)) return;
-
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-
-        button.classList.add("speaking");
-
-        utterance.onend = function () {
-            button.classList.remove("speaking");
-        };
-
-        utterance.onerror = function () {
-            button.classList.remove("speaking");
-        };
-
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function cortexBranchNewChat(button) {
-
-        const text = cortexGetFiveReplyText(button);
-
-        if (!text) return;
-
-        try {
-
-            if (typeof window.newChat === "function") {
-                window.newChat();
-            } else if (typeof window.createNewChat === "function") {
-                window.createNewChat();
-            } else {
-
-                const newButton =
-                    document.querySelector(
-                        "#newChatBtn, [id*='newChat'], [onclick*='newChat']"
-                    );
-
-                if (newButton) {
-                    newButton.click();
-                }
-            }
-
-            setTimeout(function () {
-
-                const input =
-                    document.querySelector(
-                        "textarea, input[type='text']"
-                    );
-
-                if (input) {
-                    input.value = text;
-                    input.focus();
-
-                    input.dispatchEvent(
-                        new Event("input", { bubbles: true })
-                    );
-
-                    input.dispatchEvent(
-                        new Event("change", { bubbles: true })
-                    );
-                }
-
-            }, 150);
-
-        } catch (error) {
-            console.error(
-                "[CORTEX CORE AI] Branch failed:",
-                error
-            );
-        }
-    }
-
-    function cortexCreateFiveActions(replyElement) {
-
-        if (!replyElement) return;
-
-        if (
-            replyElement.querySelector(
-                ".cortex-five-actions"
-            )
-        ) return;
-
-        const content =
-            replyElement.querySelector(
-                ".aiMessageBody, .aiWritingCard"
-            );
-
-        if (!content) return;
-
-        const actions =
-            document.createElement("div");
-
-        actions.className =
-            "cortex-five-actions";
-
-        const copy =
-            document.createElement("button");
-
-        copy.className =
-            "cortex-five-action";
-
-        copy.type = "button";
-        copy.title = "Copy";
-        copy.setAttribute("aria-label", "Copy");
-
-        copy.innerHTML =
-            cortexFiveIcon("copy");
-
-        copy.onclick = function () {
-            cortexCopyReply(copy);
-        };
-
-        const share =
-            document.createElement("button");
-
-        share.className =
-            "cortex-five-action";
-
-        share.type = "button";
-        share.title = "Share";
-        share.setAttribute("aria-label", "Share");
-
-        share.innerHTML =
-            cortexFiveIcon("share");
-
-        share.onclick = function () {
-            cortexShareReply(share);
-        };
-
-        const regenerate =
-            document.createElement("button");
-
-        regenerate.className =
-            "cortex-five-action";
-
-        regenerate.type = "button";
-        regenerate.title = "Regenerate";
-        regenerate.setAttribute(
-            "aria-label",
-            "Regenerate"
-        );
-
-        regenerate.innerHTML =
-            cortexFiveIcon("regenerate");
-
-        regenerate.onclick = function () {
-            cortexRegenerateReply(regenerate);
-        };
-
-        const read =
-            document.createElement("button");
-
-        read.className =
-            "cortex-five-action";
-
-        read.type = "button";
-        read.title = "Read Aloud";
-        read.setAttribute(
-            "aria-label",
-            "Read Aloud"
-        );
-
-        read.innerHTML =
-            cortexFiveIcon("read");
-
-        read.onclick = function () {
-            cortexReadAloud(read);
-        };
-
-        const branch =
-            document.createElement("button");
-
-        branch.className =
-            "cortex-five-action";
-
-        branch.type = "button";
-        branch.title = "Branch in New Chat";
-        branch.setAttribute(
-            "aria-label",
-            "Branch in New Chat"
-        );
-
-        branch.innerHTML =
-            cortexFiveIcon("branch");
-
-        branch.onclick = function () {
-            cortexBranchNewChat(branch);
-        };
-
-        actions.appendChild(copy);
-        actions.appendChild(share);
-        actions.appendChild(regenerate);
-        actions.appendChild(read);
-        actions.appendChild(branch);
-
-        content.insertAdjacentElement(
-            "afterend",
-            actions
-        );
-    }
-
-    function cortexScanReplies() {
-
-        document
-            .querySelectorAll(".ai")
-            .forEach(function (reply) {
-                cortexCreateFiveActions(reply);
-            });
-    }
-
-    const observer =
-        new MutationObserver(function () {
-            cortexScanReplies();
-        });
-
-    observer.observe(
-        document.body,
-        {
-            childList: true,
-            subtree: true
-        }
-    );
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        cortexScanReplies
-    );
-
-    setTimeout(
-        cortexScanReplies,
-        500
-    );
-
-    setTimeout(
-        cortexScanReplies,
-        1500
-    );
-
-    setTimeout(
-        cortexScanReplies,
-        3000
-    );
-
-})();
-</script>
 </body>
 </html>
 
@@ -40850,6 +39960,7 @@ img#headerLogo
 
 })();
 </script>
+
 
 
 
