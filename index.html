@@ -3,6 +3,105 @@
 <head>
 
 <!-- MI_AI_LOADING_RESCUE_V2_START -->
+<script>
+function escapeAIHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = String(value ?? "");
+    return div.innerHTML;
+}
+
+function renderAIResponse(text) {
+    if (!text) return "";
+
+    let html = escapeAIHtml(text);
+
+    /* Headings */
+    html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
+    html = html.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
+    html = html.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+
+    /* Bold */
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+    /* Italic */
+    html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>");
+
+    /* Inline code */
+    html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+
+    /* Unordered lists */
+    const lines = html.split("\n");
+    const output = [];
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (/^\s*[-•]\s+/.test(line)) {
+            if (!inList) {
+                output.push("<ul>");
+                inList = true;
+            }
+
+            output.push(
+                "<li>" + line.replace(/^\s*[-•]\s+/, "") + "</li>"
+            );
+        } else {
+            if (inList) {
+                output.push("</ul>");
+                inList = false;
+            }
+
+            output.push(line);
+        }
+    }
+
+    if (inList) {
+        output.push("</ul>");
+    }
+
+    html = output.join("\n");
+
+    /* Numbered lists */
+    html = html.replace(
+        /(?:^|\n)((?:\d+\.\s+.+\n?)+)/g,
+        function(match, block) {
+            const items = block
+                .split("\n")
+                .map(line => line.trim())
+                .filter(line => /^\d+\.\s+/.test(line))
+                .map(line =>
+                    "<li>" + line.replace(/^\d+\.\s+/, "") + "</li>"
+                )
+                .join("");
+
+            return "\n<ol>" + items + "</ol>\n";
+        }
+    );
+
+    /* Paragraph formatting */
+    const blocks = html
+        .split(/\n{2,}/)
+        .map(block => block.trim())
+        .filter(Boolean);
+
+    html = blocks.map(block => {
+        if (
+            block.startsWith("<h1>") ||
+            block.startsWith("<h2>") ||
+            block.startsWith("<h3>") ||
+            block.startsWith("<ul>") ||
+            block.startsWith("<ol>")
+        ) {
+            return block;
+        }
+
+        return "<p>" + block.replace(/\n/g, "<br>") + "</p>";
+    }).join("");
+
+    return html;
+}
+</script>
 <script id="MI_AI_LOADING_RESCUE_V2">
 (function () {
     "use strict";
@@ -11788,6 +11887,61 @@ textarea:disabled,
     opacity: .8;
 }
 </style>
+<style id="professional-ai-response-style">
+.ai-response {
+    line-height: 1.75;
+    font-size: 15.5px;
+}
+
+.ai-response h1 {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0 0 18px;
+}
+
+.ai-response h2 {
+    font-size: 21px;
+    font-weight: 750;
+    line-height: 1.35;
+    margin: 28px 0 10px;
+}
+
+.ai-response h3 {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 22px 0 8px;
+}
+
+.ai-response p {
+    margin: 0 0 16px;
+}
+
+.ai-response strong {
+    font-weight: 750;
+}
+
+.ai-response ul,
+.ai-response ol {
+    margin: 10px 0 18px 24px;
+    padding-left: 18px;
+}
+
+.ai-response li {
+    margin: 7px 0;
+}
+
+.ai-response code {
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
+}
+
+.ai-response em {
+    font-style: italic;
+}
+</style>
 </head>
 
 <body>
@@ -14948,11 +15102,11 @@ async function send() {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.textContent = fullText;
+                    contentBox.innerHTML = renderAIResponse(fullText);
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
-                    contentBox.textContent = fullText;
+                    contentBox.innerHTML = renderAIResponse(fullText);
                     scroll();
                     streamCompleted = true;
                 } else if (eventType === 'error') {
@@ -14978,11 +15132,11 @@ async function send() {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.textContent = fullText;
+                    contentBox.innerHTML = renderAIResponse(fullText);
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
-                    contentBox.textContent = fullText;
+                    contentBox.innerHTML = renderAIResponse(fullText);
                     scroll();
                 } else if (eventType === 'error') {
                     throw new Error(payload.error || 'Stream failed');
@@ -14998,7 +15152,7 @@ async function send() {
       throw new Error('No response received');
     }
 
-    contentBox.innerHTML = linkifyText(fullText);
+    contentBox.innerHTML = renderAIResponse(fullText);
     finalizeStreamingReplyBubble(contentBox, fullText, conversationId);
     replyInProgress = false; setReplyControlState(false);
 
@@ -39530,7 +39684,7 @@ img#headerLogo
 
 
 <script>
-window.MI_AI_WRITING_STYLE_RULE = ;
+window.MI_AI_WRITING_STYLE_RULE = "";
 </script>
 <script>
 /* MI_AI_COPYABLE_RESPONSE_BLOCK_V1 */
