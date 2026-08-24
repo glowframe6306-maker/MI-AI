@@ -15220,7 +15220,7 @@ function createStreamingReplyBubble(initialText = '') {
 
 function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
     if (!contentBox) return;
-    contentBox.innerHTML = linkifyText(text);
+    contentBox.innerHTML = renderAIResponse(String(text || ''));
     contentBox.dataset.finalText = text;
     const existingText = String(text || '').trim();
     if (conversationId && chats[conversationId]) {
@@ -40880,5 +40880,6 @@ if (false) {
 
 })();
 </script>
+
 
 
