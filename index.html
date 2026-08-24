@@ -40301,6 +40301,161 @@ if (false) {
     window.CORTEX_DYNAMIC_MARKDOWN_DISABLED = true;
 })();</script>
 <!-- CORTEX_CORE_AI_DYNAMIC_MARKDOWN_V2_END -->
+
+<!-- CORTEX_ABSOLUTE_MARKDOWN_CLEANER_V1 -->
+<script>
+(function () {
+    "use strict";
+
+    function cleanMarkdown(root) {
+        if (!root) return;
+
+        const selectors = [
+            ".ai-response",
+            ".ai-paragraph",
+            ".ai-heading",
+            ".ai-list",
+            ".mi-copyable-response-content"
+        ];
+
+        const roots = [];
+
+        if (root.matches && selectors.some(function (s) {
+            return root.matches(s);
+        })) {
+            roots.push(root);
+        }
+
+        if (root.querySelectorAll) {
+            selectors.forEach(function (selector) {
+                root.querySelectorAll(selector).forEach(function (el) {
+                    if (!roots.includes(el)) {
+                        roots.push(el);
+                    }
+                });
+            });
+        }
+
+        roots.forEach(function (container) {
+
+            const walker = document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT
+            );
+
+            const nodes = [];
+            let node;
+
+            while ((node = walker.nextNode())) {
+
+                if (
+                    node.parentElement &&
+                    node.parentElement.closest(
+                        "code, pre, script, style"
+                    )
+                ) {
+                    continue;
+                }
+
+                if (
+                    node.nodeValue &&
+                    (
+                        node.nodeValue.includes("**") ||
+                        /(^|\s)#{1,6}\s/.test(node.nodeValue)
+                    )
+                ) {
+                    nodes.push(node);
+                }
+            }
+
+            nodes.forEach(function (textNode) {
+
+                let value = textNode.nodeValue;
+
+                /*
+                 * Remove unmatched / leftover Markdown bold markers.
+                 */
+                value = value.replace(/\*\*/g, "");
+
+                /*
+                 * Remove Markdown heading markers.
+                 */
+                value = value.replace(
+                    /(^|\s)#{1,6}(?=\s)/g,
+                    "$1"
+                );
+
+                if (value !== textNode.nodeValue) {
+                    textNode.nodeValue = value;
+                }
+            });
+        });
+    }
+
+    function run() {
+        cleanMarkdown(document);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            run,
+            { once: true }
+        );
+    } else {
+        run();
+    }
+
+    window.addEventListener(
+        "mi-ai-main-started",
+        run
+    );
+
+    setTimeout(run, 50);
+    setTimeout(run, 200);
+    setTimeout(run, 500);
+    setTimeout(run, 1000);
+
+    let scheduled = false;
+
+    const observer = new MutationObserver(function () {
+
+        if (scheduled) return;
+
+        scheduled = true;
+
+        requestAnimationFrame(function () {
+            scheduled = false;
+            run();
+        });
+    });
+
+    function startObserver() {
+
+        const target =
+            document.querySelector("#chat") ||
+            document.body;
+
+        if (!target) return;
+
+        observer.observe(target, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            startObserver,
+            { once: true }
+        );
+    } else {
+        startObserver();
+    }
+
+})();
+</script>
 </body>
 </html>
 
@@ -40725,4 +40880,5 @@ if (false) {
 
 })();
 </script>
+
 
