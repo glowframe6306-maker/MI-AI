@@ -11455,611 +11455,9 @@ textarea:disabled,
 </script>
 <!-- MI_AI_NORMAL_CURSOR_FIX_V1 END -->
 <style id="cortex-ai-message-actions-style">
-/* CORTEX AI MESSAGE ACTION BAR V1 START */
 
-.cortex-ai-message-actions {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 8px;
-    margin-left: 2px;
-    opacity: 0;
-    transform: translateY(-2px);
-    transition:
-        opacity .18s ease,
-        transform .18s ease;
-    position: relative;
-    z-index: 50;
-}
-
-.message:hover .cortex-ai-message-actions,
-.ai-message:hover .cortex-ai-message-actions,
-.cortex-ai-message:hover .cortex-ai-message-actions,
-.cortex-ai-message-actions:focus-within,
-.cortex-ai-message-actions.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.cortex-ai-action-btn {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-
-    padding: 0 !important;
-    margin: 0 !important;
-
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-
-    border-radius: 10px !important;
-    border: 1px solid rgba(255,255,255,.12) !important;
-
-    background: rgba(255,255,255,.055) !important;
-    color: inherit !important;
-
-    backdrop-filter: blur(16px) saturate(150%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
-
-    box-shadow:
-        0 2px 10px rgba(0,0,0,.08),
-        inset 0 1px 0 rgba(255,255,255,.08) !important;
-
-    cursor: pointer !important;
-
-    transition:
-        transform .16s ease,
-        background .16s ease,
-        opacity .16s ease,
-        border-color .16s ease !important;
-}
-
-.cortex-ai-action-btn:hover {
-    transform: translateY(-1px) scale(1.04) !important;
-    background: rgba(255,255,255,.12) !important;
-    border-color: rgba(255,255,255,.22) !important;
-}
-
-.cortex-ai-action-btn:active {
-    transform: scale(.94) !important;
-}
-
-.cortex-ai-action-btn:disabled {
-    opacity: .45 !important;
-    cursor: default !important;
-    transform: none !important;
-}
-
-.cortex-ai-action-icon {
-    width: 17px;
-    height: 17px;
-    display: block;
-    pointer-events: none;
-}
-
-.cortex-ai-more-wrap {
-    position: relative;
-    display: inline-flex;
-}
-
-.cortex-ai-more-menu {
-    position: absolute;
-    left: 0;
-    bottom: calc(100% + 8px);
-
-    min-width: 190px;
-
-    padding: 6px;
-
-    border-radius: 14px;
-
-    background: rgba(20,20,24,.88);
-    border: 1px solid rgba(255,255,255,.13);
-
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-
-    box-shadow:
-        0 15px 45px rgba(0,0,0,.25),
-        inset 0 1px 0 rgba(255,255,255,.07);
-
-    z-index: 999999;
-
-    animation: cortexMoreMenuIn .15s ease both;
-}
-
-.cortex-ai-more-menu[hidden] {
-    display: none !important;
-}
-
-@keyframes cortexMoreMenuIn {
-    from {
-        opacity: 0;
-        transform: translateY(5px) scale(.97);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.cortex-ai-more-item {
-    width: 100% !important;
-    min-height: 38px !important;
-
-    display: flex !important;
-    align-items: center !important;
-    gap: 11px !important;
-
-    padding: 8px 10px !important;
-
-    border: 0 !important;
-    border-radius: 10px !important;
-
-    background: transparent !important;
-    color: inherit !important;
-
-    cursor: pointer !important;
-    text-align: left !important;
-
-    font: inherit !important;
-}
-
-.cortex-ai-more-item:hover {
-    background: rgba(255,255,255,.10) !important;
-}
-
-.cortex-ai-more-item svg {
-    width: 17px;
-    height: 17px;
-    flex: 0 0 17px;
-}
-
-.cortex-ai-more-label {
-    font-size: 13px;
-    white-space: nowrap;
-}
-
-.cortex-ai-action-btn.copied {
-    background: rgba(70,190,110,.18) !important;
-    border-color: rgba(70,190,110,.35) !important;
-}
-
-.cortex-ai-action-btn.speaking {
-    background: rgba(90,150,255,.18) !important;
-    border-color: rgba(90,150,255,.35) !important;
-}
-
-@media (max-width: 600px) {
-    .cortex-ai-message-actions {
-        opacity: 1;
-        transform: none;
-        gap: 4px;
-    }
-
-    .cortex-ai-action-btn {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        min-height: 30px !important;
-    }
-
-    .cortex-ai-action-icon {
-        width: 16px;
-        height: 16px;
-    }
-
-    .cortex-ai-more-menu {
-        min-width: 180px;
-    }
-}
-
-/* CORTEX AI MESSAGE ACTION BAR V1 END */
 </style>
-<!-- CORTEX AI REPLY ACTIONS V1 -->
-<style>
-.cortex-reply-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    margin-top: 8px !important;
-    min-height: 30px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-}
 
-.cortex-reply-action {
-    width: 28px !important;
-    height: 28px !important;
-    min-width: 28px !important;
-    min-height: 28px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    background: rgba(128,128,128,.10) !important;
-    color: currentColor !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    opacity: .85 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    font-size: 14px !important;
-    line-height: 1 !important;
-    transition: all .15s ease !important;
-}
-
-.cortex-reply-action:hover {
-    background: rgba(128,128,128,.20) !important;
-    opacity: 1 !important;
-    transform: translateY(-1px) !important;
-}
-
-.cortex-reply-action:active {
-    transform: scale(.92) !important;
-}
-
-.cortex-reply-action svg {
-    width: 15px !important;
-    height: 15px !important;
-    display: block !important;
-    pointer-events: none !important;
-}
-
-.cortex-reply-more-menu {
-    position: absolute !important;
-    z-index: 999999 !important;
-    min-width: 190px !important;
-    padding: 6px !important;
-    border-radius: 12px !important;
-    background: rgba(30,30,30,.96) !important;
-    color: white !important;
-    box-shadow: 0 12px 35px rgba(0,0,0,.30) !important;
-    backdrop-filter: blur(18px) !important;
-}
-
-.cortex-reply-more-item {
-    width: 100% !important;
-    border: 0 !important;
-    background: transparent !important;
-    color: inherit !important;
-    padding: 9px 10px !important;
-    border-radius: 8px !important;
-    text-align: left !important;
-    cursor: pointer !important;
-    font-size: 13px !important;
-}
-
-.cortex-reply-more-item:hover {
-    background: rgba(255,255,255,.12) !important;
-}
-</style>
-<script>
-(function () {
-
-    function cortexIcon(name) {
-        const icons = {
-            copy:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-
-            share:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4"></path><path d="m15.4 6.5-6.8 4"></path></svg>',
-
-            regenerate:
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"></path><path d="M3 4v6h6"></path><path d="M4 13a8 8 0 0 0 14.8 4L21 14"></path><path d="M21 20v-6h-6"></path></svg>',
-
-            more:
-                '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>'
-        };
-
-        return icons[name] || "";
-    }
-
-    function cortexGetReplyText(actionButton) {
-        const bubble =
-            actionButton.closest(".message, .message-bubble, .chat-message, .ai-message, [class*='message']") ||
-            actionButton.parentElement?.parentElement;
-
-        if (!bubble) return "";
-
-        const clone = bubble.cloneNode(true);
-
-        clone.querySelectorAll(
-            ".cortex-reply-actions, .cortex-reply-more-menu, button"
-        ).forEach(el => el.remove());
-
-        return (clone.innerText || clone.textContent || "").trim();
-    }
-
-    function cortexCreateActions(replyElement) {
-
-        if (!replyElement) return;
-
-        if (replyElement.querySelector(".cortex-reply-actions")) return;
-
-        const actions = document.createElement("div");
-        actions.className = "cortex-reply-actions";
-
-        const copy = document.createElement("button");
-        copy.type = "button";
-        copy.className = "cortex-reply-action";
-        copy.title = "Copy";
-        copy.setAttribute("aria-label", "Copy");
-        copy.innerHTML = cortexIcon("copy");
-
-        const share = document.createElement("button");
-        share.type = "button";
-        share.className = "cortex-reply-action";
-        share.title = "Share";
-        share.setAttribute("aria-label", "Share");
-        share.innerHTML = cortexIcon("share");
-
-        const regenerate = document.createElement("button");
-        regenerate.type = "button";
-        regenerate.className = "cortex-reply-action";
-        regenerate.title = "Regenerate";
-        regenerate.setAttribute("aria-label", "Regenerate");
-        regenerate.innerHTML = cortexIcon("regenerate");
-
-        const more = document.createElement("button");
-        more.type = "button";
-        more.className = "cortex-reply-action";
-        more.title = "More";
-        more.setAttribute("aria-label", "More");
-        more.innerHTML = cortexIcon("more");
-
-        copy.onclick = async function () {
-            const text = cortexGetReplyText(copy);
-
-            if (!text) return;
-
-            try {
-                await navigator.clipboard.writeText(text);
-                copy.title = "Copied";
-
-                setTimeout(() => {
-                    copy.title = "Copy";
-                }, 1200);
-            } catch (e) {
-                console.error("Copy failed:", e);
-            }
-        };
-
-        share.onclick = async function () {
-            const text = cortexGetReplyText(share);
-
-            if (!text) return;
-
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: "CORTEX CORE AI",
-                        text: text
-                    });
-                    return;
-                } catch (e) {
-                    if (e && e.name === "AbortError") return;
-                }
-            }
-
-            try {
-                await navigator.clipboard.writeText(text);
-                alert("Response copied. You can now share it.");
-            } catch (e) {
-                console.error("Share failed:", e);
-            }
-        };
-
-        regenerate.onclick = function () {
-
-            const messageContainer =
-                regenerate.closest(".message, .chat-message, [class*='message']");
-
-            let regenerateButton =
-                document.querySelector(
-                    '[data-action="regenerate"], [aria-label*="Regenerate" i], [title*="Regenerate" i]'
-                );
-
-            if (regenerateButton) {
-                regenerateButton.click();
-                return;
-            }
-
-            const text = cortexGetReplyText(regenerate);
-
-            if (text && window.fetchChatReply) {
-                window.dispatchEvent(
-                    new CustomEvent("cortex-regenerate", {
-                        detail: { text }
-                    })
-                );
-            }
-        };
-
-        more.onclick = function (event) {
-
-            event.stopPropagation();
-
-            document
-                .querySelectorAll(".cortex-reply-more-menu")
-                .forEach(el => el.remove());
-
-            const menu = document.createElement("div");
-            menu.className = "cortex-reply-more-menu";
-
-            const read = document.createElement("button");
-            read.type = "button";
-            read.className = "cortex-reply-more-item";
-            read.textContent = "Read Aloud";
-
-            const branch = document.createElement("button");
-            branch.type = "button";
-            branch.className = "cortex-reply-more-item";
-            branch.textContent = "Branch in New Chat";
-
-            read.onclick = function () {
-
-                const text = cortexGetReplyText(read);
-
-                if (!text) return;
-
-                if ("speechSynthesis" in window) {
-                    speechSynthesis.cancel();
-
-                    const utterance =
-                        new SpeechSynthesisUtterance(text);
-
-                    speechSynthesis.speak(utterance);
-                }
-
-                menu.remove();
-            };
-
-            branch.onclick = function () {
-
-                const text = cortexGetReplyText(branch);
-
-                if (!text) return;
-
-                const newChatButton =
-                    document.querySelector(
-                        '#newChatBtn, [data-action="new-chat"], [aria-label*="New Chat" i], [title*="New Chat" i]'
-                    );
-
-                if (newChatButton) {
-                    newChatButton.click();
-                }
-
-                setTimeout(() => {
-
-                    const input =
-                        document.querySelector(
-                            'textarea, input[type="text"], [contenteditable="true"]'
-                        );
-
-                    if (input) {
-
-                        if (input.tagName === "TEXTAREA" ||
-                            input.tagName === "INPUT") {
-
-                            input.value = text;
-                            input.dispatchEvent(
-                                new Event("input", { bubbles: true })
-                            );
-
-                        } else {
-
-                            input.textContent = text;
-                            input.dispatchEvent(
-                                new InputEvent("input", {
-                                    bubbles: true,
-                                    inputType: "insertText",
-                                    data: text
-                                })
-                            );
-                        }
-
-                        input.focus();
-                    }
-
-                }, 300);
-
-                menu.remove();
-            };
-
-            menu.appendChild(read);
-            menu.appendChild(branch);
-
-            document.body.appendChild(menu);
-
-            const rect = more.getBoundingClientRect();
-
-            menu.style.left =
-                Math.max(
-                    8,
-                    Math.min(
-                        window.innerWidth - 200,
-                        rect.left
-                    )
-                ) + "px";
-
-            menu.style.top =
-                Math.min(
-                    window.innerHeight - 100,
-                    rect.bottom + 5
-                ) + "px";
-        };
-
-        actions.appendChild(copy);
-        actions.appendChild(share);
-        actions.appendChild(regenerate);
-        actions.appendChild(more);
-
-        replyElement.appendChild(actions);
-    }
-
-    function cortexFindReplyElements() {
-
-        const selectors = [
-            ".assistant-message",
-            ".ai-message",
-            ".bot-message",
-            ".message.assistant",
-            ".message.ai",
-            "[data-role='assistant']",
-            "[data-role='ai']",
-            ".chat-message.assistant"
-        ];
-
-        const found = [];
-
-        selectors.forEach(selector => {
-            document.querySelectorAll(selector).forEach(el => {
-                if (!found.includes(el)) {
-                    found.push(el);
-                }
-            });
-        });
-
-        return found;
-    }
-
-    function cortexInstall() {
-
-        cortexFindReplyElements().forEach(el => {
-            cortexCreateActions(el);
-        });
-    }
-
-    const observer = new MutationObserver(() => {
-        cortexInstall();
-    });
-
-    function start() {
-
-        cortexInstall();
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-
-        setInterval(cortexInstall, 1000);
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start);
-    } else {
-        start();
-    }
-
-})();
-</script>
 <style>
 /* CORTEX AI REPLY ACTIONS V2 */
 .cortex-reply-actions {
@@ -12220,6 +11618,136 @@ textarea:disabled,
     color: #35d878 !important;
     opacity: 1 !important;
 }
+</style>
+<style id="cortex-final-reply-actions-css">
+
+.cortex-final-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 3px !important;
+    width: 100% !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    margin-top: 6px !important;
+    padding: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+.cortex-final-action {
+    display: inline-flex !important;
+    position: relative !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: currentColor !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: .72 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    border-radius: 7px !important;
+}
+
+.cortex-final-action:hover {
+    opacity: 1 !important;
+    background: rgba(128,128,128,.13) !important;
+}
+
+.cortex-final-action:active {
+    transform: scale(.9) !important;
+}
+
+.cortex-final-action svg {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    pointer-events: none !important;
+}
+
+.cortex-final-action.speaking {
+    opacity: 1 !important;
+}
+
+</style>
+<style id="cortex-final-reply-actions-css">
+
+.cortex-final-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 3px !important;
+    width: 100% !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    margin-top: 6px !important;
+    padding: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+.cortex-final-action {
+    display: inline-flex !important;
+    position: relative !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    color: currentColor !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: .72 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    border-radius: 7px !important;
+}
+
+.cortex-final-action:hover {
+    opacity: 1 !important;
+    background: rgba(128,128,128,.13) !important;
+}
+
+.cortex-final-action:active {
+    transform: scale(.9) !important;
+}
+
+.cortex-final-action svg {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    pointer-events: none !important;
+}
+
+.cortex-final-action.speaking {
+    opacity: 1 !important;
+}
+
 </style>
 </head>
 
@@ -14972,7 +14500,6 @@ function createStreamingReplyBubble(initialText = '') {
     d.className = 'ai';
 
     const contentBox = document.createElement('div');
-
     contentBox.className =
         isLongWritingResponse(initialText)
             ? 'aiWritingCard'
@@ -14982,228 +14509,230 @@ function createStreamingReplyBubble(initialText = '') {
 
     d.appendChild(contentBox);
 
+    /*
+     * CORTEX CORE AI
+     * ALWAYS VISIBLE REPLY ACTIONS
+     */
     const actions = document.createElement('div');
-    actions.className = 'cortex-reply-actions';
+    actions.className = 'cortex-final-actions';
 
-    function actionButton(title, icon) {
+    function icon(name) {
+        const icons = {
+
+            copy:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+
+            check:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6"/></svg>',
+
+            share:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4"/><path d="m15.4 6.5-6.8 4"/></svg>',
+
+            regenerate:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"/><path d="M3 4v6h6"/><path d="M4 13a8 8 0 0 0 14.8 4L21 14"/><path d="M21 20v-6h-6"/></svg>',
+
+            read:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10v4"/><path d="M7 8v8"/><path d="M11 5v14"/><path d="M15 8v8"/><path d="M19 10v4"/></svg>',
+
+            branch:
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v12"/><path d="M6 9h6a6 6 0 0 1 6 6v6"/><circle cx="6" cy="3" r="2"/><circle cx="6" cy="21" r="2"/><circle cx="18" cy="21" r="2"/></svg>'
+        };
+
+        return icons[name] || '';
+    }
+
+    function button(name, title) {
         const b = document.createElement('button');
 
         b.type = 'button';
-        b.className = 'cortex-reply-action';
+        b.className = 'cortex-final-action';
         b.title = title;
         b.setAttribute('aria-label', title);
-        b.innerHTML = icon;
+        b.innerHTML = icon(name);
+
+        actions.appendChild(b);
 
         return b;
     }
 
-    const copy = actionButton(
-        'Copy',
-        '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M5 16H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"></path></svg>'
-    );
+    const copyBtn = button('copy', 'Copy');
+    const shareBtn = button('share', 'Share');
+    const regenerateBtn = button('regenerate', 'Regenerate');
+    const readBtn = button('read', 'Read Aloud');
+    const branchBtn = button('branch', 'Branch in New Chat');
 
-    const share = actionButton(
-        'Share',
-        '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="M8.2 10.8 15.8 6.5"></path><path d="M8.2 13.2 15.8 17.5"></path></svg>'
-    );
+    copyBtn.onclick = async function () {
 
-    const regenerate = actionButton(
-        'Regenerate',
-        '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.8-4L3 10"></path><path d="M3 5v5h5"></path><path d="M4 13a8 8 0 0 0 14.8 4L21 14"></path><path d="M21 19v-5h-5"></path></svg>'
-    );
-
-    const moreWrap = document.createElement('div');
-    moreWrap.className = 'cortex-reply-more-wrap';
-
-    const more = actionButton(
-        'More',
-        '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle><circle cx="19" cy="12" r="1.5" fill="currentColor"></circle></svg>'
-    );
-
-    const menu = document.createElement('div');
-    menu.className = 'cortex-reply-more-menu';
-
-    const readAloud = document.createElement('button');
-    readAloud.type = 'button';
-    readAloud.className = 'cortex-reply-menu-item';
-    readAloud.textContent = 'Read Aloud';
-
-    const branch = document.createElement('button');
-    branch.type = 'button';
-    branch.className = 'cortex-reply-menu-item';
-    branch.textContent = 'Branch in New Chat';
-
-    menu.appendChild(readAloud);
-    menu.appendChild(branch);
-
-    moreWrap.appendChild(more);
-    moreWrap.appendChild(menu);
-
-    actions.appendChild(copy);
-    actions.appendChild(share);
-    actions.appendChild(regenerate);
-    actions.appendChild(moreWrap);
-
-    d.appendChild(actions);
-
-    const getReplyText = () => {
-        return String(
+        const text =
             contentBox.dataset.finalText ||
             contentBox.innerText ||
             contentBox.textContent ||
-            ''
-        ).trim();
-    };
+            '';
 
-    copy.addEventListener('click', async () => {
-        const text = getReplyText();
-
-        if (!text) return;
+        if (!text.trim()) return;
 
         try {
             await navigator.clipboard.writeText(text);
-        } catch {
-            const area = document.createElement('textarea');
 
+            copyBtn.innerHTML = icon('check');
+
+            setTimeout(function () {
+                copyBtn.innerHTML = icon('copy');
+            }, 1400);
+
+        } catch (error) {
+
+            const area = document.createElement('textarea');
             area.value = text;
             area.style.position = 'fixed';
-            area.style.opacity = '0';
+            area.style.left = '-9999px';
 
             document.body.appendChild(area);
-
             area.select();
-            document.execCommand('copy');
 
-            area.remove();
+            try {
+                document.execCommand('copy');
+                copyBtn.innerHTML = icon('check');
+
+                setTimeout(function () {
+                    copyBtn.innerHTML = icon('copy');
+                }, 1400);
+
+            } finally {
+                area.remove();
+            }
         }
-    });
+    };
 
-    share.addEventListener('click', async () => {
-        const text = getReplyText();
+    shareBtn.onclick = function () {
 
-        if (!text) return;
+        const text =
+            contentBox.dataset.finalText ||
+            contentBox.innerText ||
+            contentBox.textContent ||
+            '';
+
+        if (!text.trim()) return;
 
         if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'CORTEX CORE AI',
-                    text: text
-                });
-            } catch {}
+            navigator.share({
+                title: 'CORTEX CORE AI',
+                text: text
+            }).catch(function () {});
         } else {
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch {}
+            navigator.clipboard.writeText(text).catch(function () {});
         }
-    });
+    };
 
-    regenerate.addEventListener('click', () => {
-        if (!currentChat || !chats[currentChat]) return;
+    regenerateBtn.onclick = function () {
 
-        const chat = chats[currentChat];
+        const previous =
+            d.previousElementSibling;
 
-        let userMessage = '';
+        if (!previous || !previous.classList.contains('me')) {
+            return;
+        }
 
-        for (let i = chat.length - 1; i >= 0; i--) {
-            if (chat[i].role === 'me') {
-                userMessage = String(chat[i].text || '').trim();
-                break;
+        const message =
+            String(
+                previous.innerText ||
+                previous.textContent ||
+                ''
+            ).trim();
+
+        if (!message) return;
+
+        if (typeof send === 'function') {
+
+            if (input) {
+                input.value = message;
+
+                input.dispatchEvent(
+                    new Event('input', {
+                        bubbles: true
+                    })
+                );
+            }
+
+            send();
+        }
+    };
+
+    readBtn.onclick = function () {
+
+        const text =
+            contentBox.dataset.finalText ||
+            contentBox.innerText ||
+            contentBox.textContent ||
+            '';
+
+        if (!text.trim()) return;
+
+        if (!window.speechSynthesis) return;
+
+        window.speechSynthesis.cancel();
+
+        const speech =
+            new SpeechSynthesisUtterance(text);
+
+        speech.rate = 1;
+        speech.pitch = 1;
+        speech.volume = 1;
+
+        readBtn.classList.add('speaking');
+
+        speech.onend = function () {
+            readBtn.classList.remove('speaking');
+        };
+
+        speech.onerror = function () {
+            readBtn.classList.remove('speaking');
+        };
+
+        window.speechSynthesis.speak(speech);
+    };
+
+    branchBtn.onclick = function () {
+
+        const text =
+            contentBox.dataset.finalText ||
+            contentBox.innerText ||
+            contentBox.textContent ||
+            '';
+
+        if (!text.trim()) return;
+
+        if (typeof newChat === 'function') {
+            newChat();
+        } else {
+
+            const newChatBtn =
+                document.querySelector(
+                    '#newChatBtn,[id*="newChat"],[onclick*="newChat"]'
+                );
+
+            if (newChatBtn) {
+                newChatBtn.click();
             }
         }
 
-        if (!userMessage) return;
+        setTimeout(function () {
 
-        d.remove();
+            if (!input) return;
 
-        while (
-            chat.length &&
-            chat[chat.length - 1] &&
-            chat[chat.length - 1].role === 'ai'
-        ) {
-            chat.pop();
-        }
-
-        save();
-
-        if (input) {
-            input.value = userMessage;
-        }
-
-        send();
-    });
-
-    more.addEventListener('click', (event) => {
-        event.stopPropagation();
-
-        document
-            .querySelectorAll('.cortex-reply-more-menu.open')
-            .forEach((m) => {
-                if (m !== menu) {
-                    m.classList.remove('open');
-                }
-            });
-
-        menu.classList.toggle('open');
-    });
-
-    readAloud.addEventListener('click', () => {
-        menu.classList.remove('open');
-
-        const text = getReplyText();
-
-        if (!text) return;
-
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-
-            const speech = new SpeechSynthesisUtterance(text);
-
-            speech.rate = 1;
-            speech.pitch = 1;
-            speech.volume = 1;
-
-            window.speechSynthesis.speak(speech);
-        }
-    });
-
-    branch.addEventListener('click', () => {
-        menu.classList.remove('open');
-
-        const text = getReplyText();
-
-        if (!text) return;
-
-        const newChatId = 'chat_' + Date.now();
-
-        chats[newChatId] = [];
-
-        chats[newChatId].title =
-            text.length > 40
-                ? text.substring(0, 40) + '...'
-                : text;
-
-        chats[newChatId].push({
-            role: 'me',
-            text: text
-        });
-
-        currentChat = newChatId;
-
-        save();
-
-        if (typeof renderList === 'function') {
-            renderList();
-        }
-
-        if (typeof openChat === 'function') {
-            openChat(newChatId);
-        }
-
-        if (input) {
             input.value = text;
             input.focus();
-        }
-    });
+
+            input.dispatchEvent(
+                new Event('input', {
+                    bubbles: true
+                })
+            );
+
+        }, 200);
+    };
+
+    d.appendChild(actions);
 
     chatBox.appendChild(d);
 
@@ -15211,7 +14740,7 @@ function createStreamingReplyBubble(initialText = '') {
 
     return {
         container: d,
-        contentBox: contentBox
+        contentBox
     };
 }
 
@@ -39680,969 +39209,7 @@ img#headerLogo
 <!-- CORTEX_SETTINGS_LANGUAGE_THEME_ICONS_END -->
 
 <script id="cortex-ai-message-actions-js">
-/* CORTEX AI MESSAGE ACTION BAR V1 START */
 
-(function () {
-    "use strict";
-
-    if (window.CortexAIMessageActions) {
-        return;
-    }
-
-    const ICONS = {
-
-        copy: `
-            <svg class="cortex-ai-action-icon" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>`,
-
-        share: `
-            <svg class="cortex-ai-action-icon" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="18" cy="5" r="3"></circle>
-                <circle cx="6" cy="12" r="3"></circle>
-                <circle cx="18" cy="19" r="3"></circle>
-                <path d="m8.6 13.5 6.8 4"></path>
-                <path d="m15.4 6.5-6.8 4"></path>
-            </svg>`,
-
-        regenerate: `
-            <svg class="cortex-ai-action-icon" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 11a8.1 8.1 0 0 0-14.9-4L3 10"></path>
-                <path d="M3 4v6h6"></path>
-                <path d="M4 13a8.1 8.1 0 0 0 14.9 4L21 14"></path>
-                <path d="M21 20v-6h-6"></path>
-            </svg>`,
-
-        more: `
-            <svg class="cortex-ai-action-icon" viewBox="0 0 24 24"
-                 fill="currentColor">
-                <circle cx="5" cy="12" r="1.7"></circle>
-                <circle cx="12" cy="12" r="1.7"></circle>
-                <circle cx="19" cy="12" r="1.7"></circle>
-            </svg>`,
-
-        read: `
-            <svg viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 5v14"></path>
-                <path d="M8 9v6"></path>
-                <path d="M12 7v10"></path>
-                <path d="M16 9v6"></path>
-                <path d="M20 5v14"></path>
-            </svg>`,
-
-        branch: `
-            <svg viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 3v12a5 5 0 0 0 5 5h7"></path>
-                <path d="m15 16 3 4 3-4"></path>
-                <path d="M6 7h8a4 4 0 0 1 4 4v1"></path>
-            </svg>`
-    };
-
-    function getReplyText(root) {
-
-        if (!root) {
-            return "";
-        }
-
-        let text = "";
-
-        const selectors = [
-            ".contentBox",
-            ".message-content",
-            ".message-text",
-            ".reply-content",
-            ".ai-content",
-            ".content",
-            ".bubble-content"
-        ];
-
-        for (const selector of selectors) {
-            const el = root.querySelector(selector);
-
-            if (el && el.innerText && el.innerText.trim()) {
-                text = el.innerText.trim();
-                break;
-            }
-        }
-
-        if (!text) {
-            text = root.innerText || "";
-        }
-
-        return text
-            .replace(/\n\s*(Copy|Share|Regenerate|More|Read Aloud|Branch in New Chat)\s*$/gi, "")
-            .trim();
-    }
-
-    function createButton(icon, label, handler) {
-
-        const button = document.createElement("button");
-
-        button.type = "button";
-        button.className = "cortex-ai-action-btn";
-        button.setAttribute("aria-label", label);
-        button.setAttribute("title", label);
-
-        button.innerHTML = icon;
-
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            try {
-                handler(button);
-            } catch (error) {
-                console.error("[CORTEX ACTION]", error);
-            }
-        });
-
-        return button;
-    }
-
-    async function copyText(text, button) {
-
-        if (!text) {
-            return;
-        }
-
-        try {
-
-            if (
-                navigator.clipboard &&
-                navigator.clipboard.writeText
-            ) {
-                await navigator.clipboard.writeText(text);
-            } else {
-
-                const area = document.createElement("textarea");
-
-                area.value = text;
-                area.style.position = "fixed";
-                area.style.left = "-9999px";
-
-                document.body.appendChild(area);
-
-                area.focus();
-                area.select();
-
-                document.execCommand("copy");
-
-                area.remove();
-            }
-
-            button.classList.add("copied");
-            button.setAttribute("aria-label", "Copied");
-
-            setTimeout(function () {
-                button.classList.remove("copied");
-                button.setAttribute("aria-label", "Copy");
-            }, 1200);
-
-        } catch (error) {
-
-            console.error("[CORTEX COPY]", error);
-
-        }
-    }
-
-    async function shareText(text) {
-
-        if (!text) {
-            return;
-        }
-
-        if (
-            navigator.share &&
-            typeof navigator.share === "function"
-        ) {
-
-            try {
-
-                await navigator.share({
-                    title: "CORTEX CORE AI",
-                    text: text,
-                    url: window.location.href
-                });
-
-                return;
-
-            } catch (error) {
-
-                if (error && error.name === "AbortError") {
-                    return;
-                }
-
-            }
-        }
-
-        showSharePopup(text);
-    }
-
-    function showSharePopup(text) {
-
-        const old = document.querySelector(".cortex-ai-share-popup");
-
-        if (old) {
-            old.remove();
-        }
-
-        const overlay = document.createElement("div");
-
-        overlay.className = "cortex-ai-share-popup";
-
-        overlay.style.cssText = `
-            position:fixed;
-            inset:0;
-            z-index:9999999;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            background:rgba(0,0,0,.28);
-            backdrop-filter:blur(8px);
-            -webkit-backdrop-filter:blur(8px);
-        `;
-
-        const card = document.createElement("div");
-
-        card.style.cssText = `
-            width:min(420px,calc(100vw - 32px));
-            padding:22px;
-            border-radius:22px;
-            background:rgba(25,25,30,.92);
-            border:1px solid rgba(255,255,255,.14);
-            box-shadow:0 25px 80px rgba(0,0,0,.35);
-            color:inherit;
-        `;
-
-        card.innerHTML = `
-            <div style="
-                font-size:18px;
-                font-weight:600;
-                margin-bottom:15px;
-            ">Share</div>
-
-            <textarea readonly style="
-                width:100%;
-                min-height:120px;
-                resize:none;
-                box-sizing:border-box;
-                border-radius:12px;
-                border:1px solid rgba(255,255,255,.12);
-                background:rgba(255,255,255,.06);
-                color:inherit;
-                padding:12px;
-                font:inherit;
-                outline:none;
-            "></textarea>
-
-            <div style="
-                display:flex;
-                gap:8px;
-                justify-content:flex-end;
-                margin-top:14px;
-            ">
-                <button type="button" data-cortex-share-copy>
-                    Copy
-                </button>
-
-                <button type="button" data-cortex-share-close>
-                    Close
-                </button>
-            </div>
-        `;
-
-        card.querySelector("textarea").value = text;
-
-        card.querySelector("[data-cortex-share-copy]")
-            .addEventListener("click", async function () {
-
-                await copyText(
-                    text,
-                    this
-                );
-
-                this.textContent = "Copied";
-
-                setTimeout(() => {
-                    this.textContent = "Copy";
-                }, 1000);
-            });
-
-        card.querySelector("[data-cortex-share-close]")
-            .addEventListener("click", function () {
-                overlay.remove();
-            });
-
-        overlay.addEventListener("click", function (event) {
-
-            if (event.target === overlay) {
-                overlay.remove();
-            }
-
-        });
-
-        document.body.appendChild(overlay);
-    }
-
-    function readAloud(text, button) {
-
-        if (!text) {
-            return;
-        }
-
-        if (!("speechSynthesis" in window)) {
-            return;
-        }
-
-        if (
-            window.speechSynthesis.speaking ||
-            window.speechSynthesis.pending
-        ) {
-
-            window.speechSynthesis.cancel();
-
-            button.classList.remove("speaking");
-            return;
-        }
-
-        const utterance =
-            new SpeechSynthesisUtterance(text);
-
-        utterance.onstart = function () {
-            button.classList.add("speaking");
-        };
-
-        utterance.onend = function () {
-            button.classList.remove("speaking");
-        };
-
-        utterance.onerror = function () {
-            button.classList.remove("speaking");
-        };
-
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function findUserMessageForAI(aiRoot) {
-
-        if (!aiRoot) {
-            return null;
-        }
-
-        const explicitId =
-            aiRoot.dataset.userMessageId ||
-            aiRoot.dataset.previousUserMessageId ||
-            "";
-
-        if (explicitId) {
-
-            const found =
-                document.querySelector(
-                    `[data-message-id="${CSS.escape(explicitId)}"]`
-                );
-
-            if (found) {
-                return found;
-            }
-        }
-
-        let node = aiRoot.previousElementSibling;
-
-        while (node) {
-
-            const role =
-                node.dataset?.role ||
-                node.getAttribute?.("data-role") ||
-                "";
-
-            if (
-                role.toLowerCase() === "user" ||
-                node.classList.contains("user-message")
-            ) {
-                return node;
-            }
-
-            node = node.previousElementSibling;
-        }
-
-        return null;
-    }
-
-    function regenerate(root) {
-
-        const userMessage =
-            findUserMessageForAI(root);
-
-        const userText =
-            userMessage
-                ? getReplyText(userMessage)
-                : "";
-
-        if (!userText) {
-
-            console.warn(
-                "[CORTEX REGENERATE] User message not found."
-            );
-
-            return;
-        }
-
-        /*
-         * Reuse existing send/generation functions where possible.
-         */
-
-        const candidates = [
-            "sendMessage",
-            "handleSendMessage",
-            "sendChatMessage",
-            "generateReply",
-            "submitMessage"
-        ];
-
-        for (const name of candidates) {
-
-            if (
-                typeof window[name] === "function"
-            ) {
-
-                try {
-
-                    window[name](
-                        userText,
-                        {
-                            regenerate: true,
-                            targetMessage: root
-                        }
-                    );
-
-                    return;
-
-                } catch (error) {
-
-                    console.warn(
-                        "[CORTEX REGENERATE]",
-                        name,
-                        error
-                    );
-                }
-            }
-        }
-
-        /*
-         * Fallback:
-         * put the original user message back into
-         * the existing input without automatically
-         * sending it.
-         */
-
-        const input =
-            document.querySelector(
-                'textarea:not([readonly]), textarea[contenteditable="true"], input[type="text"]'
-            );
-
-        if (input) {
-
-            input.value = userText;
-
-            input.dispatchEvent(
-                new Event("input", {
-                    bubbles: true
-                })
-            );
-
-            input.focus();
-        }
-    }
-
-    function branchNewChat(text) {
-
-        if (!text) {
-            return;
-        }
-
-        /*
-         * Use existing New Chat controls.
-         */
-
-        const newChatCandidates = [
-            "#newChatBtn",
-            "#new-chat-btn",
-            "[data-action='new-chat']",
-            "[data-new-chat]",
-            ".new-chat-btn"
-        ];
-
-        let newChatButton = null;
-
-        for (const selector of newChatCandidates) {
-
-            const found =
-                document.querySelector(selector);
-
-            if (found) {
-                newChatButton = found;
-                break;
-            }
-        }
-
-        if (newChatButton) {
-
-            newChatButton.click();
-
-        } else {
-
-            /*
-             * Try common existing global functions.
-             */
-
-            const candidates = [
-                "createNewChat",
-                "newChat",
-                "startNewChat",
-                "openNewChat"
-            ];
-
-            for (const name of candidates) {
-
-                if (
-                    typeof window[name] === "function"
-                ) {
-
-                    try {
-                        window[name]();
-                        break;
-                    } catch (error) {
-                        console.warn(
-                            "[CORTEX BRANCH]",
-                            error
-                        );
-                    }
-                }
-            }
-        }
-
-        setTimeout(function () {
-
-            const input =
-                document.querySelector(
-                    'textarea:not([readonly]), textarea[contenteditable="true"], input[type="text"]'
-                );
-
-            if (!input) {
-                return;
-            }
-
-            if ("value" in input) {
-                input.value = text;
-            } else {
-                input.textContent = text;
-            }
-
-            input.dispatchEvent(
-                new Event("input", {
-                    bubbles: true
-                })
-            );
-
-            input.dispatchEvent(
-                new Event("change", {
-                    bubbles: true
-                })
-            );
-
-            input.focus();
-
-        }, 150);
-    }
-
-    function closeAllMenus(except) {
-
-        document
-            .querySelectorAll(".cortex-ai-more-menu")
-            .forEach(function (menu) {
-
-                if (menu !== except) {
-                    menu.hidden = true;
-                }
-            });
-    }
-
-    function createActions(root) {
-
-        if (!root) {
-            return null;
-        }
-
-        if (
-            root.querySelector(
-                ".cortex-ai-message-actions"
-            )
-        ) {
-            return root.querySelector(
-                ".cortex-ai-message-actions"
-            );
-        }
-
-        const text =
-            getReplyText(root);
-
-        if (!text) {
-            return null;
-        }
-
-        const actions =
-            document.createElement("div");
-
-        actions.className =
-            "cortex-ai-message-actions";
-
-        actions.dataset.cortexActions =
-            "true";
-
-        actions.dataset.messageId =
-            root.dataset.messageId || "";
-
-        actions.dataset.conversationId =
-            root.dataset.conversationId || "";
-
-        const copy =
-            createButton(
-                ICONS.copy,
-                "Copy",
-                function (button) {
-                    copyText(
-                        getReplyText(root),
-                        button
-                    );
-                }
-            );
-
-        const share =
-            createButton(
-                ICONS.share,
-                "Share",
-                function () {
-                    shareText(
-                        getReplyText(root)
-                    );
-                }
-            );
-
-        const regenerate =
-            createButton(
-                ICONS.regenerate,
-                "Regenerate",
-                function () {
-                    regenerate.disabled = true;
-
-                    try {
-                        regenerate(root);
-                    } finally {
-                        setTimeout(function () {
-                            regenerate.disabled = false;
-                        }, 1200);
-                    }
-                }
-            );
-
-        const moreWrap =
-            document.createElement("div");
-
-        moreWrap.className =
-            "cortex-ai-more-wrap";
-
-        const more =
-            createButton(
-                ICONS.more,
-                "More",
-                function () {
-
-                    const menu =
-                        moreWrap.querySelector(
-                            ".cortex-ai-more-menu"
-                        );
-
-                    closeAllMenus(menu);
-
-                    menu.hidden = !menu.hidden;
-                }
-            );
-
-        moreWrap.appendChild(more);
-
-        const menu =
-            document.createElement("div");
-
-        menu.className =
-            "cortex-ai-more-menu";
-
-        menu.hidden = true;
-
-        const readItem =
-            document.createElement("button");
-
-        readItem.type = "button";
-        readItem.className =
-            "cortex-ai-more-item";
-
-        readItem.innerHTML =
-            ICONS.read +
-            '<span class="cortex-ai-more-label">Read Aloud</span>';
-
-        readItem.addEventListener(
-            "click",
-            function (event) {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-                readAloud(
-                    getReplyText(root),
-                    more
-                );
-
-                menu.hidden = true;
-            }
-        );
-
-        const branchItem =
-            document.createElement("button");
-
-        branchItem.type = "button";
-        branchItem.className =
-            "cortex-ai-more-item";
-
-        branchItem.innerHTML =
-            ICONS.branch +
-            '<span class="cortex-ai-more-label">Branch in New Chat</span>';
-
-        branchItem.addEventListener(
-            "click",
-            function (event) {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-                branchNewChat(
-                    getReplyText(root)
-                );
-
-                menu.hidden = true;
-            }
-        );
-
-        menu.appendChild(readItem);
-        menu.appendChild(branchItem);
-
-        moreWrap.appendChild(menu);
-
-        actions.appendChild(copy);
-        actions.appendChild(share);
-        actions.appendChild(regenerate);
-        actions.appendChild(moreWrap);
-
-        /*
-         * Place action bar directly after the AI content
-         * whenever possible.
-         */
-
-        const content =
-            root.querySelector(
-                ".contentBox, .message-content, .message-text, .reply-content, .ai-content, .content, .bubble-content"
-            );
-
-        if (content && content.parentElement === root) {
-            content.insertAdjacentElement(
-                "afterend",
-                actions
-            );
-        } else {
-            root.appendChild(actions);
-        }
-
-        return actions;
-    }
-
-    function isAIMessage(element) {
-
-        if (!element || element.nodeType !== 1) {
-            return false;
-        }
-
-        const role =
-            element.dataset?.role ||
-            element.getAttribute?.("data-role") ||
-            element.dataset?.messageRole ||
-            "";
-
-        if (
-            role &&
-            role.toLowerCase() === "ai"
-        ) {
-            return true;
-        }
-
-        if (
-            role &&
-            (
-                role.toLowerCase() === "assistant" ||
-                role.toLowerCase() === "user"
-            )
-        ) {
-            return role.toLowerCase() === "assistant";
-        }
-
-        const classes =
-            String(element.className || "")
-                .toLowerCase();
-
-        if (
-            classes.includes("ai-message") ||
-            classes.includes("assistant-message") ||
-            classes.includes("bot-message") ||
-            classes.includes("cortex-ai")
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    function scan() {
-
-        const candidates = [
-            '[data-role="ai"]',
-            '[data-role="assistant"]',
-            ".ai-message",
-            ".assistant-message",
-            ".bot-message",
-            ".cortex-ai-message"
-        ];
-
-        const seen =
-            new Set();
-
-        candidates.forEach(function (selector) {
-
-            document
-                .querySelectorAll(selector)
-                .forEach(function (element) {
-
-                    if (seen.has(element)) {
-                        return;
-                    }
-
-                    seen.add(element);
-
-                    if (!element.dataset.cortexActionsAttached) {
-
-                        const actions =
-                            createActions(element);
-
-                        if (actions) {
-                            element.dataset.cortexActionsAttached =
-                                "true";
-                        }
-                    }
-                });
-        });
-    }
-
-    document.addEventListener(
-        "click",
-        function (event) {
-
-            if (
-                !event.target.closest(
-                    ".cortex-ai-more-wrap"
-                )
-            ) {
-                closeAllMenus(null);
-            }
-        }
-    );
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (event.key === "Escape") {
-                closeAllMenus(null);
-            }
-        }
-    );
-
-    const observer =
-        new MutationObserver(function () {
-            scan();
-        });
-
-    function start() {
-
-        scan();
-
-        if (document.body) {
-
-            observer.observe(
-                document.body,
-                {
-                    childList: true,
-                    subtree: true
-                }
-            );
-        }
-
-        /*
-         * Additional scan for dynamically rendered
-         * streaming/history messages.
-         */
-
-        setInterval(
-            scan,
-            1200
-        );
-    }
-
-    if (
-        document.readyState === "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once: true
-            }
-        );
-
-    } else {
-        start();
-    }
-
-    window.CortexAIMessageActions = {
-        create: createActions,
-        scan: scan,
-        copy: copyText,
-        share: shareText,
-        readAloud: readAloud,
-        branch: branchNewChat
-    };
-
-})();
-
-/* CORTEX AI MESSAGE ACTION BAR V1 END */
 </script>
 <!-- CORTEX ALWAYS VISIBLE AI REPLY ICONS START -->
 <style>
@@ -41032,6 +39599,8 @@ img#headerLogo
 })();
 </script>
 <!-- CORTEX ALWAYS VISIBLE AI REPLY ICONS END -->
+
+
 </body>
 </html>
 
@@ -41456,4 +40025,8 @@ img#headerLogo
 
 })();
 </script>
+
+
+
+
 
