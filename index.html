@@ -6759,7 +6759,7 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
         }
 
         async saveSettings(settings) {
-            if (!this.uid) return;
+            if (!this.uid) throw new Error('Cannot save settings without an authenticated user.');
             try {
                 const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
                 await docRef.set({
@@ -6775,7 +6775,7 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
         }
 
         async saveChat(chatId, chatData) {
-            if (!this.uid) return;
+            if (!this.uid) throw new Error('Cannot save chat without an authenticated user.');
             try {
                 const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
                 await chatRef.set({
@@ -6792,7 +6792,7 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
         }
 
         async saveMessage(chatId, messageId, message) {
-            if (!this.uid) return;
+            if (!this.uid) throw new Error('Cannot save message without an authenticated user.');
             try {
                 const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
                     .collection('chats').doc(chatId)
@@ -6801,7 +6801,7 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
                     role: message.role || 'user',
                     text: message.text || '',
                     createdAt: window.firebase.firestore.Timestamp.now()
-                });
+                }, { merge: true });
                 console.log(`[Persistence] Message ${messageId} saved to Firestore`);
             } catch (err) {
                 console.error('[Persistence] Error saving message:', err.message);
@@ -6809,9 +6809,10 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
         }
 
         async loadUserData() {
-            if (!this.uid) return { chats: {}, settings: {} };
+            const requestedUid = this.uid;
+            if (!requestedUid) throw new Error('Cannot load chats without an authenticated user.');
             try {
-                const userRef = window.firebase.firestore().collection('users').doc(this.uid);
+                const userRef = window.firebase.firestore().collection('users').doc(requestedUid);
 
                 // Load settings
                 const settingsDoc = await userRef.collection('settings').doc('general').get();
@@ -6829,6 +6830,7 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
                     const messages = messagesSnapshot.docs.map(doc => {
                         const data = doc.data();
                         return {
+                            id: doc.id,
                             role: data.role === 'ai' ? 'ai' : 'me',
                             text: data.text || ''
                         };
@@ -6840,11 +6842,15 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
                     chats[chatId].messageCount = messages.length;
                 }
 
+                if (this.uid !== requestedUid) {
+                    throw new Error('Authenticated user changed while loading chats.');
+                }
+
                 console.log('[Persistence] User data loaded from Firestore:', { chats: Object.keys(chats), settings });
                 return { chats, settings };
             } catch (err) {
                 console.error('[Persistence] Error loading user data:', err.message);
-                return { chats: {}, settings: {} };
+                throw err;
             }
         }
     }
@@ -12935,7 +12941,7 @@ function getAccountScopedChatStorageKey(identity) {
 
 function getUserChatStorageKey() {
     const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
-    const userId = (localStorage.getItem('mi_user_id') || '').trim().toLowerCase();
+    const userId = String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || localStorage.getItem('mi_user_id') || '').trim();
     const identity = email || userId || guestId;
     return getAccountScopedChatStorageKey(identity);
 }
@@ -13138,9 +13144,6 @@ try {
     localStorage.removeItem('mi_supabase_token');
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
-
-    // Clear account chats from localStorage
-    localStorage.removeItem('mi_chats_' + accountId);
 
 user = null;
     accountId = guestId;
@@ -13602,6 +13605,11 @@ async function initSharedAccess(payload) {
 
 let chatLoadSequence = 0;
 
+function isCurrentAuthenticatedUser(userId) {
+    const currentUid = window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '';
+    return Boolean(userId && currentUid && String(userId) === String(currentUid));
+}
+
 async function loadUserChats() {
   const token = localStorage.getItem('mi_supabase_token');
   const userId = localStorage.getItem('mi_user_id');
@@ -13619,7 +13627,9 @@ async function loadUserChats() {
     return;
   }
 
-  const requestId = ++chatLoadSequence;
+    const requestId = ++chatLoadSequence;
+    const requestedUserId = userId;
+    if (!isCurrentAuthenticatedUser(requestedUserId)) return;
   resetChatStateForAuthChange();
   const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
 
@@ -13634,7 +13644,7 @@ async function loadUserChats() {
     const json = await res.json();
 
     let loadedChats = {};
-    if (requestId !== chatLoadSequence) return;
+    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
 
     if (res.ok && Array.isArray(json.conversations)) {
       for (const conversation of json.conversations) {
@@ -13691,7 +13701,7 @@ async function loadUserChats() {
       }
     }
 
-    if (requestId !== chatLoadSequence) return;
+    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
     chats = loadedChats;
     currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : Object.keys(chats || {})[0] || null;
 
@@ -13705,7 +13715,7 @@ async function loadUserChats() {
       chatBox.innerHTML = '';
     }
   } catch (e) {
-    if (requestId !== chatLoadSequence) return;
+    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
     chats = {};
     currentChat = null;
     const storageKey = getUserChatStorageKey();
@@ -13844,6 +13854,9 @@ try {
             const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
             const nextToken = await firebaseUser.getIdToken();
             user = nextUser;
+            if (window.firestorePersistence) {
+                window.firestorePersistence.setUser(firebaseUser.uid);
+            }
             localStorage.setItem('mi_supabase_token', nextToken);
             localStorage.setItem('mi_user_id', firebaseUser.uid);
             localStorage.setItem('mi_user_email', firebaseUser.email || '');
@@ -13858,6 +13871,11 @@ try {
                     // Only load if there's actual data
                     if (Object.keys(firestoreChats).length > 0) {
                         chats = firestoreChats;
+                        currentChat = localStorage.getItem('last_chat') && chats[localStorage.getItem('last_chat')]
+                            ? localStorage.getItem('last_chat')
+                            : Object.keys(chats)[0] || null;
+                        renderList();
+                        if (currentChat) openChat(currentChat);
                         console.log('[Persistence] User chats loaded from Firestore:', Object.keys(chats).length);
                     } else {
                         await loadUserChats();
@@ -15541,7 +15559,8 @@ async function save() {
                 // Save each message
                 chatData.forEach((msg, index) => {
                     if (msg && msg.text) {
-                        const messageId = `msg_${index}_${Date.now()}`;
+                        if (!msg.id) msg.id = `${chatId}_message_${index}`;
+                        const messageId = String(msg.id);
                         window.firestorePersistence.saveMessage(chatId, messageId, {
                             role: msg.role === 'me' ? 'me' : 'ai',
                             text: msg.text
@@ -34687,12 +34706,25 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 
         const database = window.firebase.firestore();
 
-        await database
+        const chatRef = database
             .collection("users")
             .doc(window.miFirebaseUser.uid)
             .collection("chats")
-            .doc(chatId)
-            .delete();
+            .doc(chatId);
+        const messagesSnapshot = await chatRef.collection("messages").get();
+        let batch = database.batch();
+        let batchCount = 0;
+        for (const messageDoc of messagesSnapshot.docs) {
+            batch.delete(messageDoc.ref);
+            batchCount += 1;
+            if (batchCount === 450) {
+                await batch.commit();
+                batch = database.batch();
+                batchCount = 0;
+            }
+        }
+        if (batchCount) await batch.commit();
+        await chatRef.delete();
     }
 
     async function deleteOneSelectedChat(chatId) {
