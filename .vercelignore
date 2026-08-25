@@ -3,4 +3,10 @@
 __pycache__
 **/__pycache__
 *.pyc
+.venv
+.venv-*
+**/.venv
+**/.venv-*
+node_modules
+**/node_modules
 .vercel

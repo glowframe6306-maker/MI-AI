@@ -6,7 +6,6 @@ dependencies = [
     "flask-cors",
     "groq>=1.5.0",
     "python-dotenv",
-    "speechrecognition",
     "google-genai>=1.0.0",
     "supabase>=2.4.0",
     "firebase-admin>=6.5.0",
