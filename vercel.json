@@ -9,20 +9,12 @@
     {
       "src": "index.html",
       "use": "@vercel/static"
-    },
-    {
-      "src": "vendor/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/index.py"
-    },
-    {
-      "src": "/vendor/(.*)",
-      "dest": "/vendor/$1"
     },
     {
       "src": "/(.*)",
