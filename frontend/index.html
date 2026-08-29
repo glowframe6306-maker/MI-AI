@@ -6419,7 +6419,42 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 
 <script>
-// Create a Promise that resolves when Firebase is fully initialized
+// Step 1: Create a Promise that detects when Firebase SDK is loaded
+// This handles the case where vendor scripts load asynchronously on Vercel
+window.miSDKReady = new Promise((resolve, reject) => {
+    window._miSDKResolve = resolve;
+    window._miSDKReject = reject;
+    
+    // Check if SDK is already loaded (script was synchronous)
+    if (typeof window.firebase !== 'undefined') {
+        console.log('[MI-FIREBASE] Firebase SDK already available');
+        resolve(window.firebase);
+        return;
+    }
+    
+    // Otherwise wait for it with a timeout
+    console.log('[MI-FIREBASE] Waiting for Firebase SDK to load...');
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds with 100ms checks
+    
+    const checkSDK = () => {
+        attempts++;
+        if (typeof window.firebase !== 'undefined') {
+            console.log('[MI-FIREBASE] Firebase SDK detected after', attempts * 100, 'ms');
+            resolve(window.firebase);
+        } else if (attempts >= maxAttempts) {
+            console.error('[MI-FIREBASE] Firebase SDK load timeout');
+            reject(new Error('Firebase SDK failed to load within 5 seconds'));
+        } else {
+            setTimeout(checkSDK, 100);
+        }
+    };
+    
+    // Start checking
+    setTimeout(checkSDK, 0);
+});
+
+// Step 2: Create a Promise that resolves when Firebase is fully initialized
 // This prevents race conditions where login is clicked before Firebase is ready
 window.miFirebaseReady = new Promise((resolve, reject) => {
     window._miFirebaseResolve = resolve;
@@ -6630,9 +6665,29 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
     }
 
     function initializeMIFirebase() {
+        console.log('[MI-FIREBASE] initializeMIFirebase() called');
+        
+        // By this point, SDK should be available (we waited in startFirebase)
         if (typeof window.firebase === "undefined") {
-            throw new Error("Firebase SDK failed to load.");
+            const msg = "Firebase SDK not available after waiting";
+            console.error('[MI-FIREBASE]', msg);
+            throw new Error(msg);
         }
+        
+        console.log('[MI-FIREBASE] Checking Firebase services...');
+        
+        // Verify all required Firebase services are available
+        if (typeof window.firebase.initializeApp !== 'function') {
+            throw new Error("Firebase initializeApp not available");
+        }
+        if (typeof window.firebase.auth !== 'function') {
+            throw new Error("Firebase Auth SDK not loaded");
+        }
+        if (typeof window.firebase.firestore !== 'function') {
+            throw new Error("Firebase Firestore SDK not loaded");
+        }
+        
+        console.log('[MI-FIREBASE] All Firebase services available');
 
         let app;
 
@@ -6657,9 +6712,14 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
         window.miFirebaseAuth = auth;
         window.miFirebaseDb = db;
         window.miFirebaseUser = auth.currentUser || null;
+        
+        console.log('[MI-FIREBASE] App initialized:', app.name);
+        console.log('[MI-FIREBASE] Auth module ready:', typeof auth);
+        console.log('[MI-FIREBASE] Firestore module ready:', typeof db);
 
         // Initialize persistence manager
         window.firestorePersistence = new window.FirestorePersistenceManager(db);
+        console.log('[MI-FIREBASE] Persistence manager initialized');
 
         auth.onAuthStateChanged(function (user) {
             window.miFirebaseUser = user || null;
@@ -6842,6 +6902,8 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
                 return true;
             }
         };
+        
+        console.log('[MI-FIREBASE] window.MIFirebase API created');
 
         document.addEventListener(
             "change",
@@ -6857,7 +6919,7 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
         );
 
         console.log(
-            "[CORTEX CORE AI] Firebase Authentication connected:",
+            "[MI-FIREBASE] Authentication connected for project:",
             firebaseConfig.projectId
         );
 
@@ -6881,34 +6943,45 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
     }
 
     function startFirebase() {
-        try {
-            initializeMIFirebase();
-        }
-        catch (error) {
-            console.error(
-                "[CORTEX CORE AI] Firebase initialization failed:",
-                error
-            );
-
-            // Clear the timeout and reject the readiness Promise
-            if (window._miFirebaseTimeout) {
-                clearTimeout(window._miFirebaseTimeout);
+        // Make it async by starting the async work immediately
+        (async () => {
+            try {
+                console.log('[MI-FIREBASE] startFirebase() called');
+                
+                // Wait for SDK to be available
+                console.log('[MI-FIREBASE] Waiting for Firebase SDK...');
+                await window.miSDKReady;
+                console.log('[MI-FIREBASE] Firebase SDK ready, initializing...');
+                
+                // Now initialize
+                initializeMIFirebase();
             }
-            if (window._miFirebaseReject) {
-                window._miFirebaseReject(error);
-            }
+            catch (error) {
+                console.error(
+                    "[MI-FIREBASE] Firebase initialization failed:",
+                    error
+                );
 
-            window.dispatchEvent(
-                new CustomEvent(
-                    "mi-firebase-error",
-                    {
-                        detail: {
-                            message: error.message
+                // Clear the timeout and reject the readiness Promise
+                if (window._miFirebaseTimeout) {
+                    clearTimeout(window._miFirebaseTimeout);
+                }
+                if (window._miFirebaseReject) {
+                    window._miFirebaseReject(error);
+                }
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "mi-firebase-error",
+                        {
+                            detail: {
+                                message: error.message
+                            }
                         }
-                    }
-                )
-            );
-        }
+                    )
+                );
+            }
+        })();
     }
 
     if (document.readyState === "loading") {
