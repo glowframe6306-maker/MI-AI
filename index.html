@@ -6721,6 +6721,17 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 
 <script>
+// Create a Promise that resolves when Firebase is fully initialized
+// This prevents race conditions where login is clicked before Firebase is ready
+window.miFirebaseReady = new Promise((resolve, reject) => {
+    window._miFirebaseResolve = resolve;
+    window._miFirebaseReject = reject;
+    // Add a timeout to prevent hanging if initialization fails
+    window._miFirebaseTimeout = setTimeout(() => {
+        reject(new Error('Firebase initialization timeout - SDK may not have loaded'));
+    }, 10000);
+});
+
 (function () {
     "use strict";
 
@@ -7152,6 +7163,20 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
             firebaseConfig.projectId
         );
 
+        // Clear the initialization timeout since we succeeded
+        if (window._miFirebaseTimeout) {
+            clearTimeout(window._miFirebaseTimeout);
+        }
+
+        // Resolve the readiness Promise so auth functions can proceed
+        if (window._miFirebaseResolve) {
+            window._miFirebaseResolve({
+                auth: auth,
+                db: db,
+                app: app
+            });
+        }
+
         window.dispatchEvent(
             new CustomEvent("mi-firebase-ready")
         );
@@ -7166,6 +7191,14 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
                 "[CORTEX CORE AI] Firebase initialization failed:",
                 error
             );
+
+            // Clear the timeout and reject the readiness Promise
+            if (window._miFirebaseTimeout) {
+                clearTimeout(window._miFirebaseTimeout);
+            }
+            if (window._miFirebaseReject) {
+                window._miFirebaseReject(error);
+            }
 
             window.dispatchEvent(
                 new CustomEvent(
@@ -15907,8 +15940,13 @@ async function handlePasswordReset() {
   }
 
   try {
+    // Wait for Firebase to be initialized before proceeding
+    if (!window.miFirebaseAuth) {
+      setAuthMessage(t('auth.error.initializing', 'Firebase is initializing... Please wait.'), true);
+      await window.miFirebaseReady;
+    }
     const auth = window.miFirebaseAuth;
-    if (!auth) throw new Error('Firebase not initialized');
+    if (!auth) throw new Error('Firebase not initialized after waiting');
     await auth.sendPasswordResetEmail(email, {
       url: window.location.origin || window.location.href,
     });
@@ -15959,8 +15997,13 @@ async function registerEmail() {
   const password = document.getElementById('registerPassword')?.value;
 
   try {
+    // Wait for Firebase to be initialized before proceeding
+    if (!window.miFirebaseAuth) {
+      setAuthMessage(t('auth.error.initializing', 'Firebase is initializing... Please wait.'), true);
+      await window.miFirebaseReady;
+    }
     const auth = window.miFirebaseAuth;
-    if (!auth) throw new Error('Firebase not initialized');
+    if (!auth) throw new Error('Firebase not initialized after waiting');
 
     // Create Firebase user
     const result = await auth.createUserWithEmailAndPassword(email, password);
@@ -16013,8 +16056,13 @@ async function loginEmail() {
   }
 
   try {
+    // Wait for Firebase to be initialized before proceeding
+    if (!window.miFirebaseAuth) {
+      setAuthMessage(t('auth.error.initializing', 'Firebase is initializing... Please wait.'), true);
+      await window.miFirebaseReady;
+    }
     const auth = window.miFirebaseAuth;
-    if (!auth) throw new Error('Firebase not initialized');
+    if (!auth) throw new Error('Firebase not initialized after waiting');
 
     // Sign in with Firebase
     const result = await auth.signInWithEmailAndPassword(email, password);

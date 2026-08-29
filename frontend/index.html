@@ -6419,6 +6419,17 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 
 <script>
+// Create a Promise that resolves when Firebase is fully initialized
+// This prevents race conditions where login is clicked before Firebase is ready
+window.miFirebaseReady = new Promise((resolve, reject) => {
+    window._miFirebaseResolve = resolve;
+    window._miFirebaseReject = reject;
+    // Add a timeout to prevent hanging if initialization fails
+    window._miFirebaseTimeout = setTimeout(() => {
+        reject(new Error('Firebase initialization timeout - SDK may not have loaded'));
+    }, 10000);
+});
+
 (function () {
     "use strict";
 
@@ -6850,6 +6861,20 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
             firebaseConfig.projectId
         );
 
+        // Clear the initialization timeout since we succeeded
+        if (window._miFirebaseTimeout) {
+            clearTimeout(window._miFirebaseTimeout);
+        }
+
+        // Resolve the readiness Promise so auth functions can proceed
+        if (window._miFirebaseResolve) {
+            window._miFirebaseResolve({
+                auth: auth,
+                db: db,
+                app: app
+            });
+        }
+
         window.dispatchEvent(
             new CustomEvent("mi-firebase-ready")
         );
@@ -6864,6 +6889,14 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
                 "[CORTEX CORE AI] Firebase initialization failed:",
                 error
             );
+
+            // Clear the timeout and reject the readiness Promise
+            if (window._miFirebaseTimeout) {
+                clearTimeout(window._miFirebaseTimeout);
+            }
+            if (window._miFirebaseReject) {
+                window._miFirebaseReject(error);
+            }
 
             window.dispatchEvent(
                 new CustomEvent(
@@ -11882,7 +11915,6 @@ window.FIREBASE_CONFIG = {
   appId: "1:845086558623:web:8ff161f6a157cf87d395aa"
 };
 
-let firebaseAuth = null;
 let authMode = 'signin';
 let user = null;
 let currentLanguage = 'en';
@@ -11894,48 +11926,6 @@ const SUPPORTED_LANGUAGES = [
   { code: 'si', file: 'si', label: 'Sinhala' },
   { code: 'ta', file: 'ta', label: 'Tamil' }
 ];
-function getFirebaseConfig() {
-  const config =
-    window.FIREBASE_CONFIG &&
-    typeof window.FIREBASE_CONFIG === "object"
-      ? window.FIREBASE_CONFIG
-      : null;
-
-  if (
-    !config ||
-    !String(config.apiKey || "").trim() ||
-    !String(config.authDomain || "").trim() ||
-    !String(config.projectId || "").trim() ||
-    !String(config.appId || "").trim()
-  ) {
-    return null;
-  }
-
-  return config;
-}
-
-async function initFirebase() {
-
-    if (firebaseAuth) return firebaseAuth;
-
-    const config = getFirebaseConfig();
-
-    if (!config || !config.apiKey) {
-        throw new Error("Firebase configuration is missing.");
-    }
-
-    if (!window.firebase || !window.firebase.apps) {
-        throw new Error("Firebase SDK failed to load.");
-    }
-
-    if (!window.firebase.apps.length) {
-        window.firebase.initializeApp(config);
-    }
-
-    firebaseAuth = window.firebase.auth();
-
-    return firebaseAuth;
-}
 
 function getCurrentLanguageStorageKey() {
   const userId = (user && user.id) || localStorage.getItem('mi_user_id') || '';
@@ -12660,8 +12650,10 @@ async function logout() {
     }
 
 try {
-        const auth = await initFirebase();
-        await auth.signOut();
+        const auth = window.miFirebaseAuth;
+        if (auth) {
+            await auth.signOut();
+        }
     } catch (e) {
         console.error('Logout error:', e);
     }
@@ -13354,8 +13346,8 @@ let userId = localStorage.getItem('mi_user_id');
 let storedEmail = localStorage.getItem('mi_user_email');
 
 try {
-    const auth = await initFirebase();
-    if (typeof auth.onAuthStateChanged === 'function') {
+    const auth = window.miFirebaseAuth;
+    if (auth && typeof auth.onAuthStateChanged === 'function') {
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (!firebaseUser) {
                 user = null;
@@ -15587,7 +15579,13 @@ async function handlePasswordReset() {
   }
 
   try {
-    const auth = await initFirebase();
+    // Wait for Firebase to be initialized before proceeding
+    if (!window.miFirebaseAuth) {
+      setAuthMessage(t('auth.error.initializing', 'Firebase is initializing... Please wait.'), true);
+      await window.miFirebaseReady;
+    }
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase not initialized after waiting');
     await auth.sendPasswordResetEmail(email, {
       url: window.location.origin || window.location.href,
     });
@@ -15638,7 +15636,13 @@ async function registerEmail() {
   const password = document.getElementById('registerPassword')?.value;
 
   try {
-    const auth = await initFirebase();
+    // Wait for Firebase to be initialized before proceeding
+    if (!window.miFirebaseAuth) {
+      setAuthMessage(t('auth.error.initializing', 'Firebase is initializing... Please wait.'), true);
+      await window.miFirebaseReady;
+    }
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase not initialized after waiting');
 
     // Create Firebase user
     const result = await auth.createUserWithEmailAndPassword(email, password);
@@ -15691,7 +15695,13 @@ async function loginEmail() {
   }
 
   try {
-    const auth = await initFirebase();
+    // Wait for Firebase to be initialized before proceeding
+    if (!window.miFirebaseAuth) {
+      setAuthMessage(t('auth.error.initializing', 'Firebase is initializing... Please wait.'), true);
+      await window.miFirebaseReady;
+    }
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase not initialized after waiting');
 
     // Sign in with Firebase
     const result = await auth.signInWithEmailAndPassword(email, password);
@@ -20312,7 +20322,6 @@ document.addEventListener(
         try {
             return (
                 window.miFirebaseAuth?.currentUser ||
-                window.firebaseAuth?.currentUser ||
                 (
                     window.firebase &&
                     typeof window.firebase.auth === "function"
@@ -20991,7 +21000,6 @@ document.addEventListener(
         try {
             auth =
                 window.miFirebaseAuth ||
-                window.firebaseAuth ||
                 (
                     window.firebase &&
                     typeof window.firebase
@@ -28692,14 +28700,7 @@ document.addEventListener(
             }
         } catch (_) {}
 
-        try {
-            if (
-                window.firebaseAuth &&
-                window.firebaseAuth.currentUser
-            ) {
-                candidates.push(window.firebaseAuth.currentUser);
-            }
-        } catch (_) {}
+        // Removed old firebaseAuth fallback - no longer used
 
         try {
             if (
