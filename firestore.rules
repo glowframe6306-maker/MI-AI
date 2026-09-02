@@ -1,15 +1,36 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function to verify user ownership
     function owns(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+    
+    // User root documents
     match /users/{uid} {
       allow read, create, update, delete: if owns(uid);
-      match /{document=**} {
+      
+      // User settings subcollection
+      match /settings/{document=**} {
         allow read, create, update, delete: if owns(uid);
       }
+      
+      // User chats subcollection
+      match /chats/{chatId} {
+        // Allow read/write only if user owns this chat
+        allow read, create, update, delete: if owns(uid) && 
+          (resource.data.userId == uid || request.resource.data.userId == uid);
+        
+        // Messages subcollection within each chat
+        match /messages/{messageId} {
+          // Allow read/write only if user owns the parent chat
+          allow read, create, update, delete: if owns(uid) && 
+            get(/databases/$(database)/documents/users/$(uid)/chats/$(chatId)).data.userId == uid;
+        }
+      }
     }
+    
+    // Default deny for other paths
     match /{document=**} {
       allow read, write: if false;
     }

@@ -27,6 +27,15 @@ try:
 except ImportError:
     create_client = None
 
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore, auth as firebase_auth
+except ImportError:
+    firebase_admin = None
+    credentials = None
+    firestore = None
+    firebase_auth = None
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
@@ -71,6 +80,45 @@ supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 supabase = create_client(supabase_url, supabase_key) if create_client and supabase_url and supabase_key else None
+
+# Initialize Firebase Admin SDK for Firestore persistence
+firebase_db = None
+try:
+    if firebase_admin and credentials:
+        service_account_key_path = os.path.join(BASE_DIR, "serviceAccountKey.json")
+        if os.path.exists(service_account_key_path):
+            if not firebase_admin._apps:
+                cred = credentials.Certificate(service_account_key_path)
+                firebase_admin.initialize_app(cred)
+            firebase_db = firestore.client()
+            print("[FIREBASE] Firestore client initialized successfully")
+        else:
+            print("[FIREBASE] serviceAccountKey.json not found at", service_account_key_path)
+except Exception as e:
+    print(f"[FIREBASE] Failed to initialize Firebase Admin: {e}")
+    firebase_db = None
+
+
+def _verify_firebase_token(token):
+    """Verify Firebase ID token and return user UID."""
+    if not firebase_auth or not token:
+        return None
+    try:
+        decoded_token = firebase_auth.verify_id_token(token)
+        return decoded_token.get('uid')
+    except Exception as e:
+        print(f"[FIREBASE] Token verification error: {e}")
+        return None
+
+
+def _get_user_uid_from_request():
+    """Extract and verify Firebase user UID from Authorization header."""
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return None
+    
+    token = auth_header[7:]  # Remove 'Bearer ' prefix
+    return _verify_firebase_token(token)
 
 
 def _get_groq_api_key():
@@ -694,107 +742,301 @@ def supabase_config():
 
 @app.route("/conversations", methods=["GET", "POST"])
 def conversations():
+    """
+    GET: List user's conversations from Firestore
+    POST: Create or update a conversation in Firestore
+    
+    Requires Firebase Authentication via Authorization header.
+    """
+    user_uid = _get_user_uid_from_request()
+    if not user_uid:
+        return jsonify({"error": "Unauthorized. Please provide a valid Firebase ID token."}), 401
+    
+    if not firebase_db:
+        return jsonify({"error": "Firestore is not configured."}), 503
+    
     if request.method == "GET":
-        session_id = request.args.get("session_id")
-        conversations_list = []
-        for conversation in conversations_store.values():
-            if session_id and conversation.get("session_id") != session_id:
-                continue
-            conversations_list.append({
-                "id": conversation["id"],
-                "title": conversation.get("title") or "New chat",
-                "session_id": conversation.get("session_id"),
-                "created_at": conversation.get("created_at"),
-                "updated_at": conversation.get("updated_at"),
-                "pin": conversation.get("pin", False),
+        try:
+            # Load all conversations for the authenticated user
+            user_chats_ref = firebase_db.collection('users').document(user_uid).collection('chats')
+            docs = user_chats_ref.stream()
+            
+            conversations_list = []
+            for doc in docs:
+                data = doc.data()
+                # Verify ownership
+                if data.get('userId') != user_uid:
+                    continue
+                
+                conversations_list.append({
+                    "id": doc.id,
+                    "title": data.get("title") or "New chat",
+                    "session_id": data.get("session_id"),
+                    "created_at": data.get("createdAt").isoformat() if data.get("createdAt") else None,
+                    "updated_at": data.get("updatedAt").isoformat() if data.get("updatedAt") else None,
+                    "pin": data.get("pin", False),
+                    "message_count": data.get("messageCount", 0),
+                })
+            
+            # Sort by updated_at descending
+            conversations_list.sort(
+                key=lambda x: x.get("updated_at") or x.get("created_at") or "",
+                reverse=True
+            )
+            
+            return jsonify({"conversations": conversations_list, "success": True})
+        
+        except Exception as e:
+            print(f"[FIREBASE] Error loading conversations: {e}")
+            return jsonify({"error": str(e), "success": False}), 500
+    
+    # POST: Create or update conversation
+    try:
+        data = request.get_json(silent=True) or {}
+        conversation_id = str(data.get("id") or uuid.uuid4())
+        title = (data.get("title") or "New chat").strip() or "New chat"
+        
+        user_chats_ref = firebase_db.collection('users').document(user_uid).collection('chats')
+        chat_doc = user_chats_ref.document(conversation_id)
+        
+        # Check if chat already exists and verify ownership
+        existing = chat_doc.get()
+        now = datetime.utcnow()
+        
+        if existing.exists:
+            existing_data = existing.data()
+            if existing_data.get('userId') != user_uid:
+                return jsonify({"error": "Unauthorized. This chat belongs to another user."}), 403
+            
+            # Update existing chat
+            chat_doc.update({
+                "title": title,
+                "updatedAt": now,
             })
-        conversations_list.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
-        return jsonify({"conversations": conversations_list})
-
-    data = request.get_json(silent=True) or {}
-    conversation_id = str(data.get("id") or uuid.uuid4())
-    title = (data.get("title") or "New chat").strip() or "New chat"
-    session_id = data.get("session_id") or str(uuid.uuid4())
-
-    conversation = conversations_store.get(conversation_id)
-    if not conversation:
-        conversation = {
-            "id": conversation_id,
-            "title": title,
-            "session_id": session_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
-            "pin": False,
-        }
-        conversations_store[conversation_id] = conversation
-        messages_store[conversation_id] = []
-    else:
-        conversation["title"] = title
-        conversation["session_id"] = session_id
-        conversation["updated_at"] = datetime.utcnow().isoformat()
-
-    return jsonify({"conversation": {
-        "id": conversation["id"],
-        "title": conversation.get("title") or "New chat",
-        "session_id": conversation.get("session_id"),
-        "created_at": conversation.get("created_at"),
-        "updated_at": conversation.get("updated_at"),
-        "pin": conversation.get("pin", False),
-    }})
+        else:
+            # Create new chat
+            chat_doc.set({
+                "id": conversation_id,
+                "userId": user_uid,
+                "title": title,
+                "pin": False,
+                "createdAt": now,
+                "updatedAt": now,
+                "messageCount": 0,
+            })
+        
+        return jsonify({
+            "conversation": {
+                "id": conversation_id,
+                "title": title,
+                "userId": user_uid,
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+                "pin": False,
+            },
+            "success": True
+        })
+    
+    except Exception as e:
+        print(f"[FIREBASE] Error creating/updating conversation: {e}")
+        return jsonify({"error": str(e), "success": False}), 500
 
 
 @app.route("/messages", methods=["GET", "POST"])
 def messages():
+    """
+    GET: List messages for a conversation from Firestore
+    POST: Add a message to a conversation in Firestore
+    
+    Requires Firebase Authentication via Authorization header.
+    """
+    user_uid = _get_user_uid_from_request()
+    if not user_uid:
+        return jsonify({"error": "Unauthorized. Please provide a valid Firebase ID token."}), 401
+    
+    if not firebase_db:
+        return jsonify({"error": "Firestore is not configured."}), 503
+    
     if request.method == "GET":
-        conversation_id = request.args.get("conversation_id")
+        try:
+            conversation_id = request.args.get("conversation_id")
+            if not conversation_id:
+                return jsonify({"messages": []})
+            
+            # Verify chat ownership
+            chat_doc = firebase_db.collection('users').document(user_uid).collection('chats').document(conversation_id)
+            chat_snapshot = chat_doc.get()
+            
+            if not chat_snapshot.exists:
+                return jsonify({"error": "Chat not found."}), 404
+            
+            if chat_snapshot.data().get('userId') != user_uid:
+                return jsonify({"error": "Unauthorized."}), 403
+            
+            # Load messages
+            messages_ref = chat_doc.collection('messages')
+            docs = messages_ref.order_by('createdAt').stream()
+            
+            messages_list = []
+            for doc in docs:
+                data = doc.data()
+                messages_list.append({
+                    "id": doc.id,
+                    "conversation_id": conversation_id,
+                    "role": data.get("role"),
+                    "content": data.get("text") or data.get("content"),
+                    "created_at": data.get("createdAt").isoformat() if data.get("createdAt") else None,
+                })
+            
+            return jsonify({"messages": messages_list, "success": True})
+        
+        except Exception as e:
+            print(f"[FIREBASE] Error loading messages: {e}")
+            return jsonify({"error": str(e), "success": False}), 500
+    
+    # POST: Add message
+    try:
+        data = request.get_json(silent=True) or {}
+        conversation_id = data.get("conversation_id")
+        content = (data.get("content") or "").strip()
+        role = data.get("role") or "user"
+        
         if not conversation_id:
-            return jsonify({"messages": []})
+            return jsonify({"error": "conversation_id is required."}), 400
+        
+        if not content:
+            return jsonify({"error": "Content is required."}), 400
+        
+        # Verify chat ownership
+        chat_doc = firebase_db.collection('users').document(user_uid).collection('chats').document(conversation_id)
+        chat_snapshot = chat_doc.get()
+        
+        if not chat_snapshot.exists:
+            return jsonify({"error": "Chat not found."}), 404
+        
+        if chat_snapshot.data().get('userId') != user_uid:
+            return jsonify({"error": "Unauthorized."}), 403
+        
+        # Add message
+        message_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+        
+        messages_ref = chat_doc.collection('messages')
+        messages_ref.document(message_id).set({
+            "id": message_id,
+            "userId": user_uid,
+            "role": role,
+            "text": content,
+            "content": content,
+            "createdAt": now,
+        })
+        
+        # Update chat's message count and updatedAt
+        chat_data = chat_snapshot.data()
+        new_count = chat_data.get("messageCount", 0) + 1
+        chat_doc.update({
+            "messageCount": new_count,
+            "updatedAt": now,
+        })
+        
+        return jsonify({
+            "message": {
+                "id": message_id,
+                "conversation_id": conversation_id,
+                "role": role,
+                "content": content,
+                "created_at": now.isoformat(),
+            },
+            "conversation_id": conversation_id,
+            "content": content,
+            "success": True
+        })
+    
+    except Exception as e:
+        print(f"[FIREBASE] Error adding message: {e}")
+        return jsonify({"error": str(e), "success": False}), 500
 
-        messages_list = messages_store.get(conversation_id, [])
-        return jsonify({"messages": [{
-            "id": message["id"],
-            "conversation_id": message.get("conversation_id"),
-            "role": message.get("role"),
-            "content": message.get("content"),
-            "created_at": message.get("created_at"),
-        } for message in messages_list]})
 
-    data = request.get_json(silent=True) or {}
-    conversation_id = data.get("conversation_id") or str(uuid.uuid4())
-    content = (data.get("content") or "").strip()
-    role = data.get("role") or "user"
-    session_id = data.get("session_id") or str(uuid.uuid4())
+@app.route("/api/conversations/<conversation_id>", methods=["PATCH"])
+def update_conversation(conversation_id):
+    """Update conversation metadata (title, etc.) in Firestore."""
+    user_uid = _get_user_uid_from_request()
+    if not user_uid:
+        return jsonify({"error": "Unauthorized."}), 401
+    
+    if not firebase_db:
+        return jsonify({"error": "Firestore is not configured."}), 503
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Verify ownership
+        chat_doc = firebase_db.collection('users').document(user_uid).collection('chats').document(conversation_id)
+        chat_snapshot = chat_doc.get()
+        
+        if not chat_snapshot.exists:
+            return jsonify({"error": "Chat not found."}), 404
+        
+        if chat_snapshot.data().get('userId') != user_uid:
+            return jsonify({"error": "Unauthorized."}), 403
+        
+        # Update fields
+        update_data = {}
+        if "title" in data:
+            update_data["title"] = data["title"]
+        if "pin" in data:
+            update_data["pin"] = data["pin"]
+        
+        update_data["updatedAt"] = datetime.utcnow()
+        
+        chat_doc.update(update_data)
+        
+        return jsonify({"success": True, "conversation_id": conversation_id})
+    
+    except Exception as e:
+        print(f"[FIREBASE] Error updating conversation: {e}")
+        return jsonify({"error": str(e)}), 500
 
-    if not content:
-        return jsonify({"error": "Content is required."}), 400
 
-    if conversation_id not in conversations_store:
-        conversations_store[conversation_id] = {
-            "id": conversation_id,
-            "title": "New chat",
-            "session_id": session_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
-            "pin": False,
-        }
-        messages_store[conversation_id] = []
-
-    message = {
-        "id": str(uuid.uuid4()),
-        "conversation_id": conversation_id,
-        "session_id": session_id,
-        "role": role,
-        "content": content,
-        "created_at": datetime.utcnow().isoformat(),
-    }
-    messages_store[conversation_id].append(message)
-    conversations_store[conversation_id]["updated_at"] = datetime.utcnow().isoformat()
-
-    return jsonify({
-        "message": message,
-        "conversation_id": conversation_id,
-        "content": content,
-    })
+@app.route("/api/conversations/<conversation_id>", methods=["DELETE"])
+def delete_conversation(conversation_id):
+    """Delete a conversation and all its messages from Firestore."""
+    user_uid = _get_user_uid_from_request()
+    if not user_uid:
+        return jsonify({"error": "Unauthorized."}), 401
+    
+    if not firebase_db:
+        return jsonify({"error": "Firestore is not configured."}), 503
+    
+    try:
+        # Verify ownership
+        chat_doc = firebase_db.collection('users').document(user_uid).collection('chats').document(conversation_id)
+        chat_snapshot = chat_doc.get()
+        
+        if not chat_snapshot.exists:
+            return jsonify({"error": "Chat not found."}), 404
+        
+        if chat_snapshot.data().get('userId') != user_uid:
+            return jsonify({"error": "Unauthorized."}), 403
+        
+        # Delete all messages first
+        messages_ref = chat_doc.collection('messages')
+        docs = messages_ref.stream()
+        
+        batch = firebase_db.batch()
+        for doc in docs:
+            batch.delete(doc.reference)
+        
+        # Delete the chat document
+        batch.delete(chat_doc)
+        
+        batch.commit()
+        
+        return jsonify({"success": True, "conversation_id": conversation_id})
+    
+    except Exception as e:
+        print(f"[FIREBASE] Error deleting conversation: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/chat", methods=["POST"])

@@ -6822,36 +6822,61 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
 
         async saveChat(chatId, chatData) {
             if (!this.uid) throw new Error('Cannot save chat without an authenticated user.');
-            try {
-                const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
-                await chatRef.set({
-                    title: chatData.title || 'Chat',
-                    pin: chatData.pin || false,
-                    createdAt: window.firebase.firestore.Timestamp.now(),
-                    updatedAt: window.firebase.firestore.Timestamp.now(),
-                    messageCount: chatData.messageCount || 0
-                }, { merge: true });
-                console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
-            } catch (err) {
-                console.error('[Persistence] Error saving chat:', err.message);
-            }
+            const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+            const existing = await chatRef.get();
+            const now = window.firebase.firestore.Timestamp.now();
+            await chatRef.set({
+                id: chatId,
+                userId: this.uid,
+                title: chatData.title || 'Chat',
+                pin: chatData.pin || false,
+                createdAt: existing.exists && existing.data().createdAt ? existing.data().createdAt : now,
+                updatedAt: now,
+                messageCount: chatData.messageCount || 0
+            }, { merge: true });
+            console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
         }
 
         async saveMessage(chatId, messageId, message) {
             if (!this.uid) throw new Error('Cannot save message without an authenticated user.');
-            try {
-                const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
-                    .collection('chats').doc(chatId)
-                    .collection('messages').doc(messageId);
-                await messageRef.set({
-                    role: message.role || 'user',
-                    text: message.text || '',
-                    createdAt: window.firebase.firestore.Timestamp.now()
-                }, { merge: true });
-                console.log(`[Persistence] Message ${messageId} saved to Firestore`);
-            } catch (err) {
-                console.error('[Persistence] Error saving message:', err.message);
+            const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+            const chatSnapshot = await chatRef.get();
+            if (!chatSnapshot.exists || chatSnapshot.data().userId !== this.uid) {
+                throw new Error('Chat ownership could not be verified.');
             }
+            const messageRef = chatRef.collection('messages').doc(messageId);
+            await messageRef.set({
+                id: messageId,
+                userId: this.uid,
+                role: message.role || 'user',
+                text: message.text || '',
+                createdAt: message.createdAt || window.firebase.firestore.Timestamp.now()
+            }, { merge: true });
+            console.log(`[Persistence] Message ${messageId} saved to Firestore`);
+        }
+
+        async deleteChat(chatId) {
+            if (!this.uid) throw new Error('Cannot delete chat without an authenticated user.');
+            const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
+            const chatSnapshot = await chatRef.get();
+            if (!chatSnapshot.exists) return;
+            if (chatSnapshot.data().userId && chatSnapshot.data().userId !== this.uid) {
+                throw new Error('Chat ownership could not be verified.');
+            }
+            const messagesSnapshot = await chatRef.collection('messages').get();
+            let batch = window.firebase.firestore().batch();
+            let count = 0;
+            for (const message of messagesSnapshot.docs) {
+                batch.delete(message.ref);
+                count += 1;
+                if (count === 450) {
+                    await batch.commit();
+                    batch = window.firebase.firestore().batch();
+                    count = 0;
+                }
+            }
+            if (count) await batch.commit();
+            await chatRef.delete();
         }
 
         async loadUserData() {
@@ -6871,6 +6896,7 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
                 for (const chatDoc of chatsSnapshot.docs) {
                     const chatId = chatDoc.id;
                     const chatData = chatDoc.data();
+                    if (chatData.userId && chatData.userId !== requestedUid) continue;
 
                     const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').get();
                     const messages = messagesSnapshot.docs.map(doc => {
@@ -6878,7 +6904,8 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
                         return {
                             id: doc.id,
                             role: data.role === 'ai' ? 'ai' : 'me',
-                            text: data.text || ''
+                            text: data.text || '',
+                            createdAt: data.createdAt || null
                         };
                     });
 
@@ -6886,6 +6913,9 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
                     chats[chatId].title = chatData.title || chatId;
                     chats[chatId].pin = chatData.pin || false;
                     chats[chatId].messageCount = messages.length;
+                    if (!chatData.userId) {
+                        await chatDoc.ref.set({ userId: requestedUid, id: chatId }, { merge: true });
+                    }
                 }
 
                 if (this.uid !== requestedUid) {
@@ -13669,6 +13699,7 @@ async function initSharedAccess(payload) {
 }
 
 let chatLoadSequence = 0;
+let authTransitionSequence = 0;
 
 function isCurrentAuthenticatedUser(userId) {
     const currentUid = window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '';
@@ -14154,8 +14185,13 @@ async function newChat(){
     /*
       Create the server conversation first.
       A local chat remains available if the server request fails.
+      Use Firebase token for authenticated users.
     */
-    const token =
+    const firebaseToken = isAuthenticated() && window.miFirebaseUser
+      ? await (window.miFirebaseUser.getIdToken && window.miFirebaseUser.getIdToken(true)).catch(() => null)
+      : null;
+
+    const supabaseToken =
         localStorage.getItem(
             "mi_supabase_token"
         ) || "";
@@ -14177,9 +14213,13 @@ async function newChat(){
     let serverId = "";
 
     try {
+        // Use Firebase token if available, fall back to Supabase
+        const authToken = firebaseToken || supabaseToken;
+        const authHeader = firebaseToken ? "Bearer " + firebaseToken : "Bearer " + supabaseToken;
+        
         const response =
             await fetch(
-                "/api/conversations",
+                "/conversations",
                 {
                     method:
                         "POST",
@@ -14189,8 +14229,7 @@ async function newChat(){
                             "application/json",
 
                         "Authorization":
-                            "Bearer " +
-                            token,
+                            authHeader,
 
                         "X-Session-Id":
                             accountId ||
@@ -14250,38 +14289,46 @@ async function newChat(){
 }
 
 /* OPEN */
-function openChat(id){
-removeLoginPrompt();
-currentChat=id;
-if (!chatBox) {
-    console.error('Chat container not found');
-    return;
-}
-chatBox.innerHTML="";
-const chatData = chats[id] || [];
-const attachments = Array.isArray(chatData.attachments) ? chatData.attachments : [];
-if (attachments.length > 0) {
-    const attachmentBox = document.createElement('div');
-    attachmentBox.style.marginBottom = '12px';
-    attachmentBox.innerHTML = attachments.map((attachment) => `
-      <div style="margin-bottom:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#f8fafc;">
-        <div style="font-size:13px;font-weight:700;">├░┼╕ΓÇ£┬ü ${attachment.file_name || 'Uploaded file'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} ├óΓé¼┬ó ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
-      </div>
-    `).join('');
-    chatBox.appendChild(attachmentBox);
-}
-(Array.isArray(chatData) ? chatData : []).forEach(m => {
-    if (m.role === 'ai') {
-        appendAiMessage(chatBox, m.text);
-    } else {
-        let d = document.createElement("div");
-        d.className = m.role;
-        d.textContent = m.text;
-        chatBox.appendChild(d);
+async function openChat(id){
+    // Use new chat switching logic if available
+    if (window.miChatPersistence && typeof window.miChatPersistence.switchToChat === 'function') {
+        const canSwitch = await window.miChatPersistence.switchToChat(id);
+        if (!canSwitch) {
+            return;  // User cancelled the switch
+        }
     }
-});
-localStorage.setItem("last_chat",id);
+    
+    removeLoginPrompt();
+    currentChat=id;
+    if (!chatBox) {
+        console.error('Chat container not found');
+        return;
+    }
+    chatBox.innerHTML="";
+    const chatData = chats[id] || [];
+    const attachments = Array.isArray(chatData.attachments) ? chatData.attachments : [];
+    if (attachments.length > 0) {
+        const attachmentBox = document.createElement('div');
+        attachmentBox.style.marginBottom = '12px';
+        attachmentBox.innerHTML = attachments.map((attachment) => `
+          <div style="margin-bottom:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#f8fafc;">
+            <div style="font-size:13px;font-weight:700;">├░┼╕ΓÇ£┬ü ${attachment.file_name || 'Uploaded file'}</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">${attachment.file_type || ''} ├óΓé¼┬ó ${(attachment.file_size / 1024 / 1024).toFixed(2)} MB</div>
+          </div>
+        `).join('');
+        chatBox.appendChild(attachmentBox);
+    }
+    (Array.isArray(chatData) ? chatData : []).forEach(m => {
+        if (m.role === 'ai') {
+            appendAiMessage(chatBox, m.text);
+        } else {
+            let d = document.createElement("div");
+            d.className = m.role;
+            d.textContent = m.text;
+            chatBox.appendChild(d);
+        }
+    });
+    localStorage.setItem("last_chat",id);
 }
 
 /* RENDER LIST */
@@ -15312,6 +15359,14 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
         chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
         chats[conversationId].lastPreview = existingText;
         save();
+        
+        // Save AI message to server via Firebase
+        if (isAuthenticated() && window.miChatPersistence && window.miFirebaseUser) {
+            window.miChatPersistence.saveMessageToServer(conversationId, 'assistant', existingText)
+              .catch(err => console.error('[Chat Persistence] AI message save error:', err));
+        }
+        
+        // Also save to Firestore persistence if available
         if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
             const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
             window.firestorePersistence.saveMessage(conversationId, messageId, { role: 'ai', text: existingText }).catch(err => console.error('[Persistence] AI message save error:', err));
@@ -15395,6 +15450,13 @@ async function send() {
     chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
     chats[conversationId].lastPreview = msg;
     save();
+    
+    // Save user message to server if authenticated
+    if (isAuthenticated() && window.miChatPersistence && window.miFirebaseUser) {
+        window.miChatPersistence.saveMessageToServer(conversationId, 'user', msg)
+          .catch(err => console.error('[Chat Persistence] User message save error:', err));
+    }
+    
     scroll();
     const t = document.createElement('div');
     t.className = 'thinking';
@@ -30647,6 +30709,380 @@ window.miOpenAccountChat=openPanel;
 })();
 </script>
 <!-- CORTEX CORE AI ACCOUNT CHAT V2 END -->
+
+<!-- CORTEX CORE AI PERSISTENT CHAT SYSTEM V1 START -->
+<script id="miPersistentChatSystemV1">
+(function() {
+  'use strict';
+
+  if (window.__miPersistentChatSystemV1) return;
+  window.__miPersistentChatSystemV1 = true;
+
+  let isLoadingChats = false;
+  let activeChatId = null;
+  let chatsSyncInProgress = false;
+
+  /**
+   * Get Firebase ID token for API calls
+   */
+  async function getFirebaseToken() {
+    try {
+      if (!window.miFirebaseUser) {
+        return null;
+      }
+      return await window.miFirebaseUser.getIdToken(true);
+    } catch (err) {
+      console.error('[Chat Persistence] Token error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Load chats from server (Firestore via backend)
+   */
+  async function loadChatsFromServer() {
+    if (isLoadingChats) return null;
+    if (!window.miFirebaseUser) return null;
+
+    isLoadingChats = true;
+    try {
+      const token = await getFirebaseToken();
+      if (!token) {
+        console.warn('[Chat Persistence] No token available');
+        return null;
+      }
+
+      const response = await fetch('/conversations', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        }
+      });
+
+      if (!response.ok) {
+        console.error('[Chat Persistence] Server error:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      if (!data.success || !data.conversations) {
+        console.error('[Chat Persistence] Invalid response:', data);
+        return null;
+      }
+
+      console.log('[Chat Persistence] Loaded', data.conversations.length, 'chats from server');
+      return data.conversations;
+    } catch (err) {
+      console.error('[Chat Persistence] Error loading chats:', err);
+      return null;
+    } finally {
+      isLoadingChats = false;
+    }
+  }
+
+  /**
+   * Get messages for a chat from server
+   */
+  async function getMessagesForChat(chatId) {
+    if (!window.miFirebaseUser || !chatId) return [];
+
+    try {
+      const token = await getFirebaseToken();
+      if (!token) return [];
+
+      const response = await fetch('/messages?conversation_id=' + encodeURIComponent(chatId), {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        }
+      });
+
+      if (!response.ok) return [];
+
+      const data = await response.json();
+      if (!data.success || !Array.isArray(data.messages)) return [];
+
+      return data.messages.map(msg => ({
+        id: msg.id,
+        role: msg.role === 'user' ? 'me' : (msg.role === 'assistant' ? 'ai' : msg.role),
+        text: msg.content,
+        createdAt: msg.created_at
+      }));
+    } catch (err) {
+      console.error('[Chat Persistence] Error loading messages:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Restore user's chats after login
+   */
+  async function restoreUserChats() {
+    if (!window.miFirebaseUser) {
+      console.log('[Chat Persistence] No user, skipping restore');
+      return;
+    }
+
+    console.log('[Chat Persistence] Restoring chats for user:', window.miFirebaseUser.uid);
+
+    // Clear old state
+    activeChatId = null;
+    if (window.chats) {
+      window.chats = {};
+    }
+
+    // Show loading state
+    const chatBox = document.getElementById('chatBox');
+    const chatList = document.getElementById('chatList');
+    if (chatBox) {
+      chatBox.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">Loading your chats...</div>';
+    }
+    if (chatList) {
+      chatList.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:10px;font-size:12px;">Loading...</div>';
+    }
+
+    // Load chats from server
+    const serverChats = await loadChatsFromServer();
+    if (!serverChats) {
+      console.warn('[Chat Persistence] Failed to load chats, using local storage');
+      // Fallback to local storage if server fails
+      return;
+    }
+
+    // Restore chats in memory
+    if (!window.chats) {
+      window.chats = {};
+    }
+
+    for (const chatMetadata of serverChats) {
+      const chatId = chatMetadata.id;
+      
+      // Load messages
+      const messages = await getMessagesForChat(chatId);
+
+      // Create chat in memory
+      window.chats[chatId] = messages.map(msg => ({
+        id: msg.id,
+        role: msg.role,
+        text: msg.text,
+        createdAt: msg.createdAt
+      }));
+
+      // Add metadata
+      window.chats[chatId].title = chatMetadata.title || 'New chat';
+      window.chats[chatId].pin = chatMetadata.pin || false;
+      window.chats[chatId].messageCount = chatMetadata.message_count || messages.length;
+      window.chats[chatId].createdAt = chatMetadata.created_at;
+      window.chats[chatId].updatedAt = chatMetadata.updated_at;
+    }
+
+    console.log('[Chat Persistence] Restored', Object.keys(window.chats).length, 'chats');
+
+    // Update localStorage cache
+    const storageKey = window.getActiveStorageKey ? window.getActiveStorageKey() : null;
+    if (storageKey) {
+      localStorage.setItem(storageKey, JSON.stringify(window.chats));
+    }
+
+    // Restore active chat or show list
+    const lastChatId = localStorage.getItem('last_chat');
+    if (lastChatId && window.chats[lastChatId]) {
+      console.log('[Chat Persistence] Restoring active chat:', lastChatId);
+      if (typeof window.openChat === 'function') {
+        window.openChat(lastChatId);
+      }
+    } else if (Object.keys(window.chats).length > 0) {
+      console.log('[Chat Persistence] No last chat, showing list');
+      if (typeof window.renderList === 'function') {
+        window.renderList();
+      }
+    } else {
+      // No chats, show empty state
+      if (chatBox) {
+        chatBox.innerHTML = '';
+      }
+    }
+  }
+
+  /**
+   * Save a message to server (for AI responses)
+   */
+  async function saveMessageToServer(chatId, role, content) {
+    if (!window.miFirebaseUser || !chatId) {
+      console.warn('[Chat Persistence] Cannot save message without user or chat ID');
+      return false;
+    }
+
+    try {
+      const token = await getFirebaseToken();
+      if (!token) return false;
+
+      const response = await fetch('/messages', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: chatId,
+          role: role,
+          content: content
+        })
+      });
+
+      if (!response.ok) {
+        console.error('[Chat Persistence] Server error:', response.status);
+        return false;
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        console.error('[Chat Persistence] Server returned success=false');
+        return false;
+      }
+
+      console.log('[Chat Persistence] Saved', role, 'message to server');
+      return true;
+    } catch (err) {
+      console.error('[Chat Persistence] Error saving message:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Check if a chat is empty (no messages)
+   */
+  function isChatEmpty(chatId) {
+    if (!window.chats || !window.chats[chatId]) return true;
+    const chat = window.chats[chatId];
+    if (!Array.isArray(chat)) return true;
+    return chat.length === 0;
+  }
+
+  /**
+   * Delete an empty chat from server and local state
+   */
+  async function deleteEmptyChatFromServer(chatId) {
+    if (!window.miFirebaseUser) return false;
+
+    try {
+      const token = await getFirebaseToken();
+      if (!token) return false;
+
+      const response = await fetch('/api/conversations/' + encodeURIComponent(chatId), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        }
+      });
+
+      if (!response.ok) {
+        console.error('[Chat Persistence] Delete error:', response.status);
+        return false;
+      }
+
+      console.log('[Chat Persistence] Deleted empty chat:', chatId);
+      return true;
+    } catch (err) {
+      console.error('[Chat Persistence] Error deleting chat:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Switch to another chat with confirmation if needed
+   */
+  async function switchToChat(newChatId) {
+    const currentChat = window.currentChat;
+
+    // If opening the same chat, do nothing
+    if (currentChat === newChatId) {
+      console.log('[Chat Persistence] Already in this chat');
+      return true;
+    }
+
+    // If current chat exists and is empty, delete it silently
+    if (currentChat && isChatEmpty(currentChat)) {
+      console.log('[Chat Persistence] Deleting empty chat:', currentChat);
+      await deleteEmptyChatFromServer(currentChat);
+      if (window.chats && window.chats[currentChat]) {
+        delete window.chats[currentChat];
+      }
+    }
+
+    // If current chat exists and has messages, show confirmation
+    if (currentChat && !isChatEmpty(currentChat)) {
+      return new Promise((resolve) => {
+        const confirmed = confirm(
+          'Another chat is currently open. Opening this chat will close the current chat. Continue?'
+        );
+        
+        if (confirmed) {
+          console.log('[Chat Persistence] User confirmed chat switch');
+          activeChatId = newChatId;
+          resolve(true);
+        } else {
+          console.log('[Chat Persistence] User cancelled chat switch');
+          resolve(false);
+        }
+      });
+    }
+
+    // No active chat or empty chat, just switch
+    activeChatId = newChatId;
+    return true;
+  }
+
+  /**
+   * Hook into auth state changes
+   */
+  function setupAuthListener() {
+    window.addEventListener('mi-firebase-auth-changed', async (event) => {
+      const user = event.detail?.user;
+      
+      if (user) {
+        console.log('[Chat Persistence] Auth changed - user logged in:', user.uid);
+        // Slight delay to ensure Firebase is fully ready
+        setTimeout(() => {
+          restoreUserChats();
+        }, 500);
+      } else {
+        console.log('[Chat Persistence] Auth changed - user logged out');
+        // Clear chat state on logout
+        activeChatId = null;
+        if (window.chats) {
+          window.chats = {};
+        }
+        localStorage.removeItem('last_chat');
+      }
+    });
+  }
+
+  // Expose to window for external use
+  window.miChatPersistence = {
+    loadChatsFromServer,
+    getMessagesForChat,
+    restoreUserChats,
+    saveMessageToServer,
+    isChatEmpty,
+    deleteEmptyChatFromServer,
+    switchToChat,
+    getActiveChatId: () => activeChatId,
+    setActiveChatId: (id) => { activeChatId = id; }
+  };
+
+  // Setup on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAuthListener, { once: true });
+  } else {
+    setupAuthListener();
+  }
+
+  console.log('[Chat Persistence] System initialized');
+})();
+</script>
+<!-- CORTEX CORE AI PERSISTENT CHAT SYSTEM V1 END -->
+
 <!-- CORTEX CORE AI THREE LANGUAGE UI START -->
 <script>
 (function () {
