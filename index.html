@@ -21,137 +21,90 @@ function renderAIResponse(text) {
         .trim();
 
     /*
-     * Normalize compact Markdown before parsing.
-     *
-     * This handles AI output such as:
-     *
-     * ---### 1. Geography
-     * ---**Conclusion**
-     * Text**Heading**Text
-     *
      * without changing the actual Markdown renderer.
-     */
-    source = source
-        .replace(/---(?=#{1,6}\s+)/g, "---\n")
-        .replace(/---(?=\*\*)/g, "---\n")
         .replace(/([^\n])(?=#{1,6}\s+)/g, "$1\n")
-        .replace(/([^\n])(?=\*\*[^*\n]+\*\*)/g, "$1\n");
-
-    /*
-     * Normalize Markdown that arrives without line breaks.
      * Example:
-     * ---### Heading
-     * becomes:
-     * ---
-     * ### Heading
-     */
-    source = source
-        .replace(/---(?=#{1,6}\s+)/g, "---\n")
-        .replace(/([^\n])(\#{1,6}\s+)/g, "$1\n$2");
 
-    if (!source) {
         return "";
-    }
-
-    /*
-     * Escape HTML first.
-     * This keeps normal AI text safe while allowing
-     * only the formatting generated below.
-     */
-    const escapeHTML = (value) => {
-        return value
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    };
 
-    /*
-     * Inline Markdown
      */
-    const inline = (value) => {
-        let html = escapeHTML(value);
-
-        /* Bold - NEVER expose Markdown markers */
         html = html.replace(
-            /\*\*([\s\S]*?)\*\*/g,
-            "<strong>$1</strong>"
         );
 
-        /* Remove any unmatched bold markers that could remain visible */
-        html = html.replace(/\*\*/g, "");
-
-        /* Italic */
-        html = html.replace(
-            /(?<!\*)\*([^*\n]+)\*(?!\*)/g,
-            "<em>$1</em>"
         );
-
-        /* Inline code */
-        html = html.replace(
-            /`([^`\n]+)`/g,
-            "<code>$1</code>"
-        );
-
         /* Markdown links */
-        html = html.replace(
-            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
-
-        return html;
-    };
-
     const lines = source.split("\n");
 
-    const output = [];
-
-    let paragraph = [];
-    let listType = null;
-    let listItems = [];
-
-    const flushParagraph = () => {
-        if (!paragraph.length) return;
-
-        const content = paragraph
-            .map(line => inline(line.trim()))
-            .join("<br>");
-
+    /*
+      For authenticated users: Create ONLY a temporary client-side chat.
+      The actual Firestore chat will be created on first message (lazy creation).
+      For guest users: Create guest chat as usual.
+    */
+    if (!isAuthenticated()) {
+        // Guest path: create local guest chat
+        initializeChat(localId);
+        localStorage.setItem(
+            getGuestStorageKey(),
+            JSON.stringify(chats)
+        );
+        return;
+    }
         output.push(
+    // Authenticated path: Create ONLY temporary client-side chat (no server call yet)
+    // isPersisted will be set to true in send() when first message is sent
+    chats[localId] = [];
+    chats[localId].title = "NEW CHAT";
+    chats[localId].name = "NEW CHAT";
+    chats[localId].chatName = "NEW CHAT";
+    chats[localId].isPersisted = false;  // CRITICAL: Track temp vs persisted status
+    chats[localId].tempChatId = localId;  // Keep temp ID for reference
+
+    currentChat = localId;
+    window.currentChat = localId;
+    localStorage.setItem("last_chat", localId);
+    save();
+    renderList();
+    openChat(localId);
             '<div class="ai-paragraph">' +
+    if (
+        input &&
+        typeof input.focus ===
+            "function"
+    ) {
+        input.focus();
+    }
             content +
+    if (
+        window.MIAccountPersistence &&
+        typeof window
+            .MIAccountPersistence
+            .save ===
+            "function"
+    ) {
+        window
+            .MIAccountPersistence
+            .save();
+    }
             "</div>"
+    window.dispatchEvent(
+        new CustomEvent(
+            "mi-new-chat-created",
+            {
+                detail: {
+                    chatId: localId
+                }
+            }
+        )
+    );
         );
-
-        paragraph = [];
-    };
-
-    const flushList = () => {
-        if (!listItems.length) return;
-
-        const tag = listType === "ol" ? "ol" : "ul";
+    console.log("[Chat Persistence] Created temporary client-side chat:", localId);
 
         output.push(
-            '<' + tag + ' class="ai-list">' +
             listItems
-                .map(item => "<li>" + inline(item) + "</li>")
-                .join("") +
-            "</" + tag + ">"
-        );
 
-        listItems = [];
-        listType = null;
-    };
 
-    const isUnordered = (line) => {
-        return /^\s*[-*•]\s+/.test(line);
-    };
-
-    const isOrdered = (line) => {
-        return /^\s*\d+[.)]\s+/.test(line);
-    };
-
+}
     const getListText = (line) => {
         return line
             .replace(/^\s*[-*•]\s+/, "")
@@ -13086,11 +13039,14 @@ function loadGuestChats() {
     }
 
     const ids = Object.keys(parsed);
+
+    // Only restore existing chats (no auto-creation)
     if (ids.length === 0) {
-        createSingleGuestChat();
+        chats = {};
+        currentChat = null;
+        console.log('[Guest Chat] No existing chats to restore');
         return;
     }
-
     const lastChat = localStorage.getItem('last_chat') && parsed[localStorage.getItem('last_chat')] ? localStorage.getItem('last_chat') : ids[ids.length - 1];
     chats = { [lastChat]: parsed[lastChat] || [] };
     currentChat = lastChat;
@@ -13250,10 +13206,8 @@ user = null;
 
     await applyLanguage('en', false);
     resetChatStateForAuthChange();
-    createSingleGuestChat();
     save();
     renderList();
-    openChat(currentChat);
     closeProfilePanel();
     updateAuthControls();
     window.dispatchEvent(new Event('mi-chat-user-changed'));
@@ -14103,6 +14057,11 @@ async function newChat(){
             .toString(36)
             .slice(2, 8)}`;
 
+        if (window.miChatPersistence && typeof window.miChatPersistence.switchToChat === 'function') {
+            const canSwitch = await window.miChatPersistence.switchToChat(localId);
+            if (!canSwitch) return;
+        }
+
     function initializeChat(chatId) {
         chats[chatId] = [];
 
@@ -14183,109 +14142,22 @@ async function newChat(){
     }
 
     /*
-      Create the server conversation first.
-      A local chat remains available if the server request fails.
-      Use Firebase token for authenticated users.
+      Authenticated chats are temporary until the first message is sent.
+      This prevents login, refresh, and New Chat from creating empty server chats.
     */
-    const firebaseToken = isAuthenticated() && window.miFirebaseUser
-      ? await (window.miFirebaseUser.getIdToken && window.miFirebaseUser.getIdToken(true)).catch(() => null)
-      : null;
-
-    const supabaseToken =
-        localStorage.getItem(
-            "mi_supabase_token"
-        ) || "";
-
-    const userId =
-        localStorage.getItem(
-            "mi_user_id"
-        ) || "";
-
-    const storedEmail =
-        (
-            localStorage.getItem(
-                "mi_user_email"
-            ) || ""
-        )
-            .trim()
-            .toLowerCase();
-
-    let serverId = "";
-
-    try {
-        // Use Firebase token if available, fall back to Supabase
-        const authToken = firebaseToken || supabaseToken;
-        const authHeader = firebaseToken ? "Bearer " + firebaseToken : "Bearer " + supabaseToken;
-        
-        const response =
-            await fetch(
-                "/conversations",
-                {
-                    method:
-                        "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "Authorization":
-                            authHeader,
-
-                        "X-Session-Id":
-                            accountId ||
-                            userId ||
-                            "",
-
-                        "X-User-Id":
-                            userId,
-
-                        "X-User-Email":
-                            storedEmail
-                    },
-
-                    body:
-                        JSON.stringify({
-                            title:
-                                "NEW CHAT",
-
-                            session_id:
-                                accountId ||
-                                userId ||
-                                guestId
-                        })
-                }
-            );
-
-        const result =
-            await response
-                .json()
-                .catch(
-                    function () {
-                        return {};
-                    }
-                );
-
-        if (
-            response.ok &&
-            result?.conversation?.id
-        ) {
-            serverId =
-                String(
-                    result.conversation.id
-                );
-        }
-    }
-    catch (error) {
-        console.warn(
-            "[CORTEX CORE AI] Server New Chat creation failed; using local chat.",
-            error
-        );
-    }
-
-    initializeChat(
-        serverId ||
-        localId
-    );
+    chats[localId] = [];
+    chats[localId].title = "NEW CHAT";
+    chats[localId].name = "NEW CHAT";
+    chats[localId].chatName = "NEW CHAT";
+    chats[localId].isPersisted = false;
+    currentChat = localId;
+    window.currentChat = localId;
+    localStorage.setItem("last_chat", localId);
+    save();
+    renderList();
+    openChat(localId);
+    if (input && typeof input.focus === "function") input.focus();
+    window.dispatchEvent(new CustomEvent("mi-new-chat-created", { detail: { chatId: localId } }));
 }
 
 /* OPEN */
@@ -15406,6 +15278,46 @@ async function send() {
     input.value = '';
     replyInProgress = true;
     setReplyControlState(true);
+        let finalConversationId = conversationId;
+        if (isAuthenticated() && chats[conversationId] && chats[conversationId].isPersisted === false) {
+            const firebaseToken = window.miFirebaseUser
+                ? await (window.miFirebaseUser.getIdToken && window.miFirebaseUser.getIdToken(true)).catch(() => null)
+                : null;
+            if (!firebaseToken) {
+                replyInProgress = false;
+                setReplyControlState(false);
+                return;
+            }
+            try {
+                const createResponse = await fetch('/conversations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + firebaseToken
+                    },
+                    body: JSON.stringify({ title: chats[conversationId].title || 'New chat' })
+                });
+                const result = await createResponse.json().catch(() => ({}));
+                if (!createResponse.ok || !result?.conversation?.id) {
+                    throw new Error('Unable to create conversation');
+                }
+                finalConversationId = String(result.conversation.id);
+                chats[finalConversationId] = chats[conversationId];
+                chats[finalConversationId].isPersisted = true;
+                chats[finalConversationId].serverId = finalConversationId;
+                delete chats[conversationId];
+                currentChat = finalConversationId;
+                window.currentChat = finalConversationId;
+                localStorage.setItem('last_chat', finalConversationId);
+                save();
+                renderList();
+            } catch (error) {
+                console.error('[Chat Persistence] Lazy conversation creation failed:', error);
+                replyInProgress = false;
+                setReplyControlState(false);
+                return;
+            }
+        }
     let uploadedAttachments = [];
     let uploadErrors = [];
     try {
@@ -15453,7 +15365,7 @@ async function send() {
     
     // Save user message to server if authenticated
     if (isAuthenticated() && window.miChatPersistence && window.miFirebaseUser) {
-        window.miChatPersistence.saveMessageToServer(conversationId, 'user', msg)
+           window.miChatPersistence.saveMessageToServer(finalConversationId, 'user', msg)
           .catch(err => console.error('[Chat Persistence] User message save error:', err));
     }
     
@@ -15483,7 +15395,7 @@ async function send() {
         const streamResponse = await fetchChatReply({
             message: msg,
             history,
-            conversation_id: conversationId,
+                conversation_id: finalConversationId,
             attachment_ids: uploadedAttachments.length
                 ? uploadedAttachments.map((a) => a.id)
                 : []
@@ -15579,16 +15491,16 @@ async function send() {
     }
 
     contentBox.innerHTML = renderAIResponse(fullText);
-    finalizeStreamingReplyBubble(contentBox, fullText, conversationId);
+    finalizeStreamingReplyBubble(contentBox, fullText, finalConversationId);
     replyInProgress = false; setReplyControlState(false);
 
     (async () => {
       try {
         if (token && conversationId) {
           const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-Session-Id': accountId || userId || '', 'X-User-Id': userId || '', 'X-User-Email': storedEmail || '' };
-          const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: conversationId, session_id: accountId || userId || '', role: 'ai', content: fullText }) });
+                    const aiMessageRes = await fetchJsonWithFallback('/api/messages', { method: 'POST', headers, body: JSON.stringify({ conversation_id: finalConversationId, session_id: accountId || userId || '', role: 'ai', content: fullText }) });
           if (aiMessageRes && aiMessageRes.ok) {
-            await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(conversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[conversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: fullText, message_count: chats[conversationId].messageCount || 0 }) }).catch(() => {});
+                        await fetchJsonWithFallback('/api/conversations/' + encodeURIComponent(finalConversationId), { method: 'PATCH', headers, body: JSON.stringify({ title: chats[finalConversationId].title || 'New chat', updated_at: new Date().toISOString(), last_preview: fullText, message_count: chats[finalConversationId].messageCount || 0 }) }).catch(() => {});
           }
         }
       } catch (e) { console.error('Failed to save AI reply', e); }
@@ -15703,15 +15615,7 @@ async function save() {
 
     // Logged-in users only
     if (!isAuthenticated()) return;
-
-    const token = localStorage.getItem("mi_supabase_token");
-
-    if (!token || !currentChat) return;
-
-    try {
-      localStorage.setItem("mi_chats_" + accountId, JSON.stringify(chats));
-    } catch (e) {}
-  }
+    }
 
   function persistChats() {
     save();
@@ -16430,21 +16334,8 @@ document.addEventListener(
             createAccount: "Create Account",
             forgotPassword: "Forgot Password?",
             logout: "Logout",
-            loginAction: "Log in",
-            loginUnlock: "Login to unlock more",
             benefits: "Enjoy these benefits when you sign in:",
             saveChats: "Save and restore your chats",
-            syncChats: "Sync your history across devices",
-            fasterReplies: "Get faster, more personal replies",
-            logoutQuestion: "Are you sure you want to logout?",
-            askPlaceholder: "Ask from CORTEX CORE AI...",
-            mistakes:
-                "CORTEX CORE AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
-            creator:
-                "CREATED BY MI CORTEX X",
-            closeSettings: "Close Settings",
-            closeMenu: "Close menu",
-            openMenu: "Open menu",
             send: "Send",
             stop: "Stop",
             loading: "Loading...",
@@ -30875,6 +30766,9 @@ window.miOpenAccountChat=openPanel;
       window.chats[chatId].createdAt = chatMetadata.created_at;
       window.chats[chatId].updatedAt = chatMetadata.updated_at;
     }
+            // CRITICAL: Mark as persisted (loaded from Firestore)
+            window.chats[chatId].isPersisted = true;
+            window.chats[chatId].serverId = chatId;
 
     console.log('[Chat Persistence] Restored', Object.keys(window.chats).length, 'chats');
 
@@ -31004,7 +30898,10 @@ window.miOpenAccountChat=openPanel;
     // If current chat exists and is empty, delete it silently
     if (currentChat && isChatEmpty(currentChat)) {
       console.log('[Chat Persistence] Deleting empty chat:', currentChat);
-      await deleteEmptyChatFromServer(currentChat);
+            // Only delete from server if it was persisted (created in Firestore)
+            if (window.chats && window.chats[currentChat] && window.chats[currentChat].isPersisted !== false) {
+                await deleteEmptyChatFromServer(currentChat);
+            }
       if (window.chats && window.chats[currentChat]) {
         delete window.chats[currentChat];
       }
