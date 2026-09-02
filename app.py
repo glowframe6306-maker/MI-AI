@@ -37,7 +37,8 @@ except ImportError:
     firebase_auth = None
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = BASE_DIR
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
 app = Flask(
