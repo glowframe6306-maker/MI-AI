@@ -364,6 +364,46 @@ function renderAIResponse(text) {
         const light = selected === "light" || (selected === "system" && window.matchMedia("(prefers-color-scheme: light)").matches);
         document.documentElement.dataset.themeMode = selected;
         document.body.classList.toggle("cortex-light-theme", light);
+        const paletteColor = light ? "#12345b" : (localStorage.getItem("cortex_core_theme_color") || "#1e88e5");
+        document.documentElement.style.setProperty("--main", paletteColor);
+        document.documentElement.style.setProperty("--mi-theme-color", paletteColor);
+        document.documentElement.style.setProperty("--mi-theme-rgb", light ? "18, 52, 91" : "30, 136, 229");
+        document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
+            button.style.setProperty("background", light ? "#12345b" : "#D4AF37", "important");
+            button.style.setProperty("background-color", light ? "#12345b" : "#D4AF37", "important");
+            button.style.setProperty("background-image", "none", "important");
+            button.style.setProperty("color", light ? "#ffffff" : "#17130a", "important");
+        });
+        const reassertButtonPalette = () => { const currentLight = document.body.classList.contains("cortex-light-theme"); document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
+            button.style.setProperty("background-color", currentLight ? "#12345b" : "#D4AF37", "important");
+            button.style.setProperty("background-image", "none", "important");
+        }); };
+        setTimeout(reassertButtonPalette, 0);
+        setTimeout(reassertButtonPalette, 100);
+        if (!window.__cortexThemePaletteObserver) {
+            window.__cortexThemePaletteObserver = new MutationObserver(() => {
+                const currentLight = document.body.classList.contains("cortex-light-theme");
+                const desired = currentLight ? "rgb(18, 52, 91)" : "rgb(212, 175, 55)";
+                document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
+                    if (getComputedStyle(button).backgroundColor !== desired) {
+                        button.style.setProperty("background", currentLight ? "#12345b" : "#D4AF37", "important");
+                        button.style.setProperty("background-color", currentLight ? "#12345b" : "#D4AF37", "important");
+                        button.style.setProperty("background-image", "none", "important");
+                    }
+                });
+            });
+            window.__cortexThemePaletteObserver.observe(document.body, { attributes: true, attributeFilter: ["class", "style"], subtree: true });
+        }
+        if (!window.__cortexThemePaletteInterval) {
+            window.__cortexThemePaletteInterval = window.setInterval(() => {
+                const currentLight = document.body.classList.contains("cortex-light-theme");
+                document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
+                    button.style.setProperty("background-color", currentLight ? "#12345b" : "#D4AF37", "important");
+                    button.style.setProperty("background-image", "none", "important");
+                    button.style.setProperty("color", currentLight ? "#ffffff" : "#17130a", "important");
+                });
+            }, 150);
+        }
         const control = document.getElementById("themeMode");
         if (control) control.value = selected;
         updateSummary("theme", selected.charAt(0).toUpperCase() + selected.slice(1));
@@ -12469,6 +12509,27 @@ body.cortex-light-theme #settingsPanel .mi-settings-control-box label { color:#3
 #settingsPanel .cortex-font-preview { margin-top:12px; padding:10px 12px; border:1px solid rgba(125,211,252,.18); border-radius:10px; color:#dbeafe; background:rgba(14,165,233,.08); text-align:center; font-weight:700; }
 body.cortex-light-theme #settingsPanel .cortex-accent-picker { background:rgba(255,255,255,.82); }
 @media (max-width:600px) { #miIosSelectPopup { min-width:0; width:calc(100vw - 32px) !important; } #settingsPanel .mi-ios-select-trigger { min-height:50px !important; } }
+/* Theme palette overrides: preserve the dark surface, change action treatment. */
+:root { --cortex-gold:#D4AF37; --cortex-gold-hover:#e3c45a; --cortex-navy:#12345b; --cortex-navy-hover:#1b4d80; }
+body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn), body:not(.cortex-light-theme) .headerActions button, body:not(.cortex-light-theme) #inputBox button, body:not(.cortex-light-theme) #loginBox button, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn), body:not(.cortex-light-theme) .cortex-accent-preset { background:var(--cortex-gold) !important; background-image:none !important; color:#17130a !important; border-color:#f1d77a !important; }
+body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn):hover, body:not(.cortex-light-theme) .headerActions button:hover, body:not(.cortex-light-theme) #inputBox button:hover, body:not(.cortex-light-theme) #loginBox button:hover, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn):hover { background:var(--cortex-gold-hover) !important; }
+body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn):focus-visible, body:not(.cortex-light-theme) .headerActions button:focus-visible, body:not(.cortex-light-theme) #inputBox button:focus-visible, body:not(.cortex-light-theme) #settingsPanel button:focus-visible { outline:2px solid #f7e7a3 !important; outline-offset:2px; }
+body:not(.cortex-light-theme) #sidebar > button:disabled, body:not(.cortex-light-theme) #inputBox button:disabled { background:#806c27 !important; color:#e8dfb9 !important; opacity:.7; }
+body.cortex-light-theme, body.cortex-light-theme #sidebar, body.cortex-light-theme #main, body.cortex-light-theme #chat { background:#f4f7fb !important; color:#10233f !important; }
+body.cortex-light-theme #sidebar { border-color:#d6e0ec !important; }
+body.cortex-light-theme #header, body.cortex-light-theme #inputBox { background:#ffffff !important; color:#10233f !important; border-color:#d6e0ec !important; }
+body.cortex-light-theme #chat > .me { background:#dbeafe !important; color:#10233f !important; }
+body.cortex-light-theme #chat > .ai { background:#ffffff !important; color:#10233f !important; border-color:#d6e0ec !important; }
+body.cortex-light-theme #sidebar > button, body.cortex-light-theme .headerActions button, body.cortex-light-theme #inputBox button, body.cortex-light-theme #loginBox button, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn) { background:var(--cortex-navy) !important; background-image:none !important; color:#ffffff !important; border-color:#315d8e !important; }
+body.cortex-light-theme #sidebar > button:hover, body.cortex-light-theme .headerActions button:hover, body.cortex-light-theme #inputBox button:hover, body.cortex-light-theme #loginBox button:hover, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn):hover { background:var(--cortex-navy-hover) !important; }
+body.cortex-light-theme #sidebar > button:focus-visible, body.cortex-light-theme .headerActions button:focus-visible, body.cortex-light-theme #inputBox button:focus-visible, body.cortex-light-theme #settingsPanel button:focus-visible { outline:2px solid #3b82f6 !important; outline-offset:2px; }
+body.cortex-light-theme #settingsPanel, body.cortex-light-theme #settingsPanel .mi-settings-section { background:#ffffff !important; color:#10233f !important; border-color:#cbd8e6 !important; }
+body.cortex-light-theme #settingsPanel .mi-settings-option-title, body.cortex-light-theme #settingsPanel .mi-settings-control-box label, body.cortex-light-theme #settingsPanel h3 { color:#10233f !important; }
+body.cortex-light-theme #settingsPanel .mi-ios-select-trigger, body.cortex-light-theme #settingsPanel .cortex-settings-select { background:#f8fafc !important; color:#10233f !important; border-color:#a9bfd6 !important; }
+body.cortex-light-theme #settingsPanel .mi-ios-select-trigger-text { color:#10233f !important; }
+body.cortex-light-theme #miIosSelectPopup { background:#ffffff !important; border-color:#b8c9dc !important; }
+body.cortex-light-theme #miIosSelectPopup .mi-ios-popup-option, body.cortex-light-theme #miIosSelectPopup .mi-ios-option-label { color:#10233f !important; }
+body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !important; border-color:#b8c9dc !important; }
 </style>
 <div
     id="settingsBackdrop"
@@ -16501,7 +16562,7 @@ document.addEventListener(
             syncChats: "Sync your history across devices",
             fasterReplies: "Get faster, more personal replies",
             logoutQuestion: "Are you sure you want to logout?",
-            askPlaceholder: "ASK ANYTHING FROM CORTEX CORE AI",
+            askPlaceholder: "CORTEX CORE AI වෙතින් ඕනෑම දෙයක් අසන්න",
             mistakes:
                 "CORTEX CORE AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
             creator:
@@ -16562,7 +16623,7 @@ document.addEventListener(
             syncChats: "Sync your history across devices",
             fasterReplies: "Get faster, more personal replies",
             logoutQuestion: "Are you sure you want to logout?",
-            askPlaceholder: "ASK ANYTHING FROM CORTEX CORE AI",
+            askPlaceholder: "CORTEX CORE AI-யிடம் எதையும் கேளுங்கள்",
             mistakes:
                 "CORTEX CORE AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
             creator:
@@ -16926,8 +16987,8 @@ document.addEventListener(
 
     function normalizeLanguage(language) {
         return language === "si" || language === "ta"
-            ? "en"
-            : language;
+            ? language
+            : "en";
     }
 
     function getLanguage() {
@@ -30945,15 +31006,15 @@ window.miOpenAccountChat=openPanel;
             "Yesterday": "Yesterday"
         },
         si: {
-            "New Chat": "New Chat",
-            "Customer Support": "Customer Support",
-            "Customer Service": "Customer Service",
-            "Settings": "Settings",
-            "Login": "Login",
-            "Logout": "Logout",
-            "Language": "Language",
-            "Theme": "Theme",
-            "Font Size": "Font Size",
+            "New Chat": "නව සංවාදය",
+            "Customer Support": "පාරිභෝගික සහාය",
+            "Customer Service": "පාරිභෝගික සේවාව",
+            "Settings": "සැකසුම්",
+            "Login": "පිවිසෙන්න",
+            "Logout": "ඉවත් වන්න",
+            "Language": "භාෂාව",
+            "Theme": "තේමාව",
+            "Font Size": "අකුරු ප්‍රමාණය",
             "Share": "Share",
             "Create a link": "Create a link",
             "Generate link": "Generate link",
@@ -30963,18 +31024,18 @@ window.miOpenAccountChat=openPanel;
             "Rename": "Rename",
             "Pin": "Pin",
             "Unpin": "Unpin",
-            "Delete": "Delete",
-            "Close": "Close",
-            "Save": "Save",
-            "Send": "Send",
-            "Stop": "Stop",
-            "Search": "Search",
+            "Delete": "මකන්න",
+            "Close": "වසන්න",
+            "Save": "සුරකින්න",
+            "Send": "යවන්න",
+            "Stop": "නවත්වන්න",
+            "Search": "සොයන්න",
             "View only": "View only",
             "Can edit": "Can edit",
-            "Login Required": "Login Required",
-            "Please login": "Please login",
-            "Email": "Email",
-            "Password": "Password",
+            "Login Required": "පිවිසීම අවශ්‍යයි",
+            "Please login": "කරුණාකර පිවිසෙන්න",
+            "Email": "විද්‍යුත් තැපෑල",
+            "Password": "මුරපදය",
             "Forgot password?": "Forgot password?",
             "Create account": "Create account",
             "Sign in": "Sign in",
@@ -30986,15 +31047,15 @@ window.miOpenAccountChat=openPanel;
             "Yesterday": "Yesterday"
         },
         ta: {
-            "New Chat": "New Chat",
-            "Customer Support": "Customer Support",
-            "Customer Service": "Customer Service",
-            "Settings": "Settings",
-            "Login": "Login",
-            "Logout": "Logout",
-            "Language": "Language",
-            "Theme": "Theme",
-            "Font Size": "Font Size",
+            "New Chat": "புதிய உரையாடல்",
+            "Customer Support": "வாடிக்கையாளர் ஆதரவு",
+            "Customer Service": "வாடிக்கையாளர் சேவை",
+            "Settings": "அமைப்புகள்",
+            "Login": "உள்நுழைவு",
+            "Logout": "வெளியேறு",
+            "Language": "மொழி",
+            "Theme": "தீம்",
+            "Font Size": "எழுத்து அளவு",
             "Share": "Share",
             "Create a link": "Create a link",
             "Generate link": "Generate link",
@@ -31004,18 +31065,18 @@ window.miOpenAccountChat=openPanel;
             "Rename": "Rename",
             "Pin": "Pin",
             "Unpin": "Unpin",
-            "Delete": "Delete",
-            "Close": "Close",
-            "Save": "Save",
-            "Send": "Send",
-            "Stop": "Stop",
-            "Search": "Search",
+            "Delete": "நீக்கு",
+            "Close": "மூடு",
+            "Save": "சேமி",
+            "Send": "அனுப்பு",
+            "Stop": "நிறுத்து",
+            "Search": "தேடு",
             "View only": "View only",
             "Can edit": "Can edit",
-            "Login Required": "Login Required",
-            "Please login": "Please login",
-            "Email": "Email",
-            "Password": "Password",
+            "Login Required": "உள்நுழைவு தேவை",
+            "Please login": "தயவுசெய்து உள்நுழையவும்",
+            "Email": "மின்னஞ்சல்",
+            "Password": "கடவுச்சொல்",
             "Forgot password?": "Forgot password?",
             "Create account": "Create account",
             "Sign in": "Sign in",
@@ -38544,7 +38605,9 @@ option,
             age: "Age",
             email: "Email",
             saveChanges: "Save changes",
-            logout: "Logout"
+            logout: "Logout",
+            askPlaceholder: "ASK ANYTHING FROM CORTEX CORE AI"
+            ,askPlaceholder: "ASK ANYTHING FROM CORTEX CORE AI"
         },
 
         si: {
@@ -38577,7 +38640,9 @@ option,
             age: "වයස",
             email: "ඊමේල්",
             saveChanges: "වෙනස්කම් සුරකින්න",
-            logout: "ඉවත් වන්න"
+            logout: "ඉවත් වන්න",
+            askPlaceholder: "CORTEX CORE AI වෙතින් ඕනෑම දෙයක් අසන්න"
+            ,askPlaceholder: "CORTEX CORE AI වෙතින් ඕනෑම දෙයක් අසන්න"
         },
 
         ta: {
@@ -38610,7 +38675,9 @@ option,
             age: "வயது",
             email: "மின்னஞ்சல்",
             saveChanges: "மாற்றங்களை சேமி",
-            logout: "வெளியேறு"
+            logout: "வெளியேறு",
+            askPlaceholder: "CORTEX CORE AI-யிடம் எதையும் கேளுங்கள்"
+            ,askPlaceholder: "CORTEX CORE AI-யிடம் எதையும் கேளுங்கள்"
         }
     };
 
@@ -38834,7 +38901,7 @@ option,
 
         const chatInput = document.getElementById("msg");
         if (chatInput) {
-            chatInput.placeholder = "ASK ANYTHING FROM CORTEX CORE AI";
+            chatInput.placeholder = d.askPlaceholder || "ASK ANYTHING FROM CORTEX CORE AI";
             if (!chatInput.value) chatInput.value = "";
         }
     }
@@ -39348,7 +39415,7 @@ option,
                     : "en";
 
         const selectorTranslations = [
-            ["#newChatBtn", d.newChat],
+            ["#newChatBtn, #sidebar button[onclick*='newChat']", d.newChat],
             ["#supportBtn", d.customerSupport],
             ["#customerSupportBtn", d.customerSupport],
             ["#settingsBtn", d.settings],
@@ -39374,6 +39441,18 @@ option,
                 }
             }
         );
+
+        const languageNames = { en: "English", si: "සිංහල", ta: "தமிழ்" };
+        const controls = {
+            language: document.querySelector('#settingsPanel [data-settings-type="language"] .mi-settings-option-title'),
+            theme: document.querySelector('#settingsPanel [data-settings-type="theme"] .mi-settings-option-title'),
+            fontSize: document.querySelector('#settingsPanel [data-settings-type="fontSize"] .mi-settings-option-title')
+        };
+        if (controls.language) controls.language.setAttribute("data-settings-value", languageNames[language] || languageNames.en);
+        if (controls.theme) controls.theme.setAttribute("data-settings-value", "Dark");
+        if (controls.fontSize) controls.fontSize.setAttribute("data-settings-value", "Medium");
+        const input = document.getElementById("msg");
+        if (input) input.placeholder = d.askPlaceholder || "ASK ANYTHING FROM CORTEX CORE AI";
 
         document.querySelectorAll(
             "[data-i18n]"
@@ -39473,6 +39552,14 @@ option,
         }
 
         translateCommonPage(language);
+
+        window.setTimeout(function () {
+            const currentSelect = document.getElementById("languageSelect");
+            if (currentSelect) currentSelect.value = language;
+            const currentInput = document.getElementById("msg");
+            if (currentInput) currentInput.placeholder = translations[language]?.askPlaceholder || currentInput.placeholder;
+            translateCommonPage(language);
+        }, 50);
 
         window.dispatchEvent(
             new CustomEvent(
@@ -40800,6 +40887,11 @@ if (false) {
 
 })();
 </script>
+<style id="cortex-final-theme-palette">
+body.cortex-light-theme #sidebar > button, body.cortex-light-theme .headerActions button, body.cortex-light-theme #inputBox button, body.cortex-light-theme #loginBox button, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn) { background-color:#12345b !important; background-image:none !important; color:#fff !important; }
+body.cortex-light-theme #sidebar > button:hover, body.cortex-light-theme .headerActions button:hover, body.cortex-light-theme #inputBox button:hover, body.cortex-light-theme #loginBox button:hover, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn):hover { background-color:#1b4d80 !important; background-image:none !important; }
+body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .headerActions button, body:not(.cortex-light-theme) #inputBox button, body:not(.cortex-light-theme) #loginBox button, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn) { background-color:#D4AF37 !important; background-image:none !important; color:#17130a !important; }
+</style>
 <script id="cortex-settings-row-dropdown-bridge">
 (function () {
     if (window.__cortexSettingsRowDropdownBridge) return;
