@@ -346,6 +346,91 @@ function renderAIResponse(text) {
 })();
 </script>
 
+<script id="cortex-settings-behavior">
+(function () {
+    if (window.__cortexSettingsBehavior) return;
+    window.__cortexSettingsBehavior = true;
+
+    const fontSizes = { small: 14, medium: 15, large: 17 };
+    const labels = { small: "Small", medium: "Medium", large: "Large" };
+
+    function updateSummary(type, value) {
+        const title = document.querySelector('#settingsPanel [data-settings-type="' + type + '"] .mi-settings-option-title');
+        if (title) title.setAttribute("data-settings-value", value);
+    }
+
+    function applyThemeMode(mode, persist) {
+        const selected = ["dark", "light", "system"].includes(mode) ? mode : "dark";
+        const light = selected === "light" || (selected === "system" && window.matchMedia("(prefers-color-scheme: light)").matches);
+        document.documentElement.dataset.themeMode = selected;
+        document.body.classList.toggle("cortex-light-theme", light);
+        const control = document.getElementById("themeMode");
+        if (control) control.value = selected;
+        updateSummary("theme", selected.charAt(0).toUpperCase() + selected.slice(1));
+        if (persist !== false) localStorage.setItem("mi_settings_theme_mode", selected);
+    }
+
+    function applyFontPreset(preset, persist) {
+        const selected = fontSizes[preset] ? preset : "medium";
+        const size = fontSizes[selected];
+        if (typeof window.setFont === "function") window.setFont(size);
+        else document.documentElement.style.fontSize = size + "px";
+        const control = document.getElementById("fontSizeSelect");
+        if (control) control.value = selected;
+        updateSummary("fontSize", labels[selected]);
+        if (persist !== false) localStorage.setItem("mi_settings_font_preset", selected);
+    }
+
+    function applySelectedLanguage(value) {
+        const selected = ["en", "si", "ta"].includes(value) ? value : "en";
+        const names = { en: "English", si: "සිංහල", ta: "தமிழ்" };
+        const apply = window.applyLanguage || window.MIAI18N?.setLanguage;
+        const finish = () => {
+            currentLanguage = selected;
+            localStorage.setItem("mi_settings_language", selected);
+            const control = document.getElementById("languageSelect");
+            if (control) control.value = selected;
+            updateSummary("language", names[selected]);
+        };
+        if (typeof apply === "function") Promise.resolve(apply(selected, true)).then(finish, finish);
+        else finish();
+    }
+
+    function initialize() {
+        const theme = localStorage.getItem("mi_settings_theme_mode") || "dark";
+        const preset = localStorage.getItem("mi_settings_font_preset") || "medium";
+        const language = localStorage.getItem("mi_settings_language") || document.getElementById("languageSelect")?.value || "en";
+        applyThemeMode(theme, false);
+        applyFontPreset(preset, false);
+        const languageControl = document.getElementById("languageSelect");
+        if (languageControl) {
+            languageControl.value = language;
+            languageControl.addEventListener("change", () => applySelectedLanguage(languageControl.value));
+            updateSummary("language", languageControl.options[languageControl.selectedIndex]?.text || "English");
+        }
+        const themeControl = document.getElementById("themeMode");
+        if (themeControl) themeControl.addEventListener("change", () => applyThemeMode(themeControl.value, true));
+        const fontControl = document.getElementById("fontSizeSelect");
+        if (fontControl) fontControl.addEventListener("change", () => applyFontPreset(fontControl.value, true));
+        window.matchMedia("(prefers-color-scheme: light)").addEventListener?.("change", () => {
+            if ((localStorage.getItem("mi_settings_theme_mode") || "dark") === "system") applyThemeMode("system", false);
+        });
+    }
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true });
+    else initialize();
+    setTimeout(() => {
+        applyThemeMode(localStorage.getItem("mi_settings_theme_mode") || "dark", false);
+        applyFontPreset(localStorage.getItem("mi_settings_font_preset") || "medium", false);
+        const languageControl = document.getElementById("languageSelect");
+        const language = localStorage.getItem("mi_settings_language") || "en";
+        if (languageControl) languageControl.value = language;
+        currentLanguage = language;
+        updateSummary("language", languageControl?.options[languageControl.selectedIndex]?.text || "English");
+    }, 3600);
+})();
+</script>
+
 <style id="MI_AI_CURSOR_RESCUE_V2">
 html,
 body,
@@ -12323,6 +12408,29 @@ textarea:disabled,
 <div id="chat"></div>
 
 <!-- SETTINGS -->
+<style id="cortex-settings-redesign">
+#settingsPanel > h3 { display:flex; align-items:center; gap:10px; }
+#settingsPanel > h3::before { content:"⚙"; color:#7dd3fc; font-size:24px; line-height:1; }
+#settingsPanel .mi-settings-accordion { margin-top:2px; gap:12px; }
+#settingsPanel .mi-settings-section { border-color:rgba(125,211,252,.24); background:linear-gradient(145deg,rgba(30,41,59,.82),rgba(15,23,42,.72)); }
+#settingsPanel .mi-settings-option-button { min-height:68px !important; background:rgba(255,255,255,.045) !important; box-shadow:none !important; }
+#settingsPanel .mi-settings-option-button:hover { background:rgba(125,211,252,.10) !important; }
+#settingsPanel .mi-settings-option-left { gap:12px; }
+#settingsPanel .mi-settings-option-icon { width:38px; height:38px; flex-basis:38px; border-color:rgba(125,211,252,.3); background:rgba(14,165,233,.12); font-size:20px; }
+#settingsPanel .mi-settings-option-title::after { display:block; margin-top:3px; color:#94a3b8; content:attr(data-settings-value); font-size:12px; font-weight:500; }
+#settingsPanel .mi-settings-arrow { font-size:20px; color:#7dd3fc; }
+#settingsPanel .mi-settings-control-box { padding:14px 16px 16px; }
+#settingsPanel .mi-settings-control-box label { color:#cbd5e1; }
+#settingsPanel .cortex-settings-select { width:100%; min-height:48px; padding:10px 12px; border:1px solid rgba(125,211,252,.26); border-radius:12px; background:rgba(2,6,23,.62); color:#f8fafc; font:inherit; }
+#settingsPanel .cortex-settings-select:focus { outline:2px solid rgba(125,211,252,.42); outline-offset:2px; }
+body.cortex-light-theme { --bg:#f1f5f9; --text:#0f172a; --panel:#ffffff; color:#0f172a; background:#e2e8f0; }
+body.cortex-light-theme #main, body.cortex-light-theme #header, body.cortex-light-theme #inputBox { background:rgba(255,255,255,.86); color:#0f172a; }
+body.cortex-light-theme #settingsPanel { background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(226,232,240,.96)) !important; color:#0f172a; }
+body.cortex-light-theme #settingsPanel .mi-settings-section { background:rgba(255,255,255,.72); border-color:rgba(15,23,42,.16); }
+body.cortex-light-theme #settingsPanel .mi-settings-option-button, body.cortex-light-theme #settingsPanel .mi-settings-control-box { color:#0f172a !important; }
+body.cortex-light-theme #settingsPanel .mi-settings-control-box label { color:#334155; }
+@media (max-width:600px) { #settingsPanel .mi-settings-option-button { min-height:64px !important; } }
+</style>
 <div
     id="settingsBackdrop"
     aria-hidden="true"
@@ -12337,23 +12445,37 @@ textarea:disabled,
     ├ó┼ôΓÇó
 </button>
 <h3 data-i18n="settings.title">Settings</h3>
-
-<label data-i18n="settings.language">Language</label>
-<select
-        id="languageSelect"
-        data-mi-i18n-ignore="true"
-        onchange="window.MIAI18N && window.MIAI18N.setLanguage(this.value)">
-        <option value="en">English</option>
-        <option value="si">├á┬╖╞Æ├á┬╖ΓÇÖ├á┬╢ΓÇÜ├á┬╖ΓÇ₧├á┬╢┬╜</option>
-        <option value="ta">├á┬«┬ñ├á┬«┬«├á┬«┬┐├á┬«┬┤├á┬»┬ì</option>
-    </select>
-
-<label data-i18n="settings.theme">Theme</label>
-<input type="color" id="themeColor">
-<button onclick="applyTheme()" data-i18n="settings.apply">Apply</button>
-
-<label data-i18n="settings.fontSize">Font Size</label>
-<input type="range" min="12" max="25" value="15" oninput="setFont(this.value)">
+<div class="mi-settings-accordion">
+    <section class="mi-settings-section" data-settings-type="language">
+        <button type="button" class="mi-settings-option-button" aria-expanded="false">
+            <span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🌐</span><span class="mi-settings-option-title" data-settings-value="English">Language</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box">
+            <label for="languageSelect" data-i18n="settings.language">Language</label>
+            <select id="languageSelect" class="cortex-settings-select" data-mi-i18n-ignore="true">
+                <option value="en">English</option><option value="si">සිංහල</option><option value="ta">தமிழ்</option>
+            </select>
+        </div></div></div>
+    </section>
+    <section class="mi-settings-section" data-settings-type="theme">
+        <button type="button" class="mi-settings-option-button" aria-expanded="false">
+            <span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🎨</span><span class="mi-settings-option-title" data-settings-value="Dark">Theme</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box">
+            <label for="themeMode" data-i18n="settings.theme">Theme</label>
+            <select id="themeMode" class="cortex-settings-select"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select>
+        </div></div></div>
+    </section>
+    <section class="mi-settings-section" data-settings-type="fontSize">
+        <button type="button" class="mi-settings-option-button" aria-expanded="false">
+            <span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🔤</span><span class="mi-settings-option-title" data-settings-value="Medium">Font Size</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box">
+            <label for="fontSizeSelect" data-i18n="settings.fontSize">Font Size</label>
+            <select id="fontSizeSelect" class="cortex-settings-select"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
+        </div></div></div>
+    </section>
+</div>
 </div>
 
 <!-- INPUT -->
@@ -39697,22 +39819,7 @@ img#headerLogo
     }
 
     function repairSettingsIcons() {
-        const languageRow =
-            findSettingsRow([
-                "language",
-                "භාෂාව",
-                "மொழி"
-            ]);
-
-        const themeRow =
-            findSettingsRow([
-                "theme",
-                "තේමාව",
-                "தீம்"
-            ]);
-
-        addIcon(languageRow, "🌐");
-        addIcon(themeRow, "🎨");
+        return;
     }
 
     function start() {
