@@ -16294,7 +16294,8 @@ document.addEventListener(
             copy: "Copy",
             loginRequired: "Login Required",
             loginRequiredMessage:
-                "Please log in to use this feature."
+                "Please log in to use this feature.",
+            askPlaceholder: "ASK ANYTHING FROM CORTEX CORE AI"
         },
 
         si: {
@@ -16331,7 +16332,7 @@ document.addEventListener(
             syncChats: "Sync your history across devices",
             fasterReplies: "Get faster, more personal replies",
             logoutQuestion: "Are you sure you want to logout?",
-            askPlaceholder: "Ask from CORTEX CORE AI...",
+            askPlaceholder: "ASK ANYTHING FROM CORTEX CORE AI",
             mistakes:
                 "CORTEX CORE AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
             creator:
@@ -16392,7 +16393,7 @@ document.addEventListener(
             syncChats: "Sync your history across devices",
             fasterReplies: "Get faster, more personal replies",
             logoutQuestion: "Are you sure you want to logout?",
-            askPlaceholder: "Ask from CORTEX CORE AI...",
+            askPlaceholder: "ASK ANYTHING FROM CORTEX CORE AI",
             mistakes:
                 "CORTEX CORE AI CAN MAKE MISTAKES. CHECK IMPORTANT INFORMATION.",
             creator:
@@ -38485,6 +38486,14 @@ option,
             return;
         }
 
+        if (["supportBtn", "settingsBtn", "newChatBtn"].includes(element.id)) {
+            const icon = element.querySelector(":scope > .cortex-fixed-icon");
+            element.replaceChildren();
+            if (icon) element.appendChild(icon);
+            element.appendChild(document.createTextNode(String(text || "")));
+            return;
+        }
+
         const textNodes =
             Array.from(element.childNodes)
                 .filter(function (node) {
@@ -38652,6 +38661,12 @@ option,
         if (logout) {
             setIcon(logout, "↪");
             replaceOwnText(logout, d.logout);
+        }
+
+        const chatInput = document.getElementById("msg");
+        if (chatInput) {
+            chatInput.placeholder = "ASK ANYTHING FROM CORTEX CORE AI";
+            if (!chatInput.value) chatInput.value = "";
         }
     }
 
