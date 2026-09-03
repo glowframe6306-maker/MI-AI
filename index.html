@@ -40800,6 +40800,23 @@ if (false) {
 
 })();
 </script>
+<script id="cortex-settings-row-dropdown-bridge">
+(function () {
+    if (window.__cortexSettingsRowDropdownBridge) return;
+    window.__cortexSettingsRowDropdownBridge = true;
+
+    function openFromRow(event) {
+        const row = event.target.closest?.(".mi-settings-option-button");
+        if (!row) return;
+        const section = row.closest(".mi-settings-section");
+        const trigger = section?.querySelector(".mi-ios-select-trigger");
+        if (!trigger) return;
+        window.setTimeout(() => trigger.click(), 0);
+    }
+
+    document.addEventListener("click", openFromRow, false);
+})();
+</script>
 </body>
 </html>
 
