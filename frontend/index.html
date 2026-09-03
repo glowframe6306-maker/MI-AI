@@ -156,6 +156,10 @@
         else document.documentElement.style.fontSize = size + "px";
         const control = document.getElementById("fontSizeSelect");
         if (control) control.value = selected;
+        const range = document.getElementById("fontSizeRange");
+        if (range) range.value = String(size);
+        const preview = document.querySelector("#settingsPanel .cortex-font-preview");
+        if (preview) preview.style.fontSize = size + "px";
         updateSummary("fontSize", labels[selected]);
         if (persist !== false) localStorage.setItem("mi_settings_font_preset", selected);
     }
@@ -187,18 +191,28 @@
         if (themeControl) themeControl.addEventListener("change", () => applyThemeMode(themeControl.value, true));
         const fontControl = document.getElementById("fontSizeSelect");
         if (fontControl) fontControl.addEventListener("change", () => applyFontPreset(fontControl.value, true));
+        const range = document.getElementById("fontSizeRange");
+        if (range) range.addEventListener("input", () => applyFontPreset(Number(range.value) <= 14 ? "small" : Number(range.value) >= 17 ? "large" : "medium", false));
+        const picker = document.getElementById("themeColor");
+        document.querySelectorAll("#settingsPanel .cortex-accent-preset").forEach((preset) => preset.addEventListener("click", () => { if (!picker) return; picker.value = preset.dataset.accent; picker.dispatchEvent(new Event("input", { bubbles: true })); picker.dispatchEvent(new Event("change", { bubbles: true })); }));
+        if (range) range.addEventListener("change", () => localStorage.setItem("mi_settings_font_preset", Number(range.value) <= 14 ? "small" : Number(range.value) >= 17 ? "large" : "medium"));
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true });
     else initialize();
-    setTimeout(() => {
+    const rehydrate = () => {
         applyThemeMode(localStorage.getItem("mi_settings_theme_mode") || "dark", false);
         applyFontPreset(localStorage.getItem("mi_settings_font_preset") || "medium", false);
+        const picker = document.getElementById("themeColor");
+        const accent = localStorage.getItem("cortex_core_theme_color");
+        if (picker && accent) { picker.value = accent; picker.dispatchEvent(new Event("input", { bubbles: true })); }
         const languageControl = document.getElementById("languageSelect");
         const language = localStorage.getItem("mi_settings_language") || "en";
         if (languageControl) languageControl.value = language;
         currentLanguage = language;
         updateSummary("language", languageControl?.options[languageControl.selectedIndex]?.text || "English");
-    }, 3600);
+    };
+    setTimeout(rehydrate, 3600);
+    setTimeout(rehydrate, 6500);
 })();
 </script>
 
@@ -12018,6 +12032,14 @@ body.cortex-light-theme #settingsPanel .mi-settings-control-box label { color:#3
 #miIosSelectPopup .mi-ios-popup-option.mi-selected { background:rgba(14,165,233,.25) !important; color:#fff !important; }
 #miIosSelectPopup .mi-ios-option-label { color:inherit !important; }
 #miIosSelectPopup .mi-ios-option-check { width:22px; height:22px; flex-basis:22px; background:rgba(125,211,252,.22); color:#7dd3fc; }
+#settingsPanel .cortex-accent-picker { width:100%; height:44px; padding:4px; margin-top:10px; border:1px solid rgba(125,211,252,.30); border-radius:12px; background:rgba(2,6,23,.62); cursor:pointer; }
+#settingsPanel .cortex-accent-presets { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; }
+#settingsPanel .cortex-accent-preset { min-height:34px; border:1px solid rgba(255,255,255,.16); border-radius:9px; color:#fff; font-size:11px; cursor:pointer; transition:transform 140ms ease,box-shadow 140ms ease; }
+#settingsPanel .cortex-accent-preset:hover { transform:translateY(-1px); box-shadow:0 0 14px currentColor; }
+#settingsPanel .cortex-font-range { width:100%; margin:14px 0 4px; accent-color:var(--main,#38bdf8); cursor:ew-resize; }
+#settingsPanel .cortex-font-scale { display:flex; justify-content:space-between; color:#94a3b8; font-size:11px; }
+#settingsPanel .cortex-font-preview { margin-top:12px; padding:10px 12px; border:1px solid rgba(125,211,252,.18); border-radius:10px; color:#dbeafe; background:rgba(14,165,233,.08); text-align:center; font-weight:700; }
+body.cortex-light-theme #settingsPanel .cortex-accent-picker { background:rgba(255,255,255,.82); }
 @media (max-width:600px) { #miIosSelectPopup { min-width:0; width:calc(100vw - 32px) !important; } #settingsPanel .mi-ios-select-trigger { min-height:50px !important; } }
 </style>
 <div
@@ -12041,11 +12063,11 @@ body.cortex-light-theme #settingsPanel .mi-settings-control-box label { color:#3
     </section>
     <section class="mi-settings-section" data-settings-type="theme">
         <button type="button" class="mi-settings-option-button" aria-expanded="false"><span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🎨</span><span class="mi-settings-option-title" data-settings-value="Dark">Theme</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span></button>
-        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box"><label for="themeMode" data-i18n="settings.theme">Theme</label><select id="themeMode" class="cortex-settings-select"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></div></div></div>
+        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box"><label for="themeMode" data-i18n="settings.theme">Theme</label><select id="themeMode" class="cortex-settings-select"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select><label for="themeColor">Accent Color</label><input id="themeColor" class="cortex-accent-picker" type="color" value="#1e88e5" aria-label="Accent Color"><div class="cortex-accent-presets" aria-label="Accent color presets"><button type="button" class="cortex-accent-preset" data-accent="#1e88e5" style="background:#1e88e5">Cortex Blue</button><button type="button" class="cortex-accent-preset" data-accent="#a855f7" style="background:#a855f7">Neon Purple</button><button type="button" class="cortex-accent-preset" data-accent="#22c55e" style="background:#22c55e">Cyber Green</button><button type="button" class="cortex-accent-preset" data-accent="#f97316" style="background:#f97316">Electric Orange</button></div></div></div></div>
     </section>
     <section class="mi-settings-section" data-settings-type="fontSize">
         <button type="button" class="mi-settings-option-button" aria-expanded="false"><span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🔤</span><span class="mi-settings-option-title" data-settings-value="Medium">Font Size</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span></button>
-        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box"><label for="fontSizeSelect" data-i18n="settings.fontSize">Font Size</label><select id="fontSizeSelect" class="cortex-settings-select"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></div></div></div>
+        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box"><label for="fontSizeSelect" data-i18n="settings.fontSize">Font Size</label><select id="fontSizeSelect" class="cortex-settings-select"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select><input id="fontSizeRange" class="cortex-font-range" type="range" min="14" max="17" step="1" value="15" aria-label="Font Size"><div class="cortex-font-scale"><span>A</span><span>Medium</span><span>A+</span></div><div class="cortex-font-preview">Aa&nbsp;&nbsp;CORTEX CORE AI</div></div></div></div>
     </section>
 </div>
 </div>
