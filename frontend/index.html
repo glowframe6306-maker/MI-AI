@@ -12593,10 +12593,7 @@ function loadGuestChats() {
 
     const lastChat = localStorage.getItem('last_chat') && parsed[localStorage.getItem('last_chat')] ? localStorage.getItem('last_chat') : ids[ids.length - 1];
     chats = { [lastChat]: parsed[lastChat] || [] };
-    /* Guest mode is intentionally limited to one temporary chat. */
     currentChat = lastChat;
-        chats = {};
-        currentChat = null;
     localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
     localStorage.setItem('last_chat', currentChat);
 }
@@ -13526,10 +13523,8 @@ if(theme){
 document.documentElement.style.setProperty("--main",theme);
 }
 
-if (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0) {
-    let id="chat_"+Date.now();
-    chats[id]=[];
-    currentChat=id;
+if (!isAuthenticated() && (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0)) {
+    loadGuestChats();
 } else if (!currentChat || !chats[currentChat]) {
     currentChat = Object.keys(chats)[0];
 }
@@ -13675,6 +13670,8 @@ async function newChat(){
       Existing guest chats remain unchanged.
     */
     if (!isAuthenticated()) {
+        chats = {};
+        currentChat = null;
         initializeChat(localId);
 
         localStorage.setItem(
