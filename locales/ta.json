@@ -1,0 +1,19 @@
+{
+  "app.title": "CORTEX CORE AI",
+  "auth.login": "உள்நுழைக",
+  "auth.logout": "வெளியேறு",
+  "auth.signIn": "உள்நுழைக",
+  "auth.register": "பதிவு செய்க",
+  "auth.resetPassword": "கடவுச்சொல்லை மீட்டமைக்கவும்",
+  "sidebar.newChat": "புதிய அரட்டை",
+  "sidebar.settings": "அமைப்புகள்",
+  "sidebar.support": "வாடிக்கையாளர் ஆதரவு",
+  "nav.closeMenu": "மெனுவை மூடு",
+  "nav.openMenu": "மெனுவை திற",
+  "settings.title": "அமைப்புகள்",
+  "settings.language": "மொழி",
+  "settings.theme": "தீம்",
+  "settings.fontSize": "எழுத்து அளவு",
+  "settings.apply": "பயன்படுத்து",
+  "chat.send": "அனுப்பு"
+}

@@ -345,6 +345,54 @@ function renderAIResponse(text) {
     window.setTimeout(releaseBusyState, 3000);
 })();
 </script>
+<style id="cortex-settings-center-style">
+:root { --cortex-accent:#1e88e5; --cortex-accent-rgb:30,136,229; --cortex-panel:#0b1220; --cortex-panel-2:#111c2e; }
+#settingsPanel { color:#e8eef8; background:linear-gradient(145deg,rgba(13,22,38,.97),rgba(5,11,22,.98)) !important; border:1px solid rgba(var(--cortex-accent-rgb),.38) !important; box-shadow:0 30px 90px rgba(0,0,0,.58),0 0 55px rgba(var(--cortex-accent-rgb),.14) !important; overflow:visible !important; }
+.cortex-settings-heading { padding:8px 18px 20px; border-bottom:1px solid rgba(255,255,255,.09); }
+.cortex-settings-kicker { color:var(--cortex-accent); font-size:10px; font-weight:800; letter-spacing:.18em; }
+#settingsPanel h3 { margin:6px 0 5px; font-size:26px; letter-spacing:.01em; }
+.cortex-settings-heading p,.cortex-settings-description { margin:0; color:#91a1b8; font-size:12px; line-height:1.5; }
+#cortexSettingsSections { display:grid; gap:14px; padding:18px; max-height:calc(100vh - 190px); overflow-y:auto; }
+.cortex-settings-group { padding:15px; border:1px solid rgba(148,163,184,.14); border-radius:14px; background:rgba(255,255,255,.035); }
+.cortex-settings-group h4 { margin:0 0 4px; color:#fff; font-size:12px; text-transform:uppercase; letter-spacing:.13em; }
+.cortex-settings-group > .cortex-settings-description { margin-bottom:10px; }
+.cortex-setting-row { position:relative; display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:56px; padding:10px 12px; margin-top:5px; border:1px solid transparent; border-radius:10px; cursor:pointer; transition:background .18s ease,border-color .18s ease,transform .18s ease; }
+.cortex-setting-row:hover,.cortex-setting-row:focus-visible { background:rgba(var(--cortex-accent-rgb),.10); border-color:rgba(var(--cortex-accent-rgb),.38); outline:none; }
+.cortex-setting-row b { display:block; font-size:13px; color:inherit; }
+.cortex-setting-row small { display:block; margin-top:3px; color:#8fa0b7; font-size:11px; }
+.cortex-setting-value { color:var(--cortex-accent); font-size:12px; font-weight:700; text-align:right; white-space:nowrap; }
+.cortex-setting-value::after { content:'⌄'; margin-left:8px; color:#8fa0b7; }
+.cortex-setting-toggle .cortex-setting-value { padding:4px 9px; border-radius:99px; background:rgba(148,163,184,.15); }
+.cortex-setting-toggle .cortex-setting-value::after { display:none; }
+.cortex-setting-toggle.is-on .cortex-setting-value { color:#07120c; background:var(--cortex-accent); }
+.cortex-color-preview { display:flex; align-items:center; gap:8px; }
+.cortex-color-preview i { width:22px; height:22px; border-radius:50%; background:var(--cortex-accent); box-shadow:0 0 0 3px rgba(var(--cortex-accent-rgb),.2); }
+.cortex-color-preview input { position:absolute; opacity:0; width:1px; height:1px; }
+.cortex-settings-action { display:block; width:100%; margin-top:8px; padding:11px 12px; border:1px solid rgba(var(--cortex-accent-rgb),.28); border-radius:10px; background:rgba(var(--cortex-accent-rgb),.08); color:inherit; text-align:left; cursor:pointer; }
+.cortex-settings-action:hover { background:rgba(var(--cortex-accent-rgb),.18); }
+.cortex-shortcuts { display:grid; gap:8px; margin-top:10px; color:#c4d0df; font-size:12px; }
+.cortex-shortcuts span { display:flex; justify-content:space-between; gap:12px; }
+kbd { padding:3px 7px; border:1px solid rgba(148,163,184,.3); border-radius:5px; color:#dbeafe; font-family:inherit; font-size:10px; }
+.cortex-about strong { display:block; margin-top:10px; color:var(--cortex-accent); letter-spacing:.08em; }
+.cortex-about p { color:#aebdd0; font-size:12px; line-height:1.7; }
+.cortex-about a { color:var(--cortex-accent); }
+#cortexSettingsStatus { min-height:18px; padding:0 18px 10px; color:var(--cortex-accent); font-size:11px; }
+.cortex-setting-menu { position:absolute; z-index:100000; top:calc(100% + 5px); right:10px; min-width:190px; padding:5px; border:1px solid rgba(var(--cortex-accent-rgb),.42); border-radius:11px; background:#0b1424; box-shadow:0 18px 42px rgba(0,0,0,.55); }
+.cortex-setting-menu button { display:block; width:100%; padding:9px 10px; border:0; border-radius:7px; background:transparent; color:#dbeafe; text-align:left; cursor:pointer; }
+.cortex-setting-menu button:hover,.cortex-setting-menu button[aria-selected="true"] { background:rgba(var(--cortex-accent-rgb),.2); color:#fff; }
+body.cortex-light-theme #settingsPanel { color:#12233d !important; background:linear-gradient(145deg,#fff,#f1f6fb) !important; border-color:#b9cde2 !important; box-shadow:0 24px 70px rgba(28,52,80,.2) !important; }
+body.cortex-light-theme .cortex-settings-heading { border-color:#d6e1ec; }
+body.cortex-light-theme .cortex-settings-group { background:rgba(255,255,255,.72); border-color:#d2deea; }
+body.cortex-light-theme .cortex-setting-row small,.cortex-light-theme .cortex-settings-description { color:#60738b; }
+body.cortex-light-theme .cortex-setting-menu { background:#fff; box-shadow:0 16px 35px rgba(28,52,80,.2); }
+body.cortex-light-theme .cortex-setting-menu button { color:#1d3553; }
+html.cortex-font-small { font-size:14px !important; } html.cortex-font-medium { font-size:15px !important; } html.cortex-font-large { font-size:17px !important; }
+body.cortex-chat-compact .me,body.cortex-chat-compact .ai { margin-bottom:6px !important; padding:8px 11px !important; }
+body.cortex-chat-comfortable .me,body.cortex-chat-comfortable .ai { margin-bottom:12px !important; }
+body.cortex-chat-spacious .me,body.cortex-chat-spacious .ai { margin-bottom:20px !important; padding:15px 17px !important; }
+html.cortex-high-contrast body { filter:contrast(1.12); } html.cortex-reduce-motion *,html.cortex-animations-off * { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+@media (max-width:600px) { #cortexSettingsSections { padding:12px; max-height:calc(100vh - 150px); } .cortex-settings-group { padding:11px; } .cortex-setting-row { min-height:52px; padding:9px 8px; } .cortex-setting-menu { left:8px; right:8px; } }
+</style>
 
 <script id="cortex-settings-behavior">
 (function () {
@@ -12536,57 +12584,41 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
     aria-hidden="true"
     onclick="closeSettings()">
 </div>
-<div id="settingsPanel" role="dialog" aria-modal="true" aria-hidden="true">
-<button
-    id="settingsCloseBtn"
-    type="button"
-    onclick="closeSettings()"
-    aria-label="Close Settings">
-    ├ó┼ôΓÇó
-</button>
-<h3 data-i18n="settings.title">Settings</h3>
-<div class="mi-settings-accordion">
-    <section class="mi-settings-section" data-settings-type="language">
-        <button type="button" class="mi-settings-option-button" aria-expanded="false">
-            <span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🌐</span><span class="mi-settings-option-title" data-settings-value="English">Language</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span>
-        </button>
-        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box">
-            <label for="languageSelect" data-i18n="settings.language">Language</label>
-            <select id="languageSelect" class="cortex-settings-select" data-mi-i18n-ignore="true">
-                <option value="en">English</option><option value="si">සිංහල</option><option value="ta">தமிழ்</option>
-            </select>
-        </div></div></div>
-    </section>
-    <section class="mi-settings-section" data-settings-type="theme">
-        <button type="button" class="mi-settings-option-button" aria-expanded="false">
-            <span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🎨</span><span class="mi-settings-option-title" data-settings-value="Dark">Theme</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span>
-        </button>
-        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box">
-            <label for="themeMode" data-i18n="settings.theme">Theme</label>
-            <select id="themeMode" class="cortex-settings-select"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select>
-            <label for="themeColor">Accent Color</label>
-            <input id="themeColor" class="cortex-accent-picker" type="color" value="#1e88e5" aria-label="Accent Color">
-            <div class="cortex-accent-presets" aria-label="Accent color presets">
-                <button type="button" class="cortex-accent-preset" data-accent="#1e88e5" style="background:#1e88e5">Cortex Blue</button>
-                <button type="button" class="cortex-accent-preset" data-accent="#a855f7" style="background:#a855f7">Neon Purple</button>
-                <button type="button" class="cortex-accent-preset" data-accent="#22c55e" style="background:#22c55e">Cyber Green</button>
-                <button type="button" class="cortex-accent-preset" data-accent="#f97316" style="background:#f97316">Electric Orange</button>
-            </div>
-        </div></div></div>
-    </section>
-    <section class="mi-settings-section" data-settings-type="fontSize">
-        <button type="button" class="mi-settings-option-button" aria-expanded="false">
-            <span class="mi-settings-option-left"><span class="mi-settings-option-icon" aria-hidden="true">🔤</span><span class="mi-settings-option-title" data-settings-value="Medium">Font Size</span></span><span class="mi-settings-arrow" aria-hidden="true">›</span>
-        </button>
-        <div class="mi-settings-option-content"><div class="mi-settings-option-inner"><div class="mi-settings-control-box">
-            <label for="fontSizeSelect" data-i18n="settings.fontSize">Font Size</label>
-            <select id="fontSizeSelect" class="cortex-settings-select"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
-            <input id="fontSizeRange" class="cortex-font-range" type="range" min="14" max="17" step="1" value="15" aria-label="Font Size">
-            <div class="cortex-font-scale"><span>A</span><span>Medium</span><span>A+</span></div>
-            <div class="cortex-font-preview">Aa&nbsp;&nbsp;CORTEX CORE AI</div>
-        </div></div></div>
-    </section>
-</div>
+<div id="settingsPanel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+<button id="settingsCloseBtn" type="button" onclick="closeSettings()" aria-label="Close Settings">×</button>
+<div class="cortex-settings-heading"><span class="cortex-settings-kicker">CORTEX CONTROL</span><h3 id="settingsTitle">Settings</h3><p>Shape your workspace, privacy, and conversation experience.</p></div>
+<div id="cortexSettingsSections">
+<section class="cortex-settings-group"><h4>Appearance</h4><p class="cortex-settings-description">Tune the visual language of your workspace.</p>
+  <div class="cortex-setting-row" data-setting="theme"><span><b>Theme</b><small>Dark, light, or follow system</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-color" data-setting="accentColor"><span><b>Accent Color</b><small>Personalize interactive highlights</small></span><span class="cortex-color-preview"><input id="themeColor" type="color" aria-label="Accent Color"><i></i></span></div>
+  <div class="cortex-setting-row" data-setting="fontSize"><span><b>Font Size</b><small class="cortex-font-preview">Aa CORTEX CORE AI</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row" data-setting="chatAppearance"><span><b>Chat Appearance</b><small>Control conversation density</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row" data-setting="animations"><span><b>Animations</b><small>Choose motion intensity</small></span><span class="cortex-setting-value"></span></div>
+</section>
+<section class="cortex-settings-group"><h4>Language &amp; Input</h4>
+  <div class="cortex-setting-row" data-setting="language"><span><b>Language</b><small>Translate supported application UI</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row" data-setting="enterKeyBehavior"><span><b>Enter Key Behavior</b><small>Choose how messages are sent</small></span><span class="cortex-setting-value"></span></div>
+</section>
+<section class="cortex-settings-group"><h4>Chat</h4>
+  <div class="cortex-setting-row" data-setting="responseStyle"><span><b>Response Style</b><small>Guide answer depth</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="autoScroll"><span><b>Auto Scroll</b><small>Keep the latest response in view</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="showTimestamps"><span><b>Show Timestamps</b><small>Display message times when available</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="confirmBeforeDelete"><span><b>Confirm Before Delete</b><small>Protect chats from accidental deletion</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="aiResponseSound"><span><b>AI Response Sound</b><small>Use existing response audio when supported</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="notificationSound"><span><b>Notification Sound</b><small>Use existing notification audio when supported</small></span><span class="cortex-setting-value"></span></div>
+</section>
+<section class="cortex-settings-group"><h4>Accessibility</h4>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="highContrast"><span><b>High Contrast</b><small>Increase visual separation</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="reduceMotion"><span><b>Reduce Motion</b><small>Keep transitions calm</small></span><span class="cortex-setting-value"></span></div>
+  <div class="cortex-setting-row cortex-setting-toggle" data-setting="largeText"><span><b>Large Text</b><small>Improve reading comfort</small></span><span class="cortex-setting-value"></span></div>
+</section>
+<section class="cortex-settings-group"><h4>Privacy &amp; Data</h4><p class="cortex-settings-description">Authenticated chats remain associated with your account.</p>
+  <button class="cortex-settings-action" type="button" data-settings-action="export">Export Chats</button>
+  <button class="cortex-settings-action" type="button" data-settings-action="clear">Clear Temporary Data</button>
+</section>
+<section class="cortex-settings-group"><h4>Keyboard Shortcuts</h4><div class="cortex-shortcuts"><span>New Chat <kbd>Ctrl / Cmd + N</kbd></span><span>Focus Message Input <kbd>/</kbd></span><span>Open Settings <kbd>Ctrl / Cmd + ,</kbd></span><span>Send Message <kbd>Enter</kbd></span></div></section>
+<section class="cortex-settings-group cortex-about"><h4>About Cortex Core AI</h4><strong>CORTEX CORE AI</strong><p>Created by: M.I. Muhammadh<br>Company: MI CORTEX X INC.</p><p><a href="mailto:miai.customerservice@gmail.com">miai.customerservice@gmail.com</a><br><a href="mailto:teamofchatbot.miai@gmail.com">teamofchatbot.miai@gmail.com</a><br>Team WhatsApp: 0756390621</p></section>
+</div><div id="cortexSettingsStatus" role="status" aria-live="polite"></div>
 </div>
 
 <!-- INPUT -->
@@ -14563,7 +14595,7 @@ menu.style.display="none";
 /* DELETE */
 function deleteChat(){
 if(!selectedChat) return;
-if(!confirm("Delete this chat?")) return;
+if (window.cortexSettings?.get().confirmBeforeDelete !== false && !confirm("Delete this chat?")) return;
 
 const chatId = selectedChat;
 const token = localStorage.getItem('mi_supabase_token');
@@ -15142,7 +15174,8 @@ async function fetchChatReply(options = {}, signal = null) {
         message,
         history,
         conversation_id,
-        attachment_ids
+        attachment_ids,
+        response_style: window.cortexSettings?.get().responseStyle || "balanced"
     };
 
     const response = await fetch("/api/chat/stream", {
@@ -15736,7 +15769,7 @@ async function send() {
 }
 /* SCROLL */
 function scroll(){
-chatBox.scrollTop=chatBox.scrollHeight;
+if (window.cortexSettings?.get().autoScroll !== false) chatBox.scrollTop=chatBox.scrollHeight;
 }
 
 /* SAVE */
@@ -40907,6 +40940,109 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     }
 
     document.addEventListener("click", openFromRow, false);
+})();
+</script>
+<script id="cortex-settings-center-controller">
+(function () {
+    "use strict";
+    if (window.__cortexSettingsCenter) return;
+    window.__cortexSettingsCenter = true;
+
+    const STORAGE_KEY = "cortex_settings";
+    const defaults = {
+        language: "en", theme: "dark", accentColor: "#1e88e5", fontSize: "medium",
+        chatAppearance: "comfortable", enterKeyBehavior: "send", animations: "full",
+        aiResponseSound: true, notificationSound: true, responseStyle: "balanced",
+        autoScroll: true, showTimestamps: false, confirmBeforeDelete: true,
+        highContrast: false, reduceMotion: false, largeText: false
+    };
+    const choices = {
+        theme: [["dark", "Dark"], ["light", "Light"], ["system", "System"]],
+        fontSize: [["small", "Small"], ["medium", "Medium"], ["large", "Large"]],
+        chatAppearance: [["compact", "Compact"], ["comfortable", "Comfortable"], ["spacious", "Spacious"]],
+        enterKeyBehavior: [["send", "Enter = Send"], ["newline", "Shift + Enter = New Line"]],
+        animations: [["full", "Full"], ["reduced", "Reduced"], ["off", "Off"]],
+        responseStyle: [["concise", "Concise"], ["balanced", "Balanced"], ["detailed", "Detailed"]],
+        language: [["en", "English"], ["si", "සිංහල"], ["ta", "தமிழ்"]]
+    };
+    let settings = Object.assign({}, defaults, JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
+    if (settings.accentColor === "#000000" || !/^#[0-9a-f]{6}$/i.test(settings.accentColor)) settings.accentColor = defaults.accentColor;
+
+    function save() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        Object.keys(settings).forEach((key) => localStorage.setItem("mi_settings_" + key, String(settings[key])));
+        if (window.firestorePersistence && window.miFirebaseUser) window.firestorePersistence.saveSettings(settings).catch(() => {});
+    }
+    function rgb(hex) { const value = hex.replace("#", ""); return [parseInt(value.slice(0, 2), 16), parseInt(value.slice(2, 4), 16), parseInt(value.slice(4, 6), 16)].join(","); }
+    function label(key, value) { const item = (choices[key] || []).find((entry) => entry[0] === value); return item ? item[1] : (value ? "ON" : "OFF"); }
+    function applyAll() {
+        const root = document.documentElement;
+        const light = settings.theme === "light" || (settings.theme === "system" && matchMedia("(prefers-color-scheme: light)").matches);
+        const accent = /^#[0-9a-f]{6}$/i.test(settings.accentColor) ? settings.accentColor : defaults.accentColor;
+        root.style.setProperty("--cortex-accent", accent); root.style.setProperty("--cortex-accent-rgb", rgb(accent));
+        root.style.setProperty("--mi-theme-color", accent); root.style.setProperty("--mi-theme-rgb", rgb(accent));
+        root.dataset.themeMode = settings.theme; document.body.classList.toggle("cortex-light-theme", light);
+        root.classList.remove("cortex-font-small", "cortex-font-medium", "cortex-font-large"); root.classList.add("cortex-font-" + settings.fontSize);
+        document.body.classList.remove("cortex-chat-compact", "cortex-chat-comfortable", "cortex-chat-spacious"); document.body.classList.add("cortex-chat-" + settings.chatAppearance);
+        root.classList.toggle("cortex-high-contrast", settings.highContrast); root.classList.toggle("cortex-reduce-motion", settings.reduceMotion || settings.animations === "reduced"); root.classList.toggle("cortex-animations-off", settings.animations === "off");
+        root.classList.toggle("cortex-large-text", settings.largeText); if (settings.largeText) root.classList.add("cortex-font-large");
+        const picker = document.getElementById("themeColor"); if (picker) picker.value = accent;
+        document.querySelectorAll(".cortex-setting-row[data-setting]").forEach((row) => {
+            const key = row.dataset.setting; const value = settings[key]; const valueNode = row.querySelector(".cortex-setting-value");
+            if (valueNode) valueNode.textContent = typeof value === "boolean" ? (value ? "ON" : "OFF") : label(key, value);
+            row.classList.toggle("is-on", value === true); row.setAttribute("aria-label", row.querySelector("b")?.textContent + ": " + (typeof value === "boolean" ? (value ? "ON" : "OFF") : label(key, value)));
+        });
+    }
+    function closeMenus() { document.querySelectorAll(".cortex-setting-menu").forEach((menu) => menu.remove()); }
+    function setValue(key, value) { settings[key] = value; save(); applyAll(); if (key === "language") applyLanguageNow(value); }
+    function applyLanguageNow(value) {
+        const apply = window.applyLanguage || window.MIAI18N?.setLanguage;
+        if (typeof apply === "function") Promise.resolve(apply(value, true)).catch(() => {}).finally(translateUi);
+        else translateUi();
+        document.documentElement.lang = value;
+    }
+    const uiText = {
+        en: { settings: "Settings", appearance: "Appearance", languageInput: "Language & Input", chat: "Chat", accessibility: "Accessibility", privacy: "Privacy & Data", about: "About Cortex Core AI", newChat: "New Chat", support: "Customer Support" },
+        si: { settings: "සැකසුම්", appearance: "පෙනුම", languageInput: "භාෂාව සහ ආදානය", chat: "චැට්", accessibility: "ප්‍රවේශය", privacy: "පෞද්ගලිකත්වය සහ දත්ත", about: "Cortex Core AI ගැන", newChat: "නව චැට්", support: "පාරිභෝගික සහාය" },
+        ta: { settings: "அமைப்புகள்", appearance: "தோற்றம்", languageInput: "மொழி மற்றும் உள்ளீடு", chat: "அரட்டை", accessibility: "அணுகல்தன்மை", privacy: "தனியுரிமை மற்றும் தரவு", about: "Cortex Core AI பற்றி", newChat: "புதிய அரட்டை", support: "வாடிக்கையாளர் ஆதரவு" }
+    };
+    function translateUi() {
+        const text = uiText[settings.language] || uiText.en;
+        const groups = Array.from(document.querySelectorAll(".cortex-settings-group h4"));
+        [text.appearance, text.languageInput, text.chat, text.accessibility, text.privacy, "Keyboard Shortcuts", text.about].forEach((value, index) => { if (groups[index]) groups[index].textContent = value; });
+        const title = document.getElementById("settingsTitle"); if (title) title.textContent = text.settings;
+        const newChat = document.querySelector('#sidebar button[onclick="newChat()"]'); if (newChat && settings.language !== "en") newChat.textContent = "➕ " + text.newChat;
+        const support = document.getElementById("supportBtn"); if (support && settings.language !== "en") support.textContent = "🎧 " + text.support;
+    }
+    function openMenu(row) {
+        closeMenus(); const key = row.dataset.setting; const menu = document.createElement("div"); menu.className = "cortex-setting-menu"; menu.setAttribute("role", "listbox");
+        choices[key].forEach(([value, text]) => { const option = document.createElement("button"); option.type = "button"; option.textContent = text; option.setAttribute("role", "option"); option.setAttribute("aria-selected", String(settings[key] === value)); option.onclick = () => { setValue(key, value); closeMenus(); }; menu.appendChild(option); });
+        row.appendChild(menu); menu.querySelector('[aria-selected="true"]')?.focus();
+    }
+    function onRowClick(event) {
+        const row = event.target.closest(".cortex-setting-row"); if (!row) return; const key = row.dataset.setting;
+        if (key === "accentColor") { if (event.target.id !== "themeColor") document.getElementById("themeColor")?.click(); return; }
+        if (typeof settings[key] === "boolean") setValue(key, !settings[key]); else openMenu(row);
+    }
+    function exportChats() { const data = JSON.stringify(window.chats || {}, null, 2); const blob = new Blob([data], { type: "application/json" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "cortex-core-ai-chats.json"; link.click(); URL.revokeObjectURL(link.href); }
+    function clearTemporary() { const guestKey = typeof getGuestStorageKey === "function" ? getGuestStorageKey() : "mi_guest_chats"; localStorage.removeItem(guestKey); localStorage.removeItem("mi_guest_chats"); document.getElementById("cortexSettingsStatus").textContent = "Temporary guest data cleared."; }
+    function initialize() {
+        const sections = document.getElementById("cortexSettingsSections"); if (!sections) return;
+        document.querySelectorAll("#settingsPanel .cortex-settings-heading .mi-settings-accordion").forEach((legacy) => legacy.remove());
+        const picker = document.getElementById("themeColor"); const colorPreview = document.querySelector(".cortex-color-preview");
+        if (picker && colorPreview && !colorPreview.contains(picker)) colorPreview.appendChild(picker);
+        const cleanupLegacy = () => { document.querySelectorAll("#settingsPanel .cortex-settings-heading .mi-settings-accordion").forEach((legacy) => legacy.remove()); const currentPicker = document.getElementById("themeColor"); if (currentPicker && colorPreview && !colorPreview.contains(currentPicker)) colorPreview.appendChild(currentPicker); };
+        cleanupLegacy(); new MutationObserver(cleanupLegacy).observe(document.getElementById("settingsPanel"), { childList: true, subtree: true });
+        sections.addEventListener("click", onRowClick); sections.addEventListener("keydown", (event) => { const row = event.target.closest(".cortex-setting-row"); if (row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onRowClick(event); } });
+        document.getElementById("themeColor")?.addEventListener("input", (event) => { settings.accentColor = event.target.value; applyAll(); }); document.getElementById("themeColor")?.addEventListener("change", save);
+        document.querySelector('[data-settings-action="export"]')?.addEventListener("click", exportChats); document.querySelector('[data-settings-action="clear"]')?.addEventListener("click", clearTemporary);
+        document.addEventListener("click", (event) => { if (!event.target.closest(".cortex-setting-row")) closeMenus(); });
+        document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeMenus(); if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "n") { event.preventDefault(); window.newChat?.(); } if ((event.ctrlKey || event.metaKey) && event.key === ",") { event.preventDefault(); window.toggleSettings?.(); } if (event.key === "/" && document.activeElement !== document.getElementById("msg")) { event.preventDefault(); document.getElementById("msg")?.focus(); } }, true);
+        document.addEventListener("keydown", (event) => { const input = document.getElementById("msg"); if (event.target !== input || event.key !== "Enter") return; if (settings.enterKeyBehavior === "newline" && !event.shiftKey) { event.stopImmediatePropagation(); return; } if (settings.enterKeyBehavior === "send" && !event.shiftKey) { event.preventDefault(); event.stopImmediatePropagation(); window.send?.(); } }, true);
+        window.addEventListener("mi-ai-startup-complete", applyAll, { once: true }); matchMedia("(prefers-color-scheme: light)").addEventListener?.("change", () => settings.theme === "system" && applyAll()); applyAll(); translateUi(); if (settings.language !== "en") applyLanguageNow(settings.language);
+    }
+    window.cortexSettings = { get: () => Object.assign({}, settings), set: setValue, apply: applyAll };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true }); else initialize();
 })();
 </script>
 </body>

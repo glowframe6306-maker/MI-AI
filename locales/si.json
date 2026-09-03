@@ -1,0 +1,19 @@
+{
+  "app.title": "CORTEX CORE AI",
+  "auth.login": "පිවිසෙන්න",
+  "auth.logout": "පිටවන්න",
+  "auth.signIn": "පිවිසෙන්න",
+  "auth.register": "ලියාපදිංචි වන්න",
+  "auth.resetPassword": "මුරපදය යළි සකසන්න",
+  "sidebar.newChat": "නව චැට්",
+  "sidebar.settings": "සැකසුම්",
+  "sidebar.support": "පාරිභෝගික සහාය",
+  "nav.closeMenu": "මෙනුව වසන්න",
+  "nav.openMenu": "මෙනුව විවෘත කරන්න",
+  "settings.title": "සැකසුම්",
+  "settings.language": "භාෂාව",
+  "settings.theme": "තේමාව",
+  "settings.fontSize": "අකුරු ප්‍රමාණය",
+  "settings.apply": "යොදන්න",
+  "chat.send": "යවන්න"
+}
