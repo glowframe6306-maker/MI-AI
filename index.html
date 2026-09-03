@@ -12973,31 +12973,6 @@ function createSingleGuestChat() {
     return id;
 }
 
-function enforceLoggedOutChatInvariant() {
-    if (isAuthenticated()) return;
-
-    if (!chats || typeof chats !== 'object' || Array.isArray(chats)) {
-        chats = {};
-    }
-
-    const ids = Object.keys(chats);
-    if (ids.length === 0) {
-        createSingleGuestChat();
-        return;
-    }
-
-    const preferredId = currentChat && chats[currentChat]
-        ? currentChat
-        : localStorage.getItem('last_chat') && chats[localStorage.getItem('last_chat')]
-            ? localStorage.getItem('last_chat')
-            : ids[ids.length - 1];
-
-    chats = { [preferredId]: chats[preferredId] || [] };
-    currentChat = preferredId;
-    localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
-    localStorage.setItem('last_chat', preferredId);
-}
-
 function resetChatStateForAuthChange() {
     chats = {};
     currentChat = null;
@@ -13038,7 +13013,6 @@ function loadGuestChats() {
     currentChat = lastChat;
     localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
     localStorage.setItem('last_chat', currentChat);
-    enforceLoggedOutChatInvariant();
 }
 
 function getCurrentProfileEmail() {
@@ -13964,8 +13938,9 @@ if(theme){
 document.documentElement.style.setProperty("--main",theme);
 }
 
-if (!isAuthenticated() && (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0)) {
-    enforceLoggedOutChatInvariant();
+if (!chats || typeof chats !== 'object' || Array.isArray(chats) || Object.keys(chats).length === 0) {
+    chats = {};
+    currentChat = null;
 } else if (!currentChat || !chats[currentChat]) {
     currentChat = Object.keys(chats)[0];
 }
@@ -14208,7 +14183,6 @@ async function openChat(id){
 
 /* RENDER LIST */
 function renderList(){
-if (!isAuthenticated()) enforceLoggedOutChatInvariant();
 chatList.innerHTML="";
 
 let ids = Object.keys(chats);
@@ -26321,14 +26295,6 @@ document.addEventListener(
             chatMap();
 
         if (
-            typeof isAuthenticated === "function" &&
-            !isAuthenticated()
-        ) {
-            allChats = {};
-            replaceChatMap(allChats);
-        }
-
-        if (
             !allChats ||
             typeof allChats !==
                 "object" ||
@@ -26773,14 +26739,6 @@ document.addEventListener(
     }
 
     function renderListClean() {
-        if (
-            typeof isAuthenticated === "function" &&
-            !isAuthenticated() &&
-            typeof enforceLoggedOutChatInvariant === "function"
-        ) {
-            enforceLoggedOutChatInvariant();
-        }
-
         const list =
             getChatList();
 
