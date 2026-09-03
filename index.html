@@ -6828,9 +6828,6 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
                     chats[chatId].title = chatData.title || chatId;
                     chats[chatId].pin = chatData.pin || false;
                     chats[chatId].messageCount = messages.length;
-                    if (!chatData.userId) {
-                        await chatDoc.ref.set({ userId: requestedUid, id: chatId }, { merge: true });
-                    }
                 }
 
                 if (this.uid !== requestedUid) {
@@ -12947,11 +12944,11 @@ function getAccountScopedChatStorageKey(identity) {
     return normalizedIdentity ? `mi_chats_${normalizedIdentity}` : getGuestStorageKey();
 }
 
-function getUserChatStorageKey() {
+function getUserChatStorageKey(identity) {
     const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
     const userId = String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || localStorage.getItem('mi_user_id') || '').trim();
-    const identity = email || userId || guestId;
-    return getAccountScopedChatStorageKey(identity);
+    const resolvedIdentity = identity || email || userId || guestId;
+    return getAccountScopedChatStorageKey(resolvedIdentity);
 }
 
 function getActiveStorageKey() {
@@ -13090,6 +13087,7 @@ function openProfilePanel() {
       <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;display:flex;flex-direction:column;gap:10px;">
         <button type="button" onclick="saveProfileAndStay()" style="padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">Save changes</button>
         <button type="button" onclick="confirmLogout()" style="padding:10px 12px;border:none;border-radius:12px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Logout</button>
+        <button type="button" onclick="confirmDeleteAccountData()" style="padding:10px 12px;border:1px solid rgba(248,113,113,0.55);border-radius:12px;background:transparent;color:#fecaca;font-weight:700;cursor:pointer;">Delete account data</button>
       </div>
     `;
 
@@ -13126,6 +13124,41 @@ function handleLogoutConfirmation() {
     const shouldLogout = window.confirm(message);
     if (shouldLogout) {
         logout();
+    }
+}
+
+function confirmDeleteAccountData() {
+    if (window.confirm('Delete all saved chats and messages for this account? This cannot be undone.')) {
+        deleteAccountData();
+    }
+}
+
+async function deleteAccountData() {
+    const firebaseUser = window.miFirebaseUser;
+    if (!firebaseUser || typeof firebaseUser.getIdToken !== 'function') {
+        alert('Please sign in again before deleting account data.');
+        return;
+    }
+
+    try {
+        const token = await firebaseUser.getIdToken(true);
+        const response = await fetch('/api/account/data', {
+            method: 'DELETE',
+            headers: { Authorization: 'Bearer ' + token }
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.success !== true) {
+            throw new Error(result.error || 'Account data could not be deleted.');
+        }
+
+        localStorage.removeItem(getUserChatStorageKey(firebaseUser.uid));
+        resetChatStateForAuthChange();
+        renderList();
+        closeProfilePanel();
+        alert('Your saved account data has been deleted.');
+    } catch (error) {
+        console.error('[Persistence] Account data deletion failed:', error);
+        alert(error.message || 'Account data could not be deleted.');
     }
 }
 
@@ -13737,19 +13770,7 @@ async function loadUserChats() {
     if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
     chats = {};
     currentChat = null;
-    const storageKey = getUserChatStorageKey();
-    const cached = localStorage.getItem(storageKey);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          chats = parsed;
-          currentChat = Object.keys(chats || {})[0] || null;
-        }
-      } catch {
-        chats = {};
-      }
-    }
+        // Authenticated localStorage is only a cache; never use it as restore truth.
     save();
     renderList();
     if (currentChat) {
@@ -13891,48 +13912,8 @@ try {
             accountId = firebaseUser.uid;
             localStorage.setItem('mi_account', accountId);
 
-            // Load user data from Firestore on login
-            if (window.firestorePersistence) {
-                try {
-                    const { chats: firestoreChats, settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
-
-                    // Only load if there's actual data
-                    if (Object.keys(firestoreChats).length > 0) {
-                        chats = firestoreChats;
-                        currentChat = localStorage.getItem('last_chat') && chats[localStorage.getItem('last_chat')]
-                            ? localStorage.getItem('last_chat')
-                            : Object.keys(chats)[0] || null;
-                        renderList();
-                        if (currentChat) openChat(currentChat);
-                        console.log('[Persistence] User chats loaded from Firestore:', Object.keys(chats).length);
-                    } else {
-                        await loadUserChats();
-                    }
-
-                    // Apply loaded settings
-                    if (firestoreSettings.theme) {
-                        localStorage.setItem('theme', firestoreSettings.theme);
-                        document.documentElement.style.setProperty('--main', firestoreSettings.theme);
-                    }
-                    if (firestoreSettings.fontSize) {
-                        const chatBoxElem = document.getElementById('chat');
-                        if (chatBoxElem) {
-                            chatBoxElem.style.fontSize = firestoreSettings.fontSize + 'px';
-                        }
-                        localStorage.setItem('mi_font_size', firestoreSettings.fontSize);
-                    }
-                    if (firestoreSettings.language) {
-                        await applyLanguage(firestoreSettings.language, false);
-                    }
-
-                    console.log('[Persistence] User settings loaded from Firestore');
-                } catch (err) {
-                    console.error('[Persistence] Error loading user data on login:', err);
-                    await loadUserChats();
-                }
-            } else {
-                await loadUserChats();
-            }
+            // Restore is read-only and always comes from the authenticated backend.
+            await loadUserChats();
 
             updateAuthControls();
             window.dispatchEvent(new Event('mi-chat-user-changed'));
@@ -14112,7 +14093,7 @@ async function newChat(){
     if (!isAuthenticated()) {
         // FOR LOGGED-OUT USERS: Clear ALL existing temporary chats first
         // This ensures only the new temporary chat exists
-        window.chats = {};
+        chats = {};
         currentChat = null;
         
         // Now create the single new temporary chat
@@ -14332,8 +14313,8 @@ if (token && isAuthenticated()) {
   }).catch(() => {});
 }
 
-// Auto-save chat title to Firestore
-if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+// Save metadata only after the lazy conversation has been persisted.
+if (isAuthenticated() && chats[selectedChat]?.isPersisted === true && window.firestorePersistence && window.miFirebaseUser) {
     window.firestorePersistence.saveChat(selectedChat, { title: name }).catch(err =>
         console.error('[Persistence] Chat rename error:', err)
     );
@@ -14369,17 +14350,6 @@ currentChat=null;
 chatBox.innerHTML="";
 }
 
-// Auto-delete from Firestore
-if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-    try {
-        const db = window.firebase.firestore();
-        db.collection('users').doc(window.miFirebaseUser.uid).collection('chats').doc(chatId).delete()
-            .catch(err => console.error('[Persistence] Chat delete error:', err));
-    } catch (err) {
-        console.error('[Persistence] Error deleting chat from Firestore:', err);
-    }
-}
-
 save();
 renderList();
 menu.style.display="none";
@@ -14392,8 +14362,8 @@ if(!selectedChat)return;
 chats[selectedChat].pin =
 !chats[selectedChat].pin;
 
-// Auto-save pin status to Firestore
-if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+// Save metadata only after the lazy conversation has been persisted.
+if (isAuthenticated() && chats[selectedChat]?.isPersisted === true && window.firestorePersistence && window.miFirebaseUser) {
     window.firestorePersistence.saveChat(selectedChat, { pin: chats[selectedChat].pin }).catch(err =>
         console.error('[Persistence] Chat pin error:', err)
     );
@@ -30610,8 +30580,8 @@ window.miOpenAccountChat=openPanel;
    * Check if a chat is empty (no messages)
    */
   function isChatEmpty(chatId) {
-    if (!window.chats || !window.chats[chatId]) return true;
-    const chat = window.chats[chatId];
+        if (!chats || !chats[chatId]) return true;
+        const chat = chats[chatId];
     if (!Array.isArray(chat)) return true;
     return chat.length === 0;
   }
@@ -30622,14 +30592,14 @@ window.miOpenAccountChat=openPanel;
   function enforceLoggedOutChatLimit() {
     if (isAuthenticated()) return;  // Only applies to logged-out users
 
-    const chatIds = Object.keys(window.chats || {});
+    const chatIds = Object.keys(chats || {});
     // Keep only the first temporary chat, delete others
     if (chatIds.length > 1) {
       for (let i = 1; i < chatIds.length; i++) {
-        delete window.chats[chatIds[i]];
+                delete chats[chatIds[i]];
       }
-      if (window.currentChat && !window.chats[window.currentChat]) {
-        window.currentChat = chatIds[0] || null;
+            if (currentChat && !chats[currentChat]) {
+                currentChat = chatIds[0] || null;
       }
       save();
       renderList();
@@ -30640,9 +30610,9 @@ window.miOpenAccountChat=openPanel;
    * Delete empty chat from Firestore (only if persisted)
    */
   async function deleteEmptyPersistedChat(chatId) {
-    if (!window.chats || !window.chats[chatId]) return;
+    if (!chats || !chats[chatId]) return;
     
-    const chat = window.chats[chatId];
+    const chat = chats[chatId];
     // Only delete from server if: (1) it was persisted, AND (2) it's empty
     if (chat.isPersisted === true && isChatEmpty(chatId)) {
       try {
@@ -30664,7 +30634,7 @@ window.miOpenAccountChat=openPanel;
    * Returns true if switch should proceed, false if cancelled
    */
   async function cleanupPreviousChat(newChatId) {
-    const previousChatId = window.currentChat;
+    const previousChatId = currentChat;
 
     // If opening same chat, no cleanup needed
     if (previousChatId === newChatId) {
@@ -30676,7 +30646,7 @@ window.miOpenAccountChat=openPanel;
     if (previousChatId && isChatEmpty(previousChatId)) {
       console.log('[Chat Lifecycle] Cleaning up empty chat:', previousChatId);
       await deleteEmptyPersistedChat(previousChatId);
-      delete window.chats[previousChatId];
+    delete chats[previousChatId];
       return true;
     }
 

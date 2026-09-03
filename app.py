@@ -1040,6 +1040,42 @@ def delete_conversation(conversation_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/account/data", methods=["DELETE"])
+def delete_account_data():
+    """Delete all Firestore data owned by the authenticated user."""
+    user_uid = _get_user_uid_from_request()
+    if not user_uid:
+        return jsonify({"error": "Unauthorized."}), 401
+
+    if not firebase_db:
+        return jsonify({"error": "Firestore is not configured."}), 503
+
+    try:
+        user_ref = firebase_db.collection('users').document(user_uid)
+        references = []
+
+        for chat_doc in user_ref.collection('chats').stream():
+            references.append(chat_doc.reference)
+            references.extend(
+                message.reference
+                for message in chat_doc.reference.collection('messages').stream()
+            )
+
+        references.extend(setting.reference for setting in user_ref.collection('settings').stream())
+        references.append(user_ref)
+
+        for start in range(0, len(references), 450):
+            batch = firebase_db.batch()
+            for reference in references[start:start + 450]:
+                batch.delete(reference)
+            batch.commit()
+
+        return jsonify({"success": True})
+    except Exception as exc:
+        app.logger.error("Firebase account data deletion failed: %s", exc)
+        return jsonify({"error": "Account data could not be deleted."}), 500
+
+
 @app.route("/chat", methods=["POST"])
 def chat():
     return _handle_chat_request()
