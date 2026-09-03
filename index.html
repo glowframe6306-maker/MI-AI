@@ -12467,6 +12467,11 @@ function populateLanguageSelector() {
   });
 }
 
+function setSidebarButtonLabel(button, icon, label) {
+    if (!button) return;
+    button.textContent = `${icon} ${String(label || '')}`.trim();
+}
+
 function updateTranslatedUi() {
   const loginBtn = document.getElementById('loginBtn');
   if (loginBtn) loginBtn.textContent = `├░┼╕ΓÇ¥ΓÇÿ ${t('auth.login', 'Login')}`;
@@ -12475,13 +12480,13 @@ function updateTranslatedUi() {
   if (logoutBtn) logoutBtn.textContent = `├░┼╕┼í┬¬ ${t('auth.logout', 'Logout')}`;
 
   const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
-  if (newChatButton) newChatButton.innerHTML = `├ó┼╛ΓÇó ${t('sidebar.newChat', 'New Chat')}`;
+    setSidebarButtonLabel(newChatButton, '➕', t('sidebar.newChat', 'New Chat'));
 
   const settingsButton = document.getElementById('settingsBtn');
-  if (settingsButton) settingsButton.innerHTML = `├ó┼íΓäó ${t('sidebar.settings', 'Settings')}`;
+    setSidebarButtonLabel(settingsButton, '⚙', t('sidebar.settings', 'Settings'));
 
   const supportButton = document.getElementById('supportBtn');
-  if (supportButton) supportButton.innerHTML = `├░┼╕ΓÇ£┼╛ ${t('sidebar.support', 'Customer Support')}`;
+    setSidebarButtonLabel(supportButton, '🎧', t('sidebar.support', 'Customer Support'));
 
   const mobileMenuClose = document.getElementById('mobileMenuClose');
   if (mobileMenuClose) mobileMenuClose.setAttribute('aria-label', t('nav.closeMenu', 'Close menu'));
