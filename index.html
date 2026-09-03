@@ -14100,17 +14100,25 @@ async function newChat(){
 
     /*
       Logged-out users: max 1 temporary chat
-      Guest users also receive a separate chat.
-      Existing guest chats remain unchanged.
+      
+      CRITICAL BEHAVIOR:
+      When a logged-out user clicks "New Chat":
+      1. DELETE any existing temporary chat completely
+      2. Create ONE new temporary chat
+      3. NEVER allow 2+ temporary chats in logged-out state
+      
+      This ensures the logged-out chat list always contains exactly 0 or 1 chat.
     */
     if (!isAuthenticated()) {
-        // Enforce max 1 temporary chat for logged-out users
-        if (window.miChatLifecycle && typeof window.miChatLifecycle.enforceLoggedOutChatLimit === 'function') {
-            window.miChatLifecycle.enforceLoggedOutChatLimit();
-        }
+        // FOR LOGGED-OUT USERS: Clear ALL existing temporary chats first
+        // This ensures only the new temporary chat exists
+        window.chats = {};
+        currentChat = null;
         
+        // Now create the single new temporary chat
         initializeChat(localId);
 
+        // Save guest chats (which now contains only this new temporary chat)
         localStorage.setItem(
             getGuestStorageKey(),
             JSON.stringify(chats)
