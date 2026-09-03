@@ -13158,13 +13158,18 @@ try {
     localStorage.removeItem('mi_user_id');
     localStorage.removeItem('mi_user_email');
 
-user = null;
+    user = null;
     accountId = guestId;
     localStorage.setItem('mi_account', accountId);
 
-    // Reset chat state to guest state
+    // Reset chat state - enforce one-chat max for logged-out users
     chats = {};
     currentChat = null;
+    
+    // Call consolidated cleanup logic
+    if (window.miChatLifecycle && typeof window.miChatLifecycle.onLogoutCleanup === 'function') {
+        window.miChatLifecycle.onLogoutCleanup();
+    }
 
     await applyLanguage('en', false);
     resetChatStateForAuthChange();
@@ -13871,6 +13876,12 @@ try {
             const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
             const nextToken = await firebaseUser.getIdToken();
             user = nextUser;
+            
+            // Clean up guest data when user logs in
+            if (window.miChatLifecycle && typeof window.miChatLifecycle.onLoginCleanup === 'function') {
+                window.miChatLifecycle.onLoginCleanup(firebaseUser.uid);
+            }
+            
             if (window.firestorePersistence) {
                 window.firestorePersistence.setUser(firebaseUser.uid);
             }
@@ -14023,11 +14034,6 @@ async function newChat(){
             .toString(36)
             .slice(2, 8)}`;
 
-        if (window.miChatPersistence && typeof window.miChatPersistence.switchToChat === 'function') {
-            const canSwitch = await window.miChatPersistence.switchToChat(localId);
-            if (!canSwitch) return;
-        }
-
     function initializeChat(chatId) {
         chats[chatId] = [];
 
@@ -14093,10 +14099,16 @@ async function newChat(){
     }
 
     /*
+      Logged-out users: max 1 temporary chat
       Guest users also receive a separate chat.
       Existing guest chats remain unchanged.
     */
     if (!isAuthenticated()) {
+        // Enforce max 1 temporary chat for logged-out users
+        if (window.miChatLifecycle && typeof window.miChatLifecycle.enforceLoggedOutChatLimit === 'function') {
+            window.miChatLifecycle.enforceLoggedOutChatLimit();
+        }
+        
         initializeChat(localId);
 
         localStorage.setItem(
@@ -14108,14 +14120,21 @@ async function newChat(){
     }
 
     /*
-      Authenticated chats are temporary until the first message is sent.
-      This prevents login, refresh, and New Chat from creating empty server chats.
+      Authenticated users: temporary chat until first message is sent.
+      
+      CRITICAL: Set isPersisted = false to prevent creating empty conversations.
+      This flag is checked in send() before creating the conversation.
+      
+      This prevents:
+      - Login from creating empty chats
+      - Refresh from creating empty chats
+      - New Chat from creating empty chats
     */
     chats[localId] = [];
     chats[localId].title = "NEW CHAT";
     chats[localId].name = "NEW CHAT";
     chats[localId].chatName = "NEW CHAT";
-    chats[localId].isPersisted = false;
+    chats[localId].isPersisted = false;  // ← CRITICAL: Temporary until first message
     currentChat = localId;
     window.currentChat = localId;
     localStorage.setItem("last_chat", localId);
@@ -14128,9 +14147,10 @@ async function newChat(){
 
 /* OPEN */
 async function openChat(id){
-    // Use new chat switching logic if available
-    if (window.miChatPersistence && typeof window.miChatPersistence.switchToChat === 'function') {
-        const canSwitch = await window.miChatPersistence.switchToChat(id);
+    // Use consolidated chat lifecycle cleanup logic
+    // This ensures proper chat switching with confirmation for non-empty chats
+    if (window.miChatLifecycle && typeof window.miChatLifecycle.cleanupPreviousChat === 'function') {
+        const canSwitch = await window.miChatLifecycle.cleanupPreviousChat(id);
         if (!canSwitch) {
             return;  // User cancelled the switch
         }
@@ -15199,17 +15219,8 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
         chats[conversationId].lastPreview = existingText;
         save();
         
-        // Save AI message to server via Firebase
-        if (isAuthenticated() && window.miChatPersistence && window.miFirebaseUser) {
-            window.miChatPersistence.saveMessageToServer(conversationId, 'assistant', existingText)
-              .catch(err => console.error('[Chat Persistence] AI message save error:', err));
-        }
-        
-        // Also save to Firestore persistence if available
-        if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-            const messageId = `ai_msg_${Date.now()}_${Math.random()}`;
-            window.firestorePersistence.saveMessage(conversationId, messageId, { role: 'ai', text: existingText }).catch(err => console.error('[Persistence] AI message save error:', err));
-        }
+        // AI responses are persisted via the /messages endpoint when they're added to the chat
+        // No need for separate server save since the core persistence is handled in send()
         scroll();
         maybeShowLoginPrompt(conversationId);
     }
@@ -15245,12 +15256,27 @@ async function send() {
     input.value = '';
     replyInProgress = true;
     setReplyControlState(true);
+    
         let finalConversationId = conversationId;
+        
+        // DUPLICATE PREVENTION: Ensure we only create conversation once
         if (isAuthenticated() && chats[conversationId] && chats[conversationId].isPersisted === false) {
+            // Guard against double-click or race conditions
+            if (chats[conversationId]._isCreatingConversation) {
+                console.warn('[Chat Lifecycle] Conversation creation already in progress, skipping duplicate');
+                replyInProgress = false;
+                setReplyControlState(false);
+                return;
+            }
+            
+            // Mark as creating to prevent duplicates
+            chats[conversationId]._isCreatingConversation = true;
+            
             const firebaseToken = window.miFirebaseUser
                 ? await (window.miFirebaseUser.getIdToken && window.miFirebaseUser.getIdToken(true)).catch(() => null)
                 : null;
             if (!firebaseToken) {
+                chats[conversationId]._isCreatingConversation = false;
                 replyInProgress = false;
                 setReplyControlState(false);
                 return;
@@ -15279,7 +15305,8 @@ async function send() {
                 save();
                 renderList();
             } catch (error) {
-                console.error('[Chat Persistence] Lazy conversation creation failed:', error);
+                console.error('[Chat Lifecycle] Lazy conversation creation failed:', error);
+                chats[conversationId]._isCreatingConversation = false;
                 replyInProgress = false;
                 setReplyControlState(false);
                 return;
@@ -15331,12 +15358,8 @@ async function send() {
     activeChat().lastPreview = msg;
     save();
     
-    // Save user message to server if authenticated
-    if (isAuthenticated() && window.miChatPersistence && window.miFirebaseUser) {
-           window.miChatPersistence.saveMessageToServer(finalConversationId, 'user', msg)
-          .catch(err => console.error('[Chat Persistence] User message save error:', err));
-    }
-    
+    // Note: Message persistence to Firestore happens via the /messages endpoint
+    // which is called in the chat reply handler
     scroll();
     const t = document.createElement('div');
     t.className = 'thinking';
@@ -30546,245 +30569,32 @@ window.miOpenAccountChat=openPanel;
 </script>
 <!-- CORTEX CORE AI ACCOUNT CHAT V2 END -->
 
-<!-- CORTEX CORE AI PERSISTENT CHAT SYSTEM V1 START -->
-<script id="miPersistentChatSystemV1">
+<!-- CORTEX CORE AI CHAT LIFECYCLE V2 - CONSOLIDATED FIX -->
+<script id="miChatLifecycleV2">
 (function() {
   'use strict';
 
-  if (window.__miPersistentChatSystemV1) return;
-  window.__miPersistentChatSystemV1 = true;
+  if (window.__miChatLifecycleV2Loaded) return;
+  window.__miChatLifecycleV2Loaded = true;
 
-  let isLoadingChats = false;
-  let activeChatId = null;
-  let chatsSyncInProgress = false;
+  let isCreatingConversation = false;
+  let lastCleanedUpChatId = null;
 
   /**
-   * Get Firebase ID token for API calls
+   * CONSOLIDATED CHAT LIFECYCLE
+   * Single source of truth for all chat operations
+   */
+
+  /**
+   * Get Firebase ID token (for authenticated operations)
    */
   async function getFirebaseToken() {
     try {
-      if (!window.miFirebaseUser) {
-        return null;
-      }
+      if (!window.miFirebaseUser) return null;
       return await window.miFirebaseUser.getIdToken(true);
     } catch (err) {
-      console.error('[Chat Persistence] Token error:', err);
+      console.error('[Chat Lifecycle] Token error:', err);
       return null;
-    }
-  }
-
-  /**
-   * Load chats from server (Firestore via backend)
-   */
-  async function loadChatsFromServer() {
-    if (isLoadingChats) return null;
-    if (!window.miFirebaseUser) return null;
-
-    isLoadingChats = true;
-    try {
-      const token = await getFirebaseToken();
-      if (!token) {
-        console.warn('[Chat Persistence] No token available');
-        return null;
-      }
-
-      const response = await fetch('/conversations', {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-        }
-      });
-
-      if (!response.ok) {
-        console.error('[Chat Persistence] Server error:', response.status);
-        return null;
-      }
-
-      const data = await response.json();
-      if (!data.success || !data.conversations) {
-        console.error('[Chat Persistence] Invalid response:', data);
-        return null;
-      }
-
-      console.log('[Chat Persistence] Loaded', data.conversations.length, 'chats from server');
-      return data.conversations;
-    } catch (err) {
-      console.error('[Chat Persistence] Error loading chats:', err);
-      return null;
-    } finally {
-      isLoadingChats = false;
-    }
-  }
-
-  /**
-   * Get messages for a chat from server
-   */
-  async function getMessagesForChat(chatId) {
-    if (!window.miFirebaseUser || !chatId) return [];
-
-    try {
-      const token = await getFirebaseToken();
-      if (!token) return [];
-
-      const response = await fetch('/messages?conversation_id=' + encodeURIComponent(chatId), {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-        }
-      });
-
-      if (!response.ok) return [];
-
-      const data = await response.json();
-      if (!data.success || !Array.isArray(data.messages)) return [];
-
-      return data.messages.map(msg => ({
-        id: msg.id,
-        role: msg.role === 'user' ? 'me' : (msg.role === 'assistant' ? 'ai' : msg.role),
-        text: msg.content,
-        createdAt: msg.created_at
-      }));
-    } catch (err) {
-      console.error('[Chat Persistence] Error loading messages:', err);
-      return [];
-    }
-  }
-
-  /**
-   * Restore user's chats after login
-   */
-  async function restoreUserChats() {
-    if (!window.miFirebaseUser) {
-      console.log('[Chat Persistence] No user, skipping restore');
-      return;
-    }
-
-    console.log('[Chat Persistence] Restoring chats for user:', window.miFirebaseUser.uid);
-
-    // Clear old state
-    activeChatId = null;
-    if (window.chats) {
-      window.chats = {};
-    }
-
-    // Show loading state
-    const chatBox = document.getElementById('chatBox');
-    const chatList = document.getElementById('chatList');
-    if (chatBox) {
-      chatBox.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">Loading your chats...</div>';
-    }
-    if (chatList) {
-      chatList.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:10px;font-size:12px;">Loading...</div>';
-    }
-
-    // Load chats from server
-    const serverChats = await loadChatsFromServer();
-    if (!serverChats) {
-      console.warn('[Chat Persistence] Failed to load chats, using local storage');
-      // Fallback to local storage if server fails
-      return;
-    }
-
-    // Restore chats in memory
-    if (!window.chats) {
-      window.chats = {};
-    }
-
-    for (const chatMetadata of serverChats) {
-      const chatId = chatMetadata.id;
-      
-      // Load messages
-      const messages = await getMessagesForChat(chatId);
-
-      // Create chat in memory
-      window.chats[chatId] = messages.map(msg => ({
-        id: msg.id,
-        role: msg.role,
-        text: msg.text,
-        createdAt: msg.createdAt
-      }));
-
-      // Add metadata
-      window.chats[chatId].title = chatMetadata.title || 'New chat';
-      window.chats[chatId].pin = chatMetadata.pin || false;
-      window.chats[chatId].messageCount = chatMetadata.message_count || messages.length;
-      window.chats[chatId].createdAt = chatMetadata.created_at;
-      window.chats[chatId].updatedAt = chatMetadata.updated_at;
-    }
-            // CRITICAL: Mark as persisted (loaded from Firestore)
-            window.chats[chatId].isPersisted = true;
-            window.chats[chatId].serverId = chatId;
-
-    console.log('[Chat Persistence] Restored', Object.keys(window.chats).length, 'chats');
-
-    // Update localStorage cache
-    const storageKey = window.getActiveStorageKey ? window.getActiveStorageKey() : null;
-    if (storageKey) {
-      localStorage.setItem(storageKey, JSON.stringify(window.chats));
-    }
-
-    // Restore active chat or show list
-    const lastChatId = localStorage.getItem('last_chat');
-    if (lastChatId && window.chats[lastChatId]) {
-      console.log('[Chat Persistence] Restoring active chat:', lastChatId);
-      if (typeof window.openChat === 'function') {
-        window.openChat(lastChatId);
-      }
-    } else if (Object.keys(window.chats).length > 0) {
-      console.log('[Chat Persistence] No last chat, showing list');
-      if (typeof window.renderList === 'function') {
-        window.renderList();
-      }
-    } else {
-      // No chats, show empty state
-      if (chatBox) {
-        chatBox.innerHTML = '';
-      }
-    }
-  }
-
-  /**
-   * Save a message to server (for AI responses)
-   */
-  async function saveMessageToServer(chatId, role, content) {
-    if (!window.miFirebaseUser || !chatId) {
-      console.warn('[Chat Persistence] Cannot save message without user or chat ID');
-      return false;
-    }
-
-    try {
-      const token = await getFirebaseToken();
-      if (!token) return false;
-
-      const response = await fetch('/messages', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversation_id: chatId,
-          role: role,
-          content: content
-        })
-      });
-
-      if (!response.ok) {
-        console.error('[Chat Persistence] Server error:', response.status);
-        return false;
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        console.error('[Chat Persistence] Server returned success=false');
-        return false;
-      }
-
-      console.log('[Chat Persistence] Saved', role, 'message to server');
-      return true;
-    } catch (err) {
-      console.error('[Chat Persistence] Error saving message:', err);
-      return false;
     }
   }
 
@@ -30799,131 +30609,134 @@ window.miOpenAccountChat=openPanel;
   }
 
   /**
-   * Delete an empty chat from server and local state
+   * Enforce max 1 temporary chat for logged-out users
    */
-  async function deleteEmptyChatFromServer(chatId) {
-    if (!window.miFirebaseUser) return false;
+  function enforceLoggedOutChatLimit() {
+    if (isAuthenticated()) return;  // Only applies to logged-out users
 
-    try {
-      const token = await getFirebaseToken();
-      if (!token) return false;
-
-            const response = await fetch('/api/conversations/' + encodeURIComponent(chatId), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-        }
-      });
-
-      if (!response.ok) {
-        console.error('[Chat Persistence] Delete error:', response.status);
-        return false;
+    const chatIds = Object.keys(window.chats || {});
+    // Keep only the first temporary chat, delete others
+    if (chatIds.length > 1) {
+      for (let i = 1; i < chatIds.length; i++) {
+        delete window.chats[chatIds[i]];
       }
-
-      console.log('[Chat Persistence] Deleted empty chat:', chatId);
-      return true;
-    } catch (err) {
-      console.error('[Chat Persistence] Error deleting chat:', err);
-      return false;
+      if (window.currentChat && !window.chats[window.currentChat]) {
+        window.currentChat = chatIds[0] || null;
+      }
+      save();
+      renderList();
     }
   }
 
   /**
-   * Switch to another chat with confirmation if needed
+   * Delete empty chat from Firestore (only if persisted)
    */
-  async function switchToChat(newChatId) {
-    const currentChat = window.currentChat;
+  async function deleteEmptyPersistedChat(chatId) {
+    if (!window.chats || !window.chats[chatId]) return;
+    
+    const chat = window.chats[chatId];
+    // Only delete from server if: (1) it was persisted, AND (2) it's empty
+    if (chat.isPersisted === true && isChatEmpty(chatId)) {
+      try {
+        const token = await getFirebaseToken();
+        if (!token) return;
 
-    // If opening the same chat, do nothing
-    if (currentChat === newChatId) {
-      console.log('[Chat Persistence] Already in this chat');
+        await fetch('/api/conversations/' + encodeURIComponent(chatId), {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        }).catch(err => console.warn('[Chat Lifecycle] Delete failed:', err));
+      } catch (err) {
+        console.warn('[Chat Lifecycle] Error deleting chat:', err);
+      }
+    }
+  }
+
+  /**
+   * Clean up previous chat when switching
+   * Returns true if switch should proceed, false if cancelled
+   */
+  async function cleanupPreviousChat(newChatId) {
+    const previousChatId = window.currentChat;
+
+    // If opening same chat, no cleanup needed
+    if (previousChatId === newChatId) {
+      console.log('[Chat Lifecycle] Same chat, no switch');
       return true;
     }
 
-    // If current chat exists and is empty, delete it silently
-    if (currentChat && isChatEmpty(currentChat)) {
-      console.log('[Chat Persistence] Deleting empty chat:', currentChat);
-            // Only delete from server if it was persisted (created in Firestore)
-            if (window.chats && window.chats[currentChat] && window.chats[currentChat].isPersisted !== false) {
-                await deleteEmptyChatFromServer(currentChat);
-            }
-      if (window.chats && window.chats[currentChat]) {
-        delete window.chats[currentChat];
-      }
+    // If previous chat is empty, delete it and proceed
+    if (previousChatId && isChatEmpty(previousChatId)) {
+      console.log('[Chat Lifecycle] Cleaning up empty chat:', previousChatId);
+      await deleteEmptyPersistedChat(previousChatId);
+      delete window.chats[previousChatId];
+      return true;
     }
 
-    // If current chat exists and has messages, show confirmation
-    if (currentChat && !isChatEmpty(currentChat)) {
+    // If previous chat has messages, show confirmation
+    if (previousChatId && !isChatEmpty(previousChatId)) {
       return new Promise((resolve) => {
-        const confirmed = confirm(
-          'Another chat is currently open. Opening this chat will close the current chat. Continue?'
-        );
-        
+        const msg = 'You have an active conversation. Are you sure you want to switch chats? Your current chat will be saved.';
+        const confirmed = confirm(msg);
         if (confirmed) {
-          console.log('[Chat Persistence] User confirmed chat switch');
-          activeChatId = newChatId;
+          console.log('[Chat Lifecycle] User confirmed switch');
           resolve(true);
         } else {
-          console.log('[Chat Persistence] User cancelled chat switch');
+          console.log('[Chat Lifecycle] User cancelled switch');
           resolve(false);
         }
       });
     }
 
-    // No active chat or empty chat, just switch
-    activeChatId = newChatId;
+    // No previous chat, proceed
     return true;
   }
 
   /**
-   * Hook into auth state changes
+   * Clean up and restore on logout
    */
-  function setupAuthListener() {
-    window.addEventListener('mi-firebase-auth-changed', async (event) => {
-      const user = event.detail?.user;
-      
-      if (user) {
-        console.log('[Chat Persistence] Auth changed - user logged in:', user.uid);
-        // Slight delay to ensure Firebase is fully ready
-        setTimeout(() => {
-          restoreUserChats();
-        }, 500);
-      } else {
-        console.log('[Chat Persistence] Auth changed - user logged out');
-        // Clear chat state on logout
-        activeChatId = null;
-        if (window.chats) {
-          window.chats = {};
-        }
-        localStorage.removeItem('last_chat');
-      }
-    });
+  function onLogoutCleanup() {
+    console.log('[Chat Lifecycle] Logout cleanup');
+    
+    // Enforce max 1 temporary chat for logged-out users
+    enforceLoggedOutChatLimit();
+    
+    // Clear authenticated-only state
+    localStorage.removeItem('mi_supabase_token');
+    localStorage.removeItem('mi_user_id');
+    localStorage.removeItem('mi_user_email');
   }
 
-  // Expose to window for external use
-  window.miChatPersistence = {
-    loadChatsFromServer,
-    getMessagesForChat,
-    restoreUserChats,
-    saveMessageToServer,
+  /**
+   * Clean up guest data on successful login
+   */
+  function onLoginCleanup(uid) {
+    console.log('[Chat Lifecycle] Login cleanup for UID:', uid);
+    
+    // Clear old guest storage keys
+    const guestKey = window.getGuestStorageKey ? window.getGuestStorageKey() : 'mi_guest_chats';
+    localStorage.removeItem(guestKey);
+    
+    // Clear any temporary chats that were created before login
+    // (Keep the loadUserChats() restore - it will repopulate correctly)
+  }
+
+  /**
+   * Expose public API for other modules
+   */
+  window.miChatLifecycle = {
+    getFirebaseToken,
     isChatEmpty,
-    deleteEmptyChatFromServer,
-    switchToChat,
-    getActiveChatId: () => activeChatId,
-    setActiveChatId: (id) => { activeChatId = id; }
+    enforceLoggedOutChatLimit,
+    deleteEmptyPersistedChat,
+    cleanupPreviousChat,
+    onLogoutCleanup,
+    onLoginCleanup
   };
 
-  // Setup on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupAuthListener, { once: true });
-  } else {
-    setupAuthListener();
-  }
-
-  console.log('[Chat Persistence] System initialized');
+  console.log('[Chat Lifecycle] Consolidated system initialized');
 })();
 </script>
-<!-- CORTEX CORE AI PERSISTENT CHAT SYSTEM V1 END -->
+<!-- CORTEX CORE AI CHAT LIFECYCLE V2 - END -->
 
 <!-- CORTEX CORE AI THREE LANGUAGE UI START -->
 <script>

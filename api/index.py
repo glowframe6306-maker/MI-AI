@@ -3,11 +3,10 @@ import sys
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BACKEND_DIR = os.path.join(ROOT_DIR, "backend")
-
-for path in (ROOT_DIR, BACKEND_DIR):
+for path in (ROOT_DIR,):
     if path not in sys.path:
         sys.path.insert(0, path)
 
-from backend.app import app
+from app import app
 
 application = app
