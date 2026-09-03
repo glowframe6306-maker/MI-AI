@@ -13006,10 +13006,7 @@ function loadGuestChats() {
 
     // Only restore existing chats (no auto-creation)
     if (ids.length === 0) {
-        chats = {};
-        currentChat = null;
-        console.log('[Guest Chat] No existing chats to restore');
-        return;
+        return createSingleGuestChat();
     }
     const lastChat = localStorage.getItem('last_chat') && parsed[localStorage.getItem('last_chat')] ? localStorage.getItem('last_chat') : ids[ids.length - 1];
     chats = { [lastChat]: parsed[lastChat] || [] };

@@ -12588,13 +12588,15 @@ function loadGuestChats() {
 
     const ids = Object.keys(parsed);
     if (ids.length === 0) {
-        createSingleGuestChat();
-        return;
+        return createSingleGuestChat();
     }
 
     const lastChat = localStorage.getItem('last_chat') && parsed[localStorage.getItem('last_chat')] ? localStorage.getItem('last_chat') : ids[ids.length - 1];
     chats = { [lastChat]: parsed[lastChat] || [] };
+    /* Guest mode is intentionally limited to one temporary chat. */
     currentChat = lastChat;
+        chats = {};
+        currentChat = null;
     localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
     localStorage.setItem('last_chat', currentChat);
 }
