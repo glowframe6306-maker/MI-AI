@@ -11946,7 +11946,7 @@ textarea:disabled,
     <div id="attachmentPreview" style="display:none;padding:10px 12px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.06);color:#e2e8f0;font-size:13px;"></div>
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
-      <textarea id="msg" placeholder="Ask CORTEX CORE AI..."></textarea>
+    <textarea id="msg" placeholder="ASK ANYTHING FROM CORTEX CORE AI"></textarea>
       <button id="sendBtn" type="button" onclick="sendOrStop()">├ó┼╛┬ñ</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
@@ -12089,7 +12089,7 @@ function updateTranslatedUi() {
   if (applyButton) applyButton.textContent = t('settings.apply', 'Apply');
 
   const chatInput = document.getElementById('msg');
-  if (chatInput) chatInput.placeholder = t('chat.placeholder', 'Ask from CORTEX CORE AI...');
+    if (chatInput) chatInput.placeholder = 'ASK ANYTHING FROM CORTEX CORE AI';
 
   const sendButton = document.getElementById('sendBtn');
   if (sendButton) sendButton.title = t('chat.send', 'Send');
@@ -14925,7 +14925,7 @@ async function send() {
     scroll();
     const t = document.createElement('div');
     t.className = 'thinking';
-    t.innerHTML = `<span class="label">MI AI</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
+    t.innerHTML = `<span class="label">CORTEX CORE AI</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
     chatBox.appendChild(t);
     scroll();
     try {
