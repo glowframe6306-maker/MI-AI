@@ -1459,7 +1459,7 @@ def _mi_prepare_live_context(user_message, history, include_sources=False):
                 ensure_ascii=False,
                 default=str
             )
-        )[:14000]
+        )[:7000]
 
         return (context, sources) if include_sources else context
 
@@ -2515,7 +2515,7 @@ def _mi_live_search(question, context):
         "query": _mi_live_build_query(question, context),
         "search_depth": "advanced",
         "category": category,
-        "max_results": 6,
+        "max_results": 5,
         "include_answer": True,
         "include_raw_content": False,
         "include_images": False,
@@ -2546,7 +2546,7 @@ def _mi_live_search(question, context):
     answer = str(provider_data.get("answer") or "").strip()
     sources = []
 
-    for item in provider_data.get("results", [])[:6]:
+    for item in provider_data.get("results", [])[:5]:
         url = str(item.get("url") or "").strip()
         if not url:
             continue
@@ -2555,7 +2555,7 @@ def _mi_live_search(question, context):
             {
                 "title": str(item.get("title") or "Source").strip(),
                 "url": url,
-                "snippet": str(item.get("content") or "").strip()[:500],
+                "snippet": str(item.get("content") or "").strip()[:350],
                 "published_date": str(
                     item.get("published_date") or ""
                 ).strip(),
