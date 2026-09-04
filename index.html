@@ -19,14 +19,40 @@ function renderAIResponse(text) {
 
     const tableDividerPattern = /\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?/;
     const normalizeCompactTables = value => value.split("\n").flatMap(line => {
-        if (!line.includes("||") || !tableDividerPattern.test(line)) return [line];
+        if (!tableDividerPattern.test(line)) return [line];
 
         const firstPipe = line.indexOf("|");
         if (firstPipe < 0) return [line];
 
         const prefix = line.slice(0, firstPipe).trimEnd();
-        const compactTable = line.slice(firstPipe).replace(/\|\|/g, "|\n|");
+        const compactTable = line
+            .slice(firstPipe)
+            .replace(/\|\s*(?=\|)/g, "|\n|")
+            .replace(/^\|{2}/gm, "|");
         return prefix ? [prefix, compactTable] : [compactTable];
+    }).join("\n");
+
+    const normalizeCompactLinkedTable = value => value.split("\n").flatMap(line => {
+        if (line.includes("|") || (line.match(/\[[^\]]+\]\(https?:\/\/[^\s)]+\)/g) || []).length < 2) {
+            return [line];
+        }
+
+        const links = [...line.matchAll(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g)];
+        const firstLinkStart = links[0]?.index ?? -1;
+        if (firstLinkStart < 0) return [line];
+
+        const prefix = line.slice(0, firstLinkStart);
+        const headerMatch = prefix.match(/^(.*?)(Institution|Name|Item|Organization)\s*(Official Website|Website|URL|Link)\s*(.+)$/i);
+        if (!headerMatch) return [line];
+
+        const intro = headerMatch[1].trim();
+        const header = "| " + headerMatch[2] + " | " + headerMatch[3] + " |";
+        const rows = links.map((link, index) => {
+            const rowStart = index === 0 ? headerMatch[4] : line.slice(links[index - 1].index + links[index - 1][0].length, link.index);
+            return "| " + rowStart.trim() + " | [" + link[1] + "](" + link[2] + ") |";
+        });
+        const divider = "| " + headerMatch[2].replace(/./g, "-") + " | " + headerMatch[3].replace(/./g, "-") + " |";
+        return [intro, header, divider, ...rows].filter(Boolean);
     }).join("\n");
 
     const deferIncompleteTable = value => {
@@ -44,7 +70,7 @@ function renderAIResponse(text) {
         return value;
     };
 
-    source = deferIncompleteTable(normalizeCompactTables(source));
+    source = deferIncompleteTable(normalizeCompactLinkedTable(normalizeCompactTables(source)));
     if (!source) return "";
 
     const escapeHTML = value => String(value)
@@ -144,6 +170,8 @@ function renderAIResponse(text) {
     let codeLines = [];
     let inCode = false;
     let codeLanguage = "Code";
+    const copyIconMarkup = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    const checkIconMarkup = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"></path></svg>';
 
     const flushParagraph = () => {
         if (!paragraph.length) return;
@@ -161,7 +189,7 @@ function renderAIResponse(text) {
         if (!codeLines.length) return;
         const code = codeLines.join("\n");
         const language = codeLanguage === "Code" ? detectCodeLanguage("", code) : codeLanguage;
-        output.push('<div class="ai-code-block-wrap"><div class="ai-code-header"><span>' + escapeHTML(language) + '</span><button type="button" class="ai-code-copy">Copy</button></div><pre class="ai-code-block"><code>' + escapeHTML(code) + "</code></pre></div>");
+        output.push('<div class="ai-code-block-wrap"><div class="ai-code-header"><span>' + escapeHTML(language) + '</span><button type="button" class="ai-code-copy" aria-label="Copy code" title="Copy code">' + copyIconMarkup + '</button></div><pre class="ai-code-block"><code>' + escapeHTML(code) + "</code></pre></div>");
         codeLines = [];
         codeLanguage = "Code";
     };
@@ -265,6 +293,8 @@ function renderAIResponse(text) {
 
 if (!window.__MI_AI_CODE_COPY_BOUND__) {
     window.__MI_AI_CODE_COPY_BOUND__ = true;
+    const copyTimers = new WeakMap();
+    const originalCopyMarkups = new WeakMap();
     document.addEventListener("click", event => {
         const button = event.target.closest?.(".ai-code-copy");
         if (!button) return;
@@ -272,25 +302,31 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
         const codeElement = block?.querySelector(".ai-code-block code");
         if (!codeElement) return;
         const code = codeElement.textContent || "";
-        const original = button.textContent;
-        const setState = (label, className) => {
-            button.textContent = label;
+        if (!originalCopyMarkups.has(button)) {
+            originalCopyMarkups.set(button, button.innerHTML);
+        }
+        const originalMarkup = originalCopyMarkups.get(button);
+        const setState = (markup, label, className) => {
+            button.innerHTML = markup;
+            button.setAttribute("aria-label", label);
+            button.setAttribute("title", label);
             button.classList.toggle("copied", className === "copied");
         };
         const restore = () => {
-            setState(original, "");
+            copyTimers.delete(button);
+            setState(originalMarkup, "Copy code", "");
         };
         if (!navigator.clipboard?.writeText) {
-            setState("Copy failed", "failed");
-            setTimeout(restore, 1800);
+            setState(originalMarkup, "Copy failed", "failed");
             return;
         }
         navigator.clipboard.writeText(code).then(() => {
-            setState("Copied ✓", "copied");
-            setTimeout(restore, 1800);
+            const existingTimer = copyTimers.get(button);
+            if (existingTimer) clearTimeout(existingTimer);
+            setState(checkIconMarkup, "Copied", "copied");
+            copyTimers.set(button, setTimeout(restore, 3000));
         }).catch(() => {
-            setState("Copy failed", "failed");
-            setTimeout(restore, 1800);
+            setState(originalMarkup, "Copy failed", "failed");
         });
     });
 }
@@ -12512,6 +12548,11 @@ textarea:disabled,
 }
 
 .ai-code-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 26px;
     padding: 4px 8px;
     border: 1px solid rgba(148, 163, 184, .3);
     border-radius: 5px;
@@ -12519,10 +12560,26 @@ textarea:disabled,
     color: inherit;
     cursor: pointer;
     font: inherit;
+    transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.ai-code-copy svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
 }
 
 .ai-code-copy:hover {
     background: rgba(148, 163, 184, .16);
+}
+
+.ai-code-copy.copied {
+    color: #86efac;
+    border-color: rgba(134, 239, 172, .55);
 }
 
 .ai-response .ai-code-block-wrap .ai-code-block {
