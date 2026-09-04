@@ -2308,7 +2308,7 @@ def _mi_live_search(question, context):
         "search_depth": "advanced",
         "category": category,
         "max_results": 6,
-        "include_answer": "advanced",
+        "include_answer": True,
         "include_raw_content": False,
         "include_images": False,
     }
