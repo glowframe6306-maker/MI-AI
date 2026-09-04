@@ -1564,12 +1564,55 @@ def _handle_chat_request():
                         continue
 
         if response is None:
-            raise last_error or RuntimeError("The AI service is unavailable right now.")
+            recovery_answer, recovery_sources, recovery_category = _mi_live_search(
+                user_message,
+                {"history": "", "timezone": "", "local_time": ""},
+            )
+            recovery_messages = normalized_messages[:-1] + [
+                {
+                    "role": "system",
+                    "content": (
+                        "RECOVERY WEB EVIDENCE: Use this verified evidence "
+                        "to answer the original question. Do not fabricate.\n" +
+                        json.dumps(
+                            {
+                                "category": recovery_category,
+                                "answer": recovery_answer,
+                                "sources": recovery_sources,
+                            },
+                            ensure_ascii=False,
+                        )
+                    )[:3000],
+                },
+                normalized_messages[-1],
+            ]
+            for model_name in dict.fromkeys(models_to_try):
+                try:
+                    if chat_completions is not None and hasattr(chat_completions, "create"):
+                        response = chat_completions.create(
+                            model=model_name,
+                            messages=recovery_messages,
+                        )
+                    elif models is not None and hasattr(models, "generate_content"):
+                        response = models.generate_content(
+                            model=model_name,
+                            contents=recovery_messages,
+                        )
+                    if response is not None:
+                        break
+                except Exception as recovery_error:
+                    last_error = recovery_error
+
+        if response is None:
+            raise last_error or RuntimeError("All answer recovery attempts failed")
 
         reply = _extract_text_from_groq_response(response).strip() or "No response received from the AI service."
         return jsonify({"response": reply, "reply": reply})
     except Exception:
-        message = "The AI service is temporarily unavailable. Please try again."
+        message = (
+            "I could not complete a verified answer after retrying the "
+            "available AI and live-information recovery methods."
+        )
         return jsonify({"response": message, "reply": message, "error_code": "AI_SERVICE_UNAVAILABLE"}), 500
 
 
@@ -2147,6 +2190,7 @@ def assistant_info():
 @app.route("/api/chat/stream", methods=["POST"])
 def api_chat_stream():
     payload = _read_chat_payload()
+    request_id = uuid.uuid4().hex[:12]
 
     user_message = str(
         payload.get("message")
@@ -2156,7 +2200,8 @@ def api_chat_stream():
     ).strip()
 
     app.logger.info(
-        "CORTEX stream request method=%s content_type=%s payload_keys=%s message_length=%d history_items=%d",
+        "CORTEX stream request_id=%s method=%s content_type=%s payload_keys=%s message_length=%d history_items=%d",
+        request_id,
         request.method,
         request.content_type or "none",
         sorted(str(key) for key in payload.keys()),
@@ -2240,6 +2285,8 @@ def api_chat_stream():
     )
 
     def generate_stream():
+        recovery_search_attempted = False
+        stream_sources = list(live_sources)
         try:
             client = get_groq_client()
 
@@ -2257,72 +2304,106 @@ def api_chat_stream():
             if not models_to_try:
                 raise RuntimeError("No Groq model configured")
 
-            collected_text = []
             last_error = None
+            attempt_number = 0
+            messages_to_try = normalized_messages
 
-            for model_name in models_to_try:
-                try:
-                    collected_text = []
+            while attempt_number < 3:
+                attempt_number += 1
+                for model_name in models_to_try:
+                    try:
+                        collected_text = []
+                        for chunk_text in _iter_groq_stream(
+                            client,
+                            messages_to_try,
+                            model_name=model_name,
+                        ):
+                            if chunk_text:
+                                collected_text.append(str(chunk_text))
 
-                    for chunk_text in _iter_groq_stream(
-                        client,
-                        normalized_messages,
-                        model_name=model_name,
-                    ):
-                        if not chunk_text:
-                            continue
+                        reply = "".join(collected_text).strip()
+                        if reply:
+                            for chunk_start in range(0, len(reply), 1200):
+                                yield _sse_event(
+                                    "delta",
+                                    {"delta": reply[chunk_start:chunk_start + 1200]},
+                                )
+                            yield _sse_event(
+                                "done",
+                                {
+                                    "reply": reply,
+                                    "response": reply,
+                                    "sources": stream_sources,
+                                    "recovered": attempt_number > 1,
+                                    "done": True,
+                                },
+                            )
+                            return
 
-                        collected_text.append(str(chunk_text))
-
-                        yield _sse_event(
-                            "delta",
-                            {
-                                "delta": str(chunk_text),
-                            },
+                        last_error = RuntimeError(
+                            f"Empty response from {model_name}"
+                        )
+                    except Exception as exc:
+                        last_error = exc
+                        app.logger.warning(
+                            "CORTEX stream request_id=%s attempt=%d model=%s failed type=%s",
+                            request_id,
+                            attempt_number,
+                            model_name,
+                            type(exc).__name__,
                         )
 
-                    reply = "".join(collected_text).strip()
-
-                    if reply:
-                        yield _sse_event(
-                            "done",
-                            {
-                                "reply": reply,
-                                "response": reply,
-                                "sources": live_sources,
-                                "done": True,
-                            },
+                if attempt_number == 2 and not recovery_search_attempted:
+                    recovery_search_attempted = True
+                    try:
+                        recovery_answer, recovery_sources, recovery_category = _mi_live_search(
+                            user_message,
+                            {"history": "", "timezone": "", "local_time": ""},
                         )
-                        return
+                        recovery_context = (
+                            "RECOVERY WEB EVIDENCE: The primary AI generation failed. "
+                            "Use this retrieved evidence to answer the original user question. "
+                            "Do not invent unsupported facts.\n" +
+                            json.dumps(
+                                {
+                                    "category": recovery_category,
+                                    "answer": recovery_answer,
+                                    "sources": recovery_sources,
+                                },
+                                ensure_ascii=False,
+                            )
+                        )[:3000]
+                        messages_to_try = normalized_messages[:-1] + [
+                            {"role": "system", "content": recovery_context},
+                            normalized_messages[-1],
+                        ]
+                        stream_sources = recovery_sources
+                        continue
+                    except Exception as recovery_error:
+                        last_error = recovery_error
+                        app.logger.warning(
+                            "CORTEX stream request_id=%s recovery search failed type=%s",
+                            request_id,
+                            type(recovery_error).__name__,
+                        )
 
-                    last_error = RuntimeError(
-                        f"Groq model returned empty response: {model_name}"
-                    )
+                if attempt_number >= 3:
+                    break
 
-                except Exception as exc:
-                    last_error = exc
-                    app.logger.exception(
-                        "CORTEX STREAM MODEL FAILED [%s]: %s",
-                        model_name,
-                        exc,
-                    )
-                    continue
-
-            raise last_error or RuntimeError(
-                "All Groq models failed"
-            )
+            raise last_error or RuntimeError("All answer recovery attempts failed")
 
         except Exception as exc:
-            error_detail = f"{type(exc).__name__}: {str(exc)}"
+            error_detail = f"{type(exc).__name__}"
 
-            app.logger.exception(
-                "CORTEX STREAM AI ERROR: %s",
+            app.logger.error(
+                "CORTEX stream request_id=%s final recovery failure type=%s",
+                request_id,
                 error_detail,
             )
 
             message = (
-                "The AI service is temporarily unavailable. "
-                "Please try again."
+                "I could not complete a verified answer after retrying the "
+                "available AI and live-information recovery methods."
             )
 
             yield _sse_event(
@@ -2331,7 +2412,8 @@ def api_chat_stream():
                     "reply": message,
                     "response": message,
                     "error": message,
-                    "error_detail": error_detail,
+                    "request_id": request_id,
+                    "recovered": False,
                     "done": True,
                     "error_code": "AI_SERVICE_UNAVAILABLE",
                 },
