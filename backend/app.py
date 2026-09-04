@@ -1458,6 +1458,16 @@ def _mi_prepare_live_context(user_message, history, include_sources=False):
             "Do NOT claim information is current or verified unless supported "
             "by these results.\n"
             "Use exact dates from the results when relevant.\n\n"
+            + (
+                "REALTIME SPORTS RULE: For a live/current score or status "
+                "question, answer only when the supplied evidence explicitly "
+                "contains the current score/status. Never substitute a past "
+                "match, schedule, preview, or historical result. If current "
+                "live data is absent, say that the live value could not be "
+                "verified.\n\n"
+                if sports_request
+                else ""
+            )
             + json.dumps(
                 evidence,
                 ensure_ascii=False,
