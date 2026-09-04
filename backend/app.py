@@ -1369,6 +1369,42 @@ def _sse_event(event_type, payload):
     return f"event: {event_type}\ndata: {data}\n\n"
 
 
+def _read_chat_payload():
+    """Read chat JSON across Flask and serverless adapter request variants."""
+    payload = request.get_json(silent=True)
+    if isinstance(payload, dict):
+        return payload
+
+    raw_body = request.get_data(cache=True, as_text=True) or ""
+    if raw_body.strip():
+        try:
+            parsed_body = json.loads(raw_body)
+            if isinstance(parsed_body, dict):
+                return parsed_body
+        except (TypeError, ValueError) as parse_error:
+            app.logger.warning(
+                "CORTEX chat body JSON parse failed (%s bytes): %s",
+                len(raw_body),
+                type(parse_error).__name__,
+            )
+
+    try:
+        form_message = (
+            request.form.get("message")
+            or request.form.get("input")
+            or request.form.get("prompt")
+        )
+        if form_message:
+            return {"message": form_message}
+    except Exception as form_error:
+        app.logger.warning(
+            "CORTEX chat form fallback failed: %s",
+            type(form_error).__name__,
+        )
+
+    return {}
+
+
 
 def _mi_prepare_live_context(user_message, history):
     """Fetch fresh Tavily evidence for current/live questions."""
@@ -2093,34 +2129,7 @@ def assistant_info():
 
 @app.route("/api/chat/stream", methods=["POST"])
 def api_chat_stream():
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
-        payload = {}
-
-    if not payload:
-        try:
-            raw_body = request.get_data(cache=True, as_text=True) or ""
-            if raw_body.strip():
-                parsed_body = json.loads(raw_body)
-                if isinstance(parsed_body, dict):
-                    payload = parsed_body
-        except Exception as parse_error:
-            app.logger.warning(
-                "CORTEX request JSON fallback parse failed: %s",
-                parse_error,
-            )
-
-    if not payload:
-        try:
-            form_message = (
-                request.form.get("message")
-                or request.form.get("input")
-                or request.form.get("prompt")
-            )
-            if form_message:
-                payload = {"message": form_message}
-        except Exception:
-            pass
+    payload = _read_chat_payload()
 
     user_message = str(
         payload.get("message")
@@ -2128,6 +2137,17 @@ def api_chat_stream():
         or payload.get("prompt")
         or ""
     ).strip()
+
+    app.logger.info(
+        "CORTEX stream request method=%s content_type=%s payload_keys=%s message_length=%d history_items=%d",
+        request.method,
+        request.content_type or "none",
+        sorted(str(key) for key in payload.keys()),
+        len(user_message),
+        len(payload.get("history") or payload.get("messages") or [])
+        if isinstance(payload.get("history") or payload.get("messages") or [], list)
+        else 0,
+    )
 
     if not user_message:
         def empty_stream():
