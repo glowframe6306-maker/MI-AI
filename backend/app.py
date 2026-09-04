@@ -1409,7 +1409,7 @@ def _read_chat_payload():
 def _mi_prepare_live_context(user_message, history):
     """Fetch fresh Tavily evidence for current/live questions."""
     try:
-        if not _mi_live_contains(user_message, LIVE_SEARCH_KEYWORDS):
+        if not _mi_question_requires_web(user_message):
             return ""
 
         context_parts = []
@@ -2362,9 +2362,28 @@ LIVE_SEARCH_KEYWORDS = (
     "weather", "price", "rate", "president", "prime minister",
     "election", "stock", "crypto", "bitcoin", "cricket",
     "football", "soccer", "ipl", "world cup",
-    "premier league", "champions league", "ada", "dan",
+    "premier league", "champions league", "tonight", "this morning",
+    "this week", "real-time", "realtime", "ongoing", "happening",
+    "status", "ranking", "availability", "schedule", "event", "traffic",
+    "flight status", "train status", "exchange", "version", "release",
+    "announcement", "opening hours", "law", "regulation", "statistics",
+    "time", "date", "timezone",
+    "ada", "dan",
     "keeyada", "kiyada", "Ã Â·â‚¬Ã Â·â„¢Ã Â¶Â½Ã Â·ÂÃ Â·â‚¬", "Ã Â¶Â¯Ã Â·ÂÃ Â¶Â±Ã Â·Å ", "Ã Â¶…Ã Â¶Â¯",
     "Ã Â¶Â½Ã Â¶Å¡Ã Â·”Ã Â¶Â«Ã Â·”", "Ã Â¶Â­Ã Â¶Â»Ã Â¶Å“", "Ã Â¶Â´Ã Â·Å Ã¢â‚¬ÂÃ Â¶Â»Ã Â·â‚¬Ã Â·ËœÃ Â¶Â­Ã Â·Å Ã Â¶Â­Ã Â·’", "Ã Â·Æ’Ã Â·Å Ã Â¶Å¡Ã Â·ÂÃ Â¶Â»Ã Â·Å ",
+)
+
+LIVE_SEARCH_STABLE_EXCLUSIONS = (
+    "hello", "hi", "hey", "what is python", "explain python",
+    "what is photosynthesis", "explain gravity", "write a poem",
+    "tell me a joke", "what is 2 + 2", "what is 25 x 25",
+    "what is 25 * 25", "calculate", "translate", "summarize",
+)
+
+LIVE_SEARCH_UNKNOWN_CUES = (
+    "do you know", "who is", "what is", "what are", "where is",
+    "when is", "which is", "is there", "tell me about", "information about",
+    "meaning of", "definition of", "explain", "identify",
 )
 
 LIVE_NEWS_KEYWORDS = (
@@ -2391,6 +2410,43 @@ def _mi_live_normalize(value):
 def _mi_live_contains(text, keywords):
     normalized = _mi_live_normalize(text)
     return any(keyword in normalized for keyword in keywords)
+
+
+def _mi_question_requires_web(question):
+    """Decide whether freshness, uncertainty, or verification warrants search."""
+    normalized = _mi_live_normalize(question)
+    comparison_text = normalized.rstrip("?!.,:;")
+    if not normalized:
+        return False
+
+    if any(
+        comparison_text == exclusion
+        or comparison_text.startswith(exclusion + " ")
+        for exclusion in LIVE_SEARCH_STABLE_EXCLUSIONS
+    ):
+        return False
+
+    if _mi_live_contains(normalized, LIVE_SEARCH_KEYWORDS):
+        return True
+
+    if re.search(r"https?://|www\.", normalized):
+        return True
+
+    if _mi_live_contains(normalized, LIVE_SEARCH_UNKNOWN_CUES):
+        words = normalized.split()
+        has_named_or_unknown_subject = any(
+            len(word.strip("?!.,:;()[]{}")) >= 4
+            and any(character.isalpha() for character in word)
+            for word in words[2:]
+        )
+        if has_named_or_unknown_subject and (
+            "?" in normalized
+            or any(character.isupper() for character in str(question)[1:])
+            or re.search(r"\b[A-Z]{2,}[0-9]*\b", str(question))
+        ):
+            return True
+
+    return False
 
 
 def _mi_live_category(question):
@@ -2541,7 +2597,7 @@ def mi_universal_live_search():
     if not isinstance(context, dict):
         context = {}
 
-    if not _mi_live_contains(query, LIVE_SEARCH_KEYWORDS):
+    if not _mi_question_requires_web(query):
         return jsonify({
             "ok": True,
             "handled": False,
