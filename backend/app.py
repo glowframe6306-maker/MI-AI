@@ -1439,10 +1439,14 @@ def _mi_prepare_live_context(user_message, history, include_sources=False):
             live_request_context
         )
 
+        sports_request = _mi_live_contains(
+            user_message,
+            LIVE_SPORTS_KEYWORDS,
+        )
         evidence = {
             "category": category,
-            "answer": answer,
-            "sources": sources
+            "answer": str(answer or "")[:1200],
+            "sources": sources[:3],
         }
 
         context = (
@@ -1459,7 +1463,7 @@ def _mi_prepare_live_context(user_message, history, include_sources=False):
                 ensure_ascii=False,
                 default=str
             )
-        )[:3500]
+        )[:1800 if sports_request else 3000]
 
         return (context, sources) if include_sources else context
 
