@@ -10,6 +10,21 @@ function escapeAIHtml(value) {
     return div.innerHTML;
 }
 
+function detectAIResponseType(text) {
+    const value = String(text || "").trim();
+    if (!value) return "normal";
+    if (/```|^(?:\s*)(?:import |from |const |let |var |def |function |class |SELECT\s)/mi.test(value)) return "code";
+    if (/^\s*\|.*\|\s*$/m.test(value) && /\|\s*:?-{3,}/.test(value)) return "table";
+    if (/^\s*(?:[-*+]\s+|\d+[.)]\s+)/m.test(value)) return "list";
+    if (/^\s*#{1,6}\s+/m.test(value) && value.split(/\s+/).length > 100) return "document";
+    if (/\b(subject:|dear |sincerely,|regards,)\b/i.test(value)) return "email";
+    if (/\b(step-by-step|step 1|how do i|instructions?)\b/i.test(value)) return "tutorial";
+    if (/\b(latest|current|live|today|right now|real-time|sources)\b/i.test(value)) return "live";
+    if (/\b(compare|comparison|versus| vs\.? )\b/i.test(value)) return "comparison";
+    if (/^\s*(?:\$\$|\\\(|x\^\d|[a-z]\s*=)/i.test(value)) return "math";
+    return "normal";
+}
+
 function renderAIResponse(text) {
     const source = String(text ?? "")
         .replace(/\r\n/g, "\n")
@@ -66,6 +81,7 @@ function renderAIResponse(text) {
     let listItems = [];
     let codeLines = [];
     let inCode = false;
+    let codeLanguage = "text";
 
     const flushParagraph = () => {
         if (!paragraph.length) return;
@@ -81,8 +97,9 @@ function renderAIResponse(text) {
     };
     const flushCode = () => {
         if (!codeLines.length) return;
-        output.push('<pre class="ai-code-block"><code>' + escapeHTML(codeLines.join("\n")) + "</code></pre>");
+        output.push('<pre class="ai-code-block" data-language="' + escapeHTML(codeLanguage) + '"><code>' + escapeHTML(codeLines.join("\n")) + "</code></pre>");
         codeLines = [];
+        codeLanguage = "text";
     };
     const flushBlocks = () => {
         flushParagraph();
@@ -115,6 +132,7 @@ function renderAIResponse(text) {
             } else {
                 flushBlocks();
                 inCode = true;
+                codeLanguage = line.slice(3).trim().toLowerCase() || "text";
             }
             continue;
         }
@@ -171,7 +189,8 @@ function renderAIResponse(text) {
     }
     if (inCode) flushCode();
     flushBlocks();
-    return '<div class="ai-response">' + output.join("") + '</div>';
+    const responseType = detectAIResponseType(source);
+    return '<div class="ai-response ai-response-' + responseType + '" data-response-type="' + responseType + '">' + output.join("") + '</div>';
 }
 (function () {
     "use strict";
@@ -12426,6 +12445,50 @@ textarea:disabled,
     white-space: pre;
 }
 
+.ai-response-document {
+    max-width: 760px;
+}
+
+.ai-response-code .ai-code-block,
+.ai-response-tutorial .ai-code-block {
+    box-shadow: inset 3px 0 0 var(--main, #38bdf8);
+}
+
+.ai-code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 14px 0 0;
+    padding: 7px 10px;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-bottom: 0;
+    border-radius: 10px 10px 0 0;
+    background: rgba(15, 23, 42, .9);
+    color: rgba(226, 232, 240, .76);
+    font: 12px Consolas, monospace;
+    text-transform: lowercase;
+}
+
+.ai-code-header + .ai-code-block {
+    margin-top: 0;
+    border-radius: 0 0 10px 10px;
+}
+
+.ai-code-copy {
+    padding: 4px 8px;
+    border: 1px solid rgba(148, 163, 184, .3);
+    border-radius: 5px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+}
+
+.ai-code-copy:hover {
+    background: rgba(148, 163, 184, .16);
+}
+
 .ai-response .ai-code-block code {
     padding: 0;
     background: transparent;
@@ -14850,12 +14913,42 @@ function createCopyButton(text) {
   return button;
 }
 
+function enhanceSpecializedResponse(contentBox, text) {
+    if (!contentBox) return;
+    const response = contentBox.querySelector('.ai-response');
+    if (!response) return;
+
+    response.dataset.responseType = detectAIResponseType(text);
+
+    response.querySelectorAll('.ai-code-block').forEach(block => {
+        if (block.dataset.enhanced === 'true') return;
+        block.dataset.enhanced = 'true';
+
+        const header = document.createElement('div');
+        header.className = 'ai-code-header';
+        const language = document.createElement('span');
+        language.textContent = block.dataset.language || 'text';
+        const copy = document.createElement('button');
+        copy.type = 'button';
+        copy.className = 'ai-code-copy';
+        copy.textContent = 'Copy';
+        copy.onclick = async () => {
+            await copyTextToClipboard(block.querySelector('code')?.textContent || '');
+            copy.textContent = 'Copied';
+            window.setTimeout(() => { copy.textContent = 'Copy'; }, 1200);
+        };
+        header.append(language, copy);
+        block.parentNode.insertBefore(header, block);
+    });
+}
+
 function appendAiMessage(container, text) {
   const wrap = document.createElement('div');
   wrap.className = 'ai';
   const body = document.createElement('div');
   body.className = isLongWritingResponse(text) ? 'aiWritingCard' : 'aiMessageBody';
   body.innerHTML = linkifyText(text) || '';
+    enhanceSpecializedResponse(body, text);
   wrap.appendChild(body);
   wrap.appendChild(createCopyButton(text));
   container.appendChild(wrap);
@@ -15506,6 +15599,7 @@ function renderVerifiedSources(container, sources) {
 function finalizeStreamingReplyBubble(contentBox, text, conversationId, sources = []) {
     if (!contentBox) return;
     contentBox.innerHTML = renderAIResponse(String(text || ''));
+    enhanceSpecializedResponse(contentBox, text);
     contentBox.dataset.finalText = text;
     const existingText = String(text || '').trim();
     if (conversationId && chats[conversationId]) {
@@ -15753,11 +15847,13 @@ async function sendMessageInternal(msg) {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
                     contentBox.innerHTML = renderAIResponse(fullText);
+                    enhanceSpecializedResponse(contentBox, fullText);
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
                     if (Array.isArray(payload.sources)) liveSources = payload.sources;
                     contentBox.innerHTML = renderAIResponse(fullText);
+                    enhanceSpecializedResponse(contentBox, fullText);
                     scroll();
                     streamCompleted = true;
                 } else if (eventType === 'error') {
@@ -15785,11 +15881,13 @@ async function sendMessageInternal(msg) {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
                     contentBox.innerHTML = renderAIResponse(fullText);
+                    enhanceSpecializedResponse(contentBox, fullText);
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
                     if (Array.isArray(payload.sources)) liveSources = payload.sources;
                     contentBox.innerHTML = renderAIResponse(fullText);
+                    enhanceSpecializedResponse(contentBox, fullText);
                     scroll();
                 } else if (eventType === 'error') {
                     throw new Error(payload.error || 'Stream failed');
@@ -15806,6 +15904,7 @@ async function sendMessageInternal(msg) {
     }
 
     contentBox.innerHTML = renderAIResponse(fullText);
+    enhanceSpecializedResponse(contentBox, fullText);
     finalizeStreamingReplyBubble(contentBox, fullText, finalConversationId, liveSources);
     replyInProgress = false; setReplyControlState(false);
   } catch (e) {
