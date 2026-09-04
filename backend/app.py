@@ -2093,7 +2093,34 @@ def assistant_info():
 
 @app.route("/api/chat/stream", methods=["POST"])
 def api_chat_stream():
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = {}
+
+    if not payload:
+        try:
+            raw_body = request.get_data(cache=True, as_text=True) or ""
+            if raw_body.strip():
+                parsed_body = json.loads(raw_body)
+                if isinstance(parsed_body, dict):
+                    payload = parsed_body
+        except Exception as parse_error:
+            app.logger.warning(
+                "CORTEX request JSON fallback parse failed: %s",
+                parse_error,
+            )
+
+    if not payload:
+        try:
+            form_message = (
+                request.form.get("message")
+                or request.form.get("input")
+                or request.form.get("prompt")
+            )
+            if form_message:
+                payload = {"message": form_message}
+        except Exception:
+            pass
 
     user_message = str(
         payload.get("message")
