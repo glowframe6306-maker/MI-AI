@@ -1392,9 +1392,15 @@ def _mi_prepare_live_context(user_message, history):
 
         history_context = "\n".join(context_parts)[-6000:]
 
+        live_request_context = {
+            "history": history_context,
+            "timezone": "",
+            "local_time": "",
+        }
+
         answer, sources, category = _mi_live_search(
             user_message,
-            history_context
+            live_request_context
         )
 
         evidence = {
