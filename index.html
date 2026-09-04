@@ -47,7 +47,7 @@ function renderAIResponse(text) {
                     '" target="_blank" rel="noopener noreferrer">' +
                     escapeHTML(label) + '</a>'
                 );
-                return "@@AI_LINK_" + (links.length - 1) + "@@";
+                return "@@AILINK" + (links.length - 1) + "@@";
             }
         );
         working = escapeHTML(working)
@@ -56,7 +56,7 @@ function renderAIResponse(text) {
             .replace(/__([^_\n]+)__/g, "<strong>$1</strong>")
             .replace(/(?<![*_])\*([^*\n]+)\*(?![*_])/g, "<em>$1</em>")
             .replace(/(?<![*_])_([^_\n]+)_(?![*_])/g, "<em>$1</em>");
-        return working.replace(/@@AI_LINK_(\d+)@@/g, (match, index) => links[Number(index)] || "");
+        return working.replace(/@@AILINK(\d+)@@/g, (match, index) => links[Number(index)] || "");
     };
 
     const lines = source.split("\n");
