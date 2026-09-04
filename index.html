@@ -15101,6 +15101,15 @@ function createCopyButton(text) {
 }
 
 function appendAiMessage(container, text) {
+    if (container && typeof createStreamingReplyBubble === 'function') {
+        const bubble = createStreamingReplyBubble('', container);
+        bubble.contentBox.innerHTML = typeof renderAIResponse === 'function'
+            ? renderAIResponse(String(text || ''))
+            : escapeAIHtml(String(text || ''));
+        bubble.contentBox.dataset.finalText = String(text || '');
+        return bubble.container;
+    }
+
   const wrap = document.createElement('div');
   wrap.className = 'ai';
   const body = document.createElement('div');
@@ -15467,7 +15476,7 @@ async function fetchChatReply(options = {}, signal = null) {
     return response;
 }
 
-function createStreamingReplyBubble(initialText = '') {
+function createStreamingReplyBubble(initialText = '', targetContainer = chatBox) {
     const d = document.createElement('div');
     d.className = 'ai';
 
@@ -15706,7 +15715,7 @@ function createStreamingReplyBubble(initialText = '') {
 
     d.appendChild(actions);
 
-    chatBox.appendChild(d);
+    (targetContainer || chatBox).appendChild(d);
 
     scroll();
 
@@ -15772,6 +15781,10 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId, sources 
     }
 
     renderVerifiedSources(contentBox?.parentElement, sources);
+    const actions = contentBox.parentElement?.querySelector('.cortex-final-actions');
+    if (actions && actions.parentElement === contentBox.parentElement) {
+        contentBox.parentElement.appendChild(actions);
+    }
 }
 
 function sendOrStop(event) {
