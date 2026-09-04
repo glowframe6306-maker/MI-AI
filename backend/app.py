@@ -2487,14 +2487,19 @@ def _mi_live_build_query(question, context):
 
     if _mi_live_contains(question, LIVE_SPORTS_KEYWORDS):
         parts.append(
-            "Return the newest verified score or status, "
-            "the teams, competition and exact match date."
+            "This is a realtime sports request. Find the currently ongoing "
+            "or latest match, not a historical or scheduled article. Return "
+            "the newest verified score/status, teams, competition, exact "
+            "match date, update time, and sport-specific fields only when "
+            "the source provides them. If no current live data is available, "
+            "say that the live value could not be verified."
         )
 
     if _mi_live_contains(question, LIVE_NEWS_KEYWORDS):
         parts.append(
-            "Prioritize the newest trustworthy reports "
-            "and state exact dates."
+            "This is a current-news request. Prioritize the newest trustworthy "
+            "reports, compare relevant sources, and state exact publication "
+            "or update dates. Do not treat an old article as live."
         )
 
     return "\n".join(parts)
@@ -2524,11 +2529,26 @@ def _mi_live_search(question, context):
     if category == "news":
         payload["time_range"] = "week"
 
-    response = requests.post(
-        "https://api.tavily.com/search",
-        json=payload,
-        timeout=25,
-    )
+    response = None
+    last_error = None
+
+    for attempt in range(2):
+        try:
+            response = requests.post(
+                "https://api.tavily.com/search",
+                json=payload,
+                timeout=15,
+            )
+            if response.status_code < 500 and response.status_code != 429:
+                break
+            last_error = RuntimeError(
+                f"Tavily transient response: {response.status_code}"
+            )
+        except requests.RequestException as error:
+            last_error = error
+
+    if response is None:
+        raise last_error or RuntimeError("Tavily did not return a response.")
 
     if response.status_code in (401, 403):
         raise RuntimeError(
@@ -2546,6 +2566,8 @@ def _mi_live_search(question, context):
     answer = str(provider_data.get("answer") or "").strip()
     sources = []
 
+    retrieved_at = datetime.utcnow().isoformat() + "Z"
+
     for item in provider_data.get("results", [])[:4]:
         url = str(item.get("url") or "").strip()
         if not url:
@@ -2559,6 +2581,7 @@ def _mi_live_search(question, context):
                 "published_date": str(
                     item.get("published_date") or ""
                 ).strip(),
+                "retrieved_at": retrieved_at,
             }
         )
 
@@ -2567,6 +2590,9 @@ def _mi_live_search(question, context):
 
     if not answer:
         answer = "I could not find a reliable current answer."
+
+    if _mi_live_contains(question, LIVE_SPORTS_KEYWORDS) and not sources:
+        answer = "I could not verify a current live score or match status."
 
     return answer, sources, category
 
