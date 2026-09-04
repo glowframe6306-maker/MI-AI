@@ -15202,24 +15202,46 @@ async function send() {
     if (trailingText) {
       buffer += trailingText;
     }
-    if (buffer) {
-      const lines = buffer.split('\n').map((line) => line.trim());
-      const eventLine = lines.find((line) => line.startsWith('event:'));
-      const dataLine = lines.find((line) => line.startsWith('data:'));
-      if (eventLine && dataLine) {
-                const payload = JSON.parse(dataLine.replace(/^data:\s*/, ''));
-                if (eventType === 'delta') {
-                    if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
-                    fullText += payload.delta;
-                    contentBox.textContent = fullText;
-                    scroll();
-                } else if (eventType === 'done') {
-                    if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
-                    contentBox.textContent = fullText;
-                    scroll();
-                } else if (eventType === 'error') {
-                    throw new Error(payload.error || 'Stream failed');
-                }
+
+    if (buffer.trim()) {
+      const blocks = buffer.split(/\n\n+/);
+
+      for (const block of blocks) {
+        const lines = block.split(/\r?\n/).map((line) => line.trim());
+        const eventLine = lines.find((line) => line.startsWith('event:'));
+        const dataLine = lines.find((line) => line.startsWith('data:'));
+
+        if (!eventLine || !dataLine) continue;
+
+        const eventType = eventLine.replace(/^event:\s*/, '').trim();
+        const payloadText = dataLine.replace(/^data:\s*/, '').trim();
+
+        if (!payloadText) continue;
+
+        let payload;
+        try {
+          payload = JSON.parse(payloadText);
+        } catch (err) {
+          console.warn('Invalid SSE payload:', payloadText);
+          continue;
+        }
+
+        if (eventType === 'delta') {
+          if (typeof payload.delta === 'string') {
+            fullText += payload.delta;
+            contentBox.textContent = fullText;
+            scroll();
+          }
+        } else if (eventType === 'done') {
+          if (typeof payload.reply === 'string' && payload.reply.trim()) {
+            fullText = payload.reply;
+          }
+          contentBox.textContent = fullText;
+          scroll();
+          streamCompleted = true;
+        } else if (eventType === 'error') {
+          throw new Error(payload.error || 'Stream failed');
+        }
       }
     }
 
@@ -40364,6 +40386,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
+
 
 
 
