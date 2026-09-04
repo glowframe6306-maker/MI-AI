@@ -11,40 +11,52 @@ function escapeAIHtml(value) {
 }
 
 function renderAIResponse(text) {
-    if (text === null || text === undefined) {
-        return "";
-    }
-
-    let source = String(text)
+    const source = String(text ?? "")
         .replace(/\r\n/g, "\n")
         .replace(/\r/g, "\n")
         .trim();
-
-    /*
-    /* Normalize compact Markdown before parsing. */
-    source = source
-        .replace(/---(?=#{1,6}\s+)/g, "---\n")
-        .replace(/---(?=\*\*)/g, "---\n")
-        .replace(/([^\n])(?=#{1,6}\s+)/g, "$1\n")
-        .replace(/([^\n])(?=\*\*[^*\n]+\*\*)/g, "$1\n")
-        .replace(/([^\n])(\#{1,6}\s+)/g, "$1\n$2");
-
     if (!source) return "";
 
-    const escapeHTML = (value) => String(value)
+    const escapeHTML = value => String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
-    const inline = (value) => {
-        let html = escapeHTML(value);
-        html = html.replace(/\*\*([\s\S]*?)\*\*/g, "<strong>$1</strong>");
-        html = html.replace(/\*\*/g, "");
-        html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>");
-        html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
-        return html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    const safeURL = value => {
+        try {
+            const url = new URL(String(value || ""));
+            return url.protocol === "http:" || url.protocol === "https:"
+                ? url.href
+                : "";
+        } catch (error) {
+            return "";
+        }
+    };
+
+    const inline = value => {
+        const links = [];
+        let working = String(value || "").replace(
+            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+            (match, label, url) => {
+                const safe = safeURL(url);
+                if (!safe) return match;
+                links.push(
+                    '<a href="' + escapeHTML(safe) +
+                    '" target="_blank" rel="noopener noreferrer">' +
+                    escapeHTML(label) + '</a>'
+                );
+                return "@@AI_LINK_" + (links.length - 1) + "@@";
+            }
+        );
+        working = escapeHTML(working)
+            .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+            .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+            .replace(/__([^_\n]+)__/g, "<strong>$1</strong>")
+            .replace(/(?<![*_])\*([^*\n]+)\*(?![*_])/g, "<em>$1</em>")
+            .replace(/(?<![*_])_([^_\n]+)_(?![*_])/g, "<em>$1</em>");
+        return working.replace(/@@AI_LINK_(\d+)@@/g, (match, index) => links[Number(index)] || "");
     };
 
     const lines = source.split("\n");
@@ -52,13 +64,14 @@ function renderAIResponse(text) {
     let paragraph = [];
     let listType = null;
     let listItems = [];
+    let codeLines = [];
+    let inCode = false;
 
     const flushParagraph = () => {
         if (!paragraph.length) return;
-        output.push('<div class="ai-paragraph">' + paragraph.map(line => inline(line.trim())).join("<br>") + "</div>");
+        output.push('<p class="ai-paragraph">' + paragraph.map(line => inline(line.trim())).join("<br>") + "</p>");
         paragraph = [];
     };
-
     const flushList = () => {
         if (!listItems.length) return;
         const tag = listType === "ol" ? "ol" : "ul";
@@ -66,160 +79,99 @@ function renderAIResponse(text) {
         listItems = [];
         listType = null;
     };
+    const flushCode = () => {
+        if (!codeLines.length) return;
+        output.push('<pre class="ai-code-block"><code>' + escapeHTML(codeLines.join("\n")) + "</code></pre>");
+        codeLines = [];
+    };
+    const flushBlocks = () => {
+        flushParagraph();
+        flushList();
+    };
+    const isTableRow = line => /^\s*\|.*\|\s*$/.test(line);
+    const isTableDivider = line => /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(line);
+    const cells = line => line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(cell => cell.trim());
+    const renderTable = rows => {
+        if (rows.length < 2 || !isTableDivider(rows[1])) return false;
+        const headers = cells(rows[0]);
+        const bodyRows = rows.slice(2).map(cells).filter(row => row.some(Boolean));
+        if (!headers.length || !bodyRows.length) return false;
+        const head = headers.map(cell => "<th>" + inline(cell) + "</th>").join("");
+        const body = bodyRows.map(row => {
+            const values = headers.map((_, index) => "<td>" + inline(row[index] || "") + "</td>").join("");
+            return "<tr>" + values + "</tr>";
+        }).join("");
+        output.push('<div class="ai-table-wrap"><table class="ai-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>");
+        return true;
+    };
 
-    const isUnordered = (line) => /^\s*[-*•]\s+/.test(line);
-    const isOrdered = (line) => /^\s*\d+[.)]\s+/.test(line);
-    const getListText = (line) => line
-        .replace(/^\s*[-*•]\s+/, "")
-        .replace(/^\s*\d+[.)]\s+/, "")
-        .trim();
-
-    for (let i = 0; i < lines.length; i++) {
-
-        const raw = lines[i];
+    for (let index = 0; index < lines.length; index += 1) {
+        const raw = lines[index];
         const line = raw.trim();
-
-        /*
-         * Blank line
-         */
+        if (/^```/.test(line)) {
+            if (inCode) {
+                flushCode();
+                inCode = false;
+            } else {
+                flushBlocks();
+                inCode = true;
+            }
+            continue;
+        }
+        if (inCode) {
+            codeLines.push(raw);
+            continue;
+        }
+        if (isTableRow(line) && isTableRow(lines[index + 1] || "") && isTableDivider(lines[index + 1])) {
+            const tableRows = [line];
+            index += 1;
+            tableRows.push(lines[index].trim());
+            while (isTableRow(lines[index + 1] || "") && !isTableDivider(lines[index + 1])) {
+                index += 1;
+                tableRows.push(lines[index].trim());
+            }
+            flushBlocks();
+            if (renderTable(tableRows)) continue;
+        }
         if (!line) {
-            flushParagraph();
-            flushList();
+            flushBlocks();
             continue;
         }
-
-        /*
-         * H1
-         */
-        if (/^#\s+/.test(line)) {
-            flushParagraph();
-            flushList();
-
-            output.push(
-                '<h1 class="ai-heading ai-heading-1">' +
-                inline(line.replace(/^#\s+/, "")) +
-                "</h1>"
-            );
-
+        const heading = line.match(/^(#{1,6})\s+(.+)$/);
+        if (heading) {
+            flushBlocks();
+            const level = Math.min(heading[1].length, 3);
+            output.push('<h' + level + ' class="ai-heading ai-heading-' + level + '">' + inline(heading[2]) + '</h' + level + '>');
             continue;
         }
-
-        /*
-         * H2
-         */
-        if (/^##\s+/.test(line)) {
-            flushParagraph();
-            flushList();
-
-            output.push(
-                '<h2 class="ai-heading ai-heading-2">' +
-                inline(line.replace(/^##\s+/, "")) +
-                "</h2>"
-            );
-
+        if (/^\s*>\s?/.test(raw)) {
+            flushBlocks();
+            output.push('<blockquote class="ai-blockquote">' + inline(raw.replace(/^\s*>\s?/, "")) + '</blockquote>');
             continue;
         }
-
-        /*
-         * H3
-         */
-        if (/^###\s+/.test(line)) {
-            flushParagraph();
-            flushList();
-
-            output.push(
-                '<h3 class="ai-heading ai-heading-3">' +
-                inline(line.replace(/^###\s+/, "")) +
-                "</h3>"
-            );
-
-            continue;
-        }
-
-        /*
-         * Markdown horizontal divider
-         */
         if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
-            flushParagraph();
-            flushList();
-
-            output.push(
-                '<hr class="ai-divider">'
-            );
-
+            flushBlocks();
+            output.push('<hr class="ai-divider">');
             continue;
         }
-
-        /*
-         * Unordered list
-         */
-        if (isUnordered(line)) {
-
+        if (/^\s*[-*+]\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line)) {
             flushParagraph();
-
-            if (listType && listType !== "ul") {
-                flushList();
-            }
-
-            listType = "ul";
-
-            listItems.push(
-                getListText(line)
-            );
-
+            const ordered = /^\s*\d+[.)]\s+/.test(line);
+            if (listType && ((ordered && listType !== "ol") || (!ordered && listType !== "ul"))) flushList();
+            listType = ordered ? "ol" : "ul";
+            listItems.push(line.replace(ordered ? /^\s*\d+[.)]\s+/ : /^\s*[-*+]\s+/, ""));
             continue;
         }
-
-        /*
-         * Ordered list
-         */
-        if (isOrdered(line)) {
-
-            flushParagraph();
-
-            if (listType && listType !== "ol") {
-                flushList();
-            }
-
-            listType = "ol";
-
-            listItems.push(
-                getListText(line)
-            );
-
-            continue;
-        }
-
-        /*
-         * Continuation line for list item
-         */
         if (listType && /^\s{2,}/.test(raw)) {
-            if (listItems.length) {
-                listItems[listItems.length - 1] +=
-                    " " + line;
-            }
-
+            listItems[listItems.length - 1] += " " + line;
             continue;
         }
-
-        /*
-         * Normal paragraph
-         */
-        if (listType) {
-            flushList();
-        }
-
+        if (listType) flushList();
         paragraph.push(line);
     }
-
-    flushParagraph();
-    flushList();
-
-    return (
-        '<div class="ai-response">' +
-        output.join("") +
-        "</div>"
-    );
+    if (inCode) flushCode();
+    flushBlocks();
+    return '<div class="ai-response">' + output.join("") + '</div>';
 }
 (function () {
     "use strict";
@@ -12462,6 +12414,62 @@ textarea:disabled,
     border-top: 1px solid currentColor;
     opacity: .18;
     margin: 24px 0;
+}
+
+.ai-response .ai-code-block {
+    margin: 14px 0 20px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, .72);
+    white-space: pre;
+}
+
+.ai-response .ai-code-block code {
+    padding: 0;
+    background: transparent;
+    white-space: pre;
+}
+
+.ai-response .ai-blockquote {
+    margin: 14px 0 20px;
+    padding: 10px 16px;
+    border-left: 3px solid var(--main, #38bdf8);
+    color: rgba(226, 232, 240, .86);
+    background: rgba(148, 163, 184, .08);
+}
+
+.ai-response .ai-table-wrap {
+    width: 100%;
+    margin: 14px 0 22px;
+    overflow-x: auto;
+    border: 1px solid rgba(148, 163, 184, .2);
+    border-radius: 10px;
+}
+
+.ai-response .ai-table {
+    width: 100%;
+    min-width: 460px;
+    border-collapse: collapse;
+    font-size: .95em;
+}
+
+.ai-response .ai-table th,
+.ai-response .ai-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, .18);
+    text-align: left;
+    vertical-align: top;
+}
+
+.ai-response .ai-table th {
+    font-weight: 750;
+    background: rgba(148, 163, 184, .12);
+}
+
+.ai-response .ai-table tr:last-child td {
+    border-bottom: 0;
 }
 </style>
 </head>
