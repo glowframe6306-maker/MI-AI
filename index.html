@@ -15458,7 +15458,44 @@ function createStreamingReplyBubble(initialText = '') {
     };
 }
 
-function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
+function renderVerifiedSources(container, sources) {
+    if (!container || !Array.isArray(sources) || !sources.length) {
+        return;
+    }
+
+    const verifiedSources = sources.filter(source => {
+        try {
+            const url = new URL(String(source?.url || ''));
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (error) {
+            return false;
+        }
+    });
+
+    if (!verifiedSources.length) {
+        return;
+    }
+
+    const sourcesBox = document.createElement('div');
+    sourcesBox.className = 'cortex-verified-sources';
+
+    const heading = document.createElement('strong');
+    heading.textContent = 'Sources';
+    sourcesBox.appendChild(heading);
+
+    verifiedSources.forEach(source => {
+        const link = document.createElement('a');
+        link.href = String(source.url);
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = String(source.title || source.url);
+        sourcesBox.appendChild(link);
+    });
+
+    container.appendChild(sourcesBox);
+}
+
+function finalizeStreamingReplyBubble(contentBox, text, conversationId, sources = []) {
     if (!contentBox) return;
     contentBox.innerHTML = renderAIResponse(String(text || ''));
     contentBox.dataset.finalText = text;
@@ -15475,6 +15512,8 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId) {
         scroll();
         maybeShowLoginPrompt(conversationId);
     }
+
+    renderVerifiedSources(contentBox?.parentElement, sources);
 }
 
 function sendOrStop(event) {
@@ -15670,6 +15709,7 @@ async function sendMessageInternal(msg) {
     streamBubble = createStreamingReplyBubble('');
     const { contentBox } = streamBubble;
     let fullText = '';
+    let liveSources = [];
     let buffer = '';
     const reader = streamResponse.body && streamResponse.body.getReader ? streamResponse.body.getReader() : null;
 
@@ -15708,6 +15748,7 @@ async function sendMessageInternal(msg) {
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
+                    if (Array.isArray(payload.sources)) liveSources = payload.sources;
                     contentBox.innerHTML = renderAIResponse(fullText);
                     scroll();
                     streamCompleted = true;
@@ -15739,6 +15780,7 @@ async function sendMessageInternal(msg) {
                     scroll();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
+                    if (Array.isArray(payload.sources)) liveSources = payload.sources;
                     contentBox.innerHTML = renderAIResponse(fullText);
                     scroll();
                 } else if (eventType === 'error') {
@@ -15756,7 +15798,7 @@ async function sendMessageInternal(msg) {
     }
 
     contentBox.innerHTML = renderAIResponse(fullText);
-    finalizeStreamingReplyBubble(contentBox, fullText, finalConversationId);
+    finalizeStreamingReplyBubble(contentBox, fullText, finalConversationId, liveSources);
     replyInProgress = false; setReplyControlState(false);
   } catch (e) {
     if (e && e.name === 'AbortError') {

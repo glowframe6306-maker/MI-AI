@@ -1406,11 +1406,11 @@ def _read_chat_payload():
 
 
 
-def _mi_prepare_live_context(user_message, history):
+def _mi_prepare_live_context(user_message, history, include_sources=False):
     """Fetch fresh Tavily evidence for current/live questions."""
     try:
         if not _mi_question_requires_web(user_message):
-            return ""
+            return ("", []) if include_sources else ""
 
         context_parts = []
 
@@ -1445,7 +1445,7 @@ def _mi_prepare_live_context(user_message, history):
             "sources": sources
         }
 
-        return (
+        context = (
             "LIVE WEB SEARCH RESULTS ? retrieved specifically for this "
             "current-information request.\n"
             "Use these live results as the primary evidence for current facts.\n"
@@ -1461,18 +1461,21 @@ def _mi_prepare_live_context(user_message, history):
             )
         )[:14000]
 
+        return (context, sources) if include_sources else context
+
     except Exception as exc:
         app.logger.warning(
             "Tavily live search failed during normal chat: %s",
             exc
         )
 
-        return (
+        unavailable_context = (
             "LIVE WEB SEARCH STATUS: This question requires current "
             "information, but the live web search service was unavailable. "
             "Do NOT present old model knowledge as current or verified. "
             "Clearly state that current verification is unavailable."
         )
+        return (unavailable_context, []) if include_sources else unavailable_context
 
 def _handle_chat_request():
     payload = request.get_json(silent=True) or {}
@@ -1499,7 +1502,7 @@ def _handle_chat_request():
             normalized_messages.append({"role": role, "content": str(content)})
     live_context = _mi_prepare_live_context(
         user_message,
-        history
+        history,
     )
 
     if live_context:
@@ -2201,9 +2204,10 @@ def api_chat_stream():
                 }
             )
 
-    live_context = _mi_prepare_live_context(
+    live_context, live_sources = _mi_prepare_live_context(
         user_message,
-        history
+        history,
+        include_sources=True,
     )
 
     if live_context:
@@ -2271,6 +2275,7 @@ def api_chat_stream():
                             {
                                 "reply": reply,
                                 "response": reply,
+                                "sources": live_sources,
                                 "done": True,
                             },
                         )
