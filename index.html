@@ -13090,11 +13090,28 @@ let sharedChatData = null;
 let replyAbortController = null;
 let replyTypingTimer = null;
 let replyInProgress = false;
+let chatSendLock = false;
 let pendingAttachment = null;
 let pendingAttachments = [];
 let attachmentUploadInProgress = false;
 let attachmentProgress = 0;
 let attachmentStatusText = '';
+
+function installChatInputHandler() {
+    if (!input || input.dataset.chatSendHandlerInstalled === 'true') {
+        return;
+    }
+
+    input.dataset.chatSendHandlerInstalled = 'true';
+    input.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' || event.shiftKey) {
+            return;
+        }
+
+        event.preventDefault();
+        send();
+    });
+}
 
 function isAuthenticated() {
     return Boolean(user && localStorage.getItem('mi_supabase_token'));
@@ -14117,13 +14134,7 @@ if (sharedPayload) {
 
     if (input) {
         input.focus();
-        input.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-                if (e.shiftKey) return;
-                e.preventDefault();
-                send();
-            }
-        });
+        installChatInputHandler();
     }
 
     return;
@@ -14221,13 +14232,7 @@ updateAuthControls();
 
 if (input) {
     input.focus();
-    input.addEventListener("keydown", e => {
-        if (e.key === "Enter") {
-            if (e.shiftKey) return;
-            e.preventDefault();
-            send();
-        }
-    });
+    installChatInputHandler();
 } else {
     console.warn('Chat input element not found');
 }
@@ -15480,14 +15485,31 @@ function sendOrStop() {
     send();
 }
 
-async function send() {
+async function safeSendMessage(rawMessage) {
+    const message = String(rawMessage ?? '').trim();
+
+    if (!message || chatSendLock) {
+        return;
+    }
+
+    chatSendLock = true;
+    try {
+        await sendMessageInternal(message);
+    } finally {
+        chatSendLock = false;
+    }
+}
+
+function send() {
+    return safeSendMessage(input && input.value);
+}
+
+async function sendMessageInternal(msg) {
     if (replyInProgress) return;
     if (sharedChatData && sharedChatData.permission === 'view') {
         applySharedChatUi('view');
         return;
     }
-    const msg = (input && input.value || '').trim();
-    if (!msg) return;
     if (!currentChat) {
         const fallbackId = `chat_${Date.now()}`;
         chats[fallbackId] = [];
@@ -15612,6 +15634,7 @@ async function send() {
     t.innerHTML = `<span class="label">CORTEX CORE AI</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;
     chatBox.appendChild(t);
     scroll();
+    let streamBubble = null;
     try {
         replyAbortController = new AbortController();
                 /*
@@ -15640,7 +15663,7 @@ async function send() {
 
     if (!streamResponse.ok) throw new Error('Server returned ' + streamResponse.status);
 
-    const streamBubble = createStreamingReplyBubble('');
+    streamBubble = createStreamingReplyBubble('');
     const { contentBox } = streamBubble;
     let fullText = '';
     let buffer = '';
@@ -15740,6 +15763,10 @@ async function send() {
         thinking.remove();
       }
 
+            if (streamBubble && streamBubble.container) {
+                streamBubble.container.remove();
+            }
+
       /*
         IMPORTANT:
         Never create or save a fake AI reply for timeout/abort.
@@ -15761,6 +15788,20 @@ async function send() {
     const thinking = document.querySelector('.thinking');
     if (thinking) {
         thinking.remove();
+    }
+
+    if (streamBubble && streamBubble.container) {
+        streamBubble.container.remove();
+    }
+
+    const fallback = 'I couldn\'t generate a response right now. Please try again.';
+    if (e?.name !== 'AbortError' && chats[finalConversationId]) {
+        const errorBubble = createStreamingReplyBubble('');
+        finalizeStreamingReplyBubble(
+            errorBubble.contentBox,
+            fallback,
+            finalConversationId
+        );
     }
 
     replyInProgress = false;
