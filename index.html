@@ -16111,12 +16111,7 @@ async function sendMessageInternal(msg) {
         streamBubble.container.remove();
     }
 
-    const fallback = (
-        e && e.message &&
-        !/^Stream failed$|^No response received$/.test(e.message)
-    )
-        ? e.message
-        : 'I could not complete a verified answer after retrying the available AI and live-information recovery methods.';
+    const fallback = 'I am unable to provide a reliable answer right now. Please try again shortly.';
     if (e?.name !== 'AbortError' && chats[finalConversationId]) {
         const errorBubble = createStreamingReplyBubble('');
         finalizeStreamingReplyBubble(

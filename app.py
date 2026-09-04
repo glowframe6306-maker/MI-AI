@@ -373,14 +373,16 @@ def _handle_chat_request():
                         continue
 
         if response is None:
-            raise last_error or RuntimeError("The AI service is unavailable right now.")
+            raise last_error or RuntimeError("All answer generation attempts failed")
 
-        reply = _extract_text_from_gemini_response(response).strip() or "No response received from the AI service."
+        reply = _extract_text_from_gemini_response(response).strip()
+        if not reply:
+            raise RuntimeError("Generated answer was empty")
         return jsonify({"response": reply, "reply": reply})
     except Exception as exc:
-        traceback.print_exc()
+        app.logger.error("CORTEX local chat recovery exhausted: %s", type(exc).__name__)
         message = "The AI service is unavailable right now. Please try again."
-        return jsonify({"response": message, "reply": message, "error": str(exc)}), 500
+        return jsonify({"response": message, "reply": message}), 500
 
 
 def get_client_ip():

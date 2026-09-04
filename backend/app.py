@@ -1578,6 +1578,8 @@ def _handle_chat_request():
                         last_error = exc
                         continue
 
+        recovery_answer = ""
+        recovery_sources = []
         if response is None:
             recovery_answer, recovery_sources, recovery_category = _mi_live_search(
                 user_message,
@@ -1618,15 +1620,27 @@ def _handle_chat_request():
                 except Exception as recovery_error:
                     last_error = recovery_error
 
+        if response is None and recovery_answer.strip():
+            reply = recovery_answer.strip()
+            return jsonify({
+                "response": reply,
+                "reply": reply,
+                "sources": recovery_sources,
+                "recovered": True,
+            })
+
         if response is None:
             raise last_error or RuntimeError("All answer recovery attempts failed")
 
-        reply = _extract_text_from_groq_response(response).strip() or "No response received from the AI service."
+        reply = _extract_text_from_groq_response(response).strip()
+        if not reply:
+            raise RuntimeError("Recovered AI response was empty")
         return jsonify({"response": reply, "reply": reply})
-    except Exception:
+    except Exception as exc:
+        app.logger.error("CORTEX chat recovery exhausted: %s", type(exc).__name__)
         message = (
-            "I could not complete a verified answer after retrying the "
-            "available AI and live-information recovery methods."
+            "I am unable to provide a reliable answer right now. "
+            "Please try again shortly."
         )
         return jsonify({"response": message, "reply": message, "error_code": "AI_SERVICE_UNAVAILABLE"}), 500
 
@@ -2302,6 +2316,7 @@ def api_chat_stream():
     def generate_stream():
         recovery_search_attempted = False
         stream_sources = list(live_sources)
+        recovery_fallback_answer = ""
         try:
             client = get_groq_client()
 
@@ -2375,6 +2390,7 @@ def api_chat_stream():
                             user_message,
                             {"history": "", "timezone": "", "local_time": ""},
                         )
+                        recovery_fallback_answer = str(recovery_answer or "").strip()
                         recovery_context = (
                             "RECOVERY WEB EVIDENCE: The primary AI generation failed. "
                             "Use this retrieved evidence to answer the original user question. "
@@ -2416,9 +2432,22 @@ def api_chat_stream():
                 error_detail,
             )
 
+            if recovery_fallback_answer:
+                yield _sse_event(
+                    "done",
+                    {
+                        "reply": recovery_fallback_answer,
+                        "response": recovery_fallback_answer,
+                        "sources": stream_sources,
+                        "recovered": True,
+                        "done": True,
+                    },
+                )
+                return
+
             message = (
-                "I could not complete a verified answer after retrying the "
-                "available AI and live-information recovery methods."
+                "I am unable to provide a reliable answer right now. "
+                "Please try again shortly."
             )
 
             yield _sse_event(
