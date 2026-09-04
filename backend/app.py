@@ -1369,6 +1369,69 @@ def _sse_event(event_type, payload):
     return f"event: {event_type}\ndata: {data}\n\n"
 
 
+
+def _mi_prepare_live_context(user_message, history):
+    """Fetch fresh Tavily evidence for current/live questions."""
+    try:
+        if not _mi_live_contains(user_message, LIVE_SEARCH_KEYWORDS):
+            return ""
+
+        context_parts = []
+
+        for item in (history or [])[-8:]:
+            if not isinstance(item, dict):
+                continue
+
+            role = str(item.get("role") or "user").strip()
+            content = str(
+                item.get("content") or item.get("text") or ""
+            ).strip()
+
+            if content:
+                context_parts.append(f"{role}: {content}")
+
+        history_context = "\n".join(context_parts)[-6000:]
+
+        answer, sources, category = _mi_live_search(
+            user_message,
+            history_context
+        )
+
+        evidence = {
+            "category": category,
+            "answer": answer,
+            "sources": sources
+        }
+
+        return (
+            "LIVE WEB SEARCH RESULTS ? retrieved specifically for this "
+            "current-information request.\n"
+            "Use these live results as the primary evidence for current facts.\n"
+            "Do NOT replace fresh web results with stale model memory when "
+            "they conflict.\n"
+            "Do NOT claim information is current or verified unless supported "
+            "by these results.\n"
+            "Use exact dates from the results when relevant.\n\n"
+            + json.dumps(
+                evidence,
+                ensure_ascii=False,
+                default=str
+            )
+        )[:14000]
+
+    except Exception as exc:
+        app.logger.warning(
+            "Tavily live search failed during normal chat: %s",
+            exc
+        )
+
+        return (
+            "LIVE WEB SEARCH STATUS: This question requires current "
+            "information, but the live web search service was unavailable. "
+            "Do NOT present old model knowledge as current or verified. "
+            "Clearly state that current verification is unavailable."
+        )
+
 def _handle_chat_request():
     payload = request.get_json(silent=True) or {}
     user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
@@ -1392,7 +1455,25 @@ def _handle_chat_request():
         content = item.get("content") or item.get("text") or ""
         if content:
             normalized_messages.append({"role": role, "content": str(content)})
-    normalized_messages.append({"role": "user", "content": user_message})
+    live_context = _mi_prepare_live_context(
+        user_message,
+        history
+    )
+
+    if live_context:
+        normalized_messages.append(
+            {
+                "role": "system",
+                "content": live_context,
+            }
+        )
+
+    normalized_messages.append(
+        {
+            "role": "user",
+            "content": user_message,
+        }
+    )
 
     try:
         try:
@@ -2066,6 +2147,19 @@ def api_chat_stream():
                     "content": str(content),
                 }
             )
+
+    live_context = _mi_prepare_live_context(
+        user_message,
+        history
+    )
+
+    if live_context:
+        normalized_messages.append(
+            {
+                "role": "system",
+                "content": live_context,
+            }
+        )
 
     normalized_messages.append(
         {
