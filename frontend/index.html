@@ -21960,31 +21960,15 @@ document.addEventListener(
                             question
                         )
                     ) {
-                        try {
-                            return await requestLiveSearch(
-                                payload,
-                                signal
-                            );
-                        }
-                        catch (liveSearchError) {
-                            console.warn(
-                                "[CORTEX CORE AI] Live search failed. Using normal AI instead.",
-                                liveSearchError
-                            );
+                        setThinkingLabel(
+                            "Searching the live web..."
+                        );
 
-                            /*
-                              Live search must never end the chat with
-                              the generic unavailable message.
-
-                              When Groq live search fails, retry the same
-                              question through the already-working /api/chat.
-                            */
-                            return await originalFetchChatReply(
-                                payload,
-                                signal,
-                                false
-                            );
-                        }
+                        return await originalFetchChatReply(
+                            payload,
+                            signal,
+                            true
+                        );
                     }
 
                     return await originalFetchChatReply(
