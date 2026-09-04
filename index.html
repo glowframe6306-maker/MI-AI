@@ -54,6 +54,51 @@ function renderAIResponse(text) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
+    const detectResponseType = value => {
+        if (/```|^\s*(?:import |from |const |let |var |def |function |class |SELECT\s|#!\/)/mi.test(value)) return "code";
+        if (/\|.*\|\s*\n\s*\|?\s*:?-{3,}/.test(value)) return "table";
+        if (/\$\$[\s\S]+?\$\$|(?<!\$)\$[^\n$]+\$(?!\$)|\\\(|\\\[/.test(value)) return "math";
+        if (/^\s*(?:[-*+]\s+|\d+[.)]\s+)/m.test(value)) return "list";
+        if (/\b(subject:|dear |sincerely,|kind regards|best regards)\b/i.test(value)) return "email";
+        if (/^\s*#{1,6}\s+|\b(introduction|conclusion|main discussion)\b/i.test(value) && value.length > 900) return "document";
+        if (/\b(step[- ]by[- ]step|step 1|instructions?|how to)\b/i.test(value)) return "tutorial";
+        if (/\b(source|sources|according to|reported by)\b/i.test(value) && /https?:\/\//i.test(value)) return "research";
+        return "normal";
+    };
+
+    const detectCodeLanguage = (hint, code) => {
+        const normalizedHint = String(hint || "").trim().toLowerCase();
+        const aliases = {
+            js: "JavaScript", javascript: "JavaScript", jsx: "React/JSX",
+            ts: "TypeScript", typescript: "TypeScript", tsx: "TSX",
+            py: "Python", python: "Python", html: "HTML", css: "CSS",
+            java: "Java", c: "C", cpp: "C++", "c++": "C++", csharp: "C#", cs: "C#",
+            php: "PHP", sql: "SQL", sh: "Bash", bash: "Bash", ps: "PowerShell",
+            powershell: "PowerShell", json: "JSON", yaml: "YAML", yml: "YAML",
+            md: "Markdown", markdown: "Markdown"
+        };
+        if (aliases[normalizedHint]) return aliases[normalizedHint];
+        const value = String(code || "").trim();
+        if (/^(?:import |from |def |print\(|class \w+\s*[:(])/.test(value)) return "Python";
+        if (/^(?:const |let |var |function |export |import ).*[;{]/m.test(value)) return "JavaScript";
+        if (/^\s*<(!doctype|[a-z][^>]*>)/i.test(value)) return "HTML";
+        if (/^(?:SELECT|INSERT|UPDATE|DELETE)\b/i.test(value)) return "SQL";
+        if (/^(?:PS>|Get-|Set-|New-|Write-Host\b)/m.test(value)) return "PowerShell";
+        if (/^\s*[\[{][\s\S]*[\]}]\s*$/.test(value)) return "JSON";
+        return "Code";
+    };
+
+    const renderMath = value => {
+        const math = escapeHTML(value)
+            .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "<span class=\"ai-math-frac\"><span>$1</span><span>$2</span></span>")
+            .replace(/\^\{([^{}]+)\}/g, "<sup>$1</sup>")
+            .replace(/\^([A-Za-z0-9])/g, "<sup>$1</sup>")
+            .replace(/_\{([^{}]+)\}/g, "<sub>$1</sub>")
+            .replace(/_([A-Za-z0-9])/g, "<sub>$1</sub>")
+            .replace(/\\(alpha|beta|gamma|delta|pi|theta|lambda)\b/g, "&$1;");
+        return '<div class="ai-math" role="math">' + math + "</div>";
+    };
+
     const safeURL = value => {
         try {
             const url = new URL(String(value || ""));
@@ -81,6 +126,8 @@ function renderAIResponse(text) {
             }
         );
         working = escapeHTML(working)
+            .replace(/\$\$([^$\n]+)\$\$/g, (match, expression) => renderMath(expression))
+            .replace(/(?<!\$)\$([^$\n]+)\$(?!\$)/g, (match, expression) => renderMath(expression))
             .replace(/`([^`\n]+)`/g, "<code>$1</code>")
             .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
             .replace(/__([^_\n]+)__/g, "<strong>$1</strong>")
@@ -96,6 +143,7 @@ function renderAIResponse(text) {
     let listItems = [];
     let codeLines = [];
     let inCode = false;
+    let codeLanguage = "Code";
 
     const flushParagraph = () => {
         if (!paragraph.length) return;
@@ -111,8 +159,11 @@ function renderAIResponse(text) {
     };
     const flushCode = () => {
         if (!codeLines.length) return;
-        output.push('<pre class="ai-code-block"><code>' + escapeHTML(codeLines.join("\n")) + "</code></pre>");
+        const code = codeLines.join("\n");
+        const language = codeLanguage === "Code" ? detectCodeLanguage("", code) : codeLanguage;
+        output.push('<div class="ai-code-block-wrap"><div class="ai-code-header"><span>' + escapeHTML(language) + '</span><button type="button" class="ai-code-copy" data-copy-code="' + escapeHTML(code) + '">Copy</button></div><pre class="ai-code-block"><code>' + escapeHTML(code) + "</code></pre></div>");
         codeLines = [];
+        codeLanguage = "Code";
     };
     const flushBlocks = () => {
         flushParagraph();
@@ -151,6 +202,7 @@ function renderAIResponse(text) {
             } else {
                 flushBlocks();
                 inCode = true;
+                codeLanguage = detectCodeLanguage(line.slice(3), "");
             }
             continue;
         }
@@ -207,7 +259,22 @@ function renderAIResponse(text) {
     }
     if (inCode) flushCode();
     flushBlocks();
-    return '<div class="ai-response">' + output.join("") + '</div>';
+    const responseType = detectResponseType(source);
+    return '<div class="ai-response ai-response-' + responseType + '" data-response-type="' + responseType + '">' + output.join("") + '</div>';
+}
+
+if (!window.__MI_AI_CODE_COPY_BOUND__) {
+    window.__MI_AI_CODE_COPY_BOUND__ = true;
+    document.addEventListener("click", event => {
+        const button = event.target.closest?.("[data-copy-code]");
+        if (!button) return;
+        const code = button.getAttribute("data-copy-code") || "";
+        navigator.clipboard?.writeText(code).then(() => {
+            const original = button.textContent;
+            button.textContent = "Copied";
+            setTimeout(() => { button.textContent = original; }, 1200);
+        }).catch(() => {});
+    });
 }
 (function () {
     "use strict";
@@ -12372,6 +12439,78 @@ textarea:disabled,
 
 .ai-response em {
     font-style: italic;
+}
+
+.ai-response-document {
+    max-width: 760px;
+}
+
+.ai-response-math .ai-math,
+.ai-math {
+    margin: 14px 0 18px;
+    padding: 10px 14px;
+    overflow-x: auto;
+    border-left: 3px solid var(--main, #38bdf8);
+    background: rgba(148, 163, 184, .08);
+    font-family: Georgia, serif;
+    font-size: 1.12em;
+    white-space: nowrap;
+}
+
+.ai-math-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 3px;
+    vertical-align: middle;
+}
+
+.ai-math-frac span:first-child {
+    padding: 0 4px 2px;
+    border-bottom: 1px solid currentColor;
+}
+
+.ai-math-frac span:last-child {
+    padding: 2px 4px 0;
+}
+
+.ai-code-block-wrap {
+    margin: 14px 0 20px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, .82);
+}
+
+.ai-code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, .18);
+    color: rgba(226, 232, 240, .78);
+    font: 12px Consolas, monospace;
+}
+
+.ai-code-copy {
+    padding: 4px 8px;
+    border: 1px solid rgba(148, 163, 184, .3);
+    border-radius: 5px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+}
+
+.ai-code-copy:hover {
+    background: rgba(148, 163, 184, .16);
+}
+
+.ai-response .ai-code-block-wrap .ai-code-block {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
 }
 </style>
 <style id="professional-ai-markdown-v2">
