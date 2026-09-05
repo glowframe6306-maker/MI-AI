@@ -724,8 +724,34 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
     }
     function applyAppearance(value) { document.body.classList.toggle("cortex-light-theme", value === "light" || (value === "system" && matchMedia("(prefers-color-scheme: light)").matches)); document.documentElement.dataset.themeMode = value; }
     function applyTheme(value) { document.documentElement.style.setProperty("--cortex-accent", value); document.documentElement.style.setProperty("--mi-theme-color", value); const rgb = value.replace("#", "").match(/.{2}/g)?.map(x => parseInt(x, 16)).join(","); if (rgb) document.documentElement.style.setProperty("--cortex-accent-rgb", rgb); const input = document.getElementById("msg"); if (input) { input.style.setProperty("border-color", value, "important"); input.style.setProperty("box-shadow", "0 0 0 2px " + value + "33", "important"); } }
-    function close() { document.getElementById("settingsPanel")?.classList.remove("is-open"); document.getElementById("settingsBackdrop")?.classList.remove("settings-open"); document.body.classList.remove("settings-modal-open"); }
-    function open() { const panel = buildPanel(); const state = getState(); applyAppearance(state.appearance); applyTheme(state.themeColor); panel.classList.add("is-open"); document.getElementById("settingsBackdrop")?.classList.add("settings-open"); document.body.classList.add("settings-modal-open"); }
+    function close() {
+        document.getElementById("settingsPanel")?.classList.remove("is-open");
+        const backdrop = document.getElementById("settingsBackdrop");
+        if (backdrop) {
+            backdrop.classList.remove("settings-open");
+            backdrop.hidden = true;
+            backdrop.setAttribute("aria-hidden", "true");
+            backdrop.style.display = "none";
+            backdrop.style.pointerEvents = "none";
+        }
+        document.body.classList.remove("settings-modal-open");
+    }
+    function open() {
+        const panel = buildPanel();
+        const state = getState();
+        applyAppearance(state.appearance);
+        applyTheme(state.themeColor);
+        panel.classList.add("is-open");
+        const backdrop = document.getElementById("settingsBackdrop");
+        if (backdrop) {
+            backdrop.hidden = false;
+            backdrop.setAttribute("aria-hidden", "false");
+            backdrop.style.display = "block";
+            backdrop.style.pointerEvents = "auto";
+            backdrop.classList.add("settings-open");
+        }
+        document.body.classList.add("settings-modal-open");
+    }
     function formShell(title, content) { const shell = document.createElement("div"); shell.className = "cortex-clean-form"; shell.innerHTML = "<strong>" + title + "</strong>" + content + '<div class="cortex-clean-status"></div>'; return shell; }
     function passwordForm(scroll) { const form = formShell("Change Password", '<input type="password" placeholder="Old Password" autocomplete="current-password"><input type="password" placeholder="New Password" autocomplete="new-password"><input type="password" placeholder="Confirm Password" autocomplete="new-password"><button type="button" class="cortex-clean-action">Save Password</button>'); scroll.appendChild(form); const inputs = form.querySelectorAll("input"); form.querySelector("button").addEventListener("click", async () => { const status = form.querySelector(".cortex-clean-status"); if (!inputs[0].value || !inputs[1].value || inputs[1].value !== inputs[2].value || inputs[1].value.length < 6) { message(status, "Enter all passwords and make sure the new passwords match (6+ characters).", true); return; } try { const current = await reauthenticate(inputs[0].value); await current.updatePassword(inputs[1].value); message(status, "Password updated successfully."); inputs.forEach(input => input.value = ""); } catch (error) { message(status, error.message || "Password update failed.", true); } }); }
     function lockForm(scroll) { const form = formShell("App Lock", '<select><option value="4">4 Digit</option><option value="6">6 Digit</option></select><input type="password" inputmode="numeric" maxlength="6" placeholder="New Passcode"><input type="password" inputmode="numeric" maxlength="6" placeholder="Confirm Passcode"><button type="button" class="cortex-clean-action">Save App Lock</button>'); scroll.appendChild(form); const length = form.querySelector("select"); const inputs = form.querySelectorAll("input"); length.addEventListener("change", () => inputs.forEach(input => input.maxLength = Number(length.value))); form.querySelector("button").addEventListener("click", async () => { const status = form.querySelector(".cortex-clean-status"); const digits = Number(length.value); if (![...inputs].every(input => new RegExp("^\\d{" + digits + "}$").test(input.value)) || inputs[0].value !== inputs[1].value) { message(status, "Use matching numeric passcodes with the selected length.", true); return; } const hash = await digest(inputs[0].value); localStorage.setItem(accountKey("app_lock"), JSON.stringify({ length: digits, hash })); message(status, "App Lock enabled for this account."); }); }
@@ -758,7 +784,8 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
 
 <style id="miAccountProfileStyles">
 #miAccountSection{position:relative;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
-#miAccountButton{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.06);color:inherit;text-align:left;cursor:pointer}
+#miAccountButton{position:relative;z-index:16001;width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.06);color:inherit;text-align:left;cursor:pointer;pointer-events:auto;transform:none!important;transition:none!important}
+#miAccountButton:hover,#miAccountButton:active{transform:none!important}
 #miAccountButton:hover,#miAccountButton[aria-expanded="true"]{background:rgba(255,255,255,.12);border-color:rgba(125,211,252,.42)}
 .mi-account-avatar{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#2563eb);color:#fff;font-size:13px;font-weight:800}
 .mi-account-avatar img{width:100%;height:100%;object-fit:cover;object-position:center}
@@ -863,8 +890,10 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
             });
         }
         const summary = menu.querySelector("#miAccountSummary");
-        if (summary) summary.innerHTML = avatarMarkup("mi-account-menu-avatar") + '<span><strong>' + escapeHtml(profile.name) + '</strong><small>' + escapeHtml(profile.email || "Not signed in") + '</small><em>' + escapeHtml(profile.accountType) + '</em></span>';
-        button.innerHTML = avatarMarkup("") + '<span class="mi-account-copy"><span class="mi-account-name">' + escapeHtml(profile.name) + '</span><span class="mi-account-type">' + escapeHtml(profile.accountType) + '</span></span><span aria-hidden="true">&#8942;</span>';
+        const summaryHtml = avatarMarkup("mi-account-menu-avatar") + '<span><strong>' + escapeHtml(profile.name) + '</strong><small>' + escapeHtml(profile.email || "Not signed in") + '</small><em>' + escapeHtml(profile.accountType) + '</em></span>';
+        if (summary && summary.innerHTML !== summaryHtml) summary.innerHTML = summaryHtml;
+        const buttonHtml = avatarMarkup("") + '<span class="mi-account-copy"><span class="mi-account-name">' + escapeHtml(profile.name) + '</span><span class="mi-account-type">' + escapeHtml(profile.accountType) + '</span></span><span aria-hidden="true">&#8942;</span>';
+        if (button.innerHTML !== buttonHtml) button.innerHTML = buttonHtml;
         button.setAttribute("aria-label", "Open account menu for " + profile.name);
         if (!button.dataset.miBound) {
             button.dataset.miBound = "true";
@@ -983,7 +1012,13 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
         const avatar = document.getElementById("miProfileAvatar");
         if (avatar) avatar.innerHTML = avatarMarkup("mi-profile-avatar");
         const details = document.getElementById("miProfileDetails");
-        if (details) { details.innerHTML = profileDetails(); bindProfileFields(profileBackdrop); }
+        if (details) {
+            const nextDetails = profileDetails();
+            if (details.innerHTML !== nextDetails) {
+                details.innerHTML = nextDetails;
+                bindProfileFields(profileBackdrop);
+            }
+        }
     }
 
     document.addEventListener("click", function (event) { if (!event.target.closest("#miAccountSection")) closeMenu(); });
@@ -16793,18 +16828,34 @@ function openSettings() {
     panel.style.display = "flex";
     panel.classList.add("is-open");
     panel.setAttribute("aria-hidden", "false");
-    document.getElementById("settingsBackdrop")?.classList.add("settings-open");
+    const backdrop = document.getElementById("settingsBackdrop");
+    if (backdrop) {
+        backdrop.hidden = false;
+        backdrop.style.display = "block";
+        backdrop.style.pointerEvents = "auto";
+        backdrop.setAttribute("aria-hidden", "false");
+        backdrop.classList.add("settings-open");
+    }
     console.log("CORTEX SETTINGS: OPENED");
 }
 
 function closeSettings() {
     const panel = document.getElementById("settingsPanel");
-    if (!panel) return;
-    panel.classList.remove("is-open");
-    panel.hidden = true;
-    panel.style.display = "none";
-    panel.setAttribute("aria-hidden", "true");
-    document.getElementById("settingsBackdrop")?.classList.remove("settings-open");
+    if (panel) {
+        panel.classList.remove("is-open");
+        panel.hidden = true;
+        panel.style.display = "none";
+        panel.setAttribute("aria-hidden", "true");
+    }
+    const backdrop = document.getElementById("settingsBackdrop");
+    if (backdrop) {
+        backdrop.classList.remove("settings-open");
+        backdrop.hidden = true;
+        backdrop.setAttribute("aria-hidden", "true");
+        backdrop.style.display = "none";
+        backdrop.style.pointerEvents = "none";
+    }
+    document.body.classList.remove("settings-modal-open");
 }
 
 window.openSettings = openSettings;
