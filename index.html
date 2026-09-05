@@ -17046,6 +17046,12 @@ function customerSupport() {
     const body = box.querySelector("[data-cs-body]");
     const profileUser = window.miFirebaseUser || window.miFirebaseAuth?.currentUser;
     const profileName = String(profileUser?.displayName || localStorage.getItem("mi_profile_name_" + String(profileUser?.email || "").toLowerCase()) || "").trim();
+    const customerServiceEndpoint = path => {
+        const configured = String(window.__MI_BACKEND_URL__ || "").trim().replace(/\/$/, "");
+        if (configured) return configured + path;
+        const localStaticHost = (location.hostname === "127.0.0.1" || location.hostname === "localhost") && location.port === "4173";
+        return localStaticHost ? `${location.protocol}//${location.hostname}:5000${path}` : path;
+    };
     const token = async () => {
         if (!window.miFirebaseUser?.getIdToken) throw new Error("Please sign in before contacting Customer Service.");
         return window.miFirebaseUser.getIdToken();
@@ -17068,7 +17074,7 @@ function customerSupport() {
         }
         body.querySelectorAll("select").forEach(select => select.addEventListener("change", event => event.stopPropagation()));
     };
-    const showSuccess = (appointment, payload) => { body.innerHTML = '<div class="cortex-customer-service-success"><h3>' + (appointment ? 'APPOINTMENT REQUEST SUBMITTED' : 'THANK YOU FOR YOUR SUBMISSION') + '</h3><p>' + (appointment ? 'Thank you. Your appointment request has been submitted successfully. Our team will review your request and contact you through the selected communication method.' : 'OUR TEAM WILL CHECK YOUR REPORT') + '</p><div class="cortex-customer-service-reference">' + escapeAIHtml(payload.reference) + '</div>' + (appointment ? '<p>' + escapeAIHtml(payload.preferred_date) + ' at ' + escapeAIHtml(payload.preferred_time) + '<br>' + escapeAIHtml(payload.chat_with) + '<br>' + escapeAIHtml(payload.chat_in) + '</p>' : '') + '<button type="button" class="cortex-customer-service-submit" data-cs-action="close">OK</button></div>'; };
+    const showSuccess = (appointment, payload) => { const reference = payload.reference || payload.report_number || payload.appointment_number || ''; body.innerHTML = '<div class="cortex-customer-service-success"><h3>' + (appointment ? 'APPOINTMENT REQUEST SUBMITTED' : 'THANK YOU FOR YOUR SUBMISSION') + '</h3><p>' + (appointment ? 'Thank you. Your appointment request has been submitted successfully. Our team will review your request and contact you through the selected communication method.' : 'OUR TEAM WILL CHECK YOUR REPORT') + '</p><div class="cortex-customer-service-reference">' + escapeAIHtml(reference) + '</div>' + (appointment ? '<p>' + escapeAIHtml(payload.preferred_date) + ' at ' + escapeAIHtml(payload.preferred_time) + '<br>' + escapeAIHtml(payload.chat_with) + '<br>' + escapeAIHtml(payload.chat_in) + '</p>' : '') + '<button type="button" class="cortex-customer-service-submit" data-cs-action="close">OK</button></div>'; };
     const submit = async form => {
         const status = form.querySelector("[data-cs-status]");
         const button = form.querySelector("button[type=submit]");
@@ -17082,10 +17088,10 @@ function customerSupport() {
             let response;
             if (appointment) {
                 const data = Object.fromEntries(new FormData(form).entries());
-                response = await fetch("/api/customer-service/appointments", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + authToken }, body: JSON.stringify(data) });
+                response = await fetch(customerServiceEndpoint("/api/customer-service/appointments"), { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + authToken }, body: JSON.stringify(data) });
             } else {
                 const data = new FormData(form);
-                response = await fetch("/api/customer-service/reports", { method: "POST", headers: { Authorization: "Bearer " + authToken }, body: data });
+                response = await fetch(customerServiceEndpoint("/api/customer-service/reports"), { method: "POST", headers: { Authorization: "Bearer " + authToken }, body: data });
             }
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.success) throw new Error(payload.message || "Submission failed.");

@@ -1257,6 +1257,27 @@ def api_chat_get():
     return jsonify({"response": "Method not allowed"}), 405
 
 
+# Keep local Flask execution aligned with the canonical Vercel backend.
+try:
+    from backend.app import customer_service_appointment as _customer_service_appointment
+    from backend.app import customer_service_report as _customer_service_report
+
+    app.add_url_rule(
+        "/api/customer-service/reports",
+        endpoint="customer_service_report",
+        view_func=_customer_service_report,
+        methods=["POST", "OPTIONS"],
+    )
+    app.add_url_rule(
+        "/api/customer-service/appointments",
+        endpoint="customer_service_appointment",
+        view_func=_customer_service_appointment,
+        methods=["POST", "OPTIONS"],
+    )
+except Exception as customer_service_import_error:
+    app.logger.exception("Customer Service local route registration failed: %s", customer_service_import_error)
+
+
 if __name__=="__main__":
     app.run(
         host="0.0.0.0",

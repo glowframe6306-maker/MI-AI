@@ -295,6 +295,11 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUP
 
 CUSTOMER_SERVICE_BOT_TOKEN = os.getenv("CUSTOMER_SERVICE_BOT_TOKEN", "").strip()
 CUSTOMER_SERVICE_BOT_ID = os.getenv("CUSTOMER_SERVICE_BOT_ID", "").strip()
+app.logger.info(
+    "Customer Service Telegram configured: token=%s chat_id=%s",
+    bool(CUSTOMER_SERVICE_BOT_TOKEN),
+    bool(CUSTOMER_SERVICE_BOT_ID),
+)
 CUSTOMER_SERVICE_REPORT_REASONS = (
     "Technical Issue",
     "Account & Login",
@@ -489,6 +494,9 @@ def customer_service_send_telegram(message, attachment=None):
     for chunk in chunks:
         response = requests.post(endpoint, data={"chat_id": CUSTOMER_SERVICE_BOT_ID, "text": chunk}, timeout=20)
         response.raise_for_status()
+        telegram_result = response.json()
+        if not telegram_result.get("ok"):
+            raise RuntimeError("Telegram rejected the customer service message.")
     if attachment and attachment.get("content"):
         document_endpoint = f"https://api.telegram.org/bot{CUSTOMER_SERVICE_BOT_TOKEN}/sendDocument"
         response = requests.post(
@@ -498,12 +506,24 @@ def customer_service_send_telegram(message, attachment=None):
             timeout=30,
         )
         response.raise_for_status()
+        telegram_result = response.json()
+        if not telegram_result.get("ok"):
+            raise RuntimeError("Telegram rejected the customer service attachment.")
 
 
 def customer_service_save(kind, reference, record):
     if MI_FIREBASE_DB is None:
         raise RuntimeError("Customer Service persistence is unavailable.")
     MI_FIREBASE_DB.collection("customer_service").document(kind).collection("submissions").document(reference).set(record)
+
+
+def customer_service_update(kind, reference, fields):
+    if MI_FIREBASE_DB is None:
+        return
+    try:
+        MI_FIREBASE_DB.collection("customer_service").document(kind).collection("submissions").document(reference).set(fields, merge=True)
+    except Exception as exc:
+        app.logger.exception("Customer Service status update failed for %s: %s", reference, exc)
 
 
 def customer_service_format_message(kind, record):
@@ -546,9 +566,18 @@ def customer_service_report():
     try:
         reference = customer_service_next_number("report")
         record = {"reference": reference, "uid": identity["uid"], "name": name, "email": identity["email"], "username": identity["username"], "whatsapp": whatsapp, "reason": reason, "description": description, "attachment": attachment_label, "submitted_date": now.strftime("%d %B %Y"), "submitted_time": now.strftime("%H:%M"), "created_at": now.isoformat()}
-        customer_service_save("reports", reference, {key: value for key, value in record.items() if key != "content"})
-        customer_service_send_telegram(customer_service_format_message("report", record), attachment)
-        return jsonify({"success": True, "reference": reference})
+        persisted_record = {key: value for key, value in record.items() if key != "content"}
+        persisted_record["telegram_status"] = "pending"
+        customer_service_save("reports", reference, persisted_record)
+        try:
+            customer_service_send_telegram(customer_service_format_message("report", record), attachment)
+            customer_service_update("reports", reference, {"telegram_status": "sent"})
+            notification_status = "sent"
+        except Exception as notification_error:
+            app.logger.exception("Customer Service report Telegram notification failed for %s: %s", reference, notification_error)
+            customer_service_update("reports", reference, {"telegram_status": "failed"})
+            notification_status = "failed"
+        return jsonify({"success": True, "reference": reference, "report_number": reference, "notification_status": notification_status})
     except Exception as exc:
         app.logger.exception("Customer Service report failed: %s", exc)
         return jsonify({"success": False, "message": "The report could not be submitted right now."}), 503
@@ -581,16 +610,25 @@ def customer_service_appointment():
         return jsonify({"success": False, "message": "Choose a valid appointment date and time."}), 400
     now = datetime.now()
     selected = datetime.combine(appointment_date, appointment_time)
-    if appointment_date < now.date() or selected < now:
+    if appointment_date < now.date():
         return jsonify({"success": False, "message": "Appointments must be today or a future date."}), 400
     if appointment_date == now.date() and selected < now + timedelta(hours=5):
         return jsonify({"success": False, "message": "Today’s appointment must be at least 5 hours from now."}), 400
+    if selected < now:
+        return jsonify({"success": False, "message": "Appointments must be today or a future time."}), 400
     try:
         reference = customer_service_next_number("appointment")
         record = {"reference": reference, "uid": identity["uid"], "name": name, "email": identity["email"], "username": identity["username"], "whatsapp": whatsapp, "preferred_date": preferred_date, "preferred_time": preferred_time, "reason": reason, "chat_with": chat_with, "chat_in": chat_in, "submitted_date": now.strftime("%d %B %Y"), "submitted_time": now.strftime("%H:%M"), "created_at": now.isoformat()}
-        customer_service_save("appointments", reference, record)
-        customer_service_send_telegram(customer_service_format_message("appointment", record))
-        return jsonify({"success": True, "reference": reference})
+        customer_service_save("appointments", reference, {**record, "telegram_status": "pending"})
+        try:
+            customer_service_send_telegram(customer_service_format_message("appointment", record))
+            customer_service_update("appointments", reference, {"telegram_status": "sent"})
+            notification_status = "sent"
+        except Exception as notification_error:
+            app.logger.exception("Customer Service appointment Telegram notification failed for %s: %s", reference, notification_error)
+            customer_service_update("appointments", reference, {"telegram_status": "failed"})
+            notification_status = "failed"
+        return jsonify({"success": True, "reference": reference, "appointment_number": reference, "notification_status": notification_status})
     except Exception as exc:
         app.logger.exception("Customer Service appointment failed: %s", exc)
         return jsonify({"success": False, "message": "The appointment could not be submitted right now."}), 503
