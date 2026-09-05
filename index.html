@@ -739,7 +739,11 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     let activeFileInput = null;
 
     function currentUser() {
-        return window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser || null;
+        try {
+            return window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser || null;
+        } catch (_) {
+            return window.miFirebaseUser || window.miFirebaseAuth?.currentUser || null;
+        }
     }
 
     function storageKey(uid) { return uid ? IMAGE_PREFIX + uid : null; }
@@ -17401,71 +17405,7 @@ window.closeSettings = function () {
     );
 };
 
-window.toggleSettings = function () {
-    if (
-        typeof window.closeMobileMenu
-        === "function"
-    ) {
-        window.closeMobileMenu();
-    }
-
-    const panel =
-        document.getElementById("settingsPanel");
-
-    const backdrop =
-        document.getElementById("settingsBackdrop");
-
-    if (!panel) {
-        return;
-    }
-
-    const isOpen =
-        panel.classList.contains(
-            "settings-open"
-        );
-
-    if (isOpen) {
-        window.closeSettings();
-        return;
-    }
-
-    panel.style.display = "";
-
-    panel.classList.add(
-        "settings-open"
-    );
-
-    panel.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-
-    if (backdrop) {
-        backdrop.classList.add(
-            "settings-open"
-        );
-
-        backdrop.setAttribute(
-            "aria-hidden",
-            "false"
-        );
-    }
-
-    document.body.classList.add(
-        "settings-modal-open"
-    );
-
-    const firstControl =
-        panel.querySelector(
-            "select, input, button:not(#settingsCloseBtn)"
-        );
-
-    setTimeout(function () {
-        if (firstControl) {
-            firstControl.focus();
-        }
-    }, 100);
-};
+window.toggleSettings = openSettings;
 
 document.addEventListener(
     "keydown",
