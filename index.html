@@ -14130,11 +14130,17 @@ function getGuestStorageKey() {
     return "mi_chats_" + guestId;
 }
 
-function clearLegacyGuestChatStorage() {
+function clearGuestChatPersistence() {
     Object.keys(localStorage).forEach(key => {
         if (key.startsWith("mi_chats_guest_")) localStorage.removeItem(key);
     });
+    try {
+        Object.keys(sessionStorage).forEach(key => {
+            if (key.startsWith("mi_chats_guest_")) sessionStorage.removeItem(key);
+        });
+    } catch (_) {}
     localStorage.removeItem("mi_guest_id");
+    localStorage.removeItem("last_chat");
 }
 
 function getAccountScopedChatStorageKey(identity) {
@@ -14158,14 +14164,18 @@ function getSessionId() {
 }
 
 function createSingleGuestChat() {
-    const id = `chat_${Date.now()}`;
-    clearLegacyGuestChatStorage();
-    chats = { [id]: [] };
+    const id = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    clearGuestChatPersistence();
+    const guestChat = [];
+    guestChat.title = "NEW CHAT";
+    guestChat.name = "NEW CHAT";
+    guestChat.chatName = "NEW CHAT";
+    chats = { [id]: guestChat };
     guestAssistantReplyCounts = Object.create(null);
     guestAssistantReplyCounts[id] = 0;
     currentChat = id;
-    localStorage.removeItem(getGuestStorageKey());
-    localStorage.removeItem('last_chat');
+    localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
+    localStorage.setItem('last_chat', id);
     return id;
 }
 
@@ -14185,7 +14195,6 @@ function resetChatStateForAuthChange() {
 }
 
 function loadGuestChats() {
-    clearLegacyGuestChatStorage();
     return createSingleGuestChat();
 }
 
@@ -14372,6 +14381,7 @@ try {
 
     await applyLanguage('en', false);
     resetChatStateForAuthChange();
+    loadGuestChats();
     save();
     renderList();
     closeProfilePanel();
@@ -15269,18 +15279,11 @@ async function newChat(){
       This ensures the logged-out chat list always contains exactly 0 or 1 chat.
     */
     if (!isAuthenticated()) {
-        // FOR LOGGED-OUT USERS: Clear ALL existing temporary chats first
-        // This ensures only the new temporary chat exists
-        chats = {};
-        clearLegacyGuestChatStorage();
-        guestAssistantReplyCounts = Object.create(null);
-        currentChat = null;
-        
-        // Now create the single new temporary chat
-        initializeChat(localId);
-
-        localStorage.removeItem(getGuestStorageKey());
-        localStorage.removeItem('last_chat');
+        createSingleGuestChat();
+        renderList();
+        openChat(currentChat);
+        if (input && typeof input.focus === "function") input.focus();
+        window.dispatchEvent(new CustomEvent("mi-new-chat-created", { detail: { chatId: currentChat } }));
 
         return;
     }
@@ -32020,23 +32023,10 @@ window.miOpenAccountChat=openPanel;
     if (isAuthenticated()) return;  // Only applies to logged-out users
 
     const chatIds = Object.keys(chats || {});
-        if (chatIds.length <= 1) return;
+    if (chatIds.length <= 1) return;
 
-        const retainedChatId = currentChat && chats[currentChat]
-            ? currentChat
-            : chatIds[chatIds.length - 1];
-        const retainedChat = retainedChatId ? chats[retainedChatId] : null;
-
-        chats = retainedChatId ? { [retainedChatId]: retainedChat } : {};
-        currentChat = retainedChatId || null;
-        if (retainedChatId) {
-            localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
-            localStorage.setItem('last_chat', retainedChatId);
-        } else {
-            localStorage.removeItem(getGuestStorageKey());
-            localStorage.removeItem('last_chat');
-        }
-        renderList();
+    loadGuestChats();
+    renderList();
   }
 
   /**
@@ -32107,9 +32097,10 @@ window.miOpenAccountChat=openPanel;
    */
   function onLogoutCleanup() {
     console.log('[Chat Lifecycle] Logout cleanup');
-    
-    // Enforce max 1 temporary chat for logged-out users
-    enforceLoggedOutChatLimit();
+
+        clearGuestChatPersistence();
+        chats = {};
+        currentChat = null;
     
     // Clear authenticated-only state
     localStorage.removeItem('mi_supabase_token');
