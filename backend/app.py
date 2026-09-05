@@ -1012,6 +1012,20 @@ M.I. Muhammadh
 Age of the creator:
 17 years old
 
+Mother company of CORTEX CORE AI:MI CORTEX X INC.
+
+Company of CORTEX CORE AI:MI CORTEX X INC.
+
+Owned Company of CORTEX CORE AI:MI CORTEX X INC.
+
+Chief Executive Officer (CEO) of MI CORTEX X INC.: M.I. Muhammadh
+
+owner of MI CORTEX X INC.: M.I. Muhammadh
+
+Founder of MI CORTEX X INC.: M.I. Muhammadh
+
+Chairman of MI CORTEX X INC.: M.I. Muhammadh
+
 Ambitions of the creator:
 - Director of Flight Operations
 - Software Engineer
@@ -1620,7 +1634,8 @@ Always prioritize:
 10. Friendly communication
 """.strip()
 supabase_url = (
-    os.getenv("SUPABASE_URL")
+    os.getenv("S" \
+    "UPABASE_URL")
     or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
     or ""
 ).strip()

@@ -16514,6 +16514,10 @@ async function sendMessageInternal(msg) {
         return;
     }
     if (!currentChat) {
+        if (!isAuthenticated()) {
+            chats = {};
+            guestAssistantReplyCounts = Object.create(null);
+        }
         const fallbackId = `chat_${Date.now()}`;
         chats[fallbackId] = [];
         currentChat = fallbackId;
@@ -32015,8 +32019,13 @@ window.miOpenAccountChat=openPanel;
 
         chats = retainedChatId ? { [retainedChatId]: retainedChat } : {};
         currentChat = retainedChatId || null;
-        localStorage.removeItem(getGuestStorageKey());
-        localStorage.removeItem('last_chat');
+        if (retainedChatId) {
+            localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
+            localStorage.setItem('last_chat', retainedChatId);
+        } else {
+            localStorage.removeItem(getGuestStorageKey());
+            localStorage.removeItem('last_chat');
+        }
         renderList();
   }
 
