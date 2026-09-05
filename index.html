@@ -10,11 +10,50 @@ function escapeAIHtml(value) {
     return div.innerHTML;
 }
 
+function repairAITextMojibake(value) {
+    const source = String(value ?? "");
+    const suspicious = (source.match(/[ÃÂà-ÿ]/g) || []).length;
+    if (!suspicious) return source.normalize("NFC");
+    try {
+        const cp1252Bytes = {
+            "€": 0x80, "‚": 0x82, "ƒ": 0x83, "„": 0x84, "…": 0x85,
+            "†": 0x86, "‡": 0x87, "ˆ": 0x88, "‰": 0x89, "Š": 0x8a,
+            "‹": 0x8b, "Œ": 0x8c, "Ž": 0x8e, "‘": 0x91, "’": 0x92,
+            "“": 0x93, "”": 0x94, "•": 0x95, "–": 0x96, "—": 0x97,
+            "™": 0x99, "š": 0x9a, "›": 0x9b, "œ": 0x9c, "ž": 0x9e,
+            "Ÿ": 0x9f
+        };
+        const bytes = Uint8Array.from(source, character => cp1252Bytes[character] ?? (character.charCodeAt(0) & 0xff));
+        const repaired = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        const remaining = (repaired.match(/[ÃÂà-ÿ]/g) || []).length;
+        return remaining < suspicious ? repaired.normalize("NFC") : source.normalize("NFC");
+    } catch (_) {
+        return source.normalize("NFC");
+    }
+}
+
+function normalizeAIResponseText(value) {
+    const source = String(value ?? "").replace(/\r\n?/g, "\n");
+    const fencedParts = source.split(/(```[\s\S]*?```|:::writing(?:\s+[^\n]+)?\n[\s\S]*?\n:::\s*)/gi);
+
+    return fencedParts.map((part, index) => {
+        if (index % 2 === 1) return part;
+
+        return repairAITextMojibake(part)
+            .replace(/[\u0000\u200B-\u200D\u2060\uFEFF]/g, "")
+            .split("\n")
+            .map(line => line
+                .replace(/[ \t]+$/g, "")
+                .replace(/[ \t]{2,}/g, " ")
+                .replace(/[ \t]+([,.;!?])/g, "$1")
+            )
+            .join("\n")
+            .replace(/\n{3,}/g, "\n\n");
+    }).join("").trim();
+}
+
 function renderAIResponse(text) {
-    let source = String(text ?? "")
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .trim();
+    let source = normalizeAIResponseText(text);
     if (!source) return "";
 
     const tableDividerPattern = /\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?/;
