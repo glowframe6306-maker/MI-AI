@@ -13968,11 +13968,7 @@ let menu = document.getElementById("menu");
 let authReminder = document.getElementById("authReminder");
 let loginPromptBox = null;
 
-let guestId = localStorage.getItem("mi_guest_id");
-if (!guestId) {
-    guestId = "guest_" + crypto.randomUUID();
-    localStorage.setItem("mi_guest_id", guestId);
-}
+let guestId = "guest_" + crypto.randomUUID();
 
 let accountId = localStorage.getItem("mi_account");
 
@@ -14134,6 +14130,13 @@ function getGuestStorageKey() {
     return "mi_chats_" + guestId;
 }
 
+function clearLegacyGuestChatStorage() {
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith("mi_chats_guest_")) localStorage.removeItem(key);
+    });
+    localStorage.removeItem("mi_guest_id");
+}
+
 function getAccountScopedChatStorageKey(identity) {
     const normalizedIdentity = (identity || '').trim().toLowerCase();
     return normalizedIdentity ? `mi_chats_${normalizedIdentity}` : getGuestStorageKey();
@@ -14156,12 +14159,13 @@ function getSessionId() {
 
 function createSingleGuestChat() {
     const id = `chat_${Date.now()}`;
+    clearLegacyGuestChatStorage();
     chats = { [id]: [] };
     guestAssistantReplyCounts = Object.create(null);
     guestAssistantReplyCounts[id] = 0;
     currentChat = id;
-    localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
-    localStorage.setItem('last_chat', id);
+    localStorage.removeItem(getGuestStorageKey());
+    localStorage.removeItem('last_chat');
     return id;
 }
 
@@ -14181,33 +14185,8 @@ function resetChatStateForAuthChange() {
 }
 
 function loadGuestChats() {
-    let saved = localStorage.getItem(getGuestStorageKey());
-    let parsed = {};
-    if (saved) {
-        try {
-            parsed = JSON.parse(saved) || {};
-        } catch {
-            parsed = {};
-        }
-    }
-
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-        parsed = {};
-    }
-
-    const ids = Object.keys(parsed);
-
-    // Only restore existing chats (no auto-creation)
-    if (ids.length === 0) {
-        return createSingleGuestChat();
-    }
-    const lastChat = localStorage.getItem('last_chat') && parsed[localStorage.getItem('last_chat')] ? localStorage.getItem('last_chat') : ids[ids.length - 1];
-    chats = { [lastChat]: parsed[lastChat] || [] };
-    guestAssistantReplyCounts = Object.create(null);
-    guestAssistantReplyCounts[lastChat] = chats[lastChat].filter(isCountableGuestAssistantReply).length;
-    currentChat = lastChat;
-    localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
-    localStorage.setItem('last_chat', currentChat);
+    clearLegacyGuestChatStorage();
+    return createSingleGuestChat();
 }
 
 function getCurrentProfileEmail() {
@@ -15293,17 +15272,15 @@ async function newChat(){
         // FOR LOGGED-OUT USERS: Clear ALL existing temporary chats first
         // This ensures only the new temporary chat exists
         chats = {};
+        clearLegacyGuestChatStorage();
         guestAssistantReplyCounts = Object.create(null);
         currentChat = null;
         
         // Now create the single new temporary chat
         initializeChat(localId);
 
-        // Save guest chats (which now contains only this new temporary chat)
-        localStorage.setItem(
-            getGuestStorageKey(),
-            JSON.stringify(chats)
-        );
+        localStorage.removeItem(getGuestStorageKey());
+        localStorage.removeItem('last_chat');
 
         return;
     }
@@ -16849,11 +16826,11 @@ async function save() {
 
     const storageKey = getActiveStorageKey();
 
-    if (storageKey) {
+    if (storageKey && isAuthenticated()) {
         localStorage.setItem(storageKey, JSON.stringify(chats));
     }
 
-    if (currentChat) {
+    if (currentChat && isAuthenticated()) {
         localStorage.setItem("last_chat", currentChat);
     }
 
