@@ -2,6 +2,75 @@
 <html>
 <head>
 
+<style id="miAppLockBootStyle">
+html.mi-app-lock-boot body > * { visibility: hidden !important; }
+html.mi-app-lock-ready body > * { visibility: visible !important; }
+#miAppLockGate { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center; padding: 18px; background: #020617; color: #f8fafc; }
+#miAppLockGate section { width: min(380px, 100%); padding: 28px; border: 1px solid rgba(125,211,252,.3); border-radius: 20px; background: #0b1424; text-align: center; box-shadow: 0 25px 80px rgba(0,0,0,.55); }
+#miAppLockGate h2 { margin: 0 0 8px; font-size: 22px; }
+#miAppLockGate p { color: #91a1b8; font-size: 12px; }
+#miAppLockGate input { width: 100%; box-sizing: border-box; padding: 13px; text-align: center; letter-spacing: .3em; border: 1px solid rgba(125,211,252,.3); border-radius: 10px; background: #07101e; color: #fff; font-size: 20px; }
+#miAppLockGate button { width: 100%; margin-top: 12px; padding: 11px; }
+#miAppLockGate [role="status"] { min-height: 18px; margin-top: 9px; color: #fda4af; font-size: 12px; }
+</style>
+<script id="miAppLockBootController">
+(function () {
+    "use strict";
+    document.documentElement.classList.add("mi-app-lock-boot");
+    const state = window.miAppLockState = { phase: "boot", unlocked: false, uid: "" };
+    let gate = null;
+    function currentUser() { return window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser || null; }
+    function token(user) { return user && typeof user.getIdToken === "function" ? user.getIdToken(false) : Promise.reject(new Error("Please sign in again.")); }
+    async function request(path, options) {
+        const headers = new Headers(options?.headers || {});
+        headers.set("Authorization", "Bearer " + await token(currentUser()));
+        if (options?.body) headers.set("Content-Type", "application/json");
+        const response = await fetch(path, Object.assign({}, options || {}, { headers: headers, cache: "no-store" }));
+        const data = await response.json().catch(function () { return {}; });
+        if (!response.ok) throw new Error(data.message || "App Lock request failed.");
+        return data;
+    }
+    function removeGate() {
+        gate?.remove(); gate = null; state.unlocked = true; state.phase = "unlocked";
+        document.documentElement.classList.remove("mi-app-lock-boot"); document.documentElement.classList.add("mi-app-lock-ready"); document.body?.classList.remove("mi-app-locked");
+    }
+    function showGate(length) {
+        state.phase = "locked"; document.documentElement.classList.remove("mi-app-lock-boot"); document.documentElement.classList.add("mi-app-lock-ready"); document.body?.classList.add("mi-app-locked");
+        gate = document.createElement("div"); gate.id = "miAppLockGate";
+        gate.innerHTML = '<section role="dialog" aria-modal="true"><h2>WELCOME TO CORTEX CORE AI</h2><p>ENTER PASSCODE TO CONTINUE</p><input type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="' + length + '" aria-label="App Lock Passcode"><button type="button">Verify passcode</button><div role="status"></div></section>';
+        document.body.appendChild(gate);
+        const input = gate.querySelector("input"); const status = gate.querySelector("[role=status]");
+        const verify = async function () {
+            if (!new RegExp("^\\d{" + length + "}$").test(input.value)) { status.textContent = "Enter exactly " + length + " numeric digits."; return; }
+            const button = gate.querySelector("button"); button.disabled = true;
+            try { const result = await request("/api/app-lock/verify", { method: "POST", body: JSON.stringify({ passcode: input.value }) }); if (!result.success) { status.textContent = "Incorrect passcode."; input.value = ""; return; } removeGate(); }
+            catch (error) { status.textContent = error.message || "Verification failed."; }
+            finally { if (gate) gate.querySelector("button").disabled = false; }
+        };
+        gate.querySelector("button").addEventListener("click", verify); input.addEventListener("keydown", function (event) { if (event.key === "Enter") verify(); }); input.focus();
+    }
+    async function check(user) {
+        if (!user) { state.phase = "unauthenticated"; state.unlocked = false; removeGate(); state.phase = "unauthenticated"; state.unlocked = false; return; }
+        const nextUid = String(user.uid || "");
+        if (state.uid === nextUid && (state.phase === "checking" || state.phase === "locked" || state.phase === "unlocked")) return;
+        state.uid = nextUid; state.unlocked = false; state.phase = "checking";
+        try { const result = await request("/api/app-lock"); if (result.enabled) showGate(Number(result.length) === 6 ? 6 : 4); else removeGate(); }
+        catch (error) {
+            state.phase = "locked"; state.unlocked = false;
+            document.documentElement.classList.remove("mi-app-lock-boot"); document.documentElement.classList.add("mi-app-lock-ready");
+            gate?.remove(); gate = document.createElement("div"); gate.id = "miAppLockGate";
+            gate.innerHTML = '<section role="alertdialog" aria-modal="true"><h2>WELCOME TO CORTEX CORE AI</h2><p>App Lock could not be checked.</p><button type="button">Retry</button><div role="status">Connection required before continuing.</div></section>';
+            document.body.appendChild(gate); gate.querySelector("button").addEventListener("click", function () { gate.remove(); gate = null; check(user); });
+            console.error("[App Lock] Startup check failed", error);
+        }
+    }
+    window.miAppLockCheck = check; window.miAppLockIsUnlocked = function () { return state.unlocked; };
+    window.addEventListener("mi-firebase-auth-changed", function (event) { check(event.detail?.user || currentUser()); }); window.addEventListener("mi-firebase-ready", function () { check(currentUser()); });
+    document.addEventListener("click", function (event) { if (state.phase === "locked" && !event.target.closest("#miAppLockGate")) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
+    document.addEventListener("keydown", function (event) { if (state.phase === "locked" && !event.target.closest("#miAppLockGate")) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
+})();
+</script>
+
 <!-- MI_AI_LOADING_RESCUE_V2_START -->
 <script>
 function escapeAIHtml(value) {
@@ -16777,11 +16846,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const second = document.getElementById("settingsPasscodeConfirm").value;
         const status = lockForm.querySelector("[role=status]");
         if (!new RegExp("^\\d{" + length + "}$").test(first) || first !== second) { status.textContent = "Use matching numeric passcodes with the selected length."; return; }
-        const bytes = new TextEncoder().encode(first);
-        const digest = await crypto.subtle.digest("SHA-256", bytes);
-        const hash = Array.from(new Uint8Array(digest)).map(function (byte) { return byte.toString(16).padStart(2, "0"); }).join("");
-        localStorage.setItem("cortex_app_lock:" + (window.miFirebaseUser?.uid || "guest"), JSON.stringify({ length: Number(length), hash: hash }));
-        status.textContent = "App Lock enabled for this account.";
+        try {
+            const current = window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser;
+            if (!current || typeof current.getIdToken !== "function") throw new Error("Please sign in before enabling App Lock.");
+            const response = await fetch("/api/app-lock", { method: "POST", headers: { "Authorization": "Bearer " + await current.getIdToken(false), "Content-Type": "application/json" }, body: JSON.stringify({ enabled: true, length: Number(length), passcode: first }) });
+            const result = await response.json().catch(function () { return {}; });
+            if (!response.ok || !result.success) throw new Error(result.message || "App Lock could not be enabled.");
+            status.textContent = "App Lock enabled for this account.";
+        } catch (error) { status.textContent = error.message || "App Lock could not be enabled."; }
     });
 
     passwordForm?.addEventListener("submit", async function (event) {
