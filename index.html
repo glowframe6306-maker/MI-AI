@@ -774,7 +774,7 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
 
     const IMAGE_PREFIX = "mi_profile_picture_v2:";
     const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-    let profile = { name: "Guest", email: "", accountType: "FREE", profilePicture: "", uid: "" };
+    let profile = { name: "Guest", email: "", accountType: "FREE", profilePicture: "", uid: "", serverAuthoritative: false };
     let activeFileInput = null;
 
     function currentUser() {
@@ -799,6 +799,7 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     function readProfile() {
         const user = currentUser();
         const uid = String(user?.uid || localStorage.getItem("mi_user_id") || "");
+        if (profile.serverAuthoritative && profile.uid === uid && uid) return profile;
         const storedImage = storageKey(uid) ? localStorage.getItem(storageKey(uid)) || "" : "";
         const profileKey = field => "mi_profile_" + field + ":" + (uid || String(user?.email || localStorage.getItem("mi_user_email") || "guest").trim().toLowerCase());
         const storedType = String(user?.customClaims?.accountType || user?.accountType || "FREE").toUpperCase();
@@ -813,6 +814,28 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
             profilePicture: storedImage
         };
         return profile;
+    }
+
+    async function refreshAccountProfile() {
+        const user = currentUser();
+        if (!user?.getIdToken) return;
+        try {
+            const token = await user.getIdToken();
+            const response = await fetch('/api/account/profile', { headers: { Authorization: 'Bearer ' + token } });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.success !== true || !payload.profile) return;
+            const next = payload.profile;
+            profile = Object.assign(profile, {
+                uid: String(next.uid || user.uid),
+                email: String(next.email || user.email || ''),
+                name: String(next.name || 'Guest'),
+                fullName: String(next.full_name || next.name || 'Guest'),
+                profilePicture: String(next.profile_photo || ''),
+                accountType: String(next.account_type || profile.accountType || 'FREE').toUpperCase(),
+                serverAuthoritative: true
+            });
+            render();
+        } catch (_) {}
     }
 
     function avatarMarkup(sizeClass) {
@@ -912,7 +935,10 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
             const error = backdrop.querySelector("#miProfileError");
             if (!displayName || displayName.length > 80) { error.textContent = "Enter a display name under 80 characters."; return; }
             if (nextUsername && (!/^[a-z0-9_.-]{3,30}$/.test(nextUsername) || !usernameAvailable(nextUsername))) { error.textContent = "Username already taken or invalid."; return; }
-            localStorage.setItem(profileKey("displayName"), displayName); localStorage.setItem(profileKey("birthday"), birthday); localStorage.setItem(profileKey("fullName"), profile.fullName);
+            localStorage.setItem(profileKey("birthday"), birthday);
+            if (profile.uid && currentUser()?.getIdToken) {
+                currentUser().getIdToken().then(token => fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ display_name: displayName, full_name: profile.fullName }) })).then(response => response.json()).then(payload => { if (payload.success && payload.profile) { profile.name = payload.profile.name; profile.fullName = payload.profile.full_name; render(); } });
+            }
             const identity = profile.uid || String(profile.email || "guest").trim().toLowerCase();
             if (profile.username && profile.username !== nextUsername) localStorage.removeItem("mi_username:" + identity + ":" + profile.username);
             if (nextUsername) localStorage.setItem("mi_username:" + identity + ":" + nextUsername, identity);
@@ -991,7 +1017,18 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
             await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = url; });
             URL.revokeObjectURL(url);
             const reader = new FileReader();
-            reader.onload = function () { profile.profilePicture = String(reader.result || ""); if (profile.uid) localStorage.setItem(storageKey(profile.uid), profile.profilePicture); render(); };
+            reader.onload = async function () {
+                const profilePicture = String(reader.result || "");
+                if (profile.uid && currentUser()?.getIdToken) {
+                    try {
+                        const token = await currentUser().getIdToken();
+                        const response = await fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ profile_photo: profilePicture }) });
+                        const payload = await response.json().catch(() => ({}));
+                        if (response.ok && payload.success && payload.profile) profile.profilePicture = String(payload.profile.profile_photo || '');
+                    } catch (_) {}
+                } else profile.profilePicture = profilePicture;
+                render();
+            };
             reader.readAsDataURL(file);
         } catch (_) { if (error) error.textContent = "That image could not be read. Please choose another file."; }
     }
@@ -1017,13 +1054,15 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
 
     document.addEventListener("click", function (event) { if (!event.target.closest("#miAccountSection")) closeMenu(); });
     document.addEventListener("keydown", function (event) { if (event.key === "Escape") { closeMenu(); closeProfile(); } });
-    window.addEventListener("mi-firebase-auth-changed", render);
-    window.addEventListener("mi-chat-user-changed", render);
+    window.addEventListener("mi-firebase-auth-changed", () => { profile.serverAuthoritative = false; render(); refreshAccountProfile(); });
+    window.addEventListener("mi-chat-user-changed", () => { profile.serverAuthoritative = false; render(); refreshAccountProfile(); });
     window.addEventListener("mi-language-applied", render);
-    window.MIAccountProfile = { render: render, open: openProfile, close: closeProfile };
+    window.MIAccountProfile = { render: render, open: openProfile, close: closeProfile, refresh: refreshAccountProfile };
 
-    function start() { render(); setTimeout(render, 300); setTimeout(render, 1200); }
+    function start() { render(); refreshAccountProfile(); setTimeout(render, 300); setTimeout(render, 1200); }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true }); else start();
+    window.addEventListener('focus', refreshAccountProfile);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshAccountProfile(); });
 })();
 </script>
 <style id="cortex-settings-center-style">
@@ -14893,7 +14932,7 @@ async function loadUserChats() {
   const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
 
   try {
-    const res = await fetch('/conversations', {
+    const res = await fetch('/api/conversations', {
       headers: {
         Authorization: 'Bearer ' + token,
         'X-User-Id': userId,
@@ -14919,7 +14958,7 @@ async function loadUserChats() {
         chatMessages.serverId = String(conversationId);
 
         try {
-          const messagesRes = await fetch('/messages?conversation_id=' + encodeURIComponent(conversationId), {
+          const messagesRes = await fetch('/api/messages?conversation_id=' + encodeURIComponent(conversationId), {
             headers: {
               Authorization: 'Bearer ' + token,
               'X-User-Id': userId,
@@ -16506,6 +16545,14 @@ function renderVerifiedSources(container, sources) {
     container.appendChild(sourcesBox);
 }
 
+async function persistAccountMessage(conversationId, role, content) {
+    if (!isAuthenticated() || !conversationId || !content) return;
+    try {
+        const token = window.miFirebaseUser?.getIdToken ? await window.miFirebaseUser.getIdToken() : localStorage.getItem('mi_supabase_token');
+        await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ conversation_id: conversationId, role, content }) });
+    } catch (_) {}
+}
+
 function finalizeStreamingReplyBubble(contentBox, text, conversationId, sources = []) {
     if (!contentBox) return;
     contentBox.innerHTML = renderAIResponse(String(text || ''));
@@ -16517,6 +16564,7 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId, sources 
         chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
         chats[conversationId].lastPreview = existingText;
         save();
+        persistAccountMessage(conversationId, 'ai', existingText);
         
         // AI responses are persisted via the /messages endpoint when they're added to the chat
         // No need for separate server save since the core persistence is handled in send()
@@ -16615,7 +16663,7 @@ async function sendMessageInternal(msg) {
                 return;
             }
             try {
-                const createResponse = await fetch('/conversations', {
+                const createResponse = await fetch('/api/conversations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -16690,6 +16738,7 @@ async function sendMessageInternal(msg) {
     activeChat().messageCount = (activeChat().messageCount || 0) + 1;
     activeChat().lastPreview = msg;
     save();
+    persistAccountMessage(conversationId, 'me', msg);
     const explicitMemorySave = isExplicitMemoryRequest(msg)
         ? await extractPermanentMemory(msg)
         : null;

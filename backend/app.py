@@ -601,6 +601,144 @@ def memory_item(memory_id):
         return jsonify({"success": False, "message": "Memory storage is unavailable."}), 503
 
 
+def mi_account_required():
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return None, (jsonify({"success": False, "message": error or "Authentication required."}), 401)
+    if not supabase:
+        return None, (jsonify({"success": False, "message": "Account database is unavailable."}), 503)
+    return account, None
+
+
+def mi_conversation_row(row):
+    return {
+        "id": str(row.get("id") or ""),
+        "title": row.get("title") or "New chat",
+        "session_id": row.get("session_id") or row.get("user_id"),
+        "created_at": row.get("created_at"),
+        "updated_at": row.get("updated_at") or row.get("created_at"),
+        "pin": bool(row.get("pin", False)),
+        "message_count": row.get("message_count", 0),
+    }
+
+
+@app.route("/api/conversations", methods=["GET", "POST"])
+def api_account_conversations():
+    account, error_response = mi_account_required()
+    if error_response:
+        return error_response
+    uid = account["uid"]
+    try:
+        if request.method == "GET":
+            result = (supabase.table("conversations").select("*").eq("user_id", uid).order("updated_at", desc=True).execute())
+            return jsonify({"success": True, "conversations": [mi_conversation_row(row) for row in (getattr(result, "data", None) or [])]})
+
+        payload = request.get_json(silent=True) or {}
+        conversation_id = str(payload.get("id") or uuid.uuid4())
+        title = str(payload.get("title") or "New chat").strip()[:200] or "New chat"
+        now = datetime.utcnow().isoformat()
+        row = {"id": conversation_id, "user_id": uid, "title": title, "pin": False, "created_at": now, "updated_at": now, "message_count": 0}
+        result = supabase.table("conversations").upsert(row, on_conflict="id").execute()
+        saved = (getattr(result, "data", None) or [row])[0]
+        return jsonify({"success": True, "conversation": mi_conversation_row(saved)}), 201
+    except Exception as exc:
+        app.logger.exception("Account conversation request failed for %s: %s", uid, exc)
+        return jsonify({"success": False, "message": "Conversation storage is unavailable."}), 503
+
+
+@app.route("/api/conversations/<conversation_id>", methods=["PATCH", "DELETE"])
+def api_account_conversation_item(conversation_id):
+    account, error_response = mi_account_required()
+    if error_response:
+        return error_response
+    uid = account["uid"]
+    try:
+        query = supabase.table("conversations").select("*").eq("id", str(conversation_id)).eq("user_id", uid).limit(1).execute()
+        rows = getattr(query, "data", None) or []
+        if not rows:
+            return jsonify({"success": False, "message": "Conversation not found."}), 404
+        if request.method == "DELETE":
+            supabase.table("messages").delete().eq("conversation_id", str(conversation_id)).eq("user_id", uid).execute()
+            supabase.table("conversations").delete().eq("id", str(conversation_id)).eq("user_id", uid).execute()
+            return jsonify({"success": True})
+        payload = request.get_json(silent=True) or {}
+        updates = {}
+        if "title" in payload:
+            updates["title"] = str(payload.get("title") or "New chat").strip()[:200] or "New chat"
+        if "pin" in payload:
+            updates["pin"] = bool(payload.get("pin"))
+        if not updates:
+            return jsonify({"success": True, "conversation": mi_conversation_row(rows[0])})
+        updates["updated_at"] = datetime.utcnow().isoformat()
+        result = supabase.table("conversations").update(updates).eq("id", str(conversation_id)).eq("user_id", uid).execute()
+        saved = (getattr(result, "data", None) or [dict(rows[0], **updates)])[0]
+        return jsonify({"success": True, "conversation": mi_conversation_row(saved)})
+    except Exception as exc:
+        app.logger.exception("Account conversation mutation failed for %s: %s", uid, exc)
+        return jsonify({"success": False, "message": "Conversation update is unavailable."}), 503
+
+
+@app.route("/api/messages", methods=["GET", "POST"])
+def api_account_messages():
+    account, error_response = mi_account_required()
+    if error_response:
+        return error_response
+    uid = account["uid"]
+    conversation_id = str(request.args.get("conversation_id") or (request.get_json(silent=True) or {}).get("conversation_id") or "")
+    if not conversation_id:
+        return jsonify({"success": False, "message": "Conversation is required."}), 400
+    try:
+        owned = supabase.table("conversations").select("id").eq("id", conversation_id).eq("user_id", uid).limit(1).execute()
+        if not (getattr(owned, "data", None) or []):
+            return jsonify({"success": False, "message": "Conversation not found."}), 404
+        if request.method == "GET":
+            result = supabase.table("messages").select("*").eq("conversation_id", conversation_id).eq("user_id", uid).order("created_at").execute()
+            return jsonify({"success": True, "messages": getattr(result, "data", None) or []})
+        payload = request.get_json(silent=True) or {}
+        content = str(payload.get("content") or payload.get("text") or "").strip()
+        if not content:
+            return jsonify({"success": False, "message": "Content is required."}), 400
+        row = {"id": str(payload.get("id") or uuid.uuid4()), "conversation_id": conversation_id, "user_id": uid, "role": str(payload.get("role") or "user"), "content": content, "created_at": datetime.utcnow().isoformat()}
+        result = supabase.table("messages").insert(row).execute()
+        supabase.table("conversations").update({"updated_at": datetime.utcnow().isoformat(), "message_count": len((supabase.table("messages").select("id").eq("conversation_id", conversation_id).eq("user_id", uid).execute().data or []))}).eq("id", conversation_id).eq("user_id", uid).execute()
+        return jsonify({"success": True, "message": (getattr(result, "data", None) or [row])[0]})
+    except Exception as exc:
+        app.logger.exception("Account message request failed for %s: %s", uid, exc)
+        return jsonify({"success": False, "message": "Message storage is unavailable."}), 503
+
+
+@app.route("/api/account/profile", methods=["GET", "PATCH"])
+def api_account_profile():
+    account, error_response = mi_account_required()
+    if error_response:
+        return error_response
+    uid = account["uid"]
+    try:
+        admin_user = mi_share_admin_user(uid)
+        metadata = mi_share_metadata(admin_user)
+        if request.method == "PATCH":
+            payload = request.get_json(silent=True) or {}
+            display_name = str(payload.get("display_name") or "").strip()
+            full_name = str(payload.get("full_name") or "").strip()
+            profile_photo = str(payload.get("profile_photo") or "")
+            if display_name and len(display_name) > 80:
+                return jsonify({"success": False, "message": "Display name is too long."}), 400
+            if display_name:
+                metadata["display_name"] = display_name
+            if profile_photo:
+                metadata["profile_photo"] = profile_photo
+            if full_name:
+                supabase.table("users").upsert({"id": uid, "email": account.get("email"), "full_name": full_name, "updated_at": datetime.utcnow().isoformat()}, on_conflict="id").execute()
+            if display_name or profile_photo:
+                mi_share_save_metadata(uid, metadata)
+        result = supabase.table("users").select("*").eq("id", uid).limit(1).execute()
+        row = (getattr(result, "data", None) or [{}])[0]
+        return jsonify({"success": True, "profile": {"uid": uid, "email": row.get("email") or account.get("email"), "name": metadata.get("display_name") or row.get("full_name") or "Guest", "full_name": row.get("full_name") or "Guest", "profile_photo": metadata.get("profile_photo") or "", "account_type": row.get("account_type") or metadata.get("account_type") or "FREE", "updated_at": row.get("updated_at")}})
+    except Exception as exc:
+        app.logger.exception("Account profile request failed for %s: %s", uid, exc)
+        return jsonify({"success": False, "message": "Account profile is unavailable."}), 503
+
+
 @app.route("/api/memory/extract", methods=["POST"])
 def memory_extract():
     account, error = mi_get_verified_account()
