@@ -584,6 +584,7 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
     "use strict";
     if (window.__cortexCleanSettingsRebuild) return;
     window.__cortexCleanSettingsRebuild = true;
+    return;
 
     const settingsKey = "cortex_clean_settings_v1";
     const defaults = { appearance: "dark", themeColor: "#1e88e5" };
@@ -786,7 +787,7 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
             menu.addEventListener("click", function (event) {
                 const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
                 if (action === "profile") openProfile();
-                if (action === "settings") { closeMenu(); if (typeof window.__cortexCleanSettingsOpen === "function") window.__cortexCleanSettingsOpen(); else if (typeof window.toggleSettings === "function") window.toggleSettings(); }
+                if (action === "settings") { closeMenu(); if (typeof window.openSettings === "function") window.openSettings(); }
                 if (action === "personalization") openPersonalization();
                 if (action === "help") { closeMenu(); if (typeof window.customerSupport === "function") window.customerSupport(); }
                 if (action === "logout") { closeMenu(); if (typeof window.logout === "function") window.logout(); }
@@ -978,6 +979,7 @@ html.cortex-high-contrast body { filter:contrast(1.12); } html.cortex-reduce-mot
 
 <script id="cortex-settings-behavior">
 (function () {
+    return;
     if (window.__cortexSettingsBehavior) return;
     window.__cortexSettingsBehavior = true;
 
@@ -13310,7 +13312,69 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
     aria-hidden="true"
     onclick="closeSettings()">
 </div>
+<style id="cortex-authoritative-settings-style">
+    #settingsPanel {
+        position: fixed;
+        inset: 5vh auto auto 50%;
+        z-index: 18000;
+        display: none;
+        flex-direction: column;
+        width: min(92vw, 760px);
+        height: 90vh;
+        max-height: 90vh;
+        overflow: hidden;
+        padding: 22px;
+        box-sizing: border-box;
+        transform: translateX(-50%);
+        border: 1px solid rgba(125, 211, 252, .3);
+        border-radius: 18px;
+        background: #0f1b2d;
+        color: #e8eef8;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, .58);
+    }
+
+    #settingsPanel.is-open { display: flex !important; visibility: visible; opacity: 1; }
+    #settingsPanel .cortex-authoritative-scroll { min-height: 0; overflow-y: auto; padding-right: 5px; }
+    #settingsPanel .cortex-authoritative-row,
+    #settingsPanel .cortex-authoritative-danger { margin: 0 0 10px; padding: 14px; border: 1px solid rgba(148, 163, 184, .18); border-radius: 12px; background: rgba(255, 255, 255, .05); }
+    #settingsPanel .cortex-authoritative-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    #settingsPanel .cortex-authoritative-row strong,
+    #settingsPanel .cortex-authoritative-danger strong { display: block; margin-bottom: 4px; }
+    #settingsPanel .cortex-authoritative-row small,
+    #settingsPanel .cortex-authoritative-danger small { color: #9fb0c5; }
+    #settingsPanel select,
+    #settingsPanel input,
+    #settingsPanel button { font: inherit; }
+    #settingsPanel select,
+    #settingsPanel input { min-height: 36px; box-sizing: border-box; padding: 7px 9px; border: 1px solid rgba(125, 211, 252, .3); border-radius: 8px; background: #091321; color: inherit; }
+    #settingsPanel input[type="color"] { width: 92px; padding: 3px; cursor: pointer; }
+    #settingsPanel button { cursor: pointer; }
+    #settingsPanel .cortex-authoritative-action { border: 1px solid rgba(125, 211, 252, .3); border-radius: 8px; padding: 8px 11px; background: rgba(56, 189, 248, .14); color: inherit; }
+    #settingsPanel .cortex-authoritative-close { align-self: flex-end; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 20px; }
+    #settingsPanel .cortex-authoritative-form { display: grid; gap: 8px; margin-top: 12px; padding: 12px; border: 1px solid rgba(148, 163, 184, .16); border-radius: 10px; background: rgba(0, 0, 0, .14); }
+    #settingsPanel .cortex-authoritative-form[hidden] { display: none; }
+    #settingsPanel .cortex-authoritative-danger { border-color: rgba(248, 113, 113, .35); }
+    #settingsPanel .cortex-authoritative-danger > strong { color: #fda4af; }
+    @media (max-width: 600px) {
+        #settingsPanel { inset: 12px 10px; width: calc(100vw - 20px); height: calc(100dvh - 24px); max-height: calc(100dvh - 24px); transform: none; padding: 16px; }
+        #settingsPanel .cortex-authoritative-row { align-items: flex-start; flex-direction: column; }
+        #settingsPanel select, #settingsPanel input, #settingsPanel .cortex-authoritative-action { width: 100%; }
+    }
+</style>
 <div id="settingsPanel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+    <button class="cortex-authoritative-close" type="button" onclick="closeSettings()" aria-label="Close Settings">&#10005;</button>
+    <h2 id="settingsTitle">Settings</h2>
+    <div class="cortex-authoritative-scroll">
+        <section class="cortex-authoritative-row"><div><strong>Appearance</strong><small>Choose the application appearance.</small></div><select id="settingsAppearance"><option>Dark</option><option>Light</option><option>System</option></select></section>
+        <section class="cortex-authoritative-row"><div><strong>Theme</strong><small>Change the Question Bar colour immediately.</small></div><input id="settingsThemeColor" type="color" value="#1e88e5" aria-label="Theme colour"></section>
+        <section class="cortex-authoritative-row"><div><strong>Change Password</strong><small>Update your account password.</small></div><button class="cortex-authoritative-action" type="button" data-settings-form="password">Change Password</button></section>
+        <form id="settingsPasswordForm" class="cortex-authoritative-form" hidden><input type="password" placeholder="Old Password" autocomplete="current-password"><input type="password" placeholder="New Password" autocomplete="new-password"><input type="password" placeholder="Confirm Password" autocomplete="new-password"><button class="cortex-authoritative-action" type="submit">Save Password</button><small role="status"></small></form>
+        <section class="cortex-authoritative-row"><div><strong>App Lock</strong><small>Require a passcode after refresh or reopening.</small></div><button class="cortex-authoritative-action" type="button" data-settings-form="lock">App Lock</button></section>
+        <form id="settingsLockForm" class="cortex-authoritative-form" hidden><strong>Choose your passcode length</strong><select id="settingsPasscodeLength"><option value="4">4 Digit</option><option value="6">6 Digit</option></select><input id="settingsPasscode" type="password" inputmode="numeric" placeholder="New Passcode"><input id="settingsPasscodeConfirm" type="password" inputmode="numeric" placeholder="Confirm Passcode"><button class="cortex-authoritative-action" type="submit">Save App Lock</button><small role="status"></small></form>
+        <section class="cortex-authoritative-danger"><strong>Danger Zone</strong><small>Account deletion is permanent.</small><button id="settingsDeleteAccountButton" class="cortex-authoritative-action" type="button" data-settings-form="delete">Delete My Account</button><form id="settingsDeleteForm" class="cortex-authoritative-form" hidden><input placeholder="Username or Email"><input placeholder="DELETE MY ACCOUNT"><input type="password" placeholder="Account Password" autocomplete="current-password"><button class="cortex-authoritative-action" type="submit">Delete My Account</button><small role="status"></small></form></section>
+    </div>
+</div>
+<template id="settingsPanelLegacy">
 <button id="settingsCloseBtn" type="button" onclick="closeSettings()" aria-label="Close Settings">×</button>
 <div class="cortex-settings-heading"><span class="cortex-settings-kicker">CORTEX CONTROL</span><h3 id="settingsTitle">Settings</h3><p>Shape your workspace, privacy, and conversation experience.</p></div>
 <div id="cortexSettingsSections">
@@ -13355,7 +13419,7 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
 <section class="cortex-settings-group"><h4>Keyboard Shortcuts</h4><div class="cortex-shortcuts"><span>New Chat <kbd>Ctrl / Cmd + N</kbd></span><span>Focus Message Input <kbd>/</kbd></span><span>Open Settings <kbd>Ctrl / Cmd + ,</kbd></span><span>Send Message <kbd>Enter</kbd></span></div></section>
 <section class="cortex-settings-group cortex-about"><h4>About Cortex Core AI</h4><strong>CORTEX CORE AI</strong><p>Created by: M.I. Muhammadh<br>Company: MI CORTEX X INC.</p><p><a href="mailto:miai.customerservice@gmail.com">miai.customerservice@gmail.com</a><br><a href="mailto:teamofchatbot.miai@gmail.com">teamofchatbot.miai@gmail.com</a><br>Team WhatsApp: 0756390621</p></section>
 </div><div id="cortexSettingsStatus" role="status" aria-live="polite"></div>
-</div>
+</template>
 
 <!-- INPUT -->
 <div id="inputBox">
@@ -16647,13 +16711,107 @@ function stopReply() {
 }
 
 /* SETTINGS */
-function toggleSettings(){
-  closeMobileMenu();
-  const s=document.getElementById("settingsPanel");
-  if (s) {
-    s.style.display = s.style.display === "block" ? "none" : "block";
-  }
+function openSettings() {
+    const panel = document.getElementById("settingsPanel");
+
+    if (!panel) {
+        console.error("CORTEX SETTINGS: #settingsPanel NOT FOUND");
+        return;
+    }
+
+    closeMobileMenu();
+    panel.hidden = false;
+    panel.style.display = "flex";
+    panel.classList.add("is-open");
+    panel.setAttribute("aria-hidden", "false");
+    document.getElementById("settingsBackdrop")?.classList.add("settings-open");
+    console.log("CORTEX SETTINGS: OPENED");
 }
+
+function closeSettings() {
+    const panel = document.getElementById("settingsPanel");
+    if (!panel) return;
+    panel.classList.remove("is-open");
+    panel.hidden = true;
+    panel.style.display = "none";
+    panel.setAttribute("aria-hidden", "true");
+    document.getElementById("settingsBackdrop")?.classList.remove("settings-open");
+}
+
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
+
+document.addEventListener("DOMContentLoaded", function () {
+    const panel = document.getElementById("settingsPanel");
+    const color = document.getElementById("settingsThemeColor");
+    const appearance = document.getElementById("settingsAppearance");
+    const passwordForm = document.getElementById("settingsPasswordForm");
+    const lockForm = document.getElementById("settingsLockForm");
+    const deleteForm = document.getElementById("settingsDeleteForm");
+
+    if (!panel) return;
+
+    document.querySelectorAll("[data-settings-form]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const form = document.getElementById("settings" + button.dataset.settingsForm.charAt(0).toUpperCase() + button.dataset.settingsForm.slice(1) + "Form");
+            if (form) form.hidden = !form.hidden;
+        });
+    });
+
+    color?.addEventListener("input", function () {
+        document.getElementById("msg")?.style.setProperty("border-color", color.value, "important");
+        document.documentElement.style.setProperty("--main", color.value);
+        localStorage.setItem("theme", color.value);
+    });
+
+    appearance?.addEventListener("change", function () {
+        const value = appearance.value.toLowerCase();
+        document.body.classList.toggle("cortex-light-theme", value === "light" || (value === "system" && matchMedia("(prefers-color-scheme: light)").matches));
+        localStorage.setItem("cortex_settings_appearance", value);
+    });
+
+    lockForm?.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const length = document.getElementById("settingsPasscodeLength").value;
+        const first = document.getElementById("settingsPasscode").value;
+        const second = document.getElementById("settingsPasscodeConfirm").value;
+        const status = lockForm.querySelector("[role=status]");
+        if (!new RegExp("^\\d{" + length + "}$").test(first) || first !== second) { status.textContent = "Use matching numeric passcodes with the selected length."; return; }
+        const bytes = new TextEncoder().encode(first);
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        const hash = Array.from(new Uint8Array(digest)).map(function (byte) { return byte.toString(16).padStart(2, "0"); }).join("");
+        localStorage.setItem("cortex_app_lock:" + (window.miFirebaseUser?.uid || "guest"), JSON.stringify({ length: Number(length), hash: hash }));
+        status.textContent = "App Lock enabled for this account.";
+    });
+
+    passwordForm?.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const fields = passwordForm.querySelectorAll("input");
+        const status = passwordForm.querySelector("[role=status]");
+        try {
+            const current = window.miFirebaseUser || window.firebase?.auth?.()?.currentUser;
+            const credential = window.firebase.auth.EmailAuthProvider.credential(current.email, fields[0].value);
+            await current.reauthenticateWithCredential(credential);
+            await current.updatePassword(fields[1].value);
+            status.textContent = "Password updated successfully.";
+        } catch (error) { status.textContent = error.message || "Password update failed."; }
+    });
+
+    deleteForm?.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const fields = deleteForm.querySelectorAll("input");
+        const status = deleteForm.querySelector("[role=status]");
+        const current = window.miFirebaseUser || window.firebase?.auth?.()?.currentUser;
+        if (!current || fields[0].value.trim().toLowerCase() !== String(current.email || "").toLowerCase() || fields[1].value !== "DELETE MY ACCOUNT") { status.textContent = "Username or Email and DELETE MY ACCOUNT must match exactly."; return; }
+        if (!window.confirm("Final Delete My Account confirmation?")) return;
+        try {
+            const credential = window.firebase.auth.EmailAuthProvider.credential(current.email, fields[2].value);
+            await current.reauthenticateWithCredential(credential);
+            await current.delete();
+            closeSettings();
+        } catch (error) { status.textContent = error.message || "Account deletion failed."; }
+    });
+});
 
 /* THEME */
 function applyTheme(){
@@ -17185,6 +17343,8 @@ try {
 <script>
 /* CORTEX CORE AI CENTERED SETTINGS JS - START */
 
+if (false) {
+
 window.closeSettings = function () {
     const panel =
         document.getElementById("settingsPanel");
@@ -17297,6 +17457,7 @@ document.addEventListener(
 );
 
 /* CORTEX CORE AI CENTERED SETTINGS JS - END */
+}
 </script>
 
 
@@ -19404,6 +19565,7 @@ document.addEventListener(
 /* CORTEX CORE AI SETTINGS ACCORDION COPY MOBILE JS - START */
 
 (function () {
+    return;
     "use strict";
 
     const settingsTranslations = {
@@ -31183,7 +31345,8 @@ document.addEventListener(
                 button.matches(
                     "#newChatBtn, #new-chat-btn, #supportBtn, " +
                     "#customerSupportBtn, #settingsBtn, #loginBtn, " +
-                    "#logoutBtn, #notificationBtn, #notificationsBtn, #bellBtn"
+                    "#logoutBtn, #notificationBtn, #notificationsBtn, #bellBtn, " +
+                    "#settingsDeleteAccountButton"
                 )
             ) {
                 return;
@@ -41729,6 +41892,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 </script>
 <script id="cortex-settings-center-controller">
 (function () {
+    return;
     "use strict";
     if (window.__cortexSettingsCenter) return;
     window.__cortexSettingsCenter = true;
@@ -41838,6 +42002,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 <script id="cortex-large-settings-controller">
 (function () {
+    return;
     "use strict";
     if (window.__cortexLargeSettingsController) return;
     window.__cortexLargeSettingsController = true;
