@@ -35484,6 +35484,28 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
     box-sizing: border-box;
 }
 
+#miSidebarCustomerSupport {
+    display: block;
+    width: calc(100% - 16px);
+    min-height: 34px;
+    margin: 8px;
+    padding: 7px 10px;
+    box-sizing: border-box;
+    border: 1px solid rgba(125,211,252,.28);
+    border-radius: 10px;
+    background: rgba(56,189,248,.12);
+    color: #e0f2fe;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+#miSidebarCustomerSupport:hover {
+    background: rgba(56,189,248,.22);
+    border-color: rgba(125,211,252,.52);
+}
+
 #miChatManageToolbar button {
     min-height: 34px;
     flex: 1 1 auto;
@@ -35726,115 +35748,30 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
             return;
         }
 
-        if (document.getElementById("miChatManageToolbar")) {
-            return;
+        document.getElementById("miChatManageToolbar")?.remove();
+        document.getElementById("miChatSelectionCount")?.remove();
+        document.querySelectorAll(".mi-chat-select-box").forEach(function (element) {
+            element.remove();
+        });
+        document.body.classList.remove("mi-chat-selection-mode");
+
+        let supportButton = document.getElementById("miSidebarCustomerSupport");
+        if (!supportButton) {
+            supportButton = document.createElement("button");
+            supportButton.id = "miSidebarCustomerSupport";
+            supportButton.type = "button";
+            supportButton.textContent = "Customer Support";
+            supportButton.addEventListener("click", function () {
+                if (typeof window.customerSupport === "function") {
+                    window.customerSupport();
+                }
+            });
+            container.insertBefore(supportButton, list);
         }
-
-        const toolbar = document.createElement("div");
-        toolbar.id = "miChatManageToolbar";
-
-        toolbar.innerHTML = `
-            <button type="button" id="miChatSelectModeBtn">
-                Γÿæ Delete Chats
-            </button>
-
-            <button type="button" id="miChatSortBtn">
-                AΓÇôZ
-            </button>
-
-            <button type="button" id="miChatDeleteSelectedBtn"
-                hidden>
-                Delete Selected
-            </button>
-
-            <button type="button" id="miChatCancelSelectionBtn"
-                hidden>
-                Cancel
-            </button>
-        `;
-
-        const count = document.createElement("div");
-        count.id = "miChatSelectionCount";
-        count.textContent = "0 chats selected";
-
-        container.insertBefore(toolbar, list);
-        container.insertBefore(count, list);
-
-        document.getElementById("miChatSelectModeBtn")
-            .addEventListener("click", startSelectionMode);
-
-        document.getElementById("miChatSortBtn")
-            .addEventListener("click", toggleSort);
-
-        document.getElementById("miChatDeleteSelectedBtn")
-            .addEventListener("click", deleteSelectedChats);
-
-        document.getElementById("miChatCancelSelectionBtn")
-            .addEventListener("click", cancelSelectionMode);
-
-        updateToolbar();
     }
 
     function updateToolbar() {
-        const selectButton =
-            document.getElementById("miChatSelectModeBtn");
-
-        const sortButton =
-            document.getElementById("miChatSortBtn");
-
-        const deleteButton =
-            document.getElementById("miChatDeleteSelectedBtn");
-
-        const cancelButton =
-            document.getElementById("miChatCancelSelectionBtn");
-
-        const count =
-            document.getElementById("miChatSelectionCount");
-
-        if (
-            !selectButton ||
-            !sortButton ||
-            !deleteButton ||
-            !cancelButton
-        ) {
-            return;
-        }
-
-        selectButton.hidden = selectionMode;
-        sortButton.hidden = selectionMode;
-        deleteButton.hidden = !selectionMode;
-        cancelButton.hidden = !selectionMode;
-
-        deleteButton.disabled = selectedIds.size === 0;
-
-        deleteButton.textContent =
-            selectedIds.size > 0
-                ? "Delete Selected (" + selectedIds.size + ")"
-                : "Delete Selected";
-
-        if (count) {
-            count.textContent =
-                selectedIds.size +
-                (
-                    selectedIds.size === 1
-                        ? " chat selected"
-                        : " chats selected"
-                );
-        }
-
-        if (sortDirection === "default") {
-            sortButton.textContent = "AΓÇôZ";
-            sortButton.title = "Sort chats alphabetically";
-        }
-        else if (sortDirection === "az") {
-            sortButton.textContent = "ZΓÇôA";
-            sortButton.title = "Currently AΓÇôZ. Click for ZΓÇôA.";
-        }
-        else {
-            sortButton.textContent = "Default";
-            sortButton.title =
-                "Currently ZΓÇôA. Click for default order.";
-        }
+        ensureToolbar();
     }
 
     function startSelectionMode() {
