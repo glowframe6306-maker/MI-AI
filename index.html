@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 
@@ -189,7 +189,7 @@ function renderAIResponse(text) {
         if (!codeLines.length) return;
         const code = codeLines.join("\n");
         const language = codeLanguage === "Code" ? detectCodeLanguage("", code) : codeLanguage;
-        output.push('<div class="ai-code-block-wrap"><div class="ai-code-header"><span>' + escapeHTML(language) + '</span><button type="button" class="ai-code-copy" aria-label="Copy code" title="Copy code">' + copyIconMarkup + '</button></div><pre class="ai-code-block"><code>' + escapeHTML(code) + "</code></pre></div>");
+        output.push('<div class="ai-code-block-wrap"><div class="ai-code-header"><span>' + escapeHTML(language) + '</span><button type="button" class="ai-code-copy" data-copy-state="idle" aria-label="Copy code" title="Copy code">' + copyIconMarkup + '</button></div><pre class="ai-code-block"><code>' + escapeHTML(code) + "</code></pre></div>");
         codeLines = [];
         codeLanguage = "Code";
     };
@@ -294,7 +294,8 @@ function renderAIResponse(text) {
 if (!window.__MI_AI_CODE_COPY_BOUND__) {
     window.__MI_AI_CODE_COPY_BOUND__ = true;
     const copyTimers = new WeakMap();
-    const originalCopyMarkups = new WeakMap();
+    const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    const checkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"></path></svg>';
     document.addEventListener("click", event => {
         const button = event.target.closest?.(".ai-code-copy");
         if (!button) return;
@@ -302,31 +303,37 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
         const codeElement = block?.querySelector(".ai-code-block code");
         if (!codeElement) return;
         const code = codeElement.textContent || "";
-        if (!originalCopyMarkups.has(button)) {
-            originalCopyMarkups.set(button, button.innerHTML);
-        }
-        const originalMarkup = originalCopyMarkups.get(button);
-        const setState = (markup, label, className) => {
+        const setState = (markup, state, label, className) => {
             button.innerHTML = markup;
+            button.dataset.copyState = state;
             button.setAttribute("aria-label", label);
             button.setAttribute("title", label);
             button.classList.toggle("copied", className === "copied");
         };
         const restore = () => {
+            if (!button.isConnected) {
+                copyTimers.delete(button);
+                return;
+            }
             copyTimers.delete(button);
-            setState(originalMarkup, "Copy code", "");
+            setState(copyIcon, "idle", "Copy code", "");
         };
+        const existingTimer = copyTimers.get(button);
+        if (existingTimer) {
+            clearTimeout(existingTimer);
+            copyTimers.delete(button);
+        }
+        setState(copyIcon, "idle", "Copy code", "");
         if (!navigator.clipboard?.writeText) {
-            setState(originalMarkup, "Copy failed", "failed");
+            setState(copyIcon, "idle", "Copy failed", "failed");
             return;
         }
         navigator.clipboard.writeText(code).then(() => {
-            const existingTimer = copyTimers.get(button);
-            if (existingTimer) clearTimeout(existingTimer);
-            setState(checkIconMarkup, "Copied", "copied");
+            if (!button.isConnected) return;
+            setState(checkIcon, "success", "Code copied", "copied");
             copyTimers.set(button, setTimeout(restore, 3000));
         }).catch(() => {
-            setState(originalMarkup, "Copy failed", "failed");
+            if (button.isConnected) setState(copyIcon, "idle", "Copy failed", "failed");
         });
     });
 }
@@ -41393,6 +41400,122 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true }); else initialize();
 })();
 </script>
+
+<!-- CORTEX FINAL DUPLICATE BUTTON GUARD -->
+<script>
+(function () {
+    "use strict";
+
+    const MARKER = "/* CORTEX FINAL DUPLICATE BUTTON GUARD */";
+
+    function normalizeButtonText(el) {
+        return (el?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+    }
+
+    function removeDuplicateButtons() {
+        const buttons = Array.from(document.querySelectorAll("button"));
+
+        const groups = {
+            newChat: buttons.filter(btn => {
+                const id = (btn.id || "").toLowerCase();
+                const text = normalizeButtonText(btn);
+                const onclick = (btn.getAttribute("onclick") || "").toLowerCase();
+
+                return (
+                    id === "newchatbtn" ||
+                    id === "newchatbutton" ||
+                    text === "new chat" ||
+                    text.includes("new chat") ||
+                    onclick.includes("newchat()")
+                );
+            }),
+
+            logout: buttons.filter(btn => {
+                const id = (btn.id || "").toLowerCase();
+                const text = normalizeButtonText(btn);
+                const onclick = (btn.getAttribute("onclick") || "").toLowerCase();
+
+                return (
+                    id === "logoutbtn" ||
+                    id === "logoutbutton" ||
+                    id === "authlogoutbtn" ||
+                    text === "logout" ||
+                    text.includes("logout") ||
+                    onclick.includes("logout")
+                );
+            })
+        };
+
+        function keepBestOne(list, type) {
+            if (list.length <= 1) return;
+
+            let preferred = null;
+
+            if (type === "newChat") {
+                preferred =
+                    document.querySelector("#sidebar #newChatBtn") ||
+                    document.querySelector("#sidebar button[onclick*='newChat']") ||
+                    document.querySelector("#newChatBtn");
+            }
+
+            if (type === "logout") {
+                preferred =
+                    document.querySelector("#header #logoutBtn") ||
+                    document.querySelector("#logoutBtn");
+            }
+
+            if (!preferred || !list.includes(preferred)) {
+                preferred = list.find(el => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== "none" &&
+                           style.visibility !== "hidden";
+                }) || list[0];
+            }
+
+            list.forEach(btn => {
+                if (btn !== preferred) {
+                    btn.remove();
+                }
+            });
+        }
+
+        keepBestOne(groups.newChat, "newChat");
+        keepBestOne(groups.logout, "logout");
+    }
+
+    let scheduled = false;
+
+    function scheduleCleanup() {
+        if (scheduled) return;
+        scheduled = true;
+
+        requestAnimationFrame(() => {
+            scheduled = false;
+            removeDuplicateButtons();
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", scheduleCleanup, { once: true });
+    } else {
+        scheduleCleanup();
+    }
+
+    const observer = new MutationObserver(scheduleCleanup);
+
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+
+    window.addEventListener("load", scheduleCleanup);
+
+})();
+</script>
+<!-- END CORTEX FINAL DUPLICATE BUTTON GUARD -->
 </body>
 </html>
 
@@ -41817,7 +41940,3 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
-
-
-
-
