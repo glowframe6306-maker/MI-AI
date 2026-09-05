@@ -579,6 +579,100 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
 })();
 </script>
 
+<script id="cortex-clean-settings-rebuild">
+(function () {
+    "use strict";
+    if (window.__cortexCleanSettingsRebuild) return;
+    window.__cortexCleanSettingsRebuild = true;
+
+    const settingsKey = "cortex_clean_settings_v1";
+    const defaults = { appearance: "dark", themeColor: "#1e88e5" };
+    const getState = () => Object.assign({}, defaults, JSON.parse(localStorage.getItem(settingsKey) || "{}"));
+    const saveState = state => localStorage.setItem(settingsKey, JSON.stringify(state));
+    const user = () => window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser || null;
+    const identity = () => String(user()?.uid || user()?.email || localStorage.getItem("mi_user_id") || localStorage.getItem("mi_user_email") || "guest").trim().toLowerCase();
+    const accountKey = suffix => "cortex_account_" + suffix + ":" + identity();
+
+    const css = document.createElement("style");
+    css.id = "cortex-clean-settings-style";
+    css.textContent = `
+      #settingsPanel.cortex-clean-settings{position:fixed!important;inset:5vh auto auto 50%!important;width:min(92vw,920px)!important;height:90vh!important;max-height:90vh!important;display:none!important;overflow:hidden!important;padding:0!important;transform:translateX(-50%)!important;background:linear-gradient(145deg,#101b2d,#070d18)!important;color:#e8eef8!important;border:1px solid rgba(125,211,252,.25)!important;border-radius:22px!important;box-shadow:0 30px 90px rgba(0,0,0,.58)!important}
+      #settingsPanel.cortex-clean-settings.is-open{display:flex!important;flex-direction:column!important}
+      .cortex-clean-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding:20px 24px 15px;border-bottom:1px solid rgba(148,163,184,.15)}.cortex-clean-head h3{margin:5px 0;font-size:24px}.cortex-clean-head p{margin:0;color:#91a1b8;font-size:12px}.cortex-clean-kicker{color:#7dd3fc;font-size:10px;font-weight:800;letter-spacing:.18em}.cortex-clean-close{width:38px!important;min-width:38px!important;height:38px!important;padding:0!important;border-radius:50%!important}
+      .cortex-clean-scroll{min-height:0;overflow:auto;padding:18px 24px 30px;overscroll-behavior:contain}.cortex-clean-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;padding:13px 15px;margin-bottom:10px;border:1px solid rgba(148,163,184,.15);border-radius:13px;background:rgba(255,255,255,.045)}.cortex-clean-copy{min-width:0}.cortex-clean-copy strong{display:block;font-size:14px}.cortex-clean-copy small{display:block;margin-top:4px;color:#91a1b8;font-size:11px}.cortex-clean-control{flex:0 0 auto;min-width:160px;padding:9px 10px;border:1px solid rgba(125,211,252,.28);border-radius:9px;background:#0b1424;color:#e0f2fe;font:inherit}.cortex-clean-color{width:160px;height:38px;padding:3px;cursor:pointer}.cortex-clean-action{min-width:150px;padding:9px 12px;border:1px solid rgba(125,211,252,.28);border-radius:9px;background:rgba(56,189,248,.12);color:#e0f2fe;font-weight:750;cursor:pointer}.cortex-clean-message{min-height:18px;margin:8px 0;color:#91a1b8;font-size:12px}.cortex-clean-danger{margin-top:22px;border-color:rgba(248,113,113,.35);background:rgba(127,29,29,.16)}.cortex-clean-danger h4{margin:0 0 10px;color:#fda4af;font-size:13px;text-transform:uppercase;letter-spacing:.1em}.cortex-clean-form{display:grid;gap:9px;width:min(100%,500px);margin:12px 0;padding:15px;border:1px solid rgba(148,163,184,.16);border-radius:13px;background:rgba(2,6,23,.28)}.cortex-clean-form input{width:100%;box-sizing:border-box;padding:10px;border:1px solid rgba(125,211,252,.22);border-radius:9px;background:#0b1424;color:#f8fafc;font:inherit}.cortex-clean-form input:focus,.cortex-clean-control:focus{outline:2px solid rgba(125,211,252,.45);outline-offset:2px}.cortex-clean-form button{width:max-content;padding:9px 12px}.cortex-clean-status{min-height:18px;color:#86efac;font-size:12px}.cortex-clean-error{color:#fda4af}.cortex-lock{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:18px;background:rgba(2,6,23,.94);color:#f8fafc}.cortex-lock-card{width:min(380px,100%);padding:28px;border:1px solid rgba(125,211,252,.3);border-radius:20px;background:#0b1424;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,.55)}.cortex-lock-card h2{margin:0 0 8px;font-size:22px}.cortex-lock-card p{color:#91a1b8;font-size:12px}.cortex-lock-card input{width:100%;box-sizing:border-box;padding:13px;text-align:center;letter-spacing:.3em;border:1px solid rgba(125,211,252,.3);border-radius:10px;background:#07101e;color:#fff;font-size:20px}.cortex-lock-card button{width:100%;margin-top:12px;padding:11px}.cortex-lock-error{min-height:18px;margin-top:9px;color:#fda4af;font-size:12px}
+      @media(max-width:600px){#settingsPanel.cortex-clean-settings{inset:12px 10px auto!important;width:calc(100vw - 20px)!important;height:calc(100dvh - 24px)!important;max-height:calc(100dvh - 24px)!important;transform:none!important}.cortex-clean-head{padding:16px}.cortex-clean-scroll{padding:14px}.cortex-clean-row{align-items:flex-start;flex-direction:column}.cortex-clean-control,.cortex-clean-action,.cortex-clean-color{width:100%;min-width:0}.cortex-clean-head h3{font-size:20px}}
+      body.cortex-light-theme #settingsPanel.cortex-clean-settings{background:#f4f7fb!important;color:#10233f!important;border-color:#cbd8e6!important}.cortex-light-theme .cortex-clean-row{background:#fff;border-color:#d2deea}.cortex-light-theme .cortex-clean-control,.cortex-light-theme .cortex-clean-form input{background:#fff;color:#10233f;border-color:#a9bfd6}
+    `;
+    document.head.appendChild(css);
+
+    async function digest(value) {
+        const bytes = new TextEncoder().encode(String(value));
+        const hash = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(hash)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+    async function reauthenticate(password) {
+        const current = user();
+        if (!current) throw new Error("Please sign in before changing account security settings.");
+        if (!window.firebase?.auth?.EmailAuthProvider || !current.email) throw new Error("Password verification is unavailable for this account.");
+        const credential = window.firebase.auth.EmailAuthProvider.credential(current.email, password);
+        await current.reauthenticateWithCredential(credential);
+        return current;
+    }
+    function field(type, placeholder) { const input = document.createElement("input"); input.type = type; input.placeholder = placeholder; input.autocomplete = type === "password" ? "current-password" : "off"; return input; }
+    function message(container, text, error) { container.textContent = text || ""; container.className = "cortex-clean-message" + (error ? " cortex-clean-error" : ""); }
+
+    function buildPanel() {
+        const panel = document.getElementById("settingsPanel");
+        if (!panel || panel.dataset.cortexCleanReady) return panel;
+        panel.dataset.cortexCleanReady = "true";
+        panel.classList.add("cortex-clean-settings");
+        panel.innerHTML = '<header class="cortex-clean-head"><div><span class="cortex-clean-kicker">CORTEX CONTROL</span><h3>Settings</h3><p>Only the essential account and application controls.</p></div><button type="button" class="cortex-clean-close" aria-label="Close Settings">&#10005;</button></header><main class="cortex-clean-scroll" id="cortexCleanScroll"></main>';
+        panel.querySelector(".cortex-clean-close").addEventListener("click", close);
+        renderRows(panel.querySelector("#cortexCleanScroll"));
+        return panel;
+    }
+    function row(title, description, control) { return '<section class="cortex-clean-row"><div class="cortex-clean-copy"><strong>' + title + '</strong><small>' + description + '</small></div>' + control + '</section>'; }
+    function renderRows(scroll) {
+        const state = getState();
+        scroll.innerHTML = row("Appearance", "Choose the appearance used by CORTEX CORE AI.", '<select id="cleanAppearance" class="cortex-clean-control"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select>') +
+            row("Theme", "Change the Question Bar colour immediately.", '<input id="cleanThemeColor" class="cortex-clean-control cortex-clean-color" type="color" aria-label="Theme colour">') +
+            row("Change Password", "Update the password for the signed-in account.", '<button type="button" class="cortex-clean-action" data-clean-action="password">Change Password</button>') +
+            row("App Lock", "Require an account-specific passcode when the app opens.", '<button type="button" class="cortex-clean-action" data-clean-action="lock">App Lock</button>') +
+            '<section class="cortex-clean-danger"><h4>Danger Zone</h4><p>Delete your account only after identity, password, and final confirmation checks.</p><button type="button" class="cortex-clean-action" data-clean-action="delete">Delete My Account</button></section>';
+        const appearance = scroll.querySelector("#cleanAppearance"); const color = scroll.querySelector("#cleanThemeColor"); appearance.value = state.appearance; color.value = state.themeColor;
+        appearance.addEventListener("change", () => { const next = getState(); next.appearance = appearance.value; saveState(next); applyAppearance(next.appearance); });
+        color.addEventListener("input", () => { const next = getState(); next.themeColor = color.value; saveState(next); applyTheme(next.themeColor); });
+        scroll.addEventListener("click", event => { const action = event.target.closest("[data-clean-action]")?.dataset.cleanAction; if (action === "password") passwordForm(scroll); if (action === "lock") lockForm(scroll); if (action === "delete") deleteForm(scroll); });
+    }
+    function applyAppearance(value) { document.body.classList.toggle("cortex-light-theme", value === "light" || (value === "system" && matchMedia("(prefers-color-scheme: light)").matches)); document.documentElement.dataset.themeMode = value; }
+    function applyTheme(value) { document.documentElement.style.setProperty("--cortex-accent", value); document.documentElement.style.setProperty("--mi-theme-color", value); const rgb = value.replace("#", "").match(/.{2}/g)?.map(x => parseInt(x, 16)).join(","); if (rgb) document.documentElement.style.setProperty("--cortex-accent-rgb", rgb); const input = document.getElementById("msg"); if (input) { input.style.setProperty("border-color", value, "important"); input.style.setProperty("box-shadow", "0 0 0 2px " + value + "33", "important"); } }
+    function close() { document.getElementById("settingsPanel")?.classList.remove("is-open"); document.getElementById("settingsBackdrop")?.classList.remove("settings-open"); document.body.classList.remove("settings-modal-open"); }
+    function open() { const panel = buildPanel(); const state = getState(); applyAppearance(state.appearance); applyTheme(state.themeColor); panel.classList.add("is-open"); document.getElementById("settingsBackdrop")?.classList.add("settings-open"); document.body.classList.add("settings-modal-open"); }
+    function formShell(title, content) { const shell = document.createElement("div"); shell.className = "cortex-clean-form"; shell.innerHTML = "<strong>" + title + "</strong>" + content + '<div class="cortex-clean-status"></div>'; return shell; }
+    function passwordForm(scroll) { const form = formShell("Change Password", '<input type="password" placeholder="Old Password" autocomplete="current-password"><input type="password" placeholder="New Password" autocomplete="new-password"><input type="password" placeholder="Confirm Password" autocomplete="new-password"><button type="button" class="cortex-clean-action">Save Password</button>'); scroll.appendChild(form); const inputs = form.querySelectorAll("input"); form.querySelector("button").addEventListener("click", async () => { const status = form.querySelector(".cortex-clean-status"); if (!inputs[0].value || !inputs[1].value || inputs[1].value !== inputs[2].value || inputs[1].value.length < 6) { message(status, "Enter all passwords and make sure the new passwords match (6+ characters).", true); return; } try { const current = await reauthenticate(inputs[0].value); await current.updatePassword(inputs[1].value); message(status, "Password updated successfully."); inputs.forEach(input => input.value = ""); } catch (error) { message(status, error.message || "Password update failed.", true); } }); }
+    function lockForm(scroll) { const form = formShell("App Lock", '<select><option value="4">4 Digit</option><option value="6">6 Digit</option></select><input type="password" inputmode="numeric" maxlength="6" placeholder="New Passcode"><input type="password" inputmode="numeric" maxlength="6" placeholder="Confirm Passcode"><button type="button" class="cortex-clean-action">Save App Lock</button>'); scroll.appendChild(form); const length = form.querySelector("select"); const inputs = form.querySelectorAll("input"); length.addEventListener("change", () => inputs.forEach(input => input.maxLength = Number(length.value))); form.querySelector("button").addEventListener("click", async () => { const status = form.querySelector(".cortex-clean-status"); const digits = Number(length.value); if (![...inputs].every(input => new RegExp("^\\d{" + digits + "}$").test(input.value)) || inputs[0].value !== inputs[1].value) { message(status, "Use matching numeric passcodes with the selected length.", true); return; } const hash = await digest(inputs[0].value); localStorage.setItem(accountKey("app_lock"), JSON.stringify({ length: digits, hash })); message(status, "App Lock enabled for this account."); }); }
+    function deleteForm(scroll) { const form = formShell("Delete My Account", '<input placeholder="Username or Email"><input placeholder="Type DELETE MY ACCOUNT"><button type="button" class="cortex-clean-action">Verify Identity</button>'); scroll.appendChild(form); const inputs = form.querySelectorAll("input"); const button = form.querySelector("button"); button.addEventListener("click", async () => { const status = form.querySelector(".cortex-clean-status"); const current = user(); const expected = String(current?.email || localStorage.getItem("mi_user_email") || "").toLowerCase(); if (!current || inputs[0].value.trim().toLowerCase() !== expected || inputs[1].value !== "DELETE MY ACCOUNT") { message(status, "Account identity and confirmation phrase must match exactly.", true); return; } button.remove(); const password = field("password", "Account Password"); const final = document.createElement("button"); final.type = "button"; final.className = "cortex-clean-action"; final.textContent = "Delete My Account"; form.insertBefore(password, form.querySelector(".cortex-clean-status")); form.insertBefore(final, form.querySelector(".cortex-clean-status")); final.addEventListener("click", async () => { try { const verified = await reauthenticate(password.value); await verified.delete(); message(status, "Account deleted successfully."); } catch (error) { message(status, error.message || "Account deletion failed.", true); } }); }); }
+    window.__cortexCleanSettingsReset = function () { const panel = document.getElementById("settingsPanel"); if (!panel) return; panel.dataset.cortexCleanReady = ""; panel.className = ""; panel.innerHTML = ""; buildPanel(); };
+    window.__cortexCleanSettingsOpen = open;
+    window.__cortexCleanSettingsClose = close;
+    window.toggleSettings = open; window.closeSettings = close;
+    window.addEventListener("keydown", event => { if (event.key === "Escape") close(); });
+    let lockShown = false;
+    function enforceLock() {
+        const existingLock = localStorage.getItem(accountKey("app_lock"));
+        if (!existingLock || !user() || lockShown || document.querySelector(".cortex-lock")) return;
+        try {
+            const lock = JSON.parse(existingLock); lockShown = true;
+            const overlay = document.createElement("div"); overlay.className = "cortex-lock"; overlay.innerHTML = '<section class="cortex-lock-card"><h2>WELCOME TO CORTEX CORE AI</h2><p>ENTER PASSCODE TO CONTINUE</p><input type="password" inputmode="numeric" maxlength="' + lock.length + '" aria-label="App Lock Passcode"><button type="button">Unlock</button><div class="cortex-lock-error"></div></section>'; document.body.appendChild(overlay);
+            const input = overlay.querySelector("input"); overlay.querySelector("button").addEventListener("click", async () => { const hash = await digest(input.value); if (hash === lock.hash) overlay.remove(); else overlay.querySelector(".cortex-lock-error").textContent = "Incorrect passcode."; });
+        } catch (_) { lockShown = false; }
+    }
+    window.addEventListener("mi-firebase-auth-changed", enforceLock);
+    setTimeout(enforceLock, 500);
+    setTimeout(() => { window.__cortexCleanSettingsReset?.(); if (window.__cortexCleanSettingsOpen) window.toggleSettings = window.__cortexCleanSettingsOpen; if (window.__cortexCleanSettingsClose) window.closeSettings = window.__cortexCleanSettingsClose; }, 3500);
+})();
+</script>
+
 <style id="miAccountProfileStyles">
 #miAccountSection{position:relative;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
 #miAccountButton{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.06);color:inherit;text-align:left;cursor:pointer}
@@ -13100,8 +13194,6 @@ textarea:disabled,
 </div>
 
 <button id="newChatBtn" type="button" onclick="newChat()">&#10133; New Chat</button>
-<button id="settingsBtn" onclick="toggleSettings()">&#9881;&#65039; Settings</button>
-
 <div id="chatList"></div>
 
 <div id="miAccountSection" aria-live="polite"></div>
