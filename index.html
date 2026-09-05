@@ -13957,6 +13957,7 @@ if (!accountId) {
 
 let chats = {};
 let currentChat = null;
+let guestAssistantReplyCounts = Object.create(null);
 let selectedChat = null;
 let shareOverlay = null;
 let sharedChatData = null;
@@ -14047,17 +14048,58 @@ function shouldShowLoginPrompt(chatId) {
     return !dismissed.includes(chatId) && !shown.includes(chatId);
 }
 
+function isCountableGuestAssistantReply(message) {
+    const text = String(message?.text || '').trim();
+    return message?.role === 'ai' && text && text !== 'I am unable to provide a reliable answer right now. Please try again shortly.';
+}
+
 function showLoginPrompt(chatId) {
-        return false;
+    if (!chatId || !shouldShowLoginPrompt(chatId) || loginPromptBox) return;
+
+    const styleId = 'mi-guest-login-prompt-style';
+    if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            #miGuestLoginPrompt{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:18px;background:rgba(2,6,23,.68);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+            #miGuestLoginPrompt .mi-guest-login-card{width:min(430px,100%);padding:24px;border:1px solid rgba(125,211,252,.3);border-radius:22px;background:linear-gradient(145deg,rgba(15,27,47,.98),rgba(7,14,28,.98));box-shadow:0 28px 80px rgba(0,0,0,.52);color:#f8fafc}
+            #miGuestLoginPrompt h2{margin:0 0 9px;font-size:22px;line-height:1.2}#miGuestLoginPrompt p{margin:0;color:#b8c7d9;line-height:1.55;font-size:13px}
+            #miGuestLoginPrompt h3{margin:20px 0 9px;color:#7dd3fc;font-size:11px;letter-spacing:.12em}#miGuestLoginPrompt ul{display:grid;gap:7px;margin:0;padding:0;list-style:none;color:#dbeafe;font-size:13px}
+            #miGuestLoginPrompt li::before{content:'✓';margin-right:8px;color:#86efac;font-weight:800}#miGuestLoginPrompt .mi-guest-login-actions{display:grid;gap:9px;margin-top:22px}
+            #miGuestLoginPrompt button{min-height:42px;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer}#miGuestLoginPrompt .mi-guest-login-primary{border:1px solid #7dd3fc;background:#1684bd;color:#fff}#miGuestLoginPrompt .mi-guest-login-secondary{border:1px solid rgba(148,163,184,.3);background:transparent;color:#cbd5e1}
+        `;
+        document.head.appendChild(style);
+    }
+
+    const box = document.createElement('div');
+    box.id = 'miGuestLoginPrompt';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'miGuestLoginPromptTitle');
+    box.innerHTML = `
+        <section class="mi-guest-login-card">
+            <h2 id="miGuestLoginPromptTitle">Unlock More with CORTEX CORE AI</h2>
+            <p>You are using CORTEX CORE AI as a guest. Log in to keep your conversations safely connected to your account.</p>
+            <h3>BENEFITS OF LOGGING IN</h3>
+            <ul><li>Save chats to your account</li><li>Restore messages on any device</li><li>Create and manage multiple chats</li><li>Keep your chat history private and connected</li></ul>
+            <div class="mi-guest-login-actions"><button type="button" class="mi-guest-login-primary" data-guest-login>LOGIN</button><button type="button" class="mi-guest-login-secondary" data-guest-login-later>Maybe later</button></div>
+        </section>`;
+    box.querySelector('[data-guest-login]').addEventListener('click', () => {
+        removeLoginPrompt();
+        openLogin();
+    });
+    box.querySelector('[data-guest-login-later]').addEventListener('click', () => dismissLoginPrompt(chatId));
+    box.addEventListener('click', event => { if (event.target === box) dismissLoginPrompt(chatId); });
+    document.body.appendChild(box);
+    loginPromptBox = box;
+    markLoginPromptShown(chatId);
 }
 
 function maybeShowLoginPrompt(chatId) {
     if (!chatId || isAuthenticated()) return;
-    const messages = chats[chatId] || [];
-    const aiReplies = messages.filter((m) => m.role === 'ai').length;
-    const totalMessages = messages.length;
+    const aiReplies = guestAssistantReplyCounts[chatId] || 0;
 
-    if (aiReplies >= 3 && totalMessages >= 4 && shouldShowLoginPrompt(chatId)) {
+    if (aiReplies === 3 && shouldShowLoginPrompt(chatId)) {
         showLoginPrompt(chatId);
     }
 }
@@ -14089,6 +14131,8 @@ function getSessionId() {
 function createSingleGuestChat() {
     const id = `chat_${Date.now()}`;
     chats = { [id]: [] };
+    guestAssistantReplyCounts = Object.create(null);
+    guestAssistantReplyCounts[id] = 0;
     currentChat = id;
     localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
     localStorage.setItem('last_chat', id);
@@ -14097,6 +14141,7 @@ function createSingleGuestChat() {
 
 function resetChatStateForAuthChange() {
     chats = {};
+    guestAssistantReplyCounts = Object.create(null);
     currentChat = null;
     selectedChat = null;
     sharedChatData = null;
@@ -14132,6 +14177,8 @@ function loadGuestChats() {
     }
     const lastChat = localStorage.getItem('last_chat') && parsed[localStorage.getItem('last_chat')] ? localStorage.getItem('last_chat') : ids[ids.length - 1];
     chats = { [lastChat]: parsed[lastChat] || [] };
+    guestAssistantReplyCounts = Object.create(null);
+    guestAssistantReplyCounts[lastChat] = chats[lastChat].filter(isCountableGuestAssistantReply).length;
     currentChat = lastChat;
     localStorage.setItem(getGuestStorageKey(), JSON.stringify(chats));
     localStorage.setItem('last_chat', currentChat);
@@ -15220,6 +15267,7 @@ async function newChat(){
         // FOR LOGGED-OUT USERS: Clear ALL existing temporary chats first
         // This ensures only the new temporary chat exists
         chats = {};
+        guestAssistantReplyCounts = Object.create(null);
         currentChat = null;
         
         // Now create the single new temporary chat
@@ -16380,6 +16428,9 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId, sources 
         // AI responses are persisted via the /messages endpoint when they're added to the chat
         // No need for separate server save since the core persistence is handled in send()
         scroll();
+        if (!isAuthenticated()) {
+            guestAssistantReplyCounts[conversationId] = (guestAssistantReplyCounts[conversationId] || 0) + 1;
+        }
         maybeShowLoginPrompt(conversationId);
     }
 
@@ -16717,11 +16768,9 @@ async function sendMessageInternal(msg) {
     const fallback = 'I am unable to provide a reliable answer right now. Please try again shortly.';
     if (e?.name !== 'AbortError' && chats[finalConversationId]) {
         const errorBubble = createStreamingReplyBubble('');
-        finalizeStreamingReplyBubble(
-            errorBubble.contentBox,
-            fallback,
-            finalConversationId
-        );
+        errorBubble.contentBox.innerHTML = renderAIResponse(fallback);
+        errorBubble.contentBox.dataset.finalText = fallback;
+        scroll();
     }
 
     replyInProgress = false;
