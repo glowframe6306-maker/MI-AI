@@ -7140,6 +7140,15 @@ body.mi-shared-single-chat #miSharedSingleChatBadge {
     display: inline-flex;
 }
 
+.mi-chat-item-shell{position:relative;display:flex;align-items:center;gap:6px;min-width:0}
+.mi-chat-item-label{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mi-chat-pinned-badge{flex:0 0 auto;padding:2px 6px;border:1px solid rgba(125,211,252,.28);border-radius:5px;color:#bae6fd;font-size:9px;font-weight:800;letter-spacing:.08em}
+.mi-chat-more-button{flex:0 0 32px;width:32px;height:32px;margin:0;padding:0;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:rgba(255,255,255,.08);color:inherit;font-size:18px;line-height:1;cursor:pointer}
+.mi-chat-inline-name{min-width:0;width:100%;padding:5px 7px;border:1px solid rgba(125,211,252,.45);border-radius:7px;background:rgba(2,6,23,.35);color:inherit;font:inherit}
+.mi-chat-more-menu{position:fixed;z-index:20000;min-width:150px;padding:5px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(15,23,42,.98);box-shadow:0 16px 40px rgba(0,0,0,.35)}
+.mi-chat-more-menu button{display:block;width:100%;margin:0;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:#e2e8f0;text-align:left;cursor:pointer}
+.mi-chat-more-menu button:hover{background:rgba(125,211,252,.14)}
+
 @media (max-width: 700px) {
     body.mi-shared-single-chat #main {
         width: 100vw !important;
@@ -14494,6 +14503,8 @@ function savePendingApprovalRequests(requests) {
 
 function getSharedChatPayloadFromUrl() {
   const params = new URLSearchParams(window.location.search);
+    const backendToken = params.get('mi_share');
+    if (backendToken) return { serverToken: backendToken };
   const sharedValue = params.get('s') || params.get('share');
   if (!sharedValue) return null;
 
@@ -14903,6 +14914,7 @@ async function loadUserChats() {
         chatMessages.lastPreview = conversation.last_preview || '';
         chatMessages.messageCount = conversation.message_count || 0;
         chatMessages.attachments = [];
+        chatMessages.pin = Boolean(conversation.pin);
         chatMessages.isPersisted = true;
         chatMessages.serverId = String(conversationId);
 
@@ -15003,7 +15015,26 @@ input = document.getElementById("msg");
 menu = document.getElementById("menu");
 authReminder = document.getElementById("authReminder");
 
-const sharedPayload = getSharedChatPayloadFromUrl();
+let sharedPayload = getSharedChatPayloadFromUrl();
+if (sharedPayload?.serverToken) {
+    const tokenResponse = await fetch('/api/share-links/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: sharedPayload.serverToken })
+    });
+    const tokenResult = await tokenResponse.json().catch(() => ({}));
+    if (tokenResponse.status === 401 && tokenResult.passwordRequired) {
+        const password = window.prompt('This chat is password protected. Enter password:');
+        const retry = await fetch('/api/share-links/open', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: sharedPayload.serverToken, password: password || '' })
+        });
+        tokenResult.share = await retry.json().catch(() => ({}));
+        tokenResult.success = retry.ok && tokenResult.share.success === true;
+    }
+    sharedPayload = tokenResult.success ? tokenResult.share : null;
+}
 if (sharedPayload) {
     /*
       The viewer is entering an isolated shared-chat session.
@@ -15361,69 +15392,87 @@ async function openChat(id){
 
 /* RENDER LIST */
 function renderList(){
-chatList.innerHTML="";
-
-let ids = Object.keys(chats);
-
-if(ids.length > 9){
-    chatList.classList.add('scrollable');
-    chatList.style.maxHeight='calc(100vh - 260px)';
-} else {
-    chatList.classList.remove('scrollable');
-    chatList.style.maxHeight='none';
+    chatList.innerHTML = "";
+    const ids = Object.keys(chats || {}).sort((a, b) => Number(Boolean(chats[b]?.pin)) - Number(Boolean(chats[a]?.pin)));
+    chatList.classList.toggle('scrollable', ids.length > 9);
+    chatList.style.maxHeight = ids.length > 9 ? 'calc(100vh - 260px)' : 'none';
+    ids.forEach(id => {
+        const chat = chats[id] || [];
+        const item = document.createElement('div');
+        item.className = 'chatItem';
+        item.dataset.id = id;
+        const shell = document.createElement('div');
+        shell.className = 'mi-chat-item-shell';
+        const label = document.createElement('span');
+        label.className = 'mi-chat-item-label';
+        label.textContent = String(chat.title || chat.name || chat.chatName || id).trim();
+        shell.appendChild(label);
+        if (chat.pin) {
+            const badge = document.createElement('span');
+            badge.className = 'mi-chat-pinned-badge';
+            badge.textContent = 'PINNED';
+            shell.appendChild(badge);
+        }
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'mi-chat-more-button';
+        more.setAttribute('aria-label', 'More chat actions');
+        more.title = 'More';
+        more.textContent = '...';
+        more.addEventListener('click', event => { event.stopPropagation(); openChatMoreMenu(id, more); });
+        shell.appendChild(more);
+        item.appendChild(shell);
+        item.addEventListener('click', () => openChat(id));
+        item.addEventListener('contextmenu', event => { event.preventDefault(); openChatMoreMenu(id, event); });
+        chatList.appendChild(item);
+    });
 }
 
+function closeChatMoreMenu(){ document.querySelectorAll('.mi-chat-more-menu').forEach(node => node.remove()); }
 
-ids.sort((a,b)=>{
-
-if(chats[a].pin && !chats[b].pin) return -1;
-
-if(!chats[a].pin && chats[b].pin) return 1;
-
-return 0;
-
-});
-
-ids.forEach(id=>{
-let div=document.createElement("div");
-div.className="chatItem";
-div.dataset.id=id;
-const visibleChatTitle =
-    String(
-        chats[id]?.title ||
-        chats[id]?.name ||
-        chats[id]?.chatName ||
-        id
-    ).trim();
-
-div.innerText =
-    (chats[id].pin ? "├░┼╕ΓÇ£┼Æ " : "") +
-    "├░┼╕ΓÇÖ┬¼ " +
-    visibleChatTitle;
-
-div.onclick=()=>openChat(id);
-
-/* RIGHT CLICK */
-div.oncontextmenu=(e)=>{
-
-e.preventDefault();
-
-selectedChat=id;
-
-
-document.getElementById("pinOption").innerHTML =
-chats[id].pin ? "├ó┼ôΓÇó Unpin" : "├ó┼ôΓÇó Unpin";
-
-
-menu.style.display="block";
-menu.style.left=e.pageX+"px";
-menu.style.top=e.pageY+"px";
-
-};
-
-chatList.appendChild(div);
-});
+function openChatMoreMenu(chatId, anchor){
+    closeChatMoreMenu();
+    selectedChat = chatId;
+    const menuNode = document.createElement('div');
+    menuNode.className = 'mi-chat-more-menu';
+    [["Rename", () => beginInlineChatRename(chatId)], [chats[chatId]?.pin ? "Unpin" : "Pin", () => pinChatFor(chatId)], ["Share", () => shareChatFor(chatId)], ["Delete", () => deleteChatFor(chatId)]].forEach(([label, action]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = label;
+        button.addEventListener('click', event => { event.stopPropagation(); closeChatMoreMenu(); action(); });
+        menuNode.appendChild(button);
+    });
+    document.body.appendChild(menuNode);
+    const rect = anchor?.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 16, bottom: 80 };
+    menuNode.style.left = Math.min(rect.left, window.innerWidth - 170) + 'px';
+    menuNode.style.top = Math.min(rect.bottom + 4, window.innerHeight - 190) + 'px';
 }
+
+function beginInlineChatRename(chatId){
+    const item = Array.from(chatList.querySelectorAll('.chatItem')).find(node => node.dataset.id === chatId);
+    const label = item?.querySelector('.mi-chat-item-label');
+    if (!item || !label) return;
+    const inputField = document.createElement('input');
+    inputField.className = 'mi-chat-inline-name';
+    inputField.value = String(chats[chatId]?.title || chats[chatId]?.name || chats[chatId]?.chatName || chatId);
+    label.replaceWith(inputField);
+    inputField.focus();
+    inputField.select();
+    let finished = false;
+    const finish = saveChange => {
+        if (finished) return;
+        finished = true;
+        if (saveChange && inputField.value.trim()) renameChatTo(chatId, inputField.value.trim());
+        else renderList();
+    };
+    inputField.addEventListener('keydown', event => { if (event.key === 'Enter') finish(true); if (event.key === 'Escape') finish(false); });
+    inputField.addEventListener('blur', () => finish(true));
+}
+
+function renameChatTo(chatId, name){ selectedChat = chatId; const chat = chats[chatId]; if (!chat) return; chat.title = name; chat.updatedAt = Date.now(); if (isAuthenticated()) { fetch('/api/conversations/' + encodeURIComponent(chatId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('mi_supabase_token') }, body: JSON.stringify({ title: name }) }).catch(() => {}); if (window.firestorePersistence && window.miFirebaseUser) window.firestorePersistence.saveChat(chatId, { title: name }).catch(() => {}); } save(); renderList(); }
+function pinChatFor(chatId){ selectedChat = chatId; pinChat(); }
+function deleteChatFor(chatId){ selectedChat = chatId; deleteChat(); }
+function shareChatFor(chatId){ selectedChat = chatId; shareChat(); }
 
 /* CLOSE OVERLAYS */
 function closeAllOverlays(target) {
@@ -15818,8 +15867,8 @@ function showLinkShareOptions(chatId) {
   body.innerHTML = `
     <label style="display:block;font-size:12px;margin-bottom:6px;color:#cbd5e1;">Permission</label>
     <select id="sharePermissionSelect" onchange="event.stopPropagation();" onclick="event.stopPropagation();" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:#0f172a;color:#fff;">
-      <option value="edit">Can edit</option>
-      <option value="view">View only</option>
+            <option value="view">View only</option>
+            <option value="edit">Can edit</option>
     </select>
 
     <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
@@ -15939,32 +15988,38 @@ async function generateSharedChatLink(chatId) {
     return;
   }
 
-  const messages = (chats[chatId] || []).map((message) => ({ role: message.role, text: message.text }));
-  const payload = {
-    id: generateShortShareId(),
-    chatId,
-    messages,
-    permission,
-    ownerEmail: (localStorage.getItem('mi_user_email') || '').trim().toLowerCase(),
-    createdAt: Date.now(),
-    security: {
-      openLimitMode,
-      openLimitCustom: openLimitMode === 'custom' ? customOpenCount : '',
-      timeLimitUnit: timeLimitUnitValue,
-      timeLimitValue: timeLimitUnitValue === 'no-expiry' ? '' : timeLimitValueNumber,
-      password: passwordEnabledValue ? password : ''
+    const token = window.miFirebaseUser?.getIdToken ? await window.miFirebaseUser.getIdToken() : localStorage.getItem('mi_supabase_token');
+    const response = await fetch('/api/share-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({
+            chatId,
+            chatTitle: chats[chatId]?.title || chatId,
+            messages: (chats[chatId] || []).map(message => ({ role: message.role, text: message.text })),
+            permission,
+            security: {
+                openLimitMode,
+                openLimitCustom: openLimitMode === 'custom' ? customOpenCount : '',
+                timeLimitUnit: timeLimitUnitValue,
+                timeLimitValue: timeLimitUnitValue === 'no-expiry' ? '' : timeLimitValueNumber,
+                password: passwordEnabledValue ? password : ''
+            }
+        })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.url) {
+        showShareFeedback(result.message || 'Link could not be created.');
+        return;
     }
-  };
-
-  const store = getSharedLinkStore();
-  store[payload.id] = payload;
-  saveSharedLinkStore(store);
-
-  const shareLink = `${window.location.origin}${window.location.pathname}?s=${payload.id}`;
-
-  await copyTextToClipboard(shareLink);
-  showShareFeedback('Copied to the clipboard.');
-  closeShareOverlayAfterGenerate();
+    const resultBody = document.getElementById('shareOptionsBody');
+    if (resultBody) {
+        resultBody.insertAdjacentHTML('beforeend', `<div style="display:flex;gap:8px;margin-top:12px;"><input id="generatedShareLink" readonly value="${String(result.url).replace(/"/g, '&quot;')}" style="min-width:0;flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#0f172a;color:#fff;"><button type="button" id="copyGeneratedShareLink" aria-label="Copy link" title="Copy link" style="flex:0 0 44px;padding:10px;border-radius:10px;cursor:pointer;">⧉</button></div><div id="generatedShareFeedback" style="min-height:18px;margin-top:6px;font-size:12px;color:#86efac;"></div>`);
+        document.getElementById('copyGeneratedShareLink')?.addEventListener('click', async () => {
+            const copied = await copyTextToClipboard(result.url);
+            const feedback = document.getElementById('generatedShareFeedback');
+            if (feedback) feedback.textContent = copied ? 'Link copied' : 'Select the link and copy it manually.';
+        });
+    }
 }
 
 function shareChat(){
