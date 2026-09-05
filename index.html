@@ -27708,6 +27708,16 @@ document.addEventListener(
             chatMap();
 
         if (
+            typeof isAuthenticated ===
+                "function" &&
+            !isAuthenticated()
+        ) {
+            allChats = {};
+            replaceChatMap(allChats);
+            guestAssistantReplyCounts = Object.create(null);
+        }
+
+        if (
             !allChats ||
             typeof allChats !==
                 "object" ||
