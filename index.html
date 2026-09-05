@@ -947,10 +947,36 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
         if (!panel) {
             panel = document.createElement("div"); panel.id = "miPersonalizationBackdrop"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-modal", "true");
             panel.innerHTML = '<section class="mi-personalization-panel"><header><h2>Personalization</h2><button type="button" aria-label="Close personalization">&#10005;</button></header><p>Manage how CORTEX CORE AI responds to you.</p><label class="mi-personalization-toggle"><span><strong>Fast Answer</strong><small>Prioritize faster responses when possible.</small></span><input id="miFastAnswer" type="checkbox"></label><label>Response Style<select id="miPersonalizationStyle"><option value="concise">Concise</option><option value="balanced">Balanced</option><option value="detailed">Detailed</option></select></label><label>Personal Instructions<textarea id="miPersonalInstructions" rows="4" placeholder="Optional preferences"></textarea></label><button type="button" id="miPersonalizationSave">Save Changes</button><div id="miPersonalizationStatus" role="status"></div></section>';
+            const memoryStyle = document.createElement("style"); memoryStyle.textContent = ".mi-personalization-memory{margin-top:20px;padding-top:16px;border-top:1px solid rgba(148,163,184,.16)}.mi-personalization-memory h3{margin:0 0 5px;font-size:15px}.mi-personalization-memory p{margin:0 0 10px;color:#94a3b8;font-size:12px}.mi-memory-list{display:grid;gap:7px}.mi-memory-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid rgba(125,211,252,.16);border-radius:10px;background:rgba(56,189,248,.06)}.mi-memory-item span{min-width:0;display:grid;gap:3px}.mi-memory-item strong{font-size:12px}.mi-memory-item small{overflow-wrap:anywhere;color:#cbd5e1}.mi-memory-item button{flex:0 0 auto;padding:6px 9px;border:1px solid rgba(248,113,113,.35);border-radius:8px;background:transparent;color:#fda4af;cursor:pointer}"; panel.querySelector(".mi-personalization-panel").appendChild(memoryStyle);
             document.body.appendChild(panel); panel.addEventListener("click", event => { if (event.target === panel || event.target.closest("[aria-label=\"Close personalization\"]")) panel.classList.remove("mi-open"); });
             panel.querySelector("#miPersonalizationSave").addEventListener("click", () => { localStorage.setItem("mi_fast_answer", panel.querySelector("#miFastAnswer").checked ? "true" : "false"); localStorage.setItem("mi_response_style", panel.querySelector("#miPersonalizationStyle").value); localStorage.setItem("mi_personal_instructions", panel.querySelector("#miPersonalInstructions").value); window.cortexSettings?.set("responseStyle", panel.querySelector("#miPersonalizationStyle").value); panel.querySelector("#miPersonalizationStatus").textContent = "Personalization updated successfully."; });
+            panel.querySelector(".mi-personalization-panel").insertAdjacentHTML("beforeend", '<section class="mi-personalization-memory"><h3>Account Memory</h3><p>Facts saved to your account and available across your devices.</p><div class="mi-memory-list" role="list"></div><div class="mi-memory-status" role="status"></div></section>');
+            panel.querySelector(".mi-memory-list").addEventListener("click", async event => {
+                const button = event.target.closest("[data-memory-id]");
+                if (!button || !window.miFirebaseUser?.getIdToken) return;
+                button.disabled = true;
+                try {
+                    const token = await window.miFirebaseUser.getIdToken();
+                    const response = await fetch("/api/memory/" + encodeURIComponent(button.dataset.memoryId), { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+                    if (!response.ok) throw new Error("Memory deletion failed.");
+                    await refreshPersonalizationMemories(panel);
+                } catch (error) { panel.querySelector(".mi-memory-status").textContent = "Memory could not be deleted."; button.disabled = false; }
+            });
         }
         panel.querySelector("#miFastAnswer").checked = localStorage.getItem("mi_fast_answer") === "true"; panel.querySelector("#miPersonalizationStyle").value = localStorage.getItem("mi_response_style") || window.cortexSettings?.get().responseStyle || "balanced"; panel.querySelector("#miPersonalInstructions").value = localStorage.getItem("mi_personal_instructions") || ""; panel.classList.add("mi-open");
+        refreshPersonalizationMemories(panel);
+    }
+
+    async function refreshPersonalizationMemories(panel) {
+        const list = panel?.querySelector(".mi-memory-list");
+        if (!list || !window.miFirebaseUser?.getIdToken) { if (list) list.innerHTML = "<small>Sign in to manage account memory.</small>"; return; }
+        try {
+            const token = await window.miFirebaseUser.getIdToken();
+            const response = await fetch("/api/memory", { headers: { Authorization: "Bearer " + token } });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.success !== true) throw new Error("Memory loading failed.");
+            list.innerHTML = (payload.memories || []).map(memory => `<div class="mi-memory-item" role="listitem"><span><strong>${escapeAIHtml(memory.key)}</strong><small>${escapeAIHtml(memory.value)}</small></span><button type="button" data-memory-id="${escapeAIHtml(memory.id)}" aria-label="Forget ${escapeAIHtml(memory.key)}">Forget</button></div>`).join("") || "<small>No saved memories yet.</small>";
+        } catch (error) { list.innerHTML = "<small>Account memory is temporarily unavailable.</small>"; }
     }
 
     async function handleImageSelection(event) {
@@ -16101,12 +16127,21 @@ async function fetchChatReply(options = {}, signal = null) {
         response_style: window.cortexSettings?.get().responseStyle || "balanced"
     };
 
+    const headers = {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream"
+    };
+    if (window.miFirebaseUser?.getIdToken && isAuthenticated()) {
+        try {
+            headers.Authorization = "Bearer " + await window.miFirebaseUser.getIdToken();
+        } catch (error) {
+            console.warn("[CORTEX CORE AI] Memory/auth token refresh unavailable:", error);
+        }
+    }
+
     const response = await fetch("/api/chat/stream", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "text/event-stream"
-        },
+        headers,
         body: JSON.stringify(payload),
         signal: signal || undefined
     });
@@ -16125,6 +16160,29 @@ async function fetchChatReply(options = {}, signal = null) {
     }
 
     return response;
+}
+
+function isExplicitMemoryRequest(message) {
+    return /\b(save this|remember this|keep this|save to my memory|remember that|don't forget)\b/i.test(String(message || ""));
+}
+
+async function extractPermanentMemory(message) {
+    if (!isAuthenticated() || !window.miFirebaseUser?.getIdToken) return { saved: false };
+    try {
+        const token = await window.miFirebaseUser.getIdToken();
+        const response = await fetch("/api/memory/extract", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ message: String(message || "") })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.success !== true) throw new Error(payload.message || "Memory save failed.");
+        return payload;
+    } catch (error) {
+        console.warn("[CORTEX CORE AI] Memory extraction failed:", error);
+        if (isExplicitMemoryRequest(message)) showShareFeedback("That memory could not be saved.");
+        return { saved: false, error };
+    }
 }
 
 function createStreamingReplyBubble(initialText = '', targetContainer = chatBox) {
@@ -16593,6 +16651,9 @@ async function sendMessageInternal(msg) {
     activeChat().messageCount = (activeChat().messageCount || 0) + 1;
     activeChat().lastPreview = msg;
     save();
+    const explicitMemorySave = isExplicitMemoryRequest(msg)
+        ? await extractPermanentMemory(msg)
+        : null;
     
     // Note: Message persistence to Firestore happens via the /messages endpoint
     // which is called in the chat reply handler
@@ -16724,6 +16785,7 @@ async function sendMessageInternal(msg) {
 
     contentBox.innerHTML = renderAIResponse(fullText);
     finalizeStreamingReplyBubble(contentBox, fullText, finalConversationId, liveSources);
+    if (!explicitMemorySave) extractPermanentMemory(msg);
     replyInProgress = false; setReplyControlState(false);
   } catch (e) {
     if (e && e.name === 'AbortError') {

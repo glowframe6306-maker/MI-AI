@@ -318,6 +318,25 @@ CUSTOMER_SERVICE_CHAT_WITH = (
 )
 CUSTOMER_SERVICE_CHAT_IN = ("WhatsApp", "Telegram", "Email")
 
+MEMORY_MAX_ITEMS = 100
+MEMORY_MAX_VALUE_LENGTH = 500
+MEMORY_SENSITIVE_PATTERN = re.compile(
+    r"\b(password|passcode|token|api\s*key|secret|security\s*code|reset\s*code|credit\s*card|cvv|session\s*cookie)\b",
+    re.IGNORECASE,
+)
+MEMORY_EXPLICIT_PATTERN = re.compile(
+    r"\b(save this|remember this|keep this|save to my memory|remember that|don't forget)\b",
+    re.IGNORECASE,
+)
+MEMORY_FACT_PATTERNS = (
+    ("identity", "name", re.compile(r"\bmy name is\s+(.+?)(?:[.!?]|$)", re.IGNORECASE)),
+    ("profile", "age", re.compile(r"\bmy age is\s+(.+?)(?:[.!?]|$)", re.IGNORECASE)),
+    ("education", "school", re.compile(r"\bmy school is\s+(.+?)(?:[.!?]|$)", re.IGNORECASE)),
+    ("device", "computer_model", re.compile(r"\bmy (?:computer|laptop)(?: model)? is\s+(.+?)(?:[.!?]|$)", re.IGNORECASE)),
+    ("device", "operating_system", re.compile(r"\b(?:i use|my operating system is)\s+(Windows\s+\d+|macOS|Linux|Android|iOS)(?:[.!?]|$)", re.IGNORECASE)),
+    ("projects", "project", re.compile(r"\bmy project(?: is called| is)?\s+(.+?)(?:[.!?]|$)", re.IGNORECASE)),
+)
+
 
 
 
@@ -432,6 +451,180 @@ def mi_current_account_email():
         account.get("email")
         or ""
     )
+
+
+def memory_is_sensitive(value):
+    return bool(MEMORY_SENSITIVE_PATTERN.search(str(value or "")))
+
+
+def memory_document_id(category, key):
+    digest = hashlib.sha256(f"{category}:{key}".encode("utf-8")).hexdigest()
+    return digest[:32]
+
+
+def memory_extract_candidate(message):
+    text = str(message or "").strip()
+    explicit = bool(MEMORY_EXPLICIT_PATTERN.search(text))
+    if not text or memory_is_sensitive(text):
+        return None
+
+    for category, key, pattern in MEMORY_FACT_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            value = re.sub(r"\s+", " ", match.group(1)).strip(" .,!? ")
+            value = re.sub(r"^(?:a|an|the)\s+", "", value, flags=re.IGNORECASE)
+            if value and len(value) <= MEMORY_MAX_VALUE_LENGTH and not memory_is_sensitive(value):
+                return {"category": category, "key": key, "value": value, "source": "explicit" if explicit else "automatic", "confidence": 1.0 if explicit else 0.9}
+
+    if explicit:
+        generic = re.search(r"\bmy\s+([a-z][a-z0-9 _-]{1,50})\s+(?:is|are|=|:)\s+(.+?)(?:[.!?]|$)", text, re.IGNORECASE)
+        if generic:
+            key = re.sub(r"[^a-z0-9]+", "_", generic.group(1).lower()).strip("_")
+            value = re.sub(r"\s+", " ", generic.group(2)).strip(" .,!?")
+            if key and value and len(value) <= MEMORY_MAX_VALUE_LENGTH and not memory_is_sensitive(value):
+                return {"category": "other", "key": key, "value": value, "source": "explicit", "confidence": 1.0}
+    return None
+
+
+def memory_forget_key(message):
+    text = str(message or "")
+    if not re.search(r"\b(forget|delete|don't remember|do not remember)\b", text, re.IGNORECASE):
+        return ""
+    match = re.search(r"\b(?:my|the)\s+([a-z][a-z0-9 _-]{1,60})", text, re.IGNORECASE)
+    if not match:
+        return ""
+    phrase = re.sub(r"\s+", " ", match.group(1)).strip().lower()
+    phrase = re.sub(r"^(?:old|previous|current)\s+", "", phrase)
+    aliases = {
+        "computer model": "computer_model",
+        "laptop model": "computer_model",
+        "operating system": "operating_system",
+    }
+    return aliases.get(phrase, re.sub(r"[^a-z0-9]+", "_", phrase).strip("_"))
+
+
+def memory_user_collection(uid):
+    if MI_FIREBASE_DB is None:
+        raise RuntimeError("Memory persistence is unavailable.")
+    return MI_FIREBASE_DB.collection("users").document(uid).collection("memories")
+
+
+def memory_relevant_for_message(uid, message):
+    try:
+        documents = list(memory_user_collection(uid).where("active", "==", True).limit(MEMORY_MAX_ITEMS).stream())
+        query_terms = set(re.findall(r"[a-z0-9]{3,}", str(message or "").lower()))
+        relevant = []
+        for document in documents:
+            data = document.to_dict() or {}
+            searchable = " ".join(str(data.get(field) or "") for field in ("category", "key", "value")).lower()
+            terms = set(re.findall(r"[a-z0-9]{3,}", searchable))
+            if query_terms.intersection(terms) or re.search(r"\b(what|who|which|my|mine|remember|know)\b", str(message or ""), re.IGNORECASE):
+                relevant.append(data)
+        return relevant[:12]
+    except Exception as exc:
+        app.logger.exception("Memory retrieval failed for account %s: %s", uid, exc)
+        return []
+
+
+def memory_context_for_message(message):
+    if not mi_get_bearer_token():
+        return ""
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return ""
+    memories = memory_relevant_for_message(account["uid"], message)
+    if not memories:
+        return ""
+    lines = ["CURRENT USER MEMORY (account-private; use only when relevant):"]
+    lines.extend(f"- {item.get('key')}: {item.get('value')}" for item in memories)
+    return "\n".join(lines)[:5000]
+
+
+@app.route("/api/memory", methods=["GET", "POST"])
+def memory_collection():
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return jsonify({"success": False, "message": error or "Authentication required."}), 401
+    try:
+        collection = memory_user_collection(account["uid"])
+        if request.method == "GET":
+            memories = []
+            for document in collection.where("active", "==", True).limit(MEMORY_MAX_ITEMS).stream():
+                item = document.to_dict() or {}
+                item["id"] = document.id
+                memories.append(item)
+            return jsonify({"success": True, "memories": memories})
+
+        payload = request.get_json(silent=True) or {}
+        category = re.sub(r"[^a-z0-9_-]+", "_", str(payload.get("category") or "other").strip().lower()).strip("_")[:60] or "other"
+        key = re.sub(r"[^a-z0-9_-]+", "_", str(payload.get("key") or "fact").strip().lower()).strip("_")[:80] or "fact"
+        value = str(payload.get("value") or "").strip()
+        if not value or len(value) > MEMORY_MAX_VALUE_LENGTH or memory_is_sensitive(value):
+            return jsonify({"success": False, "message": "This memory value is empty, too long, or contains sensitive credentials."}), 400
+        now = datetime.utcnow().isoformat()
+        memory_id = memory_document_id(category, key)
+        collection.document(memory_id).set({"id": memory_id, "uid": account["uid"], "category": category, "key": key, "value": value, "source": "explicit", "confidence": 1.0, "active": True, "created_at": now, "updated_at": now}, merge=True)
+        return jsonify({"success": True, "memory": {"id": memory_id, "category": category, "key": key, "value": value}}), 201
+    except Exception as exc:
+        app.logger.exception("Memory collection request failed for account %s: %s", account.get("uid"), exc)
+        return jsonify({"success": False, "message": "Memory storage is unavailable."}), 503
+
+
+@app.route("/api/memory/<memory_id>", methods=["PATCH", "DELETE"])
+def memory_item(memory_id):
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return jsonify({"success": False, "message": error or "Authentication required."}), 401
+    if not re.fullmatch(r"[a-f0-9]{32}", str(memory_id or "")):
+        return jsonify({"success": False, "message": "Memory not found."}), 404
+    try:
+        document = memory_user_collection(account["uid"]).document(memory_id)
+        if request.method == "DELETE":
+            document.delete()
+            return jsonify({"success": True})
+        payload = request.get_json(silent=True) or {}
+        value = str(payload.get("value") or "").strip()
+        if not value or len(value) > MEMORY_MAX_VALUE_LENGTH or memory_is_sensitive(value):
+            return jsonify({"success": False, "message": "This memory value is invalid or sensitive."}), 400
+        document.set({"value": value, "updated_at": datetime.utcnow().isoformat()}, merge=True)
+        return jsonify({"success": True})
+    except Exception as exc:
+        app.logger.exception("Memory item request failed for account %s: %s", account.get("uid"), exc)
+        return jsonify({"success": False, "message": "Memory storage is unavailable."}), 503
+
+
+@app.route("/api/memory/extract", methods=["POST"])
+def memory_extract():
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return jsonify({"success": False, "message": error or "Authentication required."}), 401
+    payload = request.get_json(silent=True) or {}
+    message = str(payload.get("message") or "")
+    forget_key = memory_forget_key(message)
+    if forget_key:
+        try:
+            removed = 0
+            for document in memory_user_collection(account["uid"]).where("active", "==", True).limit(MEMORY_MAX_ITEMS).stream():
+                if str((document.to_dict() or {}).get("key") or "") == forget_key:
+                    document.reference.delete()
+                    removed += 1
+            return jsonify({"success": True, "saved": False, "forgotten": removed > 0})
+        except Exception as exc:
+            app.logger.exception("Memory deletion failed for account %s: %s", account.get("uid"), exc)
+            return jsonify({"success": False, "saved": False, "message": "Memory could not be deleted."}), 503
+
+    candidate = memory_extract_candidate(message)
+    if not candidate:
+        return jsonify({"success": True, "saved": False})
+    try:
+        now = datetime.utcnow().isoformat()
+        memory_id = memory_document_id(candidate["category"], candidate["key"])
+        record = {"id": memory_id, "uid": account["uid"], **candidate, "active": True, "updated_at": now}
+        memory_user_collection(account["uid"]).document(memory_id).set(record, merge=True)
+        return jsonify({"success": True, "saved": True, "memory": {"id": memory_id, **candidate}})
+    except Exception as exc:
+        app.logger.exception("Automatic memory save failed for account %s: %s", account.get("uid"), exc)
+        return jsonify({"success": False, "saved": False, "message": "Memory could not be saved."}), 503
 
 
 def mi_require_verified_account(function):
@@ -1814,6 +2007,11 @@ def _handle_chat_request():
         history,
     )
 
+    memory_context = memory_context_for_message(user_message)
+
+    if memory_context:
+        normalized_messages.append({"role": "system", "content": memory_context})
+
     if live_context:
         normalized_messages.append(
             {
@@ -2577,6 +2775,11 @@ def api_chat_stream():
         history,
         include_sources=True,
     )
+
+    memory_context = memory_context_for_message(user_message)
+
+    if memory_context:
+        normalized_messages.append({"role": "system", "content": memory_context})
 
     if live_context:
         normalized_messages.append(
