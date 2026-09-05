@@ -607,7 +607,58 @@ def mi_account_required():
         return None, (jsonify({"success": False, "message": error or "Authentication required."}), 401)
     if not supabase:
         return None, (jsonify({"success": False, "message": "Account database is unavailable."}), 503)
+    mi_prepare_canonical_account(account)
     return account, None
+
+
+def mi_prepare_canonical_account(account):
+    """Ensure exact-email legacy rows are attached to the verified Firebase UID."""
+    if getattr(g, "mi_account_prepared", False):
+        return
+
+    uid = str(account.get("uid") or "").strip()
+    email = str(account.get("email") or "").strip().lower()
+    if not uid or not email or not supabase:
+        g.mi_account_prepared = True
+        return
+
+    try:
+        canonical = {
+            "id": uid,
+            "email": email,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        supabase.table("users").upsert(canonical, on_conflict="id").execute()
+        existing = supabase.table("users").select("*").eq("email", email).execute()
+        matching_rows = getattr(existing, "data", None) or []
+        canonical_row = next(
+            (row for row in matching_rows if str(row.get("id") or "").strip() == uid),
+            {},
+        )
+        profile_updates = {}
+        for field in ("full_name", "age", "account_type"):
+            if not canonical_row.get(field):
+                legacy_value = next(
+                    (row.get(field) for row in matching_rows if row.get(field)),
+                    None,
+                )
+                if legacy_value is not None:
+                    profile_updates[field] = legacy_value
+        if profile_updates:
+            supabase.table("users").update(profile_updates).eq("id", uid).execute()
+        legacy_ids = [
+            str(row.get("id") or "").strip()
+            for row in matching_rows
+            if str(row.get("id") or "").strip() and str(row.get("id") or "").strip() != uid
+        ]
+
+        for legacy_id in legacy_ids:
+            supabase.table("conversations").update({"user_id": uid}).eq("user_id", legacy_id).execute()
+            supabase.table("messages").update({"user_id": uid}).eq("user_id", legacy_id).execute()
+    except Exception as exc:
+        app.logger.warning("Canonical account preparation skipped for %s: %s", uid, exc)
+    finally:
+        g.mi_account_prepared = True
 
 
 def mi_conversation_row(row):
@@ -2410,6 +2461,8 @@ def home():
 
 @app.route("/send-otp", methods=["POST"])
 def send_otp():
+    return jsonify({"success": False, "message": "Use Firebase authentication."}), 410
+
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
 
@@ -2493,6 +2546,8 @@ This link expires in {OTP_EXPIRATION_MINUTES} minutes and can be used only once.
 
 @app.route("/login", methods=["POST"])
 def api_login():
+    return jsonify({"success": False, "message": "Use Firebase authentication."}), 410
+
     data = request.get_json() or {}
     email = str(data.get("email") or "").strip().lower()
     password = str(data.get("password") or "")
@@ -2564,6 +2619,8 @@ This link expires in {OTP_EXPIRATION_MINUTES} minutes and can be used only once.
 
 @app.route("/verify-login", methods=["GET"])
 def verify_login():
+    return redirect("/?verified=0")
+
     token = (request.args.get("token") or "").strip()
     if not token:
         return redirect("/?verified=0")
@@ -2596,6 +2653,8 @@ def api_logout():
 
 @app.route("/verify-otp", methods=["POST"])
 def verify_otp():
+    return jsonify({"success": False, "message": "Use Firebase authentication."}), 410
+
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     otp = str(data.get("otp") or "").strip()
@@ -2636,6 +2695,11 @@ def verify_otp():
 
 @app.route("/api/auth/register", methods=["POST"])
 def api_register():
+    return jsonify({
+        "error": "Use the Firebase account registration flow.",
+    }), 410
+
+    # Retained below only as historical reference; this route is intentionally disabled.
     data = request.get_json() or {}
     full_name = str(data.get("fullName") or "").strip()
     age_value = data.get("age")
@@ -2730,6 +2794,11 @@ def supabase_config():
 
 @app.route("/conversations", methods=["GET", "POST"])
 def conversations():
+    return jsonify({
+        "error": "Use /api/conversations with a verified Firebase token.",
+    }), 410
+
+    # Retained below only as historical reference; this route is intentionally disabled.
     if request.method == "GET":
         session_id = request.args.get("session_id")
         conversations_list = []
@@ -2781,6 +2850,11 @@ def conversations():
 
 @app.route("/messages", methods=["GET", "POST"])
 def messages():
+    return jsonify({
+        "error": "Use /api/messages with a verified Firebase token.",
+    }), 410
+
+    # Retained below only as historical reference; this route is intentionally disabled.
     if request.method == "GET":
         conversation_id = request.args.get("conversation_id")
         if not conversation_id:
