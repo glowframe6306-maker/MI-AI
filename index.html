@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -12740,7 +12740,7 @@ textarea:disabled,
   <button id="mobileMenuClose" type="button" onclick="closeMobileMenu()" aria-label="Close menu">&#10005;</button>
 </div>
 
-<button onclick="newChat()">&#10133; New Chat</button>
+<button id="newChatBtn" type="button" onclick="newChat()">&#10133; New Chat</button>
 <button id="supportBtn" onclick="customerSupport()">&#127911; Customer Support</button>
 <button id="settingsBtn" onclick="toggleSettings()">&#9881;&#65039; Settings</button>
 
@@ -13009,7 +13009,7 @@ function updateTranslatedUi() {
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.textContent = `├░┼╕┼í┬¬ ${t('auth.logout', 'Logout')}`;
 
-  const newChatButton = document.querySelector('#sidebar button[onclick="newChat()"]');
+    const newChatButton = document.getElementById('newChatBtn');
     setSidebarButtonLabel(newChatButton, '➕', t('sidebar.newChat', 'New Chat'));
 
   const settingsButton = document.getElementById('settingsBtn');
@@ -41366,7 +41366,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
         const groups = Array.from(document.querySelectorAll(".cortex-settings-group h4"));
         [text.appearance, text.languageInput, text.chat, text.accessibility, text.privacy, "Keyboard Shortcuts", text.about].forEach((value, index) => { if (groups[index]) groups[index].textContent = value; });
         const title = document.getElementById("settingsTitle"); if (title) title.textContent = text.settings;
-        const newChat = document.querySelector('#sidebar button[onclick="newChat()"]'); if (newChat && settings.language !== "en") newChat.textContent = "➕ " + text.newChat;
+        const newChat = document.getElementById("newChatBtn"); if (newChat && settings.language !== "en") newChat.textContent = "➕ " + text.newChat;
         const support = document.getElementById("supportBtn"); if (support && settings.language !== "en") support.textContent = "🎧 " + text.support;
     }
     function openMenu(row) {
@@ -41401,121 +41401,6 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 })();
 </script>
 
-<!-- CORTEX FINAL DUPLICATE BUTTON GUARD -->
-<script>
-(function () {
-    "use strict";
-
-    const MARKER = "/* CORTEX FINAL DUPLICATE BUTTON GUARD */";
-
-    function normalizeButtonText(el) {
-        return (el?.textContent || "")
-            .replace(/\s+/g, " ")
-            .trim()
-            .toLowerCase();
-    }
-
-    function removeDuplicateButtons() {
-        const buttons = Array.from(document.querySelectorAll("button"));
-
-        const groups = {
-            newChat: buttons.filter(btn => {
-                const id = (btn.id || "").toLowerCase();
-                const text = normalizeButtonText(btn);
-                const onclick = (btn.getAttribute("onclick") || "").toLowerCase();
-
-                return (
-                    id === "newchatbtn" ||
-                    id === "newchatbutton" ||
-                    text === "new chat" ||
-                    text.includes("new chat") ||
-                    onclick.includes("newchat()")
-                );
-            }),
-
-            logout: buttons.filter(btn => {
-                const id = (btn.id || "").toLowerCase();
-                const text = normalizeButtonText(btn);
-                const onclick = (btn.getAttribute("onclick") || "").toLowerCase();
-
-                return (
-                    id === "logoutbtn" ||
-                    id === "logoutbutton" ||
-                    id === "authlogoutbtn" ||
-                    text === "logout" ||
-                    text.includes("logout") ||
-                    onclick.includes("logout")
-                );
-            })
-        };
-
-        function keepBestOne(list, type) {
-            if (list.length <= 1) return;
-
-            let preferred = null;
-
-            if (type === "newChat") {
-                preferred =
-                    document.querySelector("#sidebar #newChatBtn") ||
-                    document.querySelector("#sidebar button[onclick*='newChat']") ||
-                    document.querySelector("#newChatBtn");
-            }
-
-            if (type === "logout") {
-                preferred =
-                    document.querySelector("#header #logoutBtn") ||
-                    document.querySelector("#logoutBtn");
-            }
-
-            if (!preferred || !list.includes(preferred)) {
-                preferred = list.find(el => {
-                    const style = window.getComputedStyle(el);
-                    return style.display !== "none" &&
-                           style.visibility !== "hidden";
-                }) || list[0];
-            }
-
-            list.forEach(btn => {
-                if (btn !== preferred) {
-                    btn.remove();
-                }
-            });
-        }
-
-        keepBestOne(groups.newChat, "newChat");
-        keepBestOne(groups.logout, "logout");
-    }
-
-    let scheduled = false;
-
-    function scheduleCleanup() {
-        if (scheduled) return;
-        scheduled = true;
-
-        requestAnimationFrame(() => {
-            scheduled = false;
-            removeDuplicateButtons();
-        });
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", scheduleCleanup, { once: true });
-    } else {
-        scheduleCleanup();
-    }
-
-    const observer = new MutationObserver(scheduleCleanup);
-
-    observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true
-    });
-
-    window.addEventListener("load", scheduleCleanup);
-
-})();
-</script>
-<!-- END CORTEX FINAL DUPLICATE BUTTON GUARD -->
 </body>
 </html>
 
