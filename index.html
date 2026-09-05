@@ -631,7 +631,7 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
         panel.querySelector(".cortex-clean-close").addEventListener("click", close);
         renderRows(panel.querySelector("#cortexCleanScroll"));
         const removeObsolete = () => {
-            panel.querySelectorAll(".mi-settings-accordion,.cortex-settings-heading,.mi-settings-modal-head,.mi-settings-nav,.mi-settings-mobile-select,.cortex-settings-group,#cortexSettingsStatus").forEach(node => node.remove());
+            panel.querySelectorAll(".mi-settings-accordion,.cortex-settings-heading,.mi-settings-modal-head,.mi-settings-nav,.mi-settings-mobile-select,.cortex-settings-group,#cortexSettingsStatus,#settingsCloseBtn,#themeColor,#languageSelect").forEach(node => node.remove());
         };
         removeObsolete();
         obsoleteObserver?.disconnect();
