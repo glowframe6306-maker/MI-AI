@@ -1026,6 +1026,8 @@ Founder of MI CORTEX X INC.: M.I. Muhammadh
 
 Chairman of MI CORTEX X INC.: M.I. Muhammadh
 
+Chief Owner of CORTEX CORE AI: M.I. Muhammadh
+
 Ambitions of the creator:
 - Director of Flight Operations
 - Software Engineer
