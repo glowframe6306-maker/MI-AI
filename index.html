@@ -824,6 +824,14 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     function ensureProfileUi() {
         const mount = document.getElementById("miAccountSection");
         if (!mount) return;
+        const authenticatedUser = currentUser();
+        mount.hidden = !authenticatedUser;
+        mount.setAttribute("aria-hidden", authenticatedUser ? "false" : "true");
+        if (!authenticatedUser) {
+            document.getElementById("miAccountButton")?.remove();
+            document.getElementById("miAccountMenu")?.remove();
+            return;
+        }
         let button = document.getElementById("miAccountButton");
         let menu = document.getElementById("miAccountMenu");
         if (!button) {
@@ -7802,6 +7810,9 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
 
         auth.onAuthStateChanged(function (user) {
             window.miFirebaseUser = user || null;
+            if (typeof window.updateAuthUI === "function") {
+                window.updateAuthUI();
+            }
 
             // Update persistence manager with current user
             if (user) {
@@ -14318,17 +14329,37 @@ try {
 }
 
 function updateAuthControls(){
+    updateAuthUI();
+}
+
+function updateAuthUI() {
     const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
     const alertBox = document.getElementById('approvalAlert');
-    const hasSession = Boolean(user || localStorage.getItem('mi_supabase_token'));
+    let authenticatedUser = null;
+    try {
+        authenticatedUser = window.miFirebaseUser || window.miFirebaseAuth?.currentUser || null;
+    } catch (_) {
+        authenticatedUser = window.miFirebaseUser || null;
+    }
+    const hasSession = Boolean(authenticatedUser);
 
     if (loginBtn) {
-        loginBtn.style.display = hasSession ? 'none' : 'inline-flex';
+        loginBtn.style.setProperty('display', hasSession ? 'none' : 'inline-flex', 'important');
     }
 
-    if (logoutBtn) {
-        logoutBtn.style.display = hasSession ? 'inline-flex' : 'none';
+    const accountSection = document.getElementById('miAccountSection');
+    if (accountSection) {
+        accountSection.hidden = !hasSession;
+        accountSection.setAttribute('aria-hidden', hasSession ? 'false' : 'true');
+    }
+
+    if (window.MIAccountProfile && typeof window.MIAccountProfile.render === 'function') {
+        window.MIAccountProfile.render();
+    }
+
+    if (!hasSession) {
+        document.getElementById('miAccountMenu')?.classList.remove('mi-open');
+        document.getElementById('miAccountButton')?.setAttribute('aria-expanded', 'false');
     }
 
     if (alertBox) {
@@ -14340,6 +14371,8 @@ function updateAuthControls(){
     updateAuthReminder();
     updateTranslatedUi();
 }
+
+window.updateAuthUI = updateAuthUI;
 
 function updateAuthReminder(){
     if (authReminder) {
@@ -14972,6 +15005,7 @@ try {
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (!firebaseUser) {
                 user = null;
+                updateAuthUI();
                 localStorage.removeItem('mi_supabase_token');
                 localStorage.removeItem('mi_user_id');
                 localStorage.removeItem('mi_user_email');
@@ -14994,6 +15028,7 @@ try {
             const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
             const nextToken = await firebaseUser.getIdToken();
             user = nextUser;
+            updateAuthUI();
             
             // Clean up guest data when user logs in
             if (window.miChatLifecycle && typeof window.miChatLifecycle.onLoginCleanup === 'function') {
@@ -39788,8 +39823,7 @@ option,
         }
 
         const settings =
-            document.getElementById("settingsBtn") ||
-            findButtonByText("Settings");
+            document.getElementById("settingsBtn");
 
         if (settings) {
             setIcon(settings, "⚙");
