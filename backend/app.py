@@ -60,14 +60,16 @@ try:
     import firebase_admin
     from firebase_admin import auth as firebase_admin_auth
     from firebase_admin import credentials as firebase_admin_credentials
+    from firebase_admin import firestore as firebase_admin_firestore
 except ImportError:
     firebase_admin = None
     firebase_admin_auth = None
     firebase_admin_credentials = None
+    firebase_admin_firestore = None
 
 import ssl
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as calendar_date, time as clock_time
 import secrets
 
 import time
@@ -126,6 +128,7 @@ CORS(app)
 
 MI_FIREBASE_AUTH_READY = False
 MI_FIREBASE_AUTH_ERROR = ""
+MI_FIREBASE_DB = None
 MI_FIREBASE_PROJECT_ID = (
     os.getenv("FIREBASE_PROJECT_ID")
     or os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -213,6 +216,10 @@ else:
             )
 
         MI_FIREBASE_AUTH_READY = True
+        if firebase_admin_firestore is not None:
+            MI_FIREBASE_DB = firebase_admin_firestore.client(
+                app=active_app
+            )
 
         app.logger.info(
             "Firebase Admin ready for project %s.",
@@ -285,6 +292,26 @@ messages_store = {}
 OTP_EMAIL_ADDRESS = os.getenv("OTP_EMAIL_ADDRESS", "").strip()
 OTP_EMAIL_PASSWORD = os.getenv("OTP_EMAIL_PASSWORD", "").replace(" ", "").strip()
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+
+CUSTOMER_SERVICE_BOT_TOKEN = os.getenv("CUSTOMER_SERVICE_BOT_TOKEN", "").strip()
+CUSTOMER_SERVICE_BOT_ID = os.getenv("CUSTOMER_SERVICE_BOT_ID", "").strip()
+CUSTOMER_SERVICE_REPORT_REASONS = (
+    "Technical Issue",
+    "Account & Login",
+    "Payment Issue",
+    "AI Feature Issue",
+    "Bug Report",
+    "Feature Request",
+    "Other",
+)
+CUSTOMER_SERVICE_CHAT_WITH = (
+    "CEO OF MI CORTEX X",
+    "OWNER OF MI CORTEX X",
+    "FOUNDER OF MI CORTEX X",
+    "CHAIRMEN OF MI CORTEX X",
+    "TEAM MEMBER OF CORTEX CORE AI",
+)
+CUSTOMER_SERVICE_CHAT_IN = ("WhatsApp", "Telegram", "Email")
 
 
 
@@ -372,6 +399,8 @@ def mi_get_verified_account():
         "session_id": uid,
         "email": email,
         "user_email": email,
+        "display_name": str(verified_user.get("name") or verified_user.get("display_name") or "").strip(),
+        "username": str(verified_user.get("username") or verified_user.get("preferred_username") or "").strip(),
     }
 
     g.mi_verified_account = account
@@ -417,6 +446,154 @@ def mi_require_verified_account(function):
         return function(*args, **kwargs)
 
     return wrapped
+
+
+def customer_service_identity():
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return None, (jsonify({"success": False, "message": error or "Please sign in again."}), 401)
+    email = account.get("email") or ""
+    username = account.get("username") or account.get("display_name") or email.split("@", 1)[0]
+    return {
+        "uid": account["uid"],
+        "email": email,
+        "username": str(username).strip(),
+        "display_name": account.get("display_name") or "",
+    }, None
+
+
+def customer_service_next_number(kind):
+    if MI_FIREBASE_DB is None or firebase_admin_firestore is None:
+        raise RuntimeError("Customer Service persistence is unavailable.")
+    field = "reports" if kind == "report" else "appointments"
+    prefix = "CCA-RP-" if kind == "report" else "CCA-AP-"
+    counter_ref = MI_FIREBASE_DB.collection("customer_service").document("counters")
+    transaction = MI_FIREBASE_DB.transaction()
+
+    @firebase_admin_firestore.transactional
+    def increment(current_transaction):
+        snapshot = counter_ref.get(transaction=current_transaction)
+        values = snapshot.to_dict() if snapshot.exists else {}
+        value = int(values.get(field) or 0) + 1
+        current_transaction.set(counter_ref, {field: value}, merge=True)
+        return value
+
+    return f"{prefix}{increment(transaction):03d}"
+
+
+def customer_service_send_telegram(message, attachment=None):
+    if not CUSTOMER_SERVICE_BOT_TOKEN or not CUSTOMER_SERVICE_BOT_ID:
+        raise RuntimeError("Customer Service Telegram is not configured.")
+    endpoint = f"https://api.telegram.org/bot{CUSTOMER_SERVICE_BOT_TOKEN}/sendMessage"
+    chunks = [message[index:index + 3800] for index in range(0, len(message), 3800)] or [message]
+    for chunk in chunks:
+        response = requests.post(endpoint, data={"chat_id": CUSTOMER_SERVICE_BOT_ID, "text": chunk}, timeout=20)
+        response.raise_for_status()
+    if attachment and attachment.get("content"):
+        document_endpoint = f"https://api.telegram.org/bot{CUSTOMER_SERVICE_BOT_TOKEN}/sendDocument"
+        response = requests.post(
+            document_endpoint,
+            data={"chat_id": CUSTOMER_SERVICE_BOT_ID, "caption": attachment["filename"]},
+            files={"document": (attachment["filename"], attachment["content"], attachment.get("content_type") or "application/octet-stream")},
+            timeout=30,
+        )
+        response.raise_for_status()
+
+
+def customer_service_save(kind, reference, record):
+    if MI_FIREBASE_DB is None:
+        raise RuntimeError("Customer Service persistence is unavailable.")
+    MI_FIREBASE_DB.collection("customer_service").document(kind).collection("submissions").document(reference).set(record)
+
+
+def customer_service_format_message(kind, record):
+    heading = "CUSTOMER SERVICE — REPORT" if kind == "report" else "CUSTOMER SERVICE — APPOINTMENT"
+    lines = ["━━━━━━━━━━━━━━━━━━━━", ("🚨 " if kind == "report" else "📅 ") + heading, "━━━━━━━━━━━━━━━━━━━━"]
+    if kind == "report":
+        lines += ["", "📋 REPORT NUMBER", record["reference"], "", "👤 NAME", record["name"], "", "📧 EMAIL", record["email"], "", "👤 USERNAME", record["username"], "", "📱 WHATSAPP NUMBER", record["whatsapp"], "", "📌 REASON", record["reason"], "", "📝 ISSUE DESCRIPTION", record["description"], "", "📎 ATTACHMENT", record["attachment"], "", "📅 DATE", record["submitted_date"], "", "🕐 TIME", record["submitted_time"]]
+    else:
+        lines += ["", "📋 APPOINTMENT NUMBER", record["reference"], "", "👤 FULL NAME", record["name"], "", "📧 EMAIL", record["email"], "", "👤 USERNAME", record["username"], "", "📱 WHATSAPP NUMBER", record["whatsapp"], "", "📅 PREFERRED DATE", record["preferred_date"], "", "🕐 PREFERRED TIME", record["preferred_time"], "", "📌 REASON", record["reason"], "", "👔 CHAT WITH", record["chat_with"], "", "💬 CHAT IN", record["chat_in"], "", "📅 SUBMITTED DATE", record["submitted_date"], "", "🕐 SUBMITTED TIME", record["submitted_time"]]
+    return "\n".join(lines + ["", "━━━━━━━━━━━━━━━━━━━━", "CORTEX CORE AI", "Customer Service", "━━━━━━━━━━━━━━━━━━━━"])
+
+
+@app.route("/api/customer-service/reports", methods=["POST"])
+def customer_service_report():
+    identity, error_response = customer_service_identity()
+    if error_response:
+        return error_response
+    data = request.form.to_dict(flat=True)
+    name = str(data.get("name") or "").strip()
+    whatsapp = str(data.get("whatsapp") or "").strip()
+    reason = str(data.get("reason") or "").strip()
+    description = str(data.get("description") or "").strip()
+    digits = re.sub(r"\D", "", whatsapp)
+    if not name or not whatsapp or not reason or not description:
+        return jsonify({"success": False, "message": "Name, WhatsApp number, reason, and issue description are required."}), 400
+    if len(digits) < 7 or len(digits) > 15:
+        return jsonify({"success": False, "message": "Enter a valid WhatsApp number."}), 400
+    if reason not in CUSTOMER_SERVICE_REPORT_REASONS:
+        return jsonify({"success": False, "message": "Choose a valid report reason."}), 400
+    attachment_file = request.files.get("attachment")
+    attachment = None
+    attachment_label = "No attachment"
+    if attachment_file and attachment_file.filename:
+        content = attachment_file.read()
+        if len(content) > 10 * 1024 * 1024:
+            return jsonify({"success": False, "message": "Attachments must be 10 MB or smaller."}), 400
+        attachment = {"filename": attachment_file.filename[:180], "content_type": attachment_file.mimetype, "content": content}
+        attachment_label = attachment["filename"]
+    now = datetime.now()
+    try:
+        reference = customer_service_next_number("report")
+        record = {"reference": reference, "uid": identity["uid"], "name": name, "email": identity["email"], "username": identity["username"], "whatsapp": whatsapp, "reason": reason, "description": description, "attachment": attachment_label, "submitted_date": now.strftime("%d %B %Y"), "submitted_time": now.strftime("%H:%M"), "created_at": now.isoformat()}
+        customer_service_save("reports", reference, {key: value for key, value in record.items() if key != "content"})
+        customer_service_send_telegram(customer_service_format_message("report", record), attachment)
+        return jsonify({"success": True, "reference": reference})
+    except Exception as exc:
+        app.logger.exception("Customer Service report failed: %s", exc)
+        return jsonify({"success": False, "message": "The report could not be submitted right now."}), 503
+
+
+@app.route("/api/customer-service/appointments", methods=["POST"])
+def customer_service_appointment():
+    identity, error_response = customer_service_identity()
+    if error_response:
+        return error_response
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name") or "").strip()
+    whatsapp = str(data.get("whatsapp") or "").strip()
+    preferred_date = str(data.get("preferred_date") or "").strip()
+    preferred_time = str(data.get("preferred_time") or "").strip()
+    reason = str(data.get("reason") or "").strip()
+    chat_with = str(data.get("chat_with") or "").strip()
+    chat_in = str(data.get("chat_in") or "").strip()
+    digits = re.sub(r"\D", "", whatsapp)
+    if not all((name, whatsapp, preferred_date, preferred_time, reason, chat_with, chat_in)):
+        return jsonify({"success": False, "message": "Complete all required appointment fields."}), 400
+    if len(digits) < 7 or len(digits) > 15:
+        return jsonify({"success": False, "message": "Enter a valid WhatsApp number."}), 400
+    if chat_with not in CUSTOMER_SERVICE_CHAT_WITH or chat_in not in CUSTOMER_SERVICE_CHAT_IN:
+        return jsonify({"success": False, "message": "Choose valid appointment options."}), 400
+    try:
+        appointment_date = calendar_date.fromisoformat(preferred_date)
+        appointment_time = clock_time.fromisoformat(preferred_time)
+    except ValueError:
+        return jsonify({"success": False, "message": "Choose a valid appointment date and time."}), 400
+    now = datetime.now()
+    selected = datetime.combine(appointment_date, appointment_time)
+    if appointment_date < now.date() or selected < now:
+        return jsonify({"success": False, "message": "Appointments must be today or a future date."}), 400
+    if appointment_date == now.date() and selected < now + timedelta(hours=5):
+        return jsonify({"success": False, "message": "Today’s appointment must be at least 5 hours from now."}), 400
+    try:
+        reference = customer_service_next_number("appointment")
+        record = {"reference": reference, "uid": identity["uid"], "name": name, "email": identity["email"], "username": identity["username"], "whatsapp": whatsapp, "preferred_date": preferred_date, "preferred_time": preferred_time, "reason": reason, "chat_with": chat_with, "chat_in": chat_in, "submitted_date": now.strftime("%d %B %Y"), "submitted_time": now.strftime("%H:%M"), "created_at": now.isoformat()}
+        customer_service_save("appointments", reference, record)
+        customer_service_send_telegram(customer_service_format_message("appointment", record))
+        return jsonify({"success": True, "reference": reference})
+    except Exception as exc:
+        app.logger.exception("Customer Service appointment failed: %s", exc)
+        return jsonify({"success": False, "message": "The appointment could not be submitted right now."}), 503
 
 
 def mi_force_verified_owner(data=None):

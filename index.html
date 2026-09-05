@@ -16940,51 +16940,82 @@ if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
 
 /* CUSTOMER SUPPORT */
 
-function customerSupport(){
-
-let box=document.createElement("div");
-box.id = "supportOverlay";
-
-box.style.position="fixed";
-box.style.left="50%";
-box.style.top="50%";
-box.style.transform="translate(-50%,-50%)";
-box.style.background="rgba(17,26,43,0.95)";
-box.style.backdropFilter="blur(15px)";
-box.style.padding="25px";
-box.style.borderRadius="20px";
-box.style.zIndex="9999";
-box.style.width="280px";
-box.style.textAlign="center";
-box.style.boxShadow="0 0 25px #ff7a18";
-
-
-box.innerHTML=`
-
-<h3>├░┼╕┼╜┬º Customer Support</h3>
-
-<p>├░┼╕ΓÇ£┬º Email</p>
-
-<button onclick="openEmail()">
-REQUEST VIA EMAIL
-</button>
-
-
-<p>├░┼╕ΓÇÖ┬¼ WhatsApp</p>
-
-<button onclick="openWhatsApp()">
-VIA WHATSAPP
-</button>
-
-
-<button onclick="this.parentElement.remove()">
-├ó┼ôΓÇó Close
-</button>
-
-`;
-
-document.body.appendChild(box);
-
+function customerSupport() {
+    document.getElementById("supportOverlay")?.remove();
+    if (!document.getElementById("cortexCustomerServiceStyles")) {
+        const style = document.createElement("style");
+        style.id = "cortexCustomerServiceStyles";
+        style.textContent = `
+            #supportOverlay.cortex-customer-service{position:fixed;inset:0;z-index:30000;display:grid;place-items:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(18px)}
+            .cortex-customer-service-shell{width:min(96vw,680px);max-height:min(92vh,780px);overflow:auto;border:1px solid rgba(125,211,252,.28);border-radius:22px;background:linear-gradient(145deg,rgba(15,27,47,.98),rgba(7,14,28,.98));color:#f8fafc;box-shadow:0 30px 90px rgba(0,0,0,.56)}
+            .cortex-customer-service-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 24px 16px;border-bottom:1px solid rgba(148,163,184,.16)}
+            .cortex-customer-service-head h2{margin:3px 0 5px;font-size:23px}.cortex-customer-service-head p{margin:0;color:#9fb0c5;font-size:12px}.cortex-customer-service-kicker{color:#7dd3fc;font-size:10px;font-weight:800;letter-spacing:.18em}
+            .cortex-customer-service-close,.cortex-customer-service-back{border:1px solid rgba(125,211,252,.26);border-radius:9px;background:rgba(56,189,248,.10);color:inherit;cursor:pointer;font:inherit}.cortex-customer-service-close{width:36px;height:36px;font-size:20px}.cortex-customer-service-back{padding:8px 11px;margin:18px 24px 0}
+            .cortex-customer-service-body{padding:22px 24px 26px}.cortex-customer-service-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.cortex-customer-service-card{min-height:150px;padding:20px;border:1px solid rgba(125,211,252,.24);border-radius:16px;background:rgba(56,189,248,.08);color:inherit;text-align:left;cursor:pointer;font:inherit;transition:background .18s,border-color .18s,transform .18s}.cortex-customer-service-card:hover{background:rgba(56,189,248,.16);border-color:#7dd3fc;transform:translateY(-2px)}.cortex-customer-service-card strong{display:block;margin-bottom:8px;font-size:16px}.cortex-customer-service-card span{display:block;color:#aebdd0;font-size:12px;line-height:1.55}
+            .cortex-customer-service-form{display:grid;gap:14px}.cortex-customer-service-form label{display:grid;gap:6px;color:#dbeafe;font-size:12px;font-weight:700}.cortex-customer-service-form input,.cortex-customer-service-form select,.cortex-customer-service-form textarea{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid rgba(125,211,252,.24);border-radius:10px;background:rgba(2,6,23,.58);color:#f8fafc;font:inherit}.cortex-customer-service-form textarea{min-height:130px;resize:vertical}.cortex-customer-service-form input:focus,.cortex-customer-service-form select:focus,.cortex-customer-service-form textarea:focus{outline:2px solid rgba(125,211,252,.42);outline-offset:1px}.cortex-customer-service-form .cortex-customer-service-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cortex-customer-service-file{padding:10px!important}.cortex-customer-service-submit{min-height:44px;padding:11px 15px;border:1px solid #7dd3fc;border-radius:10px;background:#1684bd;color:#fff;font:inherit;font-weight:800;cursor:pointer}.cortex-customer-service-submit:disabled{opacity:.58;cursor:wait}.cortex-customer-service-status{min-height:18px;color:#fda4af;font-size:12px}.cortex-customer-service-success{text-align:center;padding:30px 10px}.cortex-customer-service-success h3{margin:0 0 10px;font-size:21px}.cortex-customer-service-success p{margin:8px 0;color:#cbd5e1;line-height:1.55}.cortex-customer-service-reference{display:inline-block;margin:14px 0;padding:10px 14px;border:1px solid rgba(125,211,252,.32);border-radius:10px;color:#7dd3fc;font-weight:800;letter-spacing:.06em}
+            @media(max-width:620px){.cortex-customer-service-options,.cortex-customer-service-form .cortex-customer-service-row{grid-template-columns:1fr}.cortex-customer-service-head{padding:18px}.cortex-customer-service-body{padding:18px}.cortex-customer-service-back{margin:14px 18px 0}}
+        `;
+        document.head.appendChild(style);
+    }
+    const box = document.createElement("div");
+    box.id = "supportOverlay";
+    box.className = "cortex-customer-service";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.innerHTML = '<section class="cortex-customer-service-shell"><header class="cortex-customer-service-head"><div><span class="cortex-customer-service-kicker">CORTEX CORE AI</span><h2>Customer Service</h2><p>Choose how our team can help.</p></div><button type="button" class="cortex-customer-service-close" data-cs-action="close" aria-label="Close Customer Service">&#10005;</button></header><div class="cortex-customer-service-body" data-cs-body></div></section>';
+    document.body.appendChild(box);
+    const body = box.querySelector("[data-cs-body]");
+    const profileUser = window.miFirebaseUser || window.miFirebaseAuth?.currentUser;
+    const profileName = String(profileUser?.displayName || localStorage.getItem("mi_profile_name_" + String(profileUser?.email || "").toLowerCase()) || "").trim();
+    const token = async () => {
+        if (!window.miFirebaseUser?.getIdToken) throw new Error("Please sign in before contacting Customer Service.");
+        return window.miFirebaseUser.getIdToken();
+    };
+    const setView = view => {
+        if (view === "home") {
+            body.innerHTML = '<div class="cortex-customer-service-options"><button type="button" class="cortex-customer-service-card" data-cs-action="report"><strong>REPORT A PROBLEM</strong><span>Tell our team what went wrong and include the details they need.</span></button><button type="button" class="cortex-customer-service-card" data-cs-action="appointment"><strong>LIVE CHAT</strong><span>Request an appointment with the right CORTEX CORE AI team member.</span></button></div>';
+            return;
+        }
+        body.innerHTML = '<button type="button" class="cortex-customer-service-back" data-cs-action="back">&#8592; Back</button>' + (view === "report" ? '<form class="cortex-customer-service-form" data-cs-form="report"><label>Name<input name="name" required value="' + escapeAIHtml(profileName) + '"></label><label>WhatsApp Number<input name="whatsapp" type="tel" required placeholder="+94 75 639 0621"></label><label>Reason<select name="reason" required><option value="">Choose a reason</option><option>Technical Issue</option><option>Account &amp; Login</option><option>Payment Issue</option><option>AI Feature Issue</option><option>Bug Report</option><option>Feature Request</option><option>Other</option></select></label><label>Describe Your Issue<textarea name="description" required placeholder="Explain the complete problem"></textarea></label><label>Add an Attachment (Optional)<input class="cortex-customer-service-file" name="attachment" type="file"></label><div class="cortex-customer-service-status" data-cs-status></div><button type="submit" class="cortex-customer-service-submit">SUBMIT</button></form>' : '<form class="cortex-customer-service-form" data-cs-form="appointment"><label>Full Name<input name="name" required value="' + escapeAIHtml(profileName) + '"></label><label>WhatsApp Number<input name="whatsapp" type="tel" required placeholder="+94 75 639 0621"></label><div class="cortex-customer-service-row"><label>Preferred Date<input name="preferred_date" type="date" required></label><label>Time<input name="preferred_time" type="time" required></label></div><label>Reason<textarea name="reason" required placeholder="Explain why you want the appointment"></textarea></label><label>Chat With<select name="chat_with" required><option value="">Choose a team member</option><option>CEO OF MI CORTEX X</option><option>OWNER OF MI CORTEX X</option><option>FOUNDER OF MI CORTEX X</option><option>CHAIRMEN OF MI CORTEX X</option><option>TEAM MEMBER OF CORTEX CORE AI</option></select></label><label>Chat In<select name="chat_in" required><option value="">Choose a communication method</option><option>WhatsApp</option><option>Telegram</option><option>Email</option></select></label><div class="cortex-customer-service-status" data-cs-status></div><button type="submit" class="cortex-customer-service-submit">BOOK APPOINTMENT</button></form>');
+        if (view === "appointment") {
+            const dateInput = body.querySelector('[name="preferred_date"]');
+            const timeInput = body.querySelector('[name="preferred_time"]');
+            const today = new Date();
+            const dateValue = today.toISOString().slice(0, 10);
+            dateInput.min = dateValue;
+            const updateTimeMin = () => { if (dateInput.value === dateValue) { const minimum = new Date(Date.now() + 5 * 60 * 60 * 1000); timeInput.min = String(minimum.getHours()).padStart(2, "0") + ":" + String(minimum.getMinutes()).padStart(2, "0"); } else timeInput.removeAttribute("min"); };
+            dateInput.addEventListener("change", updateTimeMin);
+            updateTimeMin();
+        }
+    };
+    const showSuccess = (appointment, payload) => { body.innerHTML = '<div class="cortex-customer-service-success"><h3>' + (appointment ? 'APPOINTMENT REQUEST SUBMITTED' : 'THANK YOU FOR YOUR SUBMISSION') + '</h3><p>' + (appointment ? 'Thank you. Your appointment request has been submitted successfully. Our team will review your request and contact you through the selected communication method.' : 'OUR TEAM WILL CHECK YOUR REPORT') + '</p><div class="cortex-customer-service-reference">' + escapeAIHtml(payload.reference) + '</div>' + (appointment ? '<p>' + escapeAIHtml(payload.preferred_date) + ' at ' + escapeAIHtml(payload.preferred_time) + '<br>' + escapeAIHtml(payload.chat_with) + '<br>' + escapeAIHtml(payload.chat_in) + '</p>' : '') + '<button type="button" class="cortex-customer-service-submit" data-cs-action="close">OK</button></div>'; };
+    const submit = async form => {
+        const status = form.querySelector("[data-cs-status]");
+        const button = form.querySelector("button[type=submit]");
+        if (!form.reportValidity() || box.dataset.submitting === "true") return;
+        box.dataset.submitting = "true";
+        button.disabled = true;
+        status.textContent = "";
+        try {
+            const authToken = await token();
+            const appointment = form.dataset.csForm === "appointment";
+            let response;
+            if (appointment) {
+                const data = Object.fromEntries(new FormData(form).entries());
+                response = await fetch("/api/customer-service/appointments", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + authToken }, body: JSON.stringify(data) });
+            } else {
+                const data = new FormData(form);
+                response = await fetch("/api/customer-service/reports", { method: "POST", headers: { Authorization: "Bearer " + authToken }, body: data });
+            }
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.success) throw new Error(payload.message || "Submission failed.");
+            if (appointment) { const data = Object.fromEntries(new FormData(form).entries()); showSuccess(true, { ...payload, preferred_date: data.preferred_date, preferred_time: data.preferred_time, chat_with: data.chat_with, chat_in: data.chat_in }); } else showSuccess(false, payload);
+        } catch (error) { status.textContent = error.message || "Submission failed. Please try again."; box.dataset.submitting = "false"; button.disabled = false; }
+    };
+    box.addEventListener("click", event => { const action = event.target.closest("[data-cs-action]")?.dataset.csAction; if (!action) return; if (action === "close") box.remove(); if (action === "back") { box.dataset.submitting = "false"; setView("home"); } if (action === "report") setView("report"); if (action === "appointment") setView("appointment"); });
+    box.addEventListener("submit", event => { event.preventDefault(); submit(event.target); });
+    box.addEventListener("click", event => { if (event.target === box) box.remove(); });
+    setView("home");
 }
 
 
@@ -35722,7 +35753,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
             supportButton = document.createElement("button");
             supportButton.id = "miSidebarCustomerSupport";
             supportButton.type = "button";
-            supportButton.textContent = "Customer Support";
+            supportButton.textContent = "Customer Service";
             supportButton.addEventListener("click", function () {
                 if (typeof window.customerSupport === "function") {
                     window.customerSupport();
