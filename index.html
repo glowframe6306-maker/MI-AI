@@ -15030,6 +15030,27 @@ async function loadUserChats() {
   }
 }
 
+let authenticatedChatRefreshInProgress = false;
+async function refreshAuthenticatedChats() {
+    if (!isAuthenticated() || authenticatedChatRefreshInProgress) return;
+    authenticatedChatRefreshInProgress = true;
+    try {
+        await loadUserChats();
+    } finally {
+        authenticatedChatRefreshInProgress = false;
+    }
+}
+
+window.addEventListener('focus', refreshAuthenticatedChats);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshAuthenticatedChats();
+});
+document.addEventListener('click', (event) => {
+    if (event.target?.closest?.('#chatList, #sidebar, #mobileMenuToggle')) {
+        refreshAuthenticatedChats();
+    }
+});
+
 async function initChat(){
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -15508,7 +15529,7 @@ function beginInlineChatRename(chatId){
     inputField.addEventListener('blur', () => finish(true));
 }
 
-function renameChatTo(chatId, name){ selectedChat = chatId; const chat = chats[chatId]; if (!chat) return; chat.title = name; chat.updatedAt = Date.now(); if (isAuthenticated()) { fetch('/api/conversations/' + encodeURIComponent(chatId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('mi_supabase_token') }, body: JSON.stringify({ title: name }) }).catch(() => {}); if (window.firestorePersistence && window.miFirebaseUser) window.firestorePersistence.saveChat(chatId, { title: name }).catch(() => {}); } save(); renderList(); }
+function renameChatTo(chatId, name){ selectedChat = chatId; const chat = chats[chatId]; if (!chat) return; chat.title = name; chat.updatedAt = Date.now(); if (isAuthenticated()) { fetch('/api/conversations/' + encodeURIComponent(chatId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('mi_supabase_token') }, body: JSON.stringify({ title: name }) }).catch(() => {}); } save(); renderList(); }
 function pinChatFor(chatId){ selectedChat = chatId; pinChat(); }
 function deleteChatFor(chatId){ selectedChat = chatId; deleteChat(); }
 function shareChatFor(chatId){ selectedChat = chatId; shareChat(); }
@@ -15588,13 +15609,6 @@ if (token && isAuthenticated()) {
   }).catch(() => {});
 }
 
-// Save metadata only after the lazy conversation has been persisted.
-if (isAuthenticated() && chats[selectedChat]?.isPersisted === true && window.firestorePersistence && window.miFirebaseUser) {
-    window.firestorePersistence.saveChat(selectedChat, { title: name }).catch(err =>
-        console.error('[Persistence] Chat rename error:', err)
-    );
-}
-
 save();
 renderList();
 menu.style.display="none";
@@ -15636,13 +15650,6 @@ if(!selectedChat)return;
 
 chats[selectedChat].pin =
 !chats[selectedChat].pin;
-
-// Save metadata only after the lazy conversation has been persisted.
-if (isAuthenticated() && chats[selectedChat]?.isPersisted === true && window.firestorePersistence && window.miFirebaseUser) {
-    window.firestorePersistence.saveChat(selectedChat, { pin: chats[selectedChat].pin }).catch(err =>
-        console.error('[Persistence] Chat pin error:', err)
-    );
-}
 
 save();
 renderList();
@@ -16943,39 +16950,6 @@ async function save() {
 
     if (currentChat && isAuthenticated()) {
         localStorage.setItem("last_chat", currentChat);
-    }
-
-    // Save to Firestore if authenticated
-    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-        try {
-            // Save all chats and messages to Firestore
-            for (const chatId in chats) {
-                const chatData = chats[chatId];
-                if (Array.isArray(chatData) && chatData.length === 0) continue; // Skip empty chats
-
-                // Save chat metadata
-                await window.firestorePersistence.saveChat(chatId, {
-                    title: chatData.title || chatId,
-                    pin: chatData.pin || false,
-                    messageCount: chatData.length || 0
-                });
-
-                // Save each message
-                chatData.forEach((msg, index) => {
-                    if (msg && msg.text) {
-                        if (!msg.id) msg.id = `${chatId}_message_${index}`;
-                        const messageId = String(msg.id);
-                        window.firestorePersistence.saveMessage(chatId, messageId, {
-                            role: msg.role === 'me' ? 'me' : 'ai',
-                            text: msg.text
-                        }).catch(err => console.error('[Persistence] Message save error:', err));
-                    }
-                });
-            }
-            console.log('[Persistence] All chats synced to Firestore');
-        } catch (err) {
-            console.error('[Persistence] Error syncing chats:', err.message);
-        }
     }
 
     // Logged-in users only
@@ -32609,6 +32583,8 @@ window.fetch=function(input,init){
 /* CORTEX CORE AI STRICT ACCOUNT ISOLATION V1 START */
 (function () {
     "use strict";
+
+    return;
 
     const ACCOUNT_PREFIX = "mi_account_cache_v2:";
     const GUEST_KEY = "mi_guest_single_chat_v2";

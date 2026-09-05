@@ -634,7 +634,7 @@ def api_account_conversations():
             return jsonify({"success": True, "conversations": [mi_conversation_row(row) for row in (getattr(result, "data", None) or [])]})
 
         payload = request.get_json(silent=True) or {}
-        conversation_id = str(payload.get("id") or uuid.uuid4())
+        conversation_id = str(uuid.uuid4())
         title = str(payload.get("title") or "New chat").strip()[:200] or "New chat"
         now = datetime.utcnow().isoformat()
         row = {"id": conversation_id, "user_id": uid, "title": title, "pin": False, "created_at": now, "updated_at": now, "message_count": 0}
