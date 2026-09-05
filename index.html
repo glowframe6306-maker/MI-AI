@@ -592,6 +592,7 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
     const user = () => window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser || null;
     const identity = () => String(user()?.uid || user()?.email || localStorage.getItem("mi_user_id") || localStorage.getItem("mi_user_email") || "guest").trim().toLowerCase();
     const accountKey = suffix => "cortex_account_" + suffix + ":" + identity();
+    let obsoleteObserver = null;
 
     const css = document.createElement("style");
     css.id = "cortex-clean-settings-style";
@@ -629,6 +630,13 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
         panel.innerHTML = '<header class="cortex-clean-head"><div><span class="cortex-clean-kicker">CORTEX CONTROL</span><h3>Settings</h3><p>Only the essential account and application controls.</p></div><button type="button" class="cortex-clean-close" aria-label="Close Settings">&#10005;</button></header><main class="cortex-clean-scroll" id="cortexCleanScroll"></main>';
         panel.querySelector(".cortex-clean-close").addEventListener("click", close);
         renderRows(panel.querySelector("#cortexCleanScroll"));
+        const removeObsolete = () => {
+            panel.querySelectorAll(".mi-settings-accordion,.cortex-settings-heading,.mi-settings-modal-head,.mi-settings-nav,.mi-settings-mobile-select,.cortex-settings-group,#cortexSettingsStatus").forEach(node => node.remove());
+        };
+        removeObsolete();
+        obsoleteObserver?.disconnect();
+        obsoleteObserver = new MutationObserver(removeObsolete);
+        obsoleteObserver.observe(panel, { childList: true, subtree: true });
         return panel;
     }
     function row(title, description, control) { return '<section class="cortex-clean-row"><div class="cortex-clean-copy"><strong>' + title + '</strong><small>' + description + '</small></div>' + control + '</section>'; }
@@ -669,7 +677,12 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
     }
     window.addEventListener("mi-firebase-auth-changed", enforceLock);
     setTimeout(enforceLock, 500);
-    setTimeout(() => { window.__cortexCleanSettingsReset?.(); if (window.__cortexCleanSettingsOpen) window.toggleSettings = window.__cortexCleanSettingsOpen; if (window.__cortexCleanSettingsClose) window.closeSettings = window.__cortexCleanSettingsClose; }, 3500);
+    const claimSettingsOwnership = () => {
+        if (window.__cortexCleanSettingsOpen) window.toggleSettings = window.__cortexCleanSettingsOpen;
+        if (window.__cortexCleanSettingsClose) window.closeSettings = window.__cortexCleanSettingsClose;
+    };
+    setTimeout(() => { window.__cortexCleanSettingsReset?.(); claimSettingsOwnership(); }, 3500);
+    window.setInterval(claimSettingsOwnership, 250);
 })();
 </script>
 
@@ -773,7 +786,7 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
             menu.addEventListener("click", function (event) {
                 const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
                 if (action === "profile") openProfile();
-                if (action === "settings") { closeMenu(); if (typeof window.toggleSettings === "function") window.toggleSettings(); }
+                if (action === "settings") { closeMenu(); if (typeof window.__cortexCleanSettingsOpen === "function") window.__cortexCleanSettingsOpen(); else if (typeof window.toggleSettings === "function") window.toggleSettings(); }
                 if (action === "personalization") openPersonalization();
                 if (action === "help") { closeMenu(); if (typeof window.customerSupport === "function") window.customerSupport(); }
                 if (action === "logout") { closeMenu(); if (typeof window.logout === "function") window.logout(); }
