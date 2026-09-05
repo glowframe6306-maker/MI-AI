@@ -15376,6 +15376,12 @@ function closeAllOverlays(target) {
   const settingsPanel = document.getElementById("settingsPanel");
   const loginBox = document.getElementById("loginBox");
   const supportOverlay = document.getElementById("supportOverlay");
+    const nativeSelectInteraction = Boolean(
+        target?.tagName === "SELECT" ||
+        target?.tagName === "OPTION" ||
+        target?.closest?.("select") ||
+        document.activeElement?.tagName === "SELECT"
+    );
 
   if (menu.style.display === "block" && !menu.contains(target)) {
     menu.style.display = "none";
@@ -15391,7 +15397,7 @@ function closeAllOverlays(target) {
     loginBox.style.display = "none";
   }
 
-  if (supportOverlay && !supportOverlay.contains(target) && target.id !== "supportBtn") {
+    if (supportOverlay && !supportOverlay.contains(target) && !nativeSelectInteraction && target.id !== "supportBtn") {
     supportOverlay.remove();
   }
 
