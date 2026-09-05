@@ -28326,7 +28326,15 @@ document.addEventListener(
                 item.dataset.chatId =
                     chatId;
 
-                item.textContent =
+                const label =
+                    document.createElement(
+                        "span"
+                    );
+
+                label.className =
+                    "mi-chat-item-label";
+
+                label.textContent =
                     (
                         chat?.pin
                             ? "├░┼╕ΓÇ£┼Æ "
@@ -28336,6 +28344,47 @@ document.addEventListener(
                     titleForChat(
                         chatId
                     );
+
+                item.appendChild(
+                    label
+                );
+
+                const more =
+                    document.createElement(
+                        "button"
+                    );
+
+                more.type =
+                    "button";
+
+                more.className =
+                    "mi-chat-more-button";
+
+                more.setAttribute(
+                    "aria-label",
+                    "More chat actions"
+                );
+
+                more.title =
+                    "More";
+
+                more.textContent =
+                    "⋯";
+
+                more.addEventListener(
+                    "click",
+                    function (event) {
+                        event.stopPropagation();
+                        openChatMoreMenu(
+                            chatId,
+                            more
+                        );
+                    }
+                );
+
+                item.appendChild(
+                    more
+                );
 
                 if (
                     chatId ===

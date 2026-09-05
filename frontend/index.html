@@ -492,6 +492,8 @@ transform:scale(1.05);
 
 /* CHAT LIST */
 .chatItem{
+display:flex;
+align-items:center;
 padding:10px;
 margin:5px 0;
 background:#ffffff10;
@@ -499,6 +501,9 @@ border-radius:10px;
 cursor:pointer;
 transition:.2s;
 }
+
+.mi-chat-item-label{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mi-chat-more-button{display:inline-flex!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:4!important;flex:0 0 32px!important;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;margin:0 0 0 6px!important;padding:0!important;border:1px solid rgba(255,255,255,.24)!important;border-radius:9px!important;background:rgba(255,255,255,.12)!important;color:#fff!important;font-size:18px!important;line-height:1!important;align-items:center!important;justify-content:center!important;cursor:pointer!important;pointer-events:auto!important}
 
 .chatItem:hover{
 background:var(--main);
@@ -26770,7 +26775,15 @@ document.addEventListener(
                 item.dataset.chatId =
                     chatId;
 
-                item.textContent =
+                const label =
+                    document.createElement(
+                        "span"
+                    );
+
+                label.className =
+                    "mi-chat-item-label";
+
+                label.textContent =
                     (
                         chat?.pin
                             ? "├░┼╕ΓÇ£┼Æ "
@@ -26780,6 +26793,50 @@ document.addEventListener(
                     titleForChat(
                         chatId
                     );
+
+                item.appendChild(
+                    label
+                );
+
+                const more =
+                    document.createElement(
+                        "button"
+                    );
+
+                more.type =
+                    "button";
+
+                more.className =
+                    "mi-chat-more-button";
+
+                more.setAttribute(
+                    "aria-label",
+                    "More chat actions"
+                );
+
+                more.title =
+                    "More";
+
+                more.textContent =
+                    "⋯";
+
+                more.addEventListener(
+                    "click",
+                    function (event) {
+                        event.stopPropagation();
+                        const rect =
+                            more.getBoundingClientRect();
+                        window.MIChatMoreMenu?.openFor(
+                            item,
+                            rect.left,
+                            rect.bottom + 4
+                        );
+                    }
+                );
+
+                item.appendChild(
+                    more
+                );
 
                 if (
                     chatId ===
