@@ -32006,17 +32006,18 @@ window.miOpenAccountChat=openPanel;
     if (isAuthenticated()) return;  // Only applies to logged-out users
 
     const chatIds = Object.keys(chats || {});
-    // Keep only the first temporary chat, delete others
-    if (chatIds.length > 1) {
-      for (let i = 1; i < chatIds.length; i++) {
-                delete chats[chatIds[i]];
-      }
-            if (currentChat && !chats[currentChat]) {
-                currentChat = chatIds[0] || null;
-      }
-      save();
-      renderList();
-    }
+        if (chatIds.length <= 1) return;
+
+        const retainedChatId = currentChat && chats[currentChat]
+            ? currentChat
+            : chatIds[chatIds.length - 1];
+        const retainedChat = retainedChatId ? chats[retainedChatId] : null;
+
+        chats = retainedChatId ? { [retainedChatId]: retainedChat } : {};
+        currentChat = retainedChatId || null;
+        localStorage.removeItem(getGuestStorageKey());
+        localStorage.removeItem('last_chat');
+        renderList();
   }
 
   /**
