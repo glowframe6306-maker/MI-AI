@@ -80,6 +80,55 @@ function renderAIResponse(text) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
+    window.MIWritingState = window.MIWritingState || Object.create(null);
+    const writingHash = value => {
+        let hash = 2166136261;
+        for (const character of String(value || "")) {
+            hash ^= character.charCodeAt(0);
+            hash = Math.imul(hash, 16777619);
+        }
+        return (hash >>> 0).toString(36);
+    };
+    const writingTextMarkup = value => escapeHTML(value).replace(/\n/g, "<br>");
+    const isWritingArtifact = value => {
+        const source = String(value || "").trim();
+        const words = source.split(/\s+/).filter(Boolean).length;
+        const paragraphs = source.split(/\n\s*\n/).filter(Boolean).length;
+        const artifactSignals = /\b(dear |sincerely|kind regards|best regards|subject:|speech|essay|report|story|notice|announcement|proposal|caption|poem|application)\b/i.test(source);
+        return !/```/.test(source) && ((words >= 120 && paragraphs >= 3) || (artifactSignals && words >= 20 && paragraphs >= 2));
+    };
+    const writingLabel = value => {
+        const lower = String(value || "").toLowerCase();
+        if (/\b(speech|address|keynote)\b/.test(lower)) return "Speech";
+        if (/\b(letter|dear |sincerely|kind regards)\b/.test(lower)) return "Letter";
+        if (/\b(report|findings|executive summary)\b/.test(lower)) return "Report";
+        if (/\b(story|once upon a time|chapter)\b/.test(lower)) return "Story";
+        if (/\b(application|request)\b/.test(lower)) return "Application";
+        if (/\b(notice|announcement)\b/.test(lower)) return "Notice";
+        if (/\b(poem|verse|stanza)\b/.test(lower)) return "Poem";
+        return "Writing";
+    };
+    const renderWritingBlock = (value, label) => {
+        const original = String(value || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+        const id = "writing-" + writingHash(original);
+        const current = window.MIWritingState[id] ?? original;
+        return '<section class="mi-writing-block" data-writing-id="' + id + '" data-writing-label="' + escapeHTML(label || writingLabel(original)) + '">' +
+            '<header class="mi-writing-header"><strong>' + escapeHTML(label || writingLabel(original)) + '</strong><div class="mi-writing-controls">' +
+            '<button type="button" class="mi-writing-edit" aria-label="Edit writing" title="Edit writing">Edit</button>' +
+            '<button type="button" class="mi-writing-copy" data-copy-state="idle" aria-label="Copy writing" title="Copy writing">Copy</button></div></header>' +
+            '<div class="mi-writing-content" tabindex="0">' + writingTextMarkup(current) + '</div></section>';
+    };
+
+    const writingArtifacts = [];
+    source = source.replace(/:::writing(?:\s+([^\n]+))?\n([\s\S]*?)\n:::/gi, (match, label, content) => {
+        const index = writingArtifacts.push({ label: String(label || "").trim(), content: String(content || "").trim() }) - 1;
+        return "\n__MI_WRITING_BLOCK_" + index + "__\n";
+    });
+    if (!writingArtifacts.length && isWritingArtifact(source)) {
+        writingArtifacts.push({ label: "", content: source });
+        source = "__MI_WRITING_BLOCK_0__";
+    }
+
     const detectResponseType = value => {
         if (/```|^\s*(?:import |from |const |let |var |def |function |class |SELECT\s|#!\/)/mi.test(value)) return "code";
         if (/\|.*\|\s*\n\s*\|?\s*:?-{3,}/.test(value)) return "table";
@@ -253,6 +302,13 @@ function renderAIResponse(text) {
             flushBlocks();
             continue;
         }
+        const writingToken = line.match(/^__MI_WRITING_BLOCK_(\d+)__$/);
+        if (writingToken) {
+            flushBlocks();
+            const artifact = writingArtifacts[Number(writingToken[1])];
+            if (artifact) output.push(renderWritingBlock(artifact.content, artifact.label));
+            continue;
+        }
         const heading = line.match(/^(#{1,6})\s+(.+)$/);
         if (heading) {
             flushBlocks();
@@ -337,6 +393,67 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
         });
     });
 }
+(function () {
+    "use strict";
+    if (window.__MI_WRITING_CONTROLS_BOUND__) return;
+    window.__MI_WRITING_CONTROLS_BOUND__ = true;
+    const timers = new WeakMap();
+    const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    const checkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12 4 4L19 6"></path></svg>';
+    const textOf = block => String(window.MIWritingState?.[block.dataset.writingId] || block.querySelector('.mi-writing-content')?.innerText || '').trim();
+    const setCopyState = (button, success) => { button.innerHTML = success ? checkIcon : 'Copy'; button.dataset.copyState = success ? 'success' : 'idle'; button.setAttribute('aria-label', success ? 'Writing copied' : 'Copy writing'); button.setAttribute('title', success ? 'Writing copied' : 'Copy writing'); };
+    const copy = async button => {
+        const block = button.closest('.mi-writing-block');
+        const text = textOf(block);
+        if (!text) return;
+        const timer = timers.get(button);
+        if (timer) clearTimeout(timer);
+        try {
+            if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+            await navigator.clipboard.writeText(text);
+            setCopyState(button, true);
+            timers.set(button, setTimeout(() => { if (button.isConnected) setCopyState(button, false); }, 3000));
+        } catch (_) {
+            setCopyState(button, false);
+            if (typeof showShareFeedback === 'function') showShareFeedback('Copy failed.');
+        }
+    };
+    document.addEventListener('click', event => {
+        const copyButton = event.target.closest?.('.mi-writing-copy');
+        if (copyButton) { event.preventDefault(); copy(copyButton); return; }
+        const editButton = event.target.closest?.('.mi-writing-edit');
+        if (editButton) {
+            const block = editButton.closest('.mi-writing-block');
+            const content = textOf(block);
+            window.MIWritingState[block.dataset.writingId] = content;
+            block.classList.add('mi-writing-editing');
+            block.querySelector('.mi-writing-content').outerHTML = '<textarea class="mi-writing-editor" aria-label="Edit writing"></textarea>';
+            block.querySelector('.mi-writing-editor').value = content;
+            block.querySelector('.mi-writing-controls').innerHTML = '<button type="button" class="mi-writing-save" aria-label="Save writing">Save</button><button type="button" class="mi-writing-cancel" aria-label="Cancel editing">Cancel</button>';
+            block.querySelector('.mi-writing-editor').focus();
+            return;
+        }
+        const saveButton = event.target.closest?.('.mi-writing-save');
+        if (saveButton) {
+            const block = saveButton.closest('.mi-writing-block');
+            const editor = block.querySelector('.mi-writing-editor');
+            window.MIWritingState[block.dataset.writingId] = editor.value;
+            block.classList.remove('mi-writing-editing');
+            block.querySelector('.mi-writing-editor').outerHTML = '<div class="mi-writing-content"></div>';
+            block.querySelector('.mi-writing-content').textContent = editor.value;
+            block.querySelector('.mi-writing-controls').innerHTML = '<button type="button" class="mi-writing-edit" aria-label="Edit writing">Edit</button><button type="button" class="mi-writing-copy" data-copy-state="idle" aria-label="Copy writing">Copy</button>';
+            return;
+        }
+        const cancelButton = event.target.closest?.('.mi-writing-cancel');
+        if (cancelButton) {
+            const block = cancelButton.closest('.mi-writing-block');
+            block.classList.remove('mi-writing-editing');
+            block.querySelector('.mi-writing-editor').outerHTML = '<div class="mi-writing-content"></div>';
+            block.querySelector('.mi-writing-content').textContent = window.MIWritingState[block.dataset.writingId] || '';
+            block.querySelector('.mi-writing-controls').innerHTML = '<button type="button" class="mi-writing-edit" aria-label="Edit writing">Edit</button><button type="button" class="mi-writing-copy" data-copy-state="idle" aria-label="Copy writing">Copy</button>';
+        }
+    });
+})();
 (function () {
     "use strict";
 
@@ -476,6 +593,8 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
 #miProfileBackdrop.mi-open{display:grid}#miProfilePanel{width:min(440px,100%);max-height:min(88vh,680px);overflow:auto;padding:24px;border:1px solid rgba(125,211,252,.3);border-radius:22px;background:linear-gradient(145deg,rgba(30,41,59,.98),rgba(15,23,42,.98));color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.48)}
 .mi-profile-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}.mi-profile-head h2{margin:0;font-size:22px}.mi-profile-close{width:38px!important;min-width:38px!important;height:38px!important;padding:0!important;border-radius:50%!important}
 .mi-profile-avatar{width:112px;height:112px;margin:0 auto 12px}.mi-profile-avatar button{width:100%;height:100%;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}.mi-profile-avatar .mi-account-avatar{width:100%;height:100%;font-size:30px}.mi-profile-details{display:grid;gap:12px;margin-top:20px}.mi-profile-detail{display:grid;gap:4px;padding:11px 12px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.05)}.mi-profile-detail small{color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.1em}.mi-profile-detail strong{overflow-wrap:anywhere}.mi-profile-upload{display:block;width:100%;margin-top:14px;padding:11px 14px;border:1px solid rgba(125,211,252,.35);border-radius:12px;background:rgba(56,189,248,.12);color:#e0f2fe;text-align:center;font-weight:750;cursor:pointer}.mi-profile-upload input{display:none}.mi-profile-error{min-height:18px;margin-top:8px;color:#fda4af;font-size:12px}.mi-profile-note{margin:14px 0 0;color:#94a3b8;font-size:12px;line-height:1.5}
+.mi-writing-block{margin:18px 0;border:1px solid rgba(125,211,252,.24);border-radius:16px;background:linear-gradient(145deg,rgba(30,41,59,.78),rgba(15,23,42,.62));overflow:hidden;box-shadow:0 12px 30px rgba(2,8,23,.18)}.mi-writing-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:#bae6fd}.mi-writing-header strong{font-size:12px;letter-spacing:.08em;text-transform:uppercase}.mi-writing-controls{display:flex;gap:6px}.mi-writing-controls button{min-height:30px;margin:0;padding:5px 9px;border:1px solid rgba(125,211,252,.28);border-radius:8px;background:rgba(56,189,248,.1);color:#e0f2fe;font-size:12px;font-weight:750;cursor:pointer}.mi-writing-controls button:hover,.mi-writing-controls button:focus-visible{background:rgba(56,189,248,.22);border-color:#7dd3fc}.mi-writing-content{padding:16px;line-height:1.7;overflow-wrap:anywhere}.mi-writing-editor{display:block;width:100%;min-height:300px;resize:vertical;padding:16px;border:0;border-radius:0;background:rgba(2,6,23,.35);color:inherit;font:inherit;line-height:1.7;white-space:pre-wrap;outline:none}.mi-writing-block.mi-writing-editing .mi-writing-header{background:rgba(56,189,248,.08)}
+body.cortex-light-theme .mi-writing-block{background:rgba(255,255,255,.86);border-color:rgba(15,23,42,.16)}body.cortex-light-theme .mi-writing-header{color:#0f4c81;border-color:rgba(15,23,42,.12)}body.cortex-light-theme .mi-writing-controls button{color:#0f172a;background:rgba(14,165,233,.1)}
 body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{background:rgba(248,250,252,.98);color:#0f172a;border-color:rgba(15,23,42,.16)}body.cortex-light-theme #miAccountMenu button{color:#0f172a}
 @media(max-width:600px){#miProfileBackdrop{padding:10px}#miProfilePanel{padding:18px;border-radius:18px}.mi-profile-avatar{width:96px;height:96px}}
 </style>
