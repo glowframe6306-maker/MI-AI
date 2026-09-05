@@ -7182,7 +7182,7 @@ body.mi-shared-single-chat #miSharedSingleChatBadge {
 .mi-chat-item-shell{position:relative;display:flex;align-items:center;gap:6px;min-width:0}
 .mi-chat-item-label{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mi-chat-pinned-badge{flex:0 0 auto;padding:2px 6px;border:1px solid rgba(125,211,252,.28);border-radius:5px;color:#bae6fd;font-size:9px;font-weight:800;letter-spacing:.08em}
-.mi-chat-more-button{flex:0 0 32px;width:32px;height:32px;margin:0;padding:0;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:rgba(255,255,255,.08);color:inherit;font-size:18px;line-height:1;cursor:pointer}
+.mi-chat-more-button{display:inline-flex!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:4!important;flex:0 0 32px!important;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;max-height:32px!important;margin:0!important;padding:0!important;border:1px solid rgba(255,255,255,.24)!important;border-radius:9px!important;background:rgba(255,255,255,.12)!important;color:#fff!important;font-size:18px!important;line-height:1!important;align-items:center!important;justify-content:center!important;cursor:pointer!important;pointer-events:auto!important;transform:none!important}
 .mi-chat-inline-name{min-width:0;width:100%;padding:5px 7px;border:1px solid rgba(125,211,252,.45);border-radius:7px;background:rgba(2,6,23,.35);color:inherit;font:inherit}
 .mi-chat-more-menu{position:fixed;z-index:20000;min-width:150px;padding:5px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(15,23,42,.98);box-shadow:0 16px 40px rgba(0,0,0,.35)}
 .mi-chat-more-menu button{display:block;width:100%;margin:0;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:#e2e8f0;text-align:left;cursor:pointer}
@@ -15457,7 +15457,7 @@ function renderList(){
         more.className = 'mi-chat-more-button';
         more.setAttribute('aria-label', 'More chat actions');
         more.title = 'More';
-        more.textContent = '...';
+        more.textContent = '⋯';
         more.addEventListener('click', event => { event.stopPropagation(); openChatMoreMenu(id, more); });
         shell.appendChild(more);
         item.appendChild(shell);
