@@ -13,6 +13,14 @@ except ImportError:
 
 
 import os
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
+if load_dotenv:
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+
 # ---------------------------------------------------------------------------
 # CORTEX CORE AI authoritative Chief Owner configuration
 # ---------------------------------------------------------------------------

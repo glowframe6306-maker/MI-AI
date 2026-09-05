@@ -17156,9 +17156,15 @@ function customerSupport() {
                 response = await fetch(customerServiceEndpoint("/api/customer-service/reports"), { method: "POST", headers: { Authorization: "Bearer " + authToken }, body: data });
             }
             const payload = await response.json().catch(() => ({}));
+            console.info("REPORT SUBMIT STATUS:", response.status);
+            console.info("REPORT SUBMIT RESPONSE:", payload);
+            if (response.status === 401 || response.status === 403) throw new Error("Your session has expired. Please sign in again.");
+            if (response.status === 400 || response.status === 422) throw new Error(payload.message || payload.error || "Please check the required report fields.");
+            if (response.status === 404) throw new Error("Customer Service report endpoint was not found.");
+            if (response.status >= 500) throw new Error("The Customer Service server is temporarily unavailable.");
             if (!response.ok || !payload.success) throw new Error(payload.message || "Submission failed.");
             if (appointment) { const data = Object.fromEntries(new FormData(form).entries()); showSuccess(true, { ...payload, preferred_date: data.preferred_date, preferred_time: data.preferred_time, chat_with: data.chat_with, chat_in: data.chat_in }); } else showSuccess(false, payload);
-        } catch (error) { status.textContent = error.message || "Submission failed. Please try again."; box.dataset.submitting = "false"; button.disabled = false; }
+        } catch (error) { console.error("REPORT SUBMIT ERROR:", error); status.textContent = error.message || "Submission failed. Please try again."; box.dataset.submitting = "false"; button.disabled = false; }
     };
     box.addEventListener("click", event => { const action = event.target.closest("[data-cs-action]")?.dataset.csAction; if (!action) return; if (action === "close") box.remove(); if (action === "back") { box.dataset.submitting = "false"; setView("home"); } if (action === "report") setView("report"); if (action === "appointment") setView("appointment"); });
     box.addEventListener("submit", event => { event.preventDefault(); submit(event.target); });
