@@ -581,7 +581,6 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
 
 <style id="miAccountProfileStyles">
 #miAccountSection{position:relative;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
-#loginBox{display:none!important}
 #miAccountButton{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.06);color:inherit;text-align:left;cursor:pointer}
 #miAccountButton:hover,#miAccountButton[aria-expanded="true"]{background:rgba(255,255,255,.12);border-color:rgba(125,211,252,.42)}
 .mi-account-avatar{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#2563eb);color:#fff;font-size:13px;font-weight:800}
@@ -598,6 +597,12 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
 body.cortex-light-theme .mi-writing-block{background:rgba(255,255,255,.86);border-color:rgba(15,23,42,.16)}body.cortex-light-theme .mi-writing-header{color:#0f4c81;border-color:rgba(15,23,42,.12)}body.cortex-light-theme .mi-writing-controls button{color:#0f172a;background:rgba(14,165,233,.1)}
 body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{background:rgba(248,250,252,.98);color:#0f172a;border-color:rgba(15,23,42,.16)}body.cortex-light-theme #miAccountMenu button{color:#0f172a}
 @media(max-width:600px){#miProfileBackdrop{padding:10px}#miProfilePanel{padding:18px;border-radius:18px}.mi-profile-avatar{width:96px;height:96px}}
+#loginBtn{display:inline-flex!important;align-items:center;justify-content:center;min-height:38px;margin:0;padding:8px 14px;border:1px solid rgba(125,211,252,.36);border-radius:999px;background:rgba(56,189,248,.14);color:#e0f2fe;cursor:pointer}
+.mi-settings-nav{display:flex;flex-direction:column;gap:4px;padding:18px 12px;border-right:1px solid rgba(148,163,184,.14);background:rgba(2,8,23,.24)}.mi-settings-nav button{display:flex;align-items:center;gap:9px;width:100%;min-height:42px;margin:0;padding:9px 11px;border:1px solid transparent;border-radius:9px;background:transparent;color:#aebdd0;text-align:left;cursor:pointer}.mi-settings-nav button:hover,.mi-settings-nav button[aria-selected="true"]{background:rgba(56,189,248,.14);border-color:rgba(125,211,252,.32);color:#fff}.mi-settings-nav-icon{width:20px;text-align:center}.mi-settings-layout{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:0;flex:1}.mi-settings-content{min-width:0;min-height:0;overflow:auto;padding:18px 22px 28px;overscroll-behavior:contain}.mi-settings-content>.cortex-settings-group{display:none}.mi-settings-content>.cortex-settings-group.mi-settings-active{display:block}.mi-settings-mobile-select{display:none}
+#settingsPanel.mi-settings-large-ready #cortexSettingsSections{grid-template-columns:240px minmax(0,1fr)!important}.mi-settings-large-ready #cortexSettingsSections:before{display:none!important}.mi-settings-large-ready #cortexSettingsSections>.mi-settings-nav{grid-column:1!important;grid-row:1!important}.mi-settings-large-ready #cortexSettingsSections>.cortex-settings-group{grid-column:2!important}
+#settingsPanel{width:min(94vw,1180px)!important;height:min(90vh,820px)!important;max-height:90vh!important;display:none!important;overflow:hidden!important;padding:0!important;border-radius:24px!important;transform:translate(-50%,-48%) scale(.98)!important}.mi-settings-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:22px 24px 16px;border-bottom:1px solid rgba(148,163,184,.14)}.mi-settings-modal-head h3{margin:4px 0 5px!important}.mi-settings-modal-head p{margin:0;color:#91a1b8;font-size:12px}.mi-settings-modal-head .cortex-settings-kicker{color:#7dd3fc;font-size:10px;font-weight:800;letter-spacing:.18em}.mi-settings-modal-head button{flex:0 0 auto}.mi-settings-large-ready{display:flex!important;flex-direction:column!important;opacity:1!important;transform:translate(-50%,-50%) scale(1)!important;animation:miSettingsOpen 220ms cubic-bezier(.2,.8,.2,1)}
+#settingsPanel.mi-settings-large-ready #cortexSettingsSections{display:contents}.mi-settings-large-ready .cortex-settings-heading{display:none}.mi-settings-large-ready #cortexSettingsStatus{padding:0 24px 10px}.mi-settings-large-ready #cortexSettingsSections{flex:1;min-height:0;overflow:hidden;padding:0!important;max-height:none!important;display:grid!important;grid-template-columns:240px minmax(0,1fr);gap:0}.mi-settings-large-ready #cortexSettingsSections>.cortex-settings-group{grid-column:2;display:none;min-width:0;overflow:auto;margin:0;padding:20px 24px 30px;border:0;border-radius:0;background:transparent}.mi-settings-large-ready #cortexSettingsSections>.cortex-settings-group.mi-settings-active{display:block}.mi-settings-large-ready #cortexSettingsSections:before{content:"";grid-column:1;grid-row:1;display:block;background:rgba(2,8,23,.24);border-right:1px solid rgba(148,163,184,.14)}
+@media(max-width:720px){#settingsPanel{width:calc(100vw - 20px)!important;height:calc(100dvh - 24px)!important;max-height:calc(100dvh - 24px)!important}.mi-settings-large-ready #cortexSettingsSections{display:flex!important;flex-direction:column;overflow:hidden}.mi-settings-large-ready #cortexSettingsSections:before{display:none}.mi-settings-nav{display:none}.mi-settings-mobile-select{display:block;margin:12px 16px 0;width:calc(100% - 32px);min-height:44px;padding:9px;border:1px solid rgba(125,211,252,.28);border-radius:10px;background:#0b1424;color:#e0f2fe}.mi-settings-large-ready #cortexSettingsSections>.cortex-settings-group{padding:16px;flex:1;overflow:auto}.mi-settings-large-ready #cortexSettingsSections>.cortex-settings-group.mi-settings-active{display:block}}
 </style>
 
 <script id="miAccountProfileController">
@@ -13111,10 +13116,15 @@ textarea:disabled,
   <span>CORTEX CORE AI</span>
   <div class="headerActions">
     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
+        <button id="loginBtn" onclick="openLogin()" type="button">&#128274; Login</button>
   </div>
 </div>
 
-<div id="loginBox" hidden aria-hidden="true"></div>
+<div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
+    <div style="display:flex;gap:6px;margin-bottom:18px;"><button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;">Sign In</button><button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;">Register</button></div>
+    <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
+    <div id="authForm"></div>
+</div>
 
 <div id="authReminder" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.08);padding:12px 16px;border-radius:16px;color:#f8fafc;z-index:999;max-width:90vw;text-align:center;font-size:13px;"></div>
 
@@ -16639,7 +16649,11 @@ location.href="https://wa.me/94756390621";
 }
 
 function openLogin(){
-    return false;
+    const box = document.getElementById('loginBox');
+    if (!box) return;
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    if (box.style.display === 'block') setAuthMode(authMode);
+    closeMobileMenu();
 }
 
 function toggleMobileMenu() {
@@ -41716,6 +41730,91 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 </body>
 </html>
+
+<script id="cortex-large-settings-controller">
+(function () {
+    "use strict";
+    if (window.__cortexLargeSettingsController) return;
+    window.__cortexLargeSettingsController = true;
+
+    const categories = [
+        ["General", "⚙", [0, 1, 2, 3, 4]],
+        ["Notifications", "🔔", [5]],
+        ["Personalization", "🎨", [6]],
+        ["Plugins", "🧩", [7]],
+        ["Voice", "🎙", [8]],
+        ["Usage", "📊", [9]],
+        ["Analytics", "📈", [10]],
+        ["Data Controls", "🛡", [11]],
+        ["Storage", "💾", [12]],
+        ["Safety", "🛡", [13]],
+        ["Security & Login", "🔐", [14]]
+    ];
+    let prepared = false;
+    let originalToggle = null;
+    let originalClose = null;
+
+    function prepare() {
+        const panel = document.getElementById("settingsPanel");
+        const sections = document.getElementById("cortexSettingsSections");
+        if (!panel || !sections || prepared) return;
+        prepared = true;
+        const compact = window.innerWidth <= 720;
+        panel.style.setProperty("width", compact ? "calc(100vw - 20px)" : "min(94vw, 1180px)", "important");
+        panel.style.setProperty("height", compact ? "calc(100dvh - 24px)" : "min(90vh, 820px)", "important");
+        panel.style.setProperty("max-height", compact ? "calc(100dvh - 24px)" : "90vh", "important");
+        document.getElementById("settingsCloseBtn")?.style.setProperty("display", "none", "important");
+        const heading = document.querySelector(".cortex-settings-heading");
+        if (heading) {
+            heading.style.setProperty("display", "none", "important");
+            const largeHeading = document.createElement("div");
+            largeHeading.className = "mi-settings-modal-head";
+            largeHeading.innerHTML = '<div><span class="cortex-settings-kicker">CORTEX CONTROL</span><h3>Settings</h3><p>Manage your workspace, privacy, personalization, and account preferences.</p></div><button type="button" aria-label="Close Settings" id="miLargeSettingsClose">&#10005;</button>';
+            heading.parentNode.insertBefore(largeHeading, heading);
+            largeHeading.querySelector("#miLargeSettingsClose").addEventListener("click", () => window.closeSettings?.());
+        }
+        const groups = Array.from(sections.querySelectorAll(":scope > .cortex-settings-group"));
+        const nav = document.createElement("nav");
+        nav.className = "mi-settings-nav";
+        nav.setAttribute("aria-label", "Settings sections");
+        categories.forEach(([label, icon, indexes], categoryIndex) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.categoryIndex = String(categoryIndex);
+            button.setAttribute("aria-selected", categoryIndex === 0 ? "true" : "false");
+            button.innerHTML = '<span class="mi-settings-nav-icon" aria-hidden="true">' + icon + '</span><span>' + label + '</span>';
+            button.addEventListener("click", () => selectCategory(categoryIndex));
+            nav.appendChild(button);
+            indexes.forEach(index => groups[index]?.classList.add("mi-settings-category-" + categoryIndex));
+        });
+        sections.prepend(nav);
+        const select = document.createElement("select");
+        select.className = "mi-settings-mobile-select";
+        select.setAttribute("aria-label", "Settings section");
+        categories.forEach(([label], index) => { const option = document.createElement("option"); option.value = String(index); option.textContent = label; select.appendChild(option); });
+        select.addEventListener("change", () => selectCategory(Number(select.value)));
+        sections.prepend(select);
+        selectCategory(0);
+
+        originalToggle = window.toggleSettings;
+        originalClose = window.closeSettings;
+        window.toggleSettings = function () { prepare(); panel.classList.add("mi-settings-large-ready"); originalToggle?.(); requestAnimationFrame(() => panel.classList.add("mi-settings-large-ready")); };
+        window.closeSettings = function () { panel.classList.remove("mi-settings-large-ready"); originalClose?.(); };
+    }
+
+    function selectCategory(index) {
+        const sections = document.getElementById("cortexSettingsSections");
+        if (!sections) return;
+        sections.querySelectorAll(".cortex-settings-group").forEach(group => group.classList.toggle("mi-settings-active", group.classList.contains("mi-settings-category-" + index)));
+        sections.querySelectorAll(".mi-settings-nav button").forEach(button => button.setAttribute("aria-selected", button.dataset.categoryIndex === String(index) ? "true" : "false"));
+        const select = sections.querySelector(".mi-settings-mobile-select");
+        if (select) select.value = String(index);
+    }
+
+    function start() { prepare(); }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true }); else start();
+})();
+</script>
 
 
 
