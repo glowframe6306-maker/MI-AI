@@ -461,6 +461,171 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
     window.setTimeout(releaseBusyState, 3000);
 })();
 </script>
+
+<style id="miAccountProfileStyles">
+#miAccountSection{position:relative;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
+#loginBox{display:none!important}
+#miAccountButton{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(255,255,255,.06);color:inherit;text-align:left;cursor:pointer}
+#miAccountButton:hover,#miAccountButton[aria-expanded="true"]{background:rgba(255,255,255,.12);border-color:rgba(125,211,252,.42)}
+.mi-account-avatar{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#2563eb);color:#fff;font-size:13px;font-weight:800}
+.mi-account-avatar img{width:100%;height:100%;object-fit:cover;object-position:center}
+.mi-account-copy{min-width:0;display:grid;gap:2px;flex:1}.mi-account-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:750}.mi-account-type{font-size:10px;letter-spacing:.12em;color:#93c5fd;font-weight:800}
+#miAccountMenu{position:absolute;left:0;right:0;bottom:calc(100% + 8px);z-index:16000;padding:8px;border:1px solid rgba(255,255,255,.18);border-radius:15px;background:rgba(15,23,42,.98);box-shadow:0 18px 44px rgba(0,0,0,.38);display:none}
+#miAccountMenu.mi-open{display:grid;gap:4px}#miAccountMenu button{width:100%;min-height:42px;padding:9px 10px;border:0;border-radius:10px;background:transparent;color:#e2e8f0;text-align:left;cursor:pointer}#miAccountMenu button:hover{background:rgba(125,211,252,.14)}
+#miProfileBackdrop{position:fixed;inset:0;z-index:17000;display:none;place-items:center;padding:16px;background:rgba(2,6,23,.62);backdrop-filter:blur(14px)}
+#miProfileBackdrop.mi-open{display:grid}#miProfilePanel{width:min(440px,100%);max-height:min(88vh,680px);overflow:auto;padding:24px;border:1px solid rgba(125,211,252,.3);border-radius:22px;background:linear-gradient(145deg,rgba(30,41,59,.98),rgba(15,23,42,.98));color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.48)}
+.mi-profile-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}.mi-profile-head h2{margin:0;font-size:22px}.mi-profile-close{width:38px!important;min-width:38px!important;height:38px!important;padding:0!important;border-radius:50%!important}
+.mi-profile-avatar{width:112px;height:112px;margin:0 auto 12px}.mi-profile-avatar button{width:100%;height:100%;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}.mi-profile-avatar .mi-account-avatar{width:100%;height:100%;font-size:30px}.mi-profile-details{display:grid;gap:12px;margin-top:20px}.mi-profile-detail{display:grid;gap:4px;padding:11px 12px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.05)}.mi-profile-detail small{color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.1em}.mi-profile-detail strong{overflow-wrap:anywhere}.mi-profile-upload{display:block;width:100%;margin-top:14px;padding:11px 14px;border:1px solid rgba(125,211,252,.35);border-radius:12px;background:rgba(56,189,248,.12);color:#e0f2fe;text-align:center;font-weight:750;cursor:pointer}.mi-profile-upload input{display:none}.mi-profile-error{min-height:18px;margin-top:8px;color:#fda4af;font-size:12px}.mi-profile-note{margin:14px 0 0;color:#94a3b8;font-size:12px;line-height:1.5}
+body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{background:rgba(248,250,252,.98);color:#0f172a;border-color:rgba(15,23,42,.16)}body.cortex-light-theme #miAccountMenu button{color:#0f172a}
+@media(max-width:600px){#miProfileBackdrop{padding:10px}#miProfilePanel{padding:18px;border-radius:18px}.mi-profile-avatar{width:96px;height:96px}}
+</style>
+
+<script id="miAccountProfileController">
+(function () {
+    "use strict";
+
+    if (window.__miAccountProfileControllerLoaded) return;
+    window.__miAccountProfileControllerLoaded = true;
+
+    const IMAGE_PREFIX = "mi_profile_picture_v2:";
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+    let profile = { name: "Guest", email: "", accountType: "FREE", profilePicture: "", uid: "" };
+    let activeFileInput = null;
+
+    function currentUser() {
+        return window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser || null;
+    }
+
+    function storageKey(uid) { return uid ? IMAGE_PREFIX + uid : null; }
+
+    function initials(name) {
+        const words = String(name || "Guest").trim().split(/\s+/).filter(Boolean);
+        return (words.slice(0, 2).map((word) => word[0]).join("") || "G").toUpperCase();
+    }
+
+    function escapeHtml(value) {
+        return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function readProfile() {
+        const user = currentUser();
+        const uid = String(user?.uid || localStorage.getItem("mi_user_id") || "");
+        const storedImage = storageKey(uid) ? localStorage.getItem(storageKey(uid)) || "" : "";
+        const storedType = String(user?.customClaims?.accountType || user?.accountType || "FREE").toUpperCase();
+        profile = {
+            uid,
+            name: String(user?.displayName || localStorage.getItem("mi_profile_name_" + String(user?.email || "").toLowerCase()) || "Guest").trim() || "Guest",
+            email: String(user?.email || localStorage.getItem("mi_user_email") || "").trim(),
+            accountType: ["FREE", "PRO", "PLUS"].includes(storedType) ? storedType : "FREE",
+            profilePicture: storedImage
+        };
+        return profile;
+    }
+
+    function avatarMarkup(sizeClass) {
+        return profile.profilePicture
+            ? '<span class="mi-account-avatar ' + sizeClass + '"><img src="' + escapeHtml(profile.profilePicture) + '" alt=""></span>'
+            : '<span class="mi-account-avatar ' + sizeClass + '" aria-hidden="true">' + escapeHtml(initials(profile.name)) + '</span>';
+    }
+
+    function ensureProfileUi() {
+        const mount = document.getElementById("miAccountSection");
+        if (!mount) return;
+        let button = document.getElementById("miAccountButton");
+        let menu = document.getElementById("miAccountMenu");
+        if (!button) {
+            button = document.createElement("button");
+            button.id = "miAccountButton";
+            button.type = "button";
+            button.setAttribute("aria-haspopup", "menu");
+            button.setAttribute("aria-expanded", "false");
+            mount.appendChild(button);
+        }
+        if (!menu) {
+            menu = document.createElement("div");
+            menu.id = "miAccountMenu";
+            menu.setAttribute("role", "menu");
+            menu.innerHTML = '<button type="button" data-account-action="profile" role="menuitem">Profile</button><button type="button" data-account-action="settings" role="menuitem">Settings</button>';
+            mount.appendChild(menu);
+            menu.addEventListener("click", function (event) {
+                const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
+                if (action === "profile") openProfile();
+                if (action === "settings") { closeMenu(); if (typeof window.toggleSettings === "function") window.toggleSettings(); }
+            });
+        }
+        button.innerHTML = avatarMarkup("") + '<span class="mi-account-copy"><span class="mi-account-name">' + escapeHtml(profile.name) + '</span><span class="mi-account-type">' + escapeHtml(profile.accountType) + '</span></span><span aria-hidden="true">&#8942;</span>';
+        button.setAttribute("aria-label", "Open account menu for " + profile.name);
+        if (!button.dataset.miBound) {
+            button.dataset.miBound = "true";
+            button.addEventListener("click", function () { const open = menu.classList.toggle("mi-open"); button.setAttribute("aria-expanded", open ? "true" : "false"); });
+        }
+    }
+
+    function closeMenu() {
+        const menu = document.getElementById("miAccountMenu");
+        const button = document.getElementById("miAccountButton");
+        menu?.classList.remove("mi-open");
+        button?.setAttribute("aria-expanded", "false");
+    }
+
+    function closeProfile() { document.getElementById("miProfileBackdrop")?.classList.remove("mi-open"); }
+
+    function profileDetails() {
+        return '<div class="mi-profile-detail"><small>Name</small><strong>' + escapeHtml(profile.name) + '</strong></div>' +
+            '<div class="mi-profile-detail"><small>Email</small><strong>' + escapeHtml(profile.email || "Not signed in") + '</strong></div>' +
+            '<div class="mi-profile-detail"><small>Account type</small><strong>' + escapeHtml(profile.accountType) + '</strong></div>';
+    }
+
+    function openProfile() {
+        closeMenu();
+        let backdrop = document.getElementById("miProfileBackdrop");
+        if (!backdrop) {
+            backdrop = document.createElement("div");
+            backdrop.id = "miProfileBackdrop";
+            backdrop.setAttribute("role", "dialog");
+            backdrop.setAttribute("aria-modal", "true");
+            backdrop.innerHTML = '<section id="miProfilePanel"><div class="mi-profile-head"><h2>Profile</h2><button type="button" class="mi-profile-close" aria-label="Close profile">&#10005;</button></div><div class="mi-profile-avatar" id="miProfileAvatar"></div><label class="mi-profile-upload">Change profile picture<input id="miProfilePictureInput" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="mi-profile-error" id="miProfileError" role="alert"></div><div class="mi-profile-details" id="miProfileDetails"></div><p class="mi-profile-note">Your profile picture is stored locally for this account on this device.</p></section>';
+            document.body.appendChild(backdrop);
+            backdrop.addEventListener("click", function (event) { if (event.target === backdrop) closeProfile(); });
+            backdrop.querySelector(".mi-profile-close").addEventListener("click", closeProfile);
+            backdrop.querySelector("#miProfilePictureInput").addEventListener("change", handleImageSelection);
+        }
+        backdrop.querySelector("#miProfileAvatar").innerHTML = avatarMarkup("mi-profile-avatar");
+        backdrop.querySelector("#miProfileDetails").innerHTML = profileDetails();
+        backdrop.querySelector("#miProfileError").textContent = "";
+        backdrop.classList.add("mi-open");
+    }
+
+    async function handleImageSelection(event) {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        const error = document.getElementById("miProfileError");
+        if (!file) return;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > MAX_IMAGE_BYTES) { if (error) error.textContent = "Choose a JPG, PNG, or WEBP image under 5 MB."; return; }
+        try {
+            const url = URL.createObjectURL(file);
+            const image = new Image();
+            await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = url; });
+            URL.revokeObjectURL(url);
+            const reader = new FileReader();
+            reader.onload = function () { profile.profilePicture = String(reader.result || ""); if (profile.uid) localStorage.setItem(storageKey(profile.uid), profile.profilePicture); render(); };
+            reader.readAsDataURL(file);
+        } catch (_) { if (error) error.textContent = "That image could not be read. Please choose another file."; }
+    }
+
+    function render() { readProfile(); ensureProfileUi(); const avatar = document.getElementById("miProfileAvatar"); if (avatar) avatar.innerHTML = avatarMarkup("mi-profile-avatar"); const details = document.getElementById("miProfileDetails"); if (details) details.innerHTML = profileDetails(); }
+
+    document.addEventListener("click", function (event) { if (!event.target.closest("#miAccountSection")) closeMenu(); });
+    document.addEventListener("keydown", function (event) { if (event.key === "Escape") { closeMenu(); closeProfile(); } });
+    window.addEventListener("mi-firebase-auth-changed", render);
+    window.addEventListener("mi-chat-user-changed", render);
+    window.addEventListener("mi-language-applied", render);
+    window.MIAccountProfile = { render: render, open: openProfile, close: closeProfile };
+
+    function start() { render(); setTimeout(render, 300); setTimeout(render, 1200); }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true }); else start();
+})();
+</script>
 <style id="cortex-settings-center-style">
 :root { --cortex-accent:#1e88e5; --cortex-accent-rgb:30,136,229; --cortex-panel:#0b1220; --cortex-panel-2:#111c2e; }
 #settingsPanel { color:#e8eef8; background:linear-gradient(145deg,rgba(13,22,38,.97),rgba(5,11,22,.98)) !important; border:1px solid rgba(var(--cortex-accent-rgb),.38) !important; box-shadow:0 30px 90px rgba(0,0,0,.58),0 0 55px rgba(var(--cortex-accent-rgb),.14) !important; overflow:visible !important; }
@@ -12746,6 +12911,8 @@ textarea:disabled,
 
 <div id="chatList"></div>
 
+<div id="miAccountSection" aria-live="polite"></div>
+
 </div>   <!-- CLOSE SIDEBAR -->
 
 <!-- MAIN -->
@@ -12756,19 +12923,10 @@ textarea:disabled,
   <span>CORTEX CORE AI</span>
   <div class="headerActions">
     <div id="approvalAlert" onclick="showApprovalRequestsPanel()" style="display:none;background:#ef4444;color:#fff;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(239,68,68,0.24);">Alert</div>
-    <button id="loginBtn" onclick="openLogin()" type="button">&#128274; Login</button>
-    <button id="logoutBtn" onclick="openProfilePanel()" style="display:none;">&#10162; Logout</button>
   </div>
 </div>
 
-<div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
-  <div style="display:flex;gap:6px;margin-bottom:18px;">
-    <button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:#1e40af;color:#fff;font-weight:700;">&#128274; Login</button>
-    <button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;padding:10px 12px;border:none;border-radius:12px;background:rgba(255,255,255,0.08);color:#cbd5e1;font-weight:700;">Register</button>
-  </div>
-  <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
-  <div id="authForm"></div>
-</div>
+<div id="loginBox" hidden aria-hidden="true"></div>
 
 <div id="authReminder" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.08);padding:12px 16px;border-radius:16px;color:#f8fafc;z-index:999;max-width:90vw;text-align:center;font-size:13px;"></div>
 
@@ -13440,40 +13598,7 @@ function shouldShowLoginPrompt(chatId) {
 }
 
 function showLoginPrompt(chatId) {
-    if (!chatId || !shouldShowLoginPrompt(chatId)) return;
-    removeLoginPrompt();
-
-    const box = document.createElement('div');
-    box.style.position = 'fixed';
-    box.style.top = '50%';
-    box.style.left = '50%';
-    box.style.transform = 'translate(-50%, -50%)';
-    box.style.zIndex = '9999';
-    box.style.width = 'min(92vw, 360px)';
-    box.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98))';
-    box.style.border = '1px solid rgba(255,255,255,0.14)';
-    box.style.borderRadius = '18px';
-    box.style.padding = '18px 18px 16px';
-    box.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.35)';
-    box.style.color = '#f8fafc';
-
-    box.innerHTML = `
-      <button type="button" onclick="dismissLoginPrompt('${chatId}')" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">├ó┼ôΓÇó</button>
-      <div style="font-size:16px;font-weight:700;margin-bottom:10px;text-align:center;">${t('auth.loginPrompt.title', 'Login to unlock more')}</div>
-      <div style="font-size:13px;line-height:1.5;color:#cbd5e1;text-align:center;margin-bottom:12px;">${t('auth.loginPrompt.description', 'Enjoy these benefits when you sign in:')}</div>
-      <ul style="margin:0 0 12px 18px;padding:0;font-size:13px;line-height:1.7;color:#e2e8f0;">
-        <li>${t('auth.loginPrompt.benefitSave', 'Save and restore your chats')}</li>
-        <li>${t('auth.loginPrompt.benefitSync', 'Sync your history across devices')}</li>
-        <li>${t('auth.loginPrompt.benefitPersonal', 'Get faster, more personal replies')}</li>
-      </ul>
-      <div style="display:flex;justify-content:center;">
-        <button type="button" onclick="dismissLoginPrompt('${chatId}'); openLogin();" style="padding:8px 12px;border:none;border-radius:999px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 8px 18px rgba(30,136,229,0.2);">├░┼╕ΓÇ¥ΓÇÖ Login</button>
-      </div>
-    `;
-
-    document.body.appendChild(box);
-    loginPromptBox = box;
-    markLoginPromptShown(chatId);
+        return false;
 }
 
 function maybeShowLoginPrompt(chatId) {
@@ -13635,7 +13760,6 @@ function openProfilePanel() {
       </div>
       <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;display:flex;flex-direction:column;gap:10px;">
         <button type="button" onclick="saveProfileAndStay()" style="padding:10px 12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e88e5,#38bdf8);color:#fff;font-weight:700;cursor:pointer;">Save changes</button>
-        <button type="button" onclick="confirmLogout()" style="padding:10px 12px;border:none;border-radius:12px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">Logout</button>
         <button type="button" onclick="confirmDeleteAccountData()" style="padding:10px 12px;border:1px solid rgba(248,113,113,0.55);border-radius:12px;background:transparent;color:#fecaca;font-weight:700;cursor:pointer;">Delete account data</button>
       </div>
     `;
@@ -13656,16 +13780,7 @@ function saveProfileAndStay() {
 }
 
 function confirmLogout() {
-    const box = document.getElementById('profilePanel');
-    if (!box) return;
-    box.innerHTML = `
-      <button type="button" onclick="closeProfilePanel()" style="position:absolute;top:10px;right:10px;border:none;background:transparent;color:#f43f5e;font-size:20px;cursor:pointer;line-height:1;">├ó┼ôΓÇó</button>
-      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">${t('auth.logoutConfirm.title', 'Are you sure you want to logout?')}</div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
-        <button type="button" onclick="openProfilePanel()" style="padding:8px 12px;border:none;border-radius:10px;background:rgba(255,255,255,0.12);color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.cancel', 'Cancel')}</button>
-        <button type="button" onclick="handleLogoutConfirmation()" style="padding:8px 12px;border:none;border-radius:10px;background:#ef4444;color:#fff;font-weight:700;cursor:pointer;">${t('auth.logoutConfirm.logout', 'Logout')}</button>
-      </div>
-    `;
+        return false;
 }
 
 function handleLogoutConfirmation() {
@@ -16326,13 +16441,7 @@ location.href="https://wa.me/94756390621";
 }
 
 function openLogin(){
-  const box = document.getElementById('loginBox');
-  if (!box) return;
-  box.style.display = box.style.display === 'block' ? 'none' : 'block';
-  if (box.style.display === 'block') {
-    setAuthMode(authMode);
-  }
-  closeMobileMenu();
+    return false;
 }
 
 function toggleMobileMenu() {
@@ -16617,6 +16726,10 @@ async function registerEmail() {
     // Create Firebase user
     const result = await auth.createUserWithEmailAndPassword(email, password);
     const firebaseUser = result.user;
+
+        await firebaseUser.updateProfile({
+            displayName: fullName
+        });
 
     // Send verification email
     await firebaseUser.sendEmailVerification();
