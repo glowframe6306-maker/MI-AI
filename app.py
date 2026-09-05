@@ -1141,13 +1141,13 @@ def delete_conversation(conversation_id):
 
 @app.route("/api/account/data", methods=["DELETE"])
 def delete_account_data():
-    """Delete all Firestore data owned by the authenticated user."""
+    """Delete the authenticated user's Firestore data and Firebase Auth account."""
     user_uid = _get_user_uid_from_request()
     if not user_uid:
         return jsonify({"error": "Unauthorized."}), 401
 
-    if not firebase_db:
-        return jsonify({"error": "Firestore is not configured."}), 503
+    if not firebase_db or not firebase_auth:
+        return jsonify({"error": "Account deletion is not configured."}), 503
 
     try:
         user_ref = firebase_db.collection('users').document(user_uid)
@@ -1169,6 +1169,7 @@ def delete_account_data():
                 batch.delete(reference)
             batch.commit()
 
+        firebase_auth.delete_user(user_uid)
         return jsonify({"success": True})
     except Exception as exc:
         app.logger.error("Firebase account data deletion failed: %s", exc)

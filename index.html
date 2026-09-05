@@ -12886,7 +12886,7 @@ textarea:disabled,
 }
 
 </style>
-<style id="cortex-final-reply-actions-css">
+<style id="cortex-final-reply-actions-css-legacy">
 
 .cortex-final-actions{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;align-items:center!important;gap:5px!important;
     display: flex !important;
@@ -15380,6 +15380,7 @@ function closeAllOverlays(target) {
         target?.tagName === "SELECT" ||
         target?.tagName === "OPTION" ||
         target?.closest?.("select") ||
+        target?.closest?.("#miIosSelectPopup") ||
         document.activeElement?.tagName === "SELECT"
     );
 
@@ -16906,14 +16907,37 @@ document.addEventListener("DOMContentLoaded", function () {
         const fields = deleteForm.querySelectorAll("input");
         const status = deleteForm.querySelector("[role=status]");
         const current = window.miFirebaseUser || window.firebase?.auth?.()?.currentUser;
-        if (!current || fields[0].value.trim().toLowerCase() !== String(current.email || "").toLowerCase() || fields[1].value !== "DELETE MY ACCOUNT") { status.textContent = "Username or Email and DELETE MY ACCOUNT must match exactly."; return; }
-        if (!window.confirm("Final Delete My Account confirmation?")) return;
+        const identifier = fields[0].value.trim().toLowerCase();
+        const acceptedIdentifiers = [current?.email, current?.displayName]
+            .filter(Boolean)
+            .map(value => String(value).trim().toLowerCase());
+        if (!current) { status.textContent = "Please sign in again before deleting your account."; return; }
+        if (!acceptedIdentifiers.includes(identifier)) { status.textContent = "Enter the username or email for the current account."; return; }
+        if (fields[1].value !== "DELETE MY ACCOUNT") { status.textContent = "Type DELETE MY ACCOUNT exactly to continue."; return; }
+        if (!fields[2].value) { status.textContent = "Enter your current account password."; return; }
+        if (!window.confirm("Final Delete My Account confirmation? This permanently deletes the current account.")) return;
+        const submitButton = deleteForm.querySelector("button[type=submit]");
+        if (submitButton) submitButton.disabled = true;
+        status.textContent = "Verifying password and deleting account...";
         try {
             const credential = window.firebase.auth.EmailAuthProvider.credential(current.email, fields[2].value);
             await current.reauthenticateWithCredential(credential);
-            await current.delete();
+            const token = await current.getIdToken(true);
+            const response = await fetch("/api/account/data", {
+                method: "DELETE",
+                headers: { Authorization: "Bearer " + token }
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success !== true) throw new Error(result.error || "Account deletion failed.");
+            await logout();
             closeSettings();
-        } catch (error) { status.textContent = error.message || "Account deletion failed."; }
+            openLogin();
+        } catch (error) {
+            status.textContent = error.code === "auth/invalid-credential" || error.code === "auth/wrong-password"
+                ? "The current account password is incorrect."
+                : error.message || "Account deletion failed.";
+            if (submitButton) submitButton.disabled = false;
+        }
     });
 });
 
@@ -16993,6 +17017,7 @@ function customerSupport() {
             dateInput.addEventListener("change", updateTimeMin);
             updateTimeMin();
         }
+        body.querySelectorAll("select").forEach(select => select.addEventListener("change", event => event.stopPropagation()));
     };
     const showSuccess = (appointment, payload) => { body.innerHTML = '<div class="cortex-customer-service-success"><h3>' + (appointment ? 'APPOINTMENT REQUEST SUBMITTED' : 'THANK YOU FOR YOUR SUBMISSION') + '</h3><p>' + (appointment ? 'Thank you. Your appointment request has been submitted successfully. Our team will review your request and contact you through the selected communication method.' : 'OUR TEAM WILL CHECK YOUR REPORT') + '</p><div class="cortex-customer-service-reference">' + escapeAIHtml(payload.reference) + '</div>' + (appointment ? '<p>' + escapeAIHtml(payload.preferred_date) + ' at ' + escapeAIHtml(payload.preferred_time) + '<br>' + escapeAIHtml(payload.chat_with) + '<br>' + escapeAIHtml(payload.chat_in) + '</p>' : '') + '<button type="button" class="cortex-customer-service-submit" data-cs-action="close">OK</button></div>'; };
     const submit = async form => {
