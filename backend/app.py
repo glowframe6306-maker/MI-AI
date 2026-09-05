@@ -60,12 +60,10 @@ try:
     import firebase_admin
     from firebase_admin import auth as firebase_admin_auth
     from firebase_admin import credentials as firebase_admin_credentials
-    from firebase_admin import firestore as firebase_admin_firestore
 except ImportError:
     firebase_admin = None
     firebase_admin_auth = None
     firebase_admin_credentials = None
-    firebase_admin_firestore = None
 
 import ssl
 import traceback
@@ -272,90 +270,6 @@ def mi_get_bearer_token():
         return ""
     return authorization.split(" ", 1)[1].strip()
 
-
-def mi_app_lock_account():
-    token = mi_get_bearer_token()
-    account, error = mi_verify_firebase_id_token(token)
-    if error or not account:
-        return None, (error or "Authentication token is required.", 401)
-    return account, None
-
-
-def mi_app_lock_document(account):
-    if firebase_admin_firestore is None:
-        raise RuntimeError("Firestore is not available.")
-    return (
-        firebase_admin_firestore.client()
-        .collection("users")
-        .document(str(account["uid"]))
-        .collection("security")
-        .document("app_lock")
-    )
-
-
-@app.route("/api/app-lock", methods=["GET", "POST"])
-def mi_app_lock():
-    account, auth_error = mi_app_lock_account()
-    if auth_error:
-        return jsonify({"success": False, "message": auth_error[0]}), auth_error[1]
-
-    try:
-        document = mi_app_lock_document(account)
-        if request.method == "GET":
-            snapshot = document.get()
-            data = snapshot.to_dict() if snapshot.exists else {}
-            return jsonify({
-                "success": True,
-                "enabled": bool(data.get("enabled", False)),
-                "length": int(data.get("length", 0) or 0),
-                "accountId": account["uid"],
-            })
-
-        payload = request.get_json(silent=True) or {}
-        enabled = bool(payload.get("enabled", True))
-        if not enabled:
-            document.set({"enabled": False, "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP}, merge=True)
-            return jsonify({"success": True, "enabled": False})
-
-        length = int(payload.get("length") or 0)
-        passcode = str(payload.get("passcode") or "")
-        if length not in (4, 6) or not re.fullmatch(rf"\d{{{length}}}", passcode):
-            return jsonify({"success": False, "message": "Use exactly 4 or 6 numeric digits."}), 400
-
-        document.set({
-            "enabled": True,
-            "length": length,
-            "passcodeHash": generate_password_hash(passcode),
-            "accountId": account["uid"],
-            "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP,
-        }, merge=True)
-        return jsonify({"success": True, "enabled": True, "length": length})
-    except Exception as error:
-        app.logger.exception("App Lock storage failure: %s", error)
-        return jsonify({"success": False, "message": "App Lock storage is unavailable."}), 503
-
-
-@app.route("/api/app-lock/verify", methods=["POST"])
-def mi_app_lock_verify():
-    account, auth_error = mi_app_lock_account()
-    if auth_error:
-        return jsonify({"success": False, "message": auth_error[0]}), auth_error[1]
-
-    try:
-        payload = request.get_json(silent=True) or {}
-        passcode = str(payload.get("passcode") or "")
-        data = mi_app_lock_document(account).get().to_dict() or {}
-        length = int(data.get("length", 0) or 0)
-        valid = (
-            bool(data.get("enabled"))
-            and length in (4, 6)
-            and bool(re.fullmatch(rf"\d{{{length}}}", passcode))
-            and check_password_hash(str(data.get("passcodeHash") or ""), passcode)
-        )
-        return jsonify({"success": bool(valid)})
-    except Exception as error:
-        app.logger.exception("App Lock verification failure: %s", error)
-        return jsonify({"success": False, "message": "App Lock verification is unavailable."}), 503
 
 otp_storage = {}
 login_tokens = {}
