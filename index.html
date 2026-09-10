@@ -14348,6 +14348,10 @@ async function deleteAccountData() {
 
 async function logout() {
 
+    persistenceGeneration += 1;
+    window.__miChatPersistence.logoutInProgress = true;
+    chatLoadSequence += 1;
+
     if (
         window.MIAccountSettings &&
         typeof window.MIAccountSettings.save === "function"
@@ -14396,6 +14400,7 @@ try {
     closeProfilePanel();
     updateAuthControls();
     window.dispatchEvent(new Event('mi-chat-user-changed'));
+    window.__miChatPersistence.logoutInProgress = false;
     console.log('[Persistence] Logout complete - state cleared');
 }
 
@@ -14863,6 +14868,49 @@ async function initSharedAccess(payload) {
 
 let chatLoadSequence = 0;
 let authTransitionSequence = 0;
+let persistenceGeneration = 0;
+window.__miChatPersistence = window.__miChatPersistence || { restoring: false, logoutInProgress: false };
+window.__miExplicitChatDelete = window.__miExplicitChatDelete === true;
+
+function chatDataTrace(stage, details = {}) {
+    const uid = String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '');
+    const currentChats = chats && typeof chats === 'object' && !Array.isArray(chats) ? chats : {};
+    console.warn(`[CHAT-DATA][${stage}]`, {
+        uid,
+        count: details.count ?? Object.keys(currentChats).length,
+        ids: details.ids ?? Object.keys(currentChats),
+        source: details.source || 'unknown',
+        generation: persistenceGeneration,
+        restoring: window.__miChatPersistence.restoring === true,
+        ...details
+    });
+}
+
+function mergeChatCollections(existingChats, incomingChats) {
+    const merged = {};
+    const sources = [existingChats, incomingChats];
+    sources.forEach(source => {
+        if (!source || typeof source !== 'object' || Array.isArray(source)) return;
+        Object.entries(source).forEach(([chatId, incoming]) => {
+            if (!incoming || typeof incoming !== 'object') return;
+            const existing = merged[chatId];
+            const existingMessages = Array.isArray(existing) ? existing : existing?.messages;
+            const incomingMessages = Array.isArray(incoming) ? incoming : incoming.messages;
+            const messages = [];
+            const byId = new Map();
+            [...(existingMessages || []), ...(incomingMessages || [])].forEach((message, index) => {
+                if (!message || typeof message !== 'object') return;
+                const messageId = String(message.id || message.messageId || `${message.role || ''}:${message.createdAt || message.created_at || index}:${message.text || message.content || ''}`);
+                const previous = byId.get(messageId);
+                byId.set(messageId, previous ? { ...previous, ...message } : { ...message, id: messageId });
+            });
+            messages.push(...byId.values());
+            Object.assign(messages, existing && !Array.isArray(existing) ? existing : {}, !Array.isArray(incoming) ? incoming : {});
+            merged[chatId] = messages;
+        });
+    });
+    return merged;
+}
 
 function isCurrentAuthenticatedUser(userId) {
     const currentUid = window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '';
@@ -14886,11 +14934,14 @@ async function loadUserChats() {
     return;
   }
 
-    const requestId = ++chatLoadSequence;
-    const requestedUserId = userId;
-    if (!isCurrentAuthenticatedUser(requestedUserId)) return;
-  resetChatStateForAuthChange();
-  const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
+        const requestId = ++chatLoadSequence;
+        const requestedUserId = userId;
+        const operationGeneration = persistenceGeneration;
+        const existingChats = mergeChatCollections(chats || {}, {});
+        const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
+        if (!isCurrentAuthenticatedUser(requestedUserId)) return;
+        window.__miChatPersistence.restoring = true;
+        chatDataTrace('BEFORE_LOAD', { count: Object.keys(existingChats).length, ids: Object.keys(existingChats), source: 'authenticated-load-start' });
 
   try {
     const res = await fetch('/conversations', {
@@ -14903,7 +14954,7 @@ async function loadUserChats() {
     const json = await res.json();
 
     let loadedChats = {};
-    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
+    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId) || operationGeneration !== persistenceGeneration) return;
 
     if (res.ok && Array.isArray(json.conversations)) {
       for (const conversation of json.conversations) {
@@ -14963,25 +15014,31 @@ async function loadUserChats() {
       }
     }
 
-    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
-    chats = loadedChats;
+    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId) || operationGeneration !== persistenceGeneration) return;
+    chatDataTrace('SOURCE', { count: Object.keys(loadedChats).length, ids: Object.keys(loadedChats), source: 'authenticated-backend-load' });
+    const mergedChats = mergeChatCollections(existingChats, loadedChats);
+    chatDataTrace('MERGED', { count: Object.keys(mergedChats).length, ids: Object.keys(mergedChats), source: 'authenticated-load-merge' });
+    chats = mergedChats;
     currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : Object.keys(chats || {})[0] || null;
 
     const storageKey = getUserChatStorageKey();
     localStorage.setItem(storageKey, JSON.stringify(chats));
     save();
     renderList();
+    window.__miChatPersistence.restoring = false;
+    chatDataTrace('AFTER_LOAD', { count: Object.keys(chats || {}).length, ids: Object.keys(chats || {}), source: 'authenticated-load-complete' });
     if (currentChat) {
       openChat(currentChat);
     } else if (chatBox) {
       chatBox.innerHTML = '';
     }
   } catch (e) {
-    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
-    chats = {};
-    currentChat = null;
-        // Authenticated localStorage is only a cache; never use it as restore truth.
-    save();
+    if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId) || operationGeneration !== persistenceGeneration) return;
+    window.__miChatPersistence.restoring = false;
+    chatDataTrace('CLEAR_BLOCKED', { count: Object.keys(existingChats).length, ids: Object.keys(existingChats), source: 'authenticated-load-error', error: e?.message || String(e) });
+    console.error('[CHAT-DATA] Authenticated chat load failed; preserving existing chats.', e);
+    chats = existingChats;
+    currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : currentChat;
     renderList();
     if (currentChat) {
       openChat(currentChat);
@@ -15096,6 +15153,8 @@ try {
     const auth = window.miFirebaseAuth || firebaseReady?.auth;
     if (auth && typeof auth.onAuthStateChanged === 'function') {
         auth.onAuthStateChanged(async (firebaseUser) => {
+            const authOperationGeneration = ++persistenceGeneration;
+            chatLoadSequence += 1;
             if (!firebaseUser) {
                 user = null;
                 updateAuthUI();
@@ -15120,6 +15179,18 @@ try {
 
             const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
             const nextToken = await firebaseUser.getIdToken();
+            const currentUidAfterToken = String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || '');
+            if (
+                authOperationGeneration !== persistenceGeneration ||
+                (currentUidAfterToken && currentUidAfterToken !== String(firebaseUser.uid))
+            ) {
+                console.warn('[CHAT-DATA][AUTH_RACE_DISCARDED]', {
+                    uid: firebaseUser.uid,
+                    generation: authOperationGeneration,
+                    currentGeneration: persistenceGeneration
+                });
+                return;
+            }
             user = nextUser;
             updateAuthUI();
             
@@ -15347,6 +15418,8 @@ async function newChat(){
 
 /* OPEN */
 async function openChat(id){
+    const openBeforeCount = Object.keys(chats || {}).length;
+    chatDataTrace('OPEN_BEFORE', { count: openBeforeCount, ids: Object.keys(chats || {}), source: 'openChat', chatId: id });
     // Use consolidated chat lifecycle cleanup logic
     // This ensures proper chat switching with confirmation for non-empty chats
     if (window.miChatLifecycle && typeof window.miChatLifecycle.cleanupPreviousChat === 'function') {
@@ -15388,10 +15461,17 @@ async function openChat(id){
         }
     });
     localStorage.setItem("last_chat",id);
+    const openAfterCount = Object.keys(chats || {}).length;
+    chatDataTrace('OPEN_AFTER', { count: openAfterCount, ids: Object.keys(chats || {}), source: 'openChat', chatId: id });
+    if (openAfterCount !== openBeforeCount) {
+        console.error('[CHAT-DATA][OPEN_COUNT_CHANGED]', { id, before: openBeforeCount, after: openAfterCount });
+    }
 }
 
 /* RENDER LIST */
 function renderList(){
+    const renderInputIds = Object.keys(chats || {});
+    chatDataTrace('RENDER_INPUT', { count: renderInputIds.length, ids: renderInputIds, source: 'renderList' });
     chatList.innerHTML = "";
     const ids = Object.keys(chats || {}).sort((a, b) => Number(Boolean(chats[b]?.pin)) - Number(Boolean(chats[a]?.pin)));
     chatList.classList.toggle('scrollable', ids.length > 9);
@@ -15425,6 +15505,11 @@ function renderList(){
         item.addEventListener('click', () => openChat(id));
         item.addEventListener('contextmenu', event => { event.preventDefault(); openChatMoreMenu(id, event); });
         chatList.appendChild(item);
+    });
+    chatDataTrace('DOM', {
+        count: chatList.querySelectorAll('.chatItem').length,
+        ids: Array.from(chatList.querySelectorAll('.chatItem')).map(item => item.dataset.id),
+        source: 'renderList.dom'
     });
 }
 
@@ -15567,6 +15652,7 @@ if(!selectedChat) return;
 if (window.cortexSettings?.get().confirmBeforeDelete !== false && !confirm("Delete this chat?")) return;
 
 const chatId = selectedChat;
+window.__miExplicitChatDelete = true;
 const token = localStorage.getItem('mi_supabase_token');
 if (token && isAuthenticated()) {
   fetch('/api/conversations/' + encodeURIComponent(chatId), {
@@ -15580,6 +15666,7 @@ if (token && isAuthenticated()) {
 }
 
 delete chats[chatId];
+chatDataTrace('DELETE', { count: Object.keys(chats || {}).length, ids: Object.keys(chats || {}), source: 'explicit-delete', chatId });
 
 if(currentChat===chatId){
 currentChat=null;
@@ -15587,6 +15674,7 @@ chatBox.innerHTML="";
 }
 
 save();
+window.__miExplicitChatDelete = false;
 renderList();
 menu.style.display="none";
 }
@@ -16886,9 +16974,39 @@ if (window.cortexSettings?.get().autoScroll !== false) chatBox.scrollTop=chatBox
 /* SAVE */
 async function save() {
 
+    const snapshotUid = String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '');
+    const snapshotGeneration = persistenceGeneration;
+    const authenticatedAtStart = isAuthenticated();
+    const existingStorageKey = authenticatedAtStart ? getActiveStorageKey() : '';
+    const previousSnapshot = authenticatedAtStart ? (() => {
+        try { return JSON.parse(localStorage.getItem(existingStorageKey) || '{}'); } catch (_) { return {}; }
+    })() : {};
+    const previousCount = previousSnapshot && typeof previousSnapshot === 'object' && !Array.isArray(previousSnapshot)
+        ? Object.keys(previousSnapshot).length
+        : 0;
+    const incomingCount = chats && typeof chats === 'object' && !Array.isArray(chats) ? Object.keys(chats).length : 0;
+    const explicitDelete = window.__miExplicitChatDelete === true;
+
+    if (authenticatedAtStart && (
+        String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '') !== snapshotUid ||
+        snapshotGeneration !== persistenceGeneration
+    )) {
+        console.warn('[CHAT-DATA][SAVE_BLOCKED]', { uid: snapshotUid, reason: 'stale-auth-generation' });
+        return false;
+    }
+    if (authenticatedAtStart && incomingCount === 0 && previousCount > 0 && !explicitDelete) {
+        console.error('[CHAT-DATA][CLEAR_BLOCKED]', {
+            uid: snapshotUid,
+            previousCount,
+            incomingCount,
+            source: 'save-empty-authenticated-snapshot'
+        });
+        return false;
+    }
+
     const storageKey = getActiveStorageKey();
 
-    if (storageKey && isAuthenticated()) {
+    if (storageKey && isAuthenticated() && String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '') === snapshotUid) {
         localStorage.setItem(storageKey, JSON.stringify(chats));
     }
 
@@ -16897,7 +17015,7 @@ async function save() {
     }
 
     // Save to Firestore if authenticated
-    if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
+    if (isAuthenticated() && String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '') === snapshotUid && window.firestorePersistence && window.miFirebaseUser) {
         try {
             // Save all chats and messages to Firestore
             for (const chatId in chats) {
@@ -22589,9 +22707,14 @@ document.addEventListener(
             return false;
         }
 
+        const existingChats = currentChats();
+        const mergedChats = mergeChats(
+            existingChats,
+            restoredChats
+        );
         const safeChats =
             clone(
-                restoredChats,
+                mergedChats,
                 {}
             );
 
@@ -32089,6 +32212,15 @@ window.miOpenAccountChat=openPanel;
    */
   async function deleteEmptyPersistedChat(chatId) {
     if (!chats || !chats[chatId]) return;
+        if (window.__miExplicitChatDelete !== true) {
+            console.error('[CHAT-DATA][CLEAR_BLOCKED]', {
+                uid: String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || ''),
+                chatId,
+                source: 'automatic-empty-chat-cleanup',
+                stack: new Error().stack
+            });
+            return;
+        }
     
     const chat = chats[chatId];
     // Only delete from server if: (1) it was persisted, AND (2) it's empty
@@ -32122,9 +32254,7 @@ window.miOpenAccountChat=openPanel;
 
     // If previous chat is empty, delete it and proceed
     if (previousChatId && isChatEmpty(previousChatId)) {
-      console.log('[Chat Lifecycle] Cleaning up empty chat:', previousChatId);
-      await deleteEmptyPersistedChat(previousChatId);
-    delete chats[previousChatId];
+            console.log('[Chat Lifecycle] Preserving empty chat while switching:', previousChatId);
       return true;
     }
 
@@ -32641,11 +32771,36 @@ window.fetch=function(input,init){
         if (!user || !store) return false;
 
         const expectedUid = user.uid;
+        const expectedGeneration = persistenceGeneration;
         const chats = captureChats();
+        const incomingCount = Object.keys(chats).length;
+        const explicitDelete = window.__miExplicitChatDelete === true;
+        const currentUid = String(currentUser()?.uid || '');
+        if (currentUid !== String(expectedUid) || expectedGeneration !== persistenceGeneration) {
+            console.warn('[CHAT-DATA][SAVE_BLOCKED]', { uid: expectedUid, reason: 'stale-exact-snapshot' });
+            return false;
+        }
+        const previous = readArchive(expectedUid);
+        if (incomingCount === 0 && Object.keys(previous?.chats || {}).length > 0 && !explicitDelete) {
+            console.error('[CHAT-DATA][CLEAR_BLOCKED]', {
+                uid: expectedUid,
+                previousCount: Object.keys(previous.chats).length,
+                incomingCount,
+                source: 'saveExactSnapshot'
+            });
+            return false;
+        }
         const settings = captureSettings();
         const userRef = store.collection("users").doc(expectedUid);
-        const existing = await userRef.collection("chats").get();
         const validIds = new Set();
+
+        console.warn('[CHAT-DATA][SAVE]', {
+            uid: expectedUid,
+            count: incomingCount,
+            ids: Object.keys(chats),
+            source: reason || 'saveExactSnapshot',
+            generation: expectedGeneration
+        });
 
         Object.keys(chats).forEach(function (chatId) {
             const raw = chats[chatId];
@@ -32653,16 +32808,8 @@ window.fetch=function(input,init){
             if (messages.length > 0) validIds.add(String(chatId));
         });
 
-        for (const doc of existing.docs) {
-            if (currentUser()?.uid !== expectedUid) throw new Error("Account changed during save");
-            if (!validIds.has(doc.id)) {
-                await deleteCollection(doc.ref.collection("messages"));
-                await doc.ref.delete();
-            }
-        }
-
         for (const chatId of validIds) {
-            if (currentUser()?.uid !== expectedUid) throw new Error("Account changed during save");
+            if (currentUser()?.uid !== expectedUid || expectedGeneration !== persistenceGeneration) throw new Error("Account changed during save");
             const raw = chats[chatId];
             const messages = Array.isArray(raw) ? raw : raw.messages;
             const chatRef = userRef.collection("chats").doc(chatId);
@@ -32674,8 +32821,6 @@ window.fetch=function(input,init){
                 messageCount: messages.length,
                 updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
-
-            await deleteCollection(chatRef.collection("messages"));
 
             let batch = store.batch();
             let count = 0;
@@ -36069,6 +36214,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
         list.innerHTML = "";
 
         const ids = sortedChatIds();
+        chatDataTrace('RENDER_INPUT', { count: ids.length, ids: ids.slice(), source: 'multi-delete-renderList' });
 
         if (ids.length > 9) {
             list.classList.add("scrollable");
@@ -36177,6 +36323,12 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
             list.appendChild(item);
         });
 
+        chatDataTrace('DOM', {
+            count: list.querySelectorAll('.chatItem').length,
+            ids: Array.from(list.querySelectorAll('.chatItem')).map(item => item.dataset.id),
+            source: 'multi-delete-renderList.dom'
+        });
+
         ensureToolbar();
         updateToolbar();
     };
@@ -36282,6 +36434,15 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
     }
 
     async function deleteOneSelectedChat(chatId) {
+        if (window.__miExplicitChatDelete !== true) {
+            console.error('[CHAT-DATA][CLEAR_BLOCKED]', {
+                uid: String(window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || ''),
+                chatId,
+                source: 'automatic-chat-delete',
+                stack: new Error().stack
+            });
+            return { id: chatId, deleted: false, errors: ['Automatic chat deletion is blocked.'] };
+        }
         const failures = [];
 
         try {
@@ -36374,6 +36535,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 
         const deleted = [];
         const failed = [];
+        window.__miExplicitChatDelete = true;
 
         for (const id of ids) {
             const result = await deleteOneSelectedChat(id);
@@ -36386,6 +36548,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
         }
 
         save();
+        window.__miExplicitChatDelete = false;
 
         deleted.forEach(function (id) {
             selectedIds.delete(id);
@@ -36461,7 +36624,9 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
             return;
         }
 
+        window.__miExplicitChatDelete = true;
         const result = await deleteOneSelectedChat(chatId);
+        window.__miExplicitChatDelete = false;
 
         if (!result.deleted) {
             showMessage(
