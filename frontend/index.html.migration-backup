@@ -39866,9 +39866,15 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
                 return;
             }
 
-            /* Authentication is handled by the application's existing
-               authenticated fetch/session layer. Do not depend on a
-               Firebase global object being exposed on window. */
+            const firebaseUser =
+                window.firebase?.auth?.()?.currentUser ||
+                window.currentUser ||
+                window.user ||
+                null;
+
+            if (!firebaseUser) {
+                return;
+            }
 
             const chats = collectLocalChats();
 
@@ -40347,7 +40353,6 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
-
 
 
 
