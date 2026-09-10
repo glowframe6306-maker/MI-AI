@@ -5,6 +5,11 @@ service cloud.firestore {
     function owns(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
+
+    function isMember(ownerId) {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/owners/$(ownerId)/members/$(request.auth.uid)).data.state == 'active';
+    }
     
     // User root documents
     match /users/{uid} {
@@ -32,6 +37,40 @@ service cloud.firestore {
           allow read, create, update, delete: if owns(uid) && 
             get(/databases/$(database)/documents/users/$(uid)/chats/$(chatId)).data.userId == uid;
         }
+      }
+    }
+
+    // Shared owner data is available only to explicitly linked active members.
+    match /owners/{ownerId} {
+      allow read: if isMember(ownerId);
+      allow create, update, delete: if false;
+
+      match /members/{memberUid} {
+        allow read: if isMember(ownerId) && request.auth.uid == memberUid;
+        allow write: if false;
+      }
+
+      match /chats/{chatId} {
+        allow read, create, update: if isMember(ownerId) &&
+          request.resource.data.ownerId == ownerId;
+        allow delete: if isMember(ownerId) &&
+          resource.data.ownerId == ownerId;
+
+        match /messages/{messageId} {
+          allow read, create, update: if isMember(ownerId) &&
+            get(/databases/$(database)/documents/owners/$(ownerId)/chats/$(chatId)).data.ownerId == ownerId;
+          allow delete: if false;
+        }
+      }
+
+      match /settings/{settingId} {
+        allow read, create, update: if isMember(ownerId) &&
+          request.resource.data.updatedBy == request.auth.uid;
+        allow delete: if false;
+      }
+
+      match /invitations/{inviteId} {
+        allow read, write: if false;
       }
     }
     

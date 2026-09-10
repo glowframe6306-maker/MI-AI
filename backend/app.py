@@ -440,6 +440,153 @@ def mi_get_verified_account():
     return account, None
 
 
+def mi_owner_ref(owner_id):
+    if MI_FIREBASE_DB is None:
+        raise RuntimeError("Firestore is not configured.")
+    return MI_FIREBASE_DB.collection("owners").document(str(owner_id))
+
+
+def mi_resolve_owner(account, create=True):
+    """Resolve a verified Firebase UID through server-controlled membership."""
+    uid = str(account.get("uid") or "").strip()
+    if not uid:
+        raise PermissionError("Firebase UID is missing.")
+    members = MI_FIREBASE_DB.collection("owners").where("memberUids", "array_contains", uid).limit(1).stream()
+    owner_doc = next(iter(members), None)
+    if owner_doc:
+        return owner_doc.id
+    if not create:
+        raise PermissionError("This account is not linked to an owner.")
+    owner_id = uid
+    owner_ref = mi_owner_ref(owner_id)
+    owner_ref.set({
+        "ownerId": owner_id,
+        "createdAt": firebase_admin_firestore.SERVER_TIMESTAMP,
+        "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP,
+        "memberUids": [uid],
+    }, merge=True)
+    owner_ref.collection("members").document(uid).set({
+        "uid": uid,
+        "email": account.get("email", ""),
+        "role": "owner",
+        "state": "active",
+        "createdAt": firebase_admin_firestore.SERVER_TIMESTAMP,
+        "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP,
+    }, merge=True)
+    mi_migrate_uid_chats_to_owner(uid, owner_id)
+    return owner_id
+
+
+def mi_migrate_uid_chats_to_owner(uid, owner_id):
+    """Copy UID-scoped chats/messages into owner storage without deleting sources."""
+    source = MI_FIREBASE_DB.collection("users").document(uid).collection("chats")
+    target = mi_owner_ref(owner_id).collection("chats")
+    for chat_doc in source.stream():
+        target_ref = target.document(chat_doc.id)
+        target_ref.set({**(chat_doc.to_dict() or {}), "sourceUid": uid, "ownerId": owner_id}, merge=True)
+        for message_doc in chat_doc.reference.collection("messages").stream():
+            target_ref.collection("messages").document(message_doc.id).set({
+                **(message_doc.to_dict() or {}), "sourceUid": uid, "ownerId": owner_id
+            }, merge=True)
+    settings_source = MI_FIREBASE_DB.collection("users").document(uid).collection("settings").document("general").get()
+    if settings_source.exists:
+        mi_owner_ref(owner_id).collection("settings").document("general").set({
+            **(settings_source.to_dict() or {}),
+            "ownerId": owner_id,
+            "sourceUid": uid,
+        }, merge=True)
+
+
+def mi_owner_account():
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return None, (jsonify({"success": False, "message": error or "Please sign in again."}), 401)
+    if MI_FIREBASE_DB is None:
+        return None, (jsonify({"success": False, "message": "Firestore is not configured."}), 503)
+    try:
+        return (account, mi_resolve_owner(account)), None
+    except Exception as exc:
+        app.logger.exception("Owner resolution failed for %s", account.get("uid"))
+        return None, (jsonify({"success": False, "message": "Owner resolution failed."}), 503)
+
+
+@app.route("/api/owner/link-invite", methods=["POST"])
+def mi_create_owner_link_invite():
+    owner_context, error_response = mi_owner_account()
+    if error_response:
+        return error_response
+    account, owner_id = owner_context
+    member = mi_owner_ref(owner_id).collection("members").document(account["uid"]).get()
+    if not member.exists or (member.to_dict() or {}).get("role") not in {"owner", "admin"}:
+        return jsonify({"success": False, "message": "Owner permission is required."}), 403
+    invite = secrets.token_urlsafe(32)
+    mi_owner_ref(owner_id).collection("invitations").document(hashlib.sha256(invite.encode()).hexdigest()).set({
+        "ownerId": owner_id,
+        "createdBy": account["uid"],
+        "state": "pending",
+        "createdAt": datetime.utcnow().isoformat(),
+    })
+    return jsonify({"success": True, "inviteToken": invite, "ownerId": owner_id})
+
+
+@app.route("/api/owner/link-accept", methods=["POST"])
+def mi_accept_owner_link_invite():
+    account, error = mi_get_verified_account()
+    if error or not account:
+        return jsonify({"success": False, "message": error or "Please sign in again."}), 401
+    payload = request.get_json(silent=True) or {}
+    invite = str(payload.get("inviteToken") or "").strip()
+    if not invite or MI_FIREBASE_DB is None:
+        return jsonify({"success": False, "message": "A valid invite is required."}), 400
+    invite_hash = hashlib.sha256(invite.encode()).hexdigest()
+    matches = MI_FIREBASE_DB.collection_group("invitations").where("state", "==", "pending").stream()
+    invitation = next((doc for doc in matches if doc.id == invite_hash), None)
+    if invitation is None:
+        return jsonify({"success": False, "message": "Invite is invalid or expired."}), 404
+    owner_id = invitation.reference.parent.parent.id
+    owner_ref = mi_owner_ref(owner_id)
+    owner = owner_ref.get()
+    if not owner.exists:
+        return jsonify({"success": False, "message": "Owner account was not found."}), 404
+    owner_ref.collection("members").document(account["uid"]).set({
+        "uid": account["uid"],
+        "email": account.get("email", ""),
+        "role": "member",
+        "state": "active",
+        "linkedAt": datetime.utcnow().isoformat(),
+    }, merge=True)
+    owner_ref.set({"memberUids": firebase_admin_firestore.ArrayUnion([account["uid"]]), "updatedAt": datetime.utcnow().isoformat()}, merge=True)
+    mi_migrate_uid_chats_to_owner(account["uid"], owner_id)
+    invitation.reference.set({"state": "accepted", "acceptedBy": account["uid"], "acceptedAt": datetime.utcnow().isoformat()}, merge=True)
+    return jsonify({"success": True, "ownerId": owner_id})
+
+
+@app.route("/api/account-settings", methods=["GET", "PATCH"])
+def mi_owner_settings():
+    owner_context, error_response = mi_owner_account()
+    if error_response:
+        return error_response
+    account, owner_id = owner_context
+    settings_ref = mi_owner_ref(owner_id).collection("settings").document("general")
+    if request.method == "GET":
+        snapshot = settings_ref.get()
+        return jsonify({"success": True, "ownerId": owner_id, "settings": snapshot.to_dict() if snapshot.exists else {}})
+    payload = request.get_json(silent=True) or {}
+    allowed = {key: value for key, value in payload.items() if key not in {"ownerId", "uid", "userId"}}
+    allowed.update({"updatedBy": account["uid"], "updatedAt": datetime.utcnow().isoformat()})
+    settings_ref.set(allowed, merge=True)
+    return jsonify({"success": True, "ownerId": owner_id, "settings": allowed})
+
+
+@app.route("/api/owner", methods=["GET"])
+def mi_owner_identity():
+    owner_context, error_response = mi_owner_account()
+    if error_response:
+        return error_response
+    account, owner_id = owner_context
+    return jsonify({"success": True, "ownerId": owner_id, "uid": account["uid"]})
+
+
 def mi_current_account_uid():
     account, error = mi_get_verified_account()
 
@@ -2590,20 +2737,24 @@ def supabase_config():
     })
 
 
+@app.route("/api/conversations", methods=["GET", "POST"])
 @app.route("/conversations", methods=["GET", "POST"])
 def conversations():
+    owner_context, error_response = mi_owner_account()
+    if error_response:
+        return error_response
+    account, owner_id = owner_context
+    owner_chats = mi_owner_ref(owner_id).collection("chats")
     if request.method == "GET":
-        session_id = request.args.get("session_id")
         conversations_list = []
-        for conversation in conversations_store.values():
-            if session_id and conversation.get("session_id") != session_id:
-                continue
+        for document in owner_chats.stream():
+            conversation = document.to_dict() or {}
             conversations_list.append({
-                "id": conversation["id"],
+                "id": document.id,
                 "title": conversation.get("title") or "New chat",
                 "session_id": conversation.get("session_id"),
-                "created_at": conversation.get("created_at"),
-                "updated_at": conversation.get("updated_at"),
+                "created_at": str(conversation.get("created_at") or conversation.get("createdAt") or ""),
+                "updated_at": str(conversation.get("updated_at") or conversation.get("updatedAt") or ""),
                 "pin": conversation.get("pin", False),
             })
         conversations_list.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
@@ -2613,23 +2764,21 @@ def conversations():
     conversation_id = str(data.get("id") or uuid.uuid4())
     title = (data.get("title") or "New chat").strip() or "New chat"
     session_id = data.get("session_id") or str(uuid.uuid4())
-
-    conversation = conversations_store.get(conversation_id)
-    if not conversation:
-        conversation = {
-            "id": conversation_id,
-            "title": title,
-            "session_id": session_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
-            "pin": False,
-        }
-        conversations_store[conversation_id] = conversation
-        messages_store[conversation_id] = []
-    else:
-        conversation["title"] = title
-        conversation["session_id"] = session_id
-        conversation["updated_at"] = datetime.utcnow().isoformat()
+    requested_pin = bool(data.get("pin", False))
+    conversation_ref = owner_chats.document(conversation_id)
+    existing = conversation_ref.get()
+    now = datetime.utcnow().isoformat()
+    conversation = {
+        "id": conversation_id,
+        "ownerId": owner_id,
+        "sourceUid": account["uid"],
+        "title": title,
+        "session_id": session_id,
+        "created_at": existing.to_dict().get("created_at", now) if existing.exists else now,
+        "updated_at": now,
+        "pin": requested_pin if "pin" in data else (existing.to_dict().get("pin", False) if existing.exists else False),
+    }
+    conversation_ref.set(conversation, merge=True)
 
     return jsonify({"conversation": {
         "id": conversation["id"],
@@ -2641,14 +2790,71 @@ def conversations():
     }})
 
 
+@app.route("/api/conversations/<conversation_id>", methods=["PATCH", "DELETE"])
+def owner_conversation_item(conversation_id):
+    owner_context, error_response = mi_owner_account()
+    if error_response:
+        return error_response
+    account, owner_id = owner_context
+    conversation_ref = mi_owner_ref(owner_id).collection("chats").document(str(conversation_id))
+    snapshot = conversation_ref.get()
+    if not snapshot.exists:
+        return jsonify({"success": False, "message": "Conversation not found."}), 404
+    if request.method == "PATCH":
+        payload = request.get_json(silent=True) or {}
+        updates = {key: payload[key] for key in ("title", "pin") if key in payload}
+        updates.update({"updated_at": datetime.utcnow().isoformat(), "sourceUid": account["uid"]})
+        conversation_ref.set(updates, merge=True)
+        return jsonify({"success": True, "conversation": {**(snapshot.to_dict() or {}), **updates, "id": str(conversation_id)}})
+    for message in conversation_ref.collection("messages").stream():
+        message.reference.delete()
+    conversation_ref.delete()
+    return jsonify({"success": True, "deleted": str(conversation_id)})
+
+
+@app.route("/api/conversations/import", methods=["POST"])
+def owner_conversation_import():
+    owner_context, error_response = mi_owner_account()
+    if error_response:
+        return error_response
+    account, owner_id = owner_context
+    payload = request.get_json(silent=True) or {}
+    imported = payload.get("conversations")
+    if not isinstance(imported, list):
+        return jsonify({"success": False, "message": "Conversations must be a list."}), 400
+    owner_chats = mi_owner_ref(owner_id).collection("chats")
+    imported_count = 0
+    for item in imported:
+        if not isinstance(item, dict) or not item.get("id"):
+            continue
+        chat_id = str(item["id"])
+        chat_ref = owner_chats.document(chat_id)
+        chat_ref.set({key: value for key, value in item.items() if key not in {"messages", "userId", "ownerId"}} | {"id": chat_id, "ownerId": owner_id, "sourceUid": account["uid"]}, merge=True)
+        for message in item.get("messages") or []:
+            if isinstance(message, dict):
+                message_id = str(message.get("id") or uuid.uuid4())
+                chat_ref.collection("messages").document(message_id).set({**message, "id": message_id, "ownerId": owner_id, "sourceUid": account["uid"]}, merge=True)
+        imported_count += 1
+    return jsonify({"success": True, "imported": imported_count, "ownerId": owner_id})
+
+
+@app.route("/api/messages", methods=["GET", "POST"])
 @app.route("/messages", methods=["GET", "POST"])
 def messages():
+    owner_context, error_response = mi_owner_account()
+    if error_response:
+        return error_response
+    account, owner_id = owner_context
+    owner_chats = mi_owner_ref(owner_id).collection("chats")
     if request.method == "GET":
         conversation_id = request.args.get("conversation_id")
         if not conversation_id:
             return jsonify({"messages": []})
 
-        messages_list = messages_store.get(conversation_id, [])
+        conversation_ref = owner_chats.document(str(conversation_id))
+        if not conversation_ref.get().exists:
+            return jsonify({"messages": []})
+        messages_list = [doc.to_dict() or {} for doc in conversation_ref.collection("messages").stream()]
         return jsonify({"messages": [{
             "id": message["id"],
             "conversation_id": message.get("conversation_id"),
@@ -2666,27 +2872,30 @@ def messages():
     if not content:
         return jsonify({"error": "Content is required."}), 400
 
-    if conversation_id not in conversations_store:
-        conversations_store[conversation_id] = {
+    conversation_ref = owner_chats.document(str(conversation_id))
+    if not conversation_ref.get().exists:
+        conversation_ref.set({
             "id": conversation_id,
+            "ownerId": owner_id,
+            "sourceUid": account["uid"],
             "title": "New chat",
             "session_id": session_id,
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
             "pin": False,
-        }
-        messages_store[conversation_id] = []
+        }, merge=True)
 
     message = {
-        "id": str(uuid.uuid4()),
+        "id": str(data.get("id") or uuid.uuid4()),
         "conversation_id": conversation_id,
         "session_id": session_id,
         "role": role,
         "content": content,
         "created_at": datetime.utcnow().isoformat(),
     }
-    messages_store[conversation_id].append(message)
-    conversations_store[conversation_id]["updated_at"] = datetime.utcnow().isoformat()
+    message_ref = conversation_ref.collection("messages").document(message["id"])
+    message_ref.set(message, merge=True)
+    conversation_ref.set({"updated_at": datetime.utcnow().isoformat(), "sourceUid": account["uid"]}, merge=True)
 
     return jsonify({
         "message": message,

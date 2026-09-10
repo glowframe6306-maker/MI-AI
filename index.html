@@ -7577,11 +7577,42 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
         constructor(db) {
             this.db = db;
             this.uid = null;
+            this.ownerId = null;
             this.listeners = [];
         }
 
         setUser(uid) {
             this.uid = uid;
+            this.ownerId = null;
+        }
+
+        async resolveOwner() {
+            if (this.ownerId) return this.ownerId;
+            const token = await window.miFirebaseUser?.getIdToken?.();
+            if (!token) throw new Error('Cannot resolve owner without authentication.');
+            const response = await fetch('/api/owner', { headers: { Authorization: 'Bearer ' + token } });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ownerId) throw new Error(result.message || 'Owner resolution failed.');
+            this.ownerId = String(result.ownerId);
+            return this.ownerId;
+        }
+
+        async loadSettings() {
+            const token = await window.miFirebaseUser?.getIdToken?.();
+            const response = await fetch('/api/account-settings', { headers: { Authorization: 'Bearer ' + token } });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.message || 'Shared settings load failed.');
+            window.__miOwnerSettings = result.settings || {};
+            return window.__miOwnerSettings;
+        }
+
+        async subscribeOwner(onChange) {
+            const ownerId = await this.resolveOwner();
+            this.unsubscribeAll();
+            const ownerRef = window.firebase.firestore().collection('owners').doc(ownerId);
+            const chatUnsubscribe = ownerRef.collection('chats').onSnapshot(() => onChange?.('chats'));
+            const settingsUnsubscribe = ownerRef.collection('settings').doc('general').onSnapshot(snapshot => onChange?.('settings', snapshot.exists ? snapshot.data() : {}));
+            this.listeners.push(chatUnsubscribe, settingsUnsubscribe);
         }
 
         unsubscribeAll() {
@@ -7600,13 +7631,17 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
         async saveSettings(settings) {
             if (!this.uid) throw new Error('Cannot save settings without an authenticated user.');
             try {
-                const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
-                await docRef.set({
+                const token = await window.miFirebaseUser?.getIdToken?.();
+                const response = await fetch('/api/account-settings', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                    body: JSON.stringify({
                     theme: settings.theme || '',
                     fontSize: settings.fontSize || 15,
-                    language: settings.language || 'en',
-                    updatedAt: window.firebase.firestore.Timestamp.now()
-                }, { merge: true });
+                    language: settings.language || 'en'
+                    })
+                });
+                if (!response.ok) throw new Error('Shared settings save failed.');
                 console.log('[Persistence] Settings saved to Firestore');
             } catch (err) {
                 console.error('[Persistence] Error saving settings:', err.message);
@@ -7615,109 +7650,47 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
 
         async saveChat(chatId, chatData) {
             if (!this.uid) throw new Error('Cannot save chat without an authenticated user.');
-            const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
-            const existing = await chatRef.get();
-            const now = window.firebase.firestore.Timestamp.now();
-            await chatRef.set({
-                id: chatId,
-                userId: this.uid,
-                title: chatData.title || 'Chat',
-                pin: chatData.pin || false,
-                createdAt: existing.exists && existing.data().createdAt ? existing.data().createdAt : now,
-                updatedAt: now,
-                messageCount: chatData.messageCount || 0
-            }, { merge: true });
+            const token = await window.miFirebaseUser?.getIdToken?.();
+            const response = await fetch('/api/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ id: chatId, title: chatData.title || 'Chat', pin: Boolean(chatData.pin) }) });
+            if (!response.ok) throw new Error('Shared chat save failed.');
             console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
         }
 
         async saveMessage(chatId, messageId, message) {
             if (!this.uid) throw new Error('Cannot save message without an authenticated user.');
-            const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
-            const chatSnapshot = await chatRef.get();
-            if (!chatSnapshot.exists || chatSnapshot.data().userId !== this.uid) {
-                throw new Error('Chat ownership could not be verified.');
-            }
-            const messageRef = chatRef.collection('messages').doc(messageId);
-            await messageRef.set({
-                id: messageId,
-                userId: this.uid,
-                role: message.role || 'user',
-                text: message.text || '',
-                createdAt: message.createdAt || window.firebase.firestore.Timestamp.now()
-            }, { merge: true });
+            const token = await window.miFirebaseUser?.getIdToken?.();
+            const response = await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ conversation_id: chatId, id: messageId, role: message.role || 'user', content: message.text || '' }) });
+            if (!response.ok) throw new Error('Shared message save failed.');
             console.log(`[Persistence] Message ${messageId} saved to Firestore`);
         }
 
         async deleteChat(chatId) {
             if (!this.uid) throw new Error('Cannot delete chat without an authenticated user.');
-            const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
-            const chatSnapshot = await chatRef.get();
-            if (!chatSnapshot.exists) return;
-            if (chatSnapshot.data().userId && chatSnapshot.data().userId !== this.uid) {
-                throw new Error('Chat ownership could not be verified.');
-            }
-            const messagesSnapshot = await chatRef.collection('messages').get();
-            let batch = window.firebase.firestore().batch();
-            let count = 0;
-            for (const message of messagesSnapshot.docs) {
-                batch.delete(message.ref);
-                count += 1;
-                if (count === 450) {
-                    await batch.commit();
-                    batch = window.firebase.firestore().batch();
-                    count = 0;
-                }
-            }
-            if (count) await batch.commit();
-            await chatRef.delete();
+            const token = await window.miFirebaseUser?.getIdToken?.();
+            const response = await fetch('/api/conversations/' + encodeURIComponent(chatId), { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+            if (!response.ok && response.status !== 404) throw new Error('Shared chat deletion failed.');
         }
 
         async loadUserData() {
             const requestedUid = this.uid;
             if (!requestedUid) throw new Error('Cannot load chats without an authenticated user.');
-            try {
-                const userRef = window.firebase.firestore().collection('users').doc(requestedUid);
-
-                // Load settings
-                const settingsDoc = await userRef.collection('settings').doc('general').get();
-                const settings = settingsDoc.exists ? settingsDoc.data() : {};
-
-                // Load chats and messages
-                const chatsSnapshot = await userRef.collection('chats').get();
-                const chats = {};
-
-                for (const chatDoc of chatsSnapshot.docs) {
-                    const chatId = chatDoc.id;
-                    const chatData = chatDoc.data();
-                    if (chatData.userId && chatData.userId !== requestedUid) continue;
-
-                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').get();
-                    const messages = messagesSnapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            role: data.role === 'ai' ? 'ai' : 'me',
-                            text: data.text || '',
-                            createdAt: data.createdAt || null
-                        };
-                    });
-
-                    chats[chatId] = messages;
-                    chats[chatId].title = chatData.title || chatId;
-                    chats[chatId].pin = chatData.pin || false;
-                    chats[chatId].messageCount = messages.length;
-                }
-
-                if (this.uid !== requestedUid) {
-                    throw new Error('Authenticated user changed while loading chats.');
-                }
-
-                console.log('[Persistence] User data loaded from Firestore:', { chats: Object.keys(chats), settings });
-                return { chats, settings };
-            } catch (err) {
-                console.error('[Persistence] Error loading user data:', err.message);
-                throw err;
+            const token = await window.miFirebaseUser?.getIdToken?.();
+            const conversationsResponse = await fetch('/api/conversations', { headers: { Authorization: 'Bearer ' + token } });
+            const conversationsJson = await conversationsResponse.json().catch(() => ({}));
+            if (!conversationsResponse.ok) throw new Error(conversationsJson.message || 'Shared chat load failed.');
+            const chats = {};
+            for (const conversation of conversationsJson.conversations || []) {
+                const messagesResponse = await fetch('/api/messages?conversation_id=' + encodeURIComponent(conversation.id), { headers: { Authorization: 'Bearer ' + token } });
+                const messagesJson = await messagesResponse.json().catch(() => ({}));
+                const messages = (messagesJson.messages || []).map(message => ({ id: message.id, role: message.role === 'ai' ? 'ai' : 'me', text: message.content || message.text || '', createdAt: message.created_at || null }));
+                messages.title = conversation.title || conversation.id;
+                messages.pin = Boolean(conversation.pin);
+                messages.messageCount = messages.length;
+                chats[conversation.id] = messages;
             }
+            const settings = await this.loadSettings();
+            console.log('[Persistence] Shared owner data loaded:', { chats: Object.keys(chats), settings });
+            return { chats, settings };
         }
     }
 
@@ -13524,6 +13497,7 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
 <section class="cortex-settings-group"><h4>Storage</h4><p class="cortex-settings-description">Manage locally stored preferences and temporary data.</p><button class="cortex-settings-action" type="button" data-settings-action="clear">Clear Cache</button></section>
 <section class="cortex-settings-group"><h4>Safety</h4><div class="cortex-setting-row cortex-setting-toggle" data-setting="safeMode"><span><b>Safe Mode</b><small>Keep existing safety behavior enabled.</small></span><span class="cortex-setting-value"></span></div></section>
 <section class="cortex-settings-group"><h4>Security &amp; Login</h4><p class="cortex-settings-description">Authentication and sessions continue to use the existing account system.</p><div class="cortex-setting-row"><span><b>Account Status</b><small>Current authenticated account state.</small></span><span class="cortex-setting-value">Protected</span></div></section>
+<section class="cortex-settings-group"><h4>Shared Workspace</h4><p class="cortex-settings-description">Link another authenticated account with an explicit owner invite.</p><button class="cortex-settings-action" type="button" data-settings-action="create-owner-invite">Create Link Invite</button><button class="cortex-settings-action" type="button" data-settings-action="accept-owner-invite">Accept Link Invite</button></section>
 <section class="cortex-settings-group"><h4>Keyboard Shortcuts</h4><div class="cortex-shortcuts"><span>New Chat <kbd>Ctrl / Cmd + N</kbd></span><span>Focus Message Input <kbd>/</kbd></span><span>Open Settings <kbd>Ctrl / Cmd + ,</kbd></span><span>Send Message <kbd>Enter</kbd></span></div></section>
 <section class="cortex-settings-group cortex-about"><h4>About Cortex Core AI</h4><strong>CORTEX CORE AI</strong><p>Created by: M.I. Muhammadh<br>Company: MI CORTEX X INC.</p><p><a href="mailto:miai.customerservice@gmail.com">miai.customerservice@gmail.com</a><br><a href="mailto:teamofchatbot.miai@gmail.com">teamofchatbot.miai@gmail.com</a><br>Team WhatsApp: 0756390621</p></section>
 </div><div id="cortexSettingsStatus" role="status" aria-live="polite"></div>
@@ -15201,6 +15175,13 @@ try {
             
             if (window.firestorePersistence) {
                 window.firestorePersistence.setUser(firebaseUser.uid);
+                window.firestorePersistence.loadSettings().then(settings => {
+                    window.dispatchEvent(new CustomEvent('mi-owner-settings-loaded', { detail: settings }));
+                }).catch(error => console.warn('[Persistence] Shared settings load skipped:', error));
+                window.firestorePersistence.subscribeOwner((kind, settings) => {
+                    if (kind === 'chats') refreshAuthenticatedChats();
+                    if (kind === 'settings') window.dispatchEvent(new CustomEvent('mi-owner-settings-changed', { detail: settings }));
+                }).catch(error => console.warn('[Persistence] Shared owner listener skipped:', error));
             }
             localStorage.setItem('mi_supabase_token', nextToken);
             localStorage.setItem('mi_user_id', firebaseUser.uid);
@@ -42279,7 +42260,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
         responseStyle: [["concise", "Concise"], ["balanced", "Balanced"], ["detailed", "Detailed"]],
         language: [["en", "English"], ["si", "සිංහල"], ["ta", "தமிழ்"]]
     };
-    let settings = Object.assign({}, defaults, JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
+    let settings = Object.assign({}, defaults, JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"), window.__miOwnerSettings || {});
     if (settings.accentColor === "#000000" || !/^#[0-9a-f]{6}$/i.test(settings.accentColor)) settings.accentColor = defaults.accentColor;
 
     function save() {
@@ -42309,6 +42290,15 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     }
     function closeMenus() { document.querySelectorAll(".cortex-setting-menu").forEach((menu) => menu.remove()); }
     function setValue(key, value) { settings[key] = value; save(); applyAll(); if (key === "language") applyLanguageNow(value); }
+    function applySharedSettings(shared) {
+        if (!shared || typeof shared !== "object") return;
+        Object.keys(settings).forEach(key => {
+            if (Object.prototype.hasOwnProperty.call(shared, key)) settings[key] = shared[key];
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        applyAll();
+        translateUi();
+    }
     function applyLanguageNow(value) {
         const apply = window.applyLanguage || window.MIAI18N?.setLanguage;
         if (typeof apply === "function") Promise.resolve(apply(value, true)).catch(() => {}).finally(translateUi);
@@ -42339,6 +42329,23 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
         if (typeof settings[key] === "boolean") setValue(key, !settings[key]); else openMenu(row);
     }
     function exportChats() { const data = JSON.stringify(window.chats || {}, null, 2); const blob = new Blob([data], { type: "application/json" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "cortex-core-ai-chats.json"; link.click(); URL.revokeObjectURL(link.href); }
+    async function ownerLinkAction(action) {
+        const token = await window.miFirebaseUser?.getIdToken?.();
+        if (!token) return;
+        if (action === "create-owner-invite") {
+            const response = await fetch('/api/owner/link-invite', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.message || 'Could not create owner invite.');
+            window.prompt('Copy this owner link invite for the other authenticated profile:', result.inviteToken);
+            return;
+        }
+        const inviteToken = window.prompt('Paste the owner link invite:');
+        if (!inviteToken) return;
+        const response = await fetch('/api/owner/link-accept', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ inviteToken }) });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || 'Could not accept owner invite.');
+        window.location.reload();
+    }
     function clearTemporary() { const guestKey = typeof getGuestStorageKey === "function" ? getGuestStorageKey() : "mi_guest_chats"; localStorage.removeItem(guestKey); localStorage.removeItem("mi_guest_chats"); document.getElementById("cortexSettingsStatus").textContent = "Temporary guest data cleared."; }
     function initialize() {
         const sections = document.getElementById("cortexSettingsSections"); if (!sections) return;
@@ -42350,9 +42357,13 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
         sections.addEventListener("click", onRowClick); sections.addEventListener("keydown", (event) => { const row = event.target.closest(".cortex-setting-row"); if (row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onRowClick(event); } });
         document.getElementById("themeColor")?.addEventListener("input", (event) => { settings.accentColor = event.target.value; applyAll(); }); document.getElementById("themeColor")?.addEventListener("change", save);
         document.querySelector('[data-settings-action="export"]')?.addEventListener("click", exportChats); document.querySelector('[data-settings-action="clear"]')?.addEventListener("click", clearTemporary);
+        document.querySelector('[data-settings-action="create-owner-invite"]')?.addEventListener("click", () => ownerLinkAction("create-owner-invite").catch(error => alert(error.message)));
+        document.querySelector('[data-settings-action="accept-owner-invite"]')?.addEventListener("click", () => ownerLinkAction("accept-owner-invite").catch(error => alert(error.message)));
         document.addEventListener("click", (event) => { if (!event.target.closest(".cortex-setting-row")) closeMenus(); });
         document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeMenus(); if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "n") { event.preventDefault(); window.newChat?.(); } if ((event.ctrlKey || event.metaKey) && event.key === ",") { event.preventDefault(); window.toggleSettings?.(); } if (event.key === "/" && document.activeElement !== document.getElementById("msg")) { event.preventDefault(); document.getElementById("msg")?.focus(); } }, true);
         document.addEventListener("keydown", (event) => { const input = document.getElementById("msg"); if (event.target !== input || event.key !== "Enter") return; if (settings.enterKeyBehavior === "newline" && !event.shiftKey) { event.stopImmediatePropagation(); return; } if (settings.enterKeyBehavior === "send" && !event.shiftKey) { event.preventDefault(); event.stopImmediatePropagation(); window.send?.(); } }, true);
+        window.addEventListener("mi-owner-settings-loaded", event => applySharedSettings(event.detail));
+        window.addEventListener("mi-owner-settings-changed", event => applySharedSettings(event.detail));
         window.addEventListener("mi-ai-startup-complete", applyAll, { once: true }); matchMedia("(prefers-color-scheme: light)").addEventListener?.("change", () => settings.theme === "system" && applyAll()); applyAll(); translateUi(); if (settings.language !== "en") applyLanguageNow(settings.language);
     }
     window.cortexSettings = { get: () => Object.assign({}, settings), set: setValue, apply: applyAll };
