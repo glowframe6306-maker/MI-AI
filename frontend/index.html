@@ -12035,7 +12035,7 @@ textarea:disabled,
     min-width:0 !important;
 }
 
-#inputBox #miVoiceAssistantBtn{
+#inputBox #miVoiceAssistantRealBtn{
     display:flex !important;
     visibility:visible !important;
     opacity:1 !important;
@@ -12057,11 +12057,54 @@ textarea:disabled,
     white-space:nowrap !important;
 }
 
-#inputBox #miVoiceAssistantBtn:hover{
+#inputBox #miVoiceAssistantRealBtn:hover{
     box-shadow:0 0 18px rgba(0,200,255,.4) !important;
 }
 
 #inputBox #sendBtn{
+    flex:0 0 auto !important;
+}
+</style>
+<style id="MI_VOICE_FINAL_INPUT_BUTTON">
+#miVoiceAssistantRealBtn{
+    display:inline-flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    position:relative !important;
+    flex:0 0 auto !important;
+    width:170px !important;
+    min-width:170px !important;
+    max-width:170px !important;
+    height:48px !important;
+    min-height:48px !important;
+    margin:0 !important;
+    padding:0 12px !important;
+    align-items:center !important;
+    justify-content:center !important;
+    white-space:nowrap !important;
+    overflow:visible !important;
+    z-index:9999999 !important;
+    cursor:pointer !important;
+    border-radius:12px !important;
+    font-size:12px !important;
+    font-weight:700 !important;
+}
+
+#inputBox > div > div[style*="align-items:flex-end"]{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:flex-end !important;
+    width:100% !important;
+    gap:8px !important;
+}
+
+#inputBox #msg{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+}
+
+#inputBox #sendBtn{
+    display:inline-flex !important;
     flex:0 0 auto !important;
 }
 </style>
@@ -12217,7 +12260,7 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
     <textarea id="msg" placeholder="ASK ANYTHING FROM CORTEX CORE AI"></textarea>
-      <button id="miVoiceAssistantBtn" type="button" title="Voice Assistant">
+      <button id="miVoiceAssistantRealBtn" type="button" title="Voice Assistant">
     🎙️ VOICE ASSISTANT
 </button>
       <button id="sendBtn" type="button" onclick="sendOrStop()">├ó┼╛┬ñ</button>
@@ -39972,7 +40015,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 </script>
 <!-- MI_VOICE_ASSISTANT_V2 -->
 <style>
-#miVoiceAssistantBtn{
+#miVoiceAssistantRealBtn{
     margin-right:8px !important;
     min-width:145px !important;
     height:42px !important;
@@ -39990,7 +40033,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     gap:7px !important;
     z-index:999999 !important;
 }
-#miVoiceAssistantBtn:hover{
+#miVoiceAssistantRealBtn:hover{
     transform:translateY(-1px);
     box-shadow:0 0 18px rgba(0,200,255,.35);
 }
@@ -40049,10 +40092,10 @@ function createVoiceButton(){
     const sendBtn = document.getElementById("sendBtn");
     if(!sendBtn) return false;
 
-    if(document.getElementById("miVoiceAssistantBtn")) return true;
+    if(document.getElementById("miVoiceAssistantRealBtn")) return true;
 
     const btn = document.createElement("button");
-    btn.id = "miVoiceAssistantBtn";
+    btn.id = "miVoiceAssistantRealBtn";
     btn.type = "button";
     btn.innerHTML = "🎙️ VOICE ASSISTANT";
 
@@ -40609,6 +40652,7 @@ if(document.readyState === "loading"){
 
 })();
 </script>
+
 
 
 
