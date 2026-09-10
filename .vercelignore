@@ -1,10 +1,5 @@
-﻿node_modules/
-.venv/
-.git/
-__pycache__/
-.pytest_cache/
-**/.pytest_cache/
-*.pyc
-*.before-live-fix
-*.before-live-integration
-test.json
+**/.pytest_cache/**
+**/__pycache__/**
+**/.venv/**
+.venv/**
+.git/**
