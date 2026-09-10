@@ -39923,6 +39923,566 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     setTimeout(migrateLocalChats, 3500);
 })();
 </script>
+<!-- MI_VOICE_ASSISTANT_V1 -->
+<style>
+#miVoiceAssistantBtn{
+    height:48px;
+    padding:0 15px;
+    border:1px solid rgba(96,165,250,.45);
+    border-radius:14px;
+    background:linear-gradient(145deg,rgba(37,99,235,.85),rgba(30,64,175,.65));
+    color:#fff;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    white-space:nowrap;
+    box-shadow:0 8px 24px rgba(37,99,235,.18);
+    transition:.2s ease;
+}
+
+#miVoiceAssistantBtn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 10px 28px rgba(37,99,235,.28);
+}
+
+#miVoiceAssistantPanel{
+    position:fixed;
+    right:24px;
+    bottom:90px;
+    width:340px;
+    max-width:calc(100vw - 30px);
+    padding:20px;
+    border:1px solid rgba(96,165,250,.35);
+    border-radius:22px;
+    background:rgba(10,18,35,.96);
+    backdrop-filter:blur(22px);
+    -webkit-backdrop-filter:blur(22px);
+    color:#fff;
+    z-index:999999;
+    display:none;
+    box-shadow:0 20px 70px rgba(0,0,0,.45);
+}
+
+#miVoiceAssistantPanel.open{
+    display:block;
+    animation:miVoiceOpen .22s ease;
+}
+
+@keyframes miVoiceOpen{
+    from{opacity:0;transform:translateY(12px) scale(.98)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+.miVoiceHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+}
+
+.miVoiceTitle{
+    font-size:18px;
+    font-weight:800;
+}
+
+.miVoiceClose{
+    width:34px;
+    height:34px;
+    border:0;
+    border-radius:10px;
+    background:rgba(255,255,255,.08);
+    color:#fff;
+    cursor:pointer;
+    font-size:18px;
+}
+
+#miVoiceOrb{
+    width:105px;
+    height:105px;
+    margin:10px auto 18px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+    background:radial-gradient(circle,rgba(96,165,250,.95),rgba(30,64,175,.75));
+    box-shadow:0 0 35px rgba(59,130,246,.35);
+    transition:.25s ease;
+}
+
+#miVoiceOrb.listening{
+    animation:miVoicePulse 1.25s infinite;
+}
+
+@keyframes miVoicePulse{
+    0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(59,130,246,.35)}
+    50%{transform:scale(1.08);box-shadow:0 0 55px rgba(59,130,246,.65)}
+}
+
+#miVoiceStatus{
+    text-align:center;
+    min-height:22px;
+    font-size:14px;
+    opacity:.85;
+    margin-bottom:14px;
+}
+
+#miVoiceTranscript{
+    min-height:42px;
+    padding:11px 13px;
+    border-radius:12px;
+    background:rgba(255,255,255,.06);
+    font-size:13px;
+    line-height:1.45;
+    margin-bottom:15px;
+    word-break:break-word;
+}
+
+#miVoiceStart{
+    width:100%;
+    height:45px;
+    border:0;
+    border-radius:13px;
+    background:linear-gradient(145deg,#2563eb,#1d4ed8);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+}
+
+#miVoiceStart.active{
+    background:linear-gradient(145deg,#dc2626,#991b1b);
+}
+
+@media(max-width:600px){
+    #miVoiceAssistantPanel{
+        right:12px;
+        bottom:75px;
+        width:calc(100vw - 24px);
+    }
+
+    #miVoiceAssistantBtn{
+        padding:0 10px;
+        font-size:12px;
+    }
+}
+</style>
+
+<script>
+(function(){
+
+    if(window.MI_VOICE_ASSISTANT_V1) return;
+    window.MI_VOICE_ASSISTANT_V1 = true;
+
+    let recognition = null;
+    let listening = false;
+    let speaking = false;
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    function createVoiceUI(){
+
+        const sendBtn = document.getElementById("sendBtn");
+
+        if(!sendBtn) return false;
+
+        if(document.getElementById("miVoiceAssistantBtn")) return true;
+
+        const voiceBtn = document.createElement("button");
+        voiceBtn.id = "miVoiceAssistantBtn";
+        voiceBtn.type = "button";
+        voiceBtn.innerHTML = "🎙️ VOICE ASSISTANT";
+        voiceBtn.title = "Open Voice Assistant";
+
+        sendBtn.parentNode.insertBefore(voiceBtn, sendBtn);
+
+        const panel = document.createElement("div");
+        panel.id = "miVoiceAssistantPanel";
+
+        panel.innerHTML = `
+            <div class="miVoiceHeader">
+                <div class="miVoiceTitle">🎙️ Voice Assistant</div>
+                <button class="miVoiceClose" type="button">×</button>
+            </div>
+
+            <div id="miVoiceOrb">🎙️</div>
+
+            <div id="miVoiceStatus">
+                Click the microphone and speak.
+            </div>
+
+            <div id="miVoiceTranscript">
+                Ready for voice conversation.
+            </div>
+
+            <button id="miVoiceStart" type="button">
+                🎙️ Start Listening
+            </button>
+        `;
+
+        document.body.appendChild(panel);
+
+        const closeBtn =
+            panel.querySelector(".miVoiceClose");
+
+        const startBtn =
+            panel.querySelector("#miVoiceStart");
+
+        voiceBtn.addEventListener("click",function(){
+            panel.classList.toggle("open");
+        });
+
+        closeBtn.addEventListener("click",function(){
+            stopListening();
+            panel.classList.remove("open");
+        });
+
+        startBtn.addEventListener("click",function(){
+
+            if(listening){
+                stopListening();
+            }else{
+                startListening();
+            }
+
+        });
+
+        return true;
+    }
+
+    function setStatus(text){
+        const el = document.getElementById("miVoiceStatus");
+        if(el) el.textContent = text;
+    }
+
+    function setTranscript(text){
+        const el = document.getElementById("miVoiceTranscript");
+        if(el) el.textContent = text;
+    }
+
+    function setListeningUI(active){
+
+        const orb =
+            document.getElementById("miVoiceOrb");
+
+        const btn =
+            document.getElementById("miVoiceStart");
+
+        if(orb){
+            orb.classList.toggle("listening",active);
+            orb.textContent = active ? "🔴" : "🎙️";
+        }
+
+        if(btn){
+            btn.classList.toggle("active",active);
+            btn.textContent =
+                active
+                ? "⏹ Stop Listening"
+                : "🎙️ Start Listening";
+        }
+    }
+
+    function stopListening(){
+
+        listening = false;
+
+        try{
+            if(recognition){
+                recognition.stop();
+            }
+        }catch(e){}
+
+        setListeningUI(false);
+        setStatus("Voice Assistant is ready.");
+    }
+
+    function speak(text){
+
+        if(!("speechSynthesis" in window)) return;
+
+        try{
+            window.speechSynthesis.cancel();
+
+            const cleanText =
+                String(text || "")
+                .replace(/<[^>]*>/g," ")
+                .replace(/\s+/g," ")
+                .trim();
+
+            if(!cleanText) return;
+
+            const utterance =
+                new SpeechSynthesisUtterance(cleanText);
+
+            utterance.lang = "en-US";
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            speaking = true;
+
+            setStatus("🔊 Speaking...");
+
+            utterance.onend = function(){
+                speaking = false;
+
+                if(!listening){
+                    setStatus("Voice Assistant is ready.");
+                }
+            };
+
+            utterance.onerror = function(){
+                speaking = false;
+                setStatus("Voice playback unavailable.");
+            };
+
+            window.speechSynthesis.speak(utterance);
+
+        }catch(error){
+            console.error("Voice synthesis error:",error);
+        }
+    }
+
+    async function askAI(text){
+
+        const message = String(text || "").trim();
+
+        if(!message) return;
+
+        setTranscript("You: " + message);
+        setStatus("🧠 Thinking...");
+
+        try{
+
+            /*
+             * Use the existing authenticated chat API.
+             * The existing fetch/authentication layer remains responsible
+             * for authentication headers/session handling.
+             */
+
+            const response = await fetch("/chat",{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                credentials:"include",
+                body:JSON.stringify({
+                    message:message
+                })
+            });
+
+            let data = {};
+
+            try{
+                data = await response.json();
+            }catch(e){
+                data = {};
+            }
+
+            if(!response.ok){
+                throw new Error(
+                    data.message ||
+                    data.error ||
+                    "Voice request failed."
+                );
+            }
+
+            const reply =
+                data.reply ||
+                data.response ||
+                data.message ||
+                data.answer ||
+                data.text ||
+                "";
+
+            if(!reply){
+                throw new Error("AI returned an empty response.");
+            }
+
+            setTranscript(
+                "You: " + message +
+                "\n\nAI: " + String(reply)
+            );
+
+            speak(String(reply));
+
+        }catch(error){
+
+            console.error(
+                "MI Voice Assistant error:",
+                error
+            );
+
+            setStatus(
+                "Unable to connect to the AI."
+            );
+
+            setTranscript(
+                "Voice request failed. " +
+                (error.message || "")
+            );
+        }
+    }
+
+    function startListening(){
+
+        if(!SpeechRecognition){
+
+            setStatus(
+                "Speech recognition is not supported in this browser."
+            );
+
+            return;
+        }
+
+        if(listening) return;
+
+        try{
+
+            recognition =
+                new SpeechRecognition();
+
+            recognition.lang = "en-US";
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function(){
+
+                listening = true;
+
+                setListeningUI(true);
+
+                setStatus(
+                    "🎙️ Listening... Speak now."
+                );
+
+                setTranscript(
+                    "I'm listening..."
+                );
+            };
+
+            recognition.onresult = function(event){
+
+                let finalText = "";
+                let interimText = "";
+
+                for(
+                    let i = event.resultIndex;
+                    i < event.results.length;
+                    i++
+                ){
+
+                    const result =
+                        event.results[i];
+
+                    const transcript =
+                        result[0]?.transcript || "";
+
+                    if(result.isFinal){
+                        finalText += transcript;
+                    }else{
+                        interimText += transcript;
+                    }
+                }
+
+                const current =
+                    (finalText || interimText).trim();
+
+                if(current){
+                    setTranscript(
+                        "You: " + current
+                    );
+                }
+
+                if(finalText.trim()){
+
+                    const message =
+                        finalText.trim();
+
+                    listening = false;
+
+                    setListeningUI(false);
+
+                    askAI(message);
+                }
+            };
+
+            recognition.onerror = function(event){
+
+                listening = false;
+
+                setListeningUI(false);
+
+                console.error(
+                    "Speech recognition error:",
+                    event.error
+                );
+
+                if(event.error === "not-allowed"){
+                    setStatus(
+                        "Microphone permission was denied."
+                    );
+                }else if(event.error === "no-speech"){
+                    setStatus(
+                        "No speech detected. Try again."
+                    );
+                }else{
+                    setStatus(
+                        "Microphone error. Try again."
+                    );
+                }
+            };
+
+            recognition.onend = function(){
+
+                listening = false;
+
+                setListeningUI(false);
+
+            };
+
+            recognition.start();
+
+        }catch(error){
+
+            console.error(
+                "Could not start speech recognition:",
+                error
+            );
+
+            listening = false;
+            setListeningUI(false);
+
+            setStatus(
+                "Could not start the microphone."
+            );
+        }
+    }
+
+    function init(){
+
+        if(createVoiceUI()) return;
+
+        setTimeout(init,500);
+    }
+
+    init();
+
+    window.MIVoiceAssistant = {
+        start:startListening,
+        stop:stopListening,
+        speak:speak
+    };
+
+})();
+</script>
+<!-- END MI_VOICE_ASSISTANT_V1 -->
 </body>
 </html>
 
@@ -40347,6 +40907,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
+
 
 
 
