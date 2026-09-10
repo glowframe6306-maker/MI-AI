@@ -446,34 +446,55 @@ def mi_owner_ref(owner_id):
     return MI_FIREBASE_DB.collection("owners").document(str(owner_id))
 
 
+# CORTEX CORE AI - ONE UNIFIED OWNER FOR ALL AUTHENTICATED PROFILES
+# All Firebase-authenticated accounts intentionally share one owner space.
+# Keep this configurable so the production owner ID can be changed without code edits.
+MI_UNIFIED_OWNER_ID = (
+    os.getenv("MI_UNIFIED_OWNER_ID")
+    or "MI_CORTEX_X_UNIFIED_OWNER"
+).strip()
+
 def mi_resolve_owner(account, create=True):
-    """Resolve a verified Firebase UID through server-controlled membership."""
+    """Resolve every verified Firebase account to the single shared owner."""
     uid = str(account.get("uid") or "").strip()
     if not uid:
         raise PermissionError("Firebase UID is missing.")
-    members = MI_FIREBASE_DB.collection("owners").where("memberUids", "array_contains", uid).limit(1).stream()
-    owner_doc = next(iter(members), None)
-    if owner_doc:
-        return owner_doc.id
-    if not create:
-        raise PermissionError("This account is not linked to an owner.")
-    owner_id = uid
+    owner_id = MI_UNIFIED_OWNER_ID
     owner_ref = mi_owner_ref(owner_id)
-    owner_ref.set({
-        "ownerId": owner_id,
-        "createdAt": firebase_admin_firestore.SERVER_TIMESTAMP,
-        "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP,
-        "memberUids": [uid],
-    }, merge=True)
-    owner_ref.collection("members").document(uid).set({
-        "uid": uid,
-        "email": account.get("email", ""),
-        "role": "owner",
-        "state": "active",
-        "createdAt": firebase_admin_firestore.SERVER_TIMESTAMP,
-        "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP,
-    }, merge=True)
-    mi_migrate_uid_chats_to_owner(uid, owner_id)
+    if create:
+        owner_ref.set({
+            "ownerId": owner_id,
+            "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP,
+            "memberUids": firebase_admin_firestore.ArrayUnion([uid]),
+            "unified": True,
+        }, merge=True)
+        owner_ref.collection("members").document(uid).set({
+            "uid": uid,
+            "email": account.get("email", ""),
+            "role": "member",
+            "state": "active",
+            "updatedAt": firebase_admin_firestore.SERVER_TIMESTAMP,
+        }, merge=True)
+        # Import this account's old UID-scoped data without deleting the source.
+        mi_migrate_uid_chats_to_owner(uid, owner_id)
+        # Import legacy owner-scoped data created before unified ownership.
+        legacy_ref = mi_owner_ref(uid)
+        if uid != owner_id:
+            for legacy_chat in legacy_ref.collection("chats").stream():
+                target_chat = owner_ref.collection("chats").document(legacy_chat.id)
+                target_chat.set({**(legacy_chat.to_dict() or {}), "ownerId": owner_id, "sourceUid": uid}, merge=True)
+                for message_doc in legacy_chat.reference.collection("messages").stream():
+                    target_chat.collection("messages").document(message_doc.id).set({
+                        **(message_doc.to_dict() or {}), "ownerId": owner_id, "sourceUid": uid
+                    }, merge=True)
+            legacy_settings = legacy_ref.collection("settings").document("general").get()
+            if legacy_settings.exists:
+                owner_settings = owner_ref.collection("settings").document("general")
+                current = owner_settings.get()
+                if not current.exists:
+                    owner_settings.set({**(legacy_settings.to_dict() or {}), "ownerId": owner_id, "sourceUid": uid}, merge=True)
+    elif not owner_ref.get().exists:
+        raise PermissionError("Unified owner is not configured.")
     return owner_id
 
 

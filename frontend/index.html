@@ -6629,98 +6629,131 @@ window.miFirebaseReady = new Promise((resolve, reject) => {
             this.listeners = [];
         }
 
+        getAuthHeaders() {
+            const token = localStorage.getItem('mi_supabase_token') || '';
+            const uid = localStorage.getItem('mi_user_id') || this.uid || '';
+            const email = localStorage.getItem('mi_user_email') || '';
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'X-User-Id': uid,
+                'X-User-Email': email
+            };
+        }
+
         async saveSettings(settings) {
             if (!this.uid) throw new Error('Cannot save settings without an authenticated user.');
             try {
-                const docRef = window.firebase.firestore().collection('users').doc(this.uid).collection('settings').doc('general');
-                await docRef.set({
-                    theme: settings.theme || '',
-                    fontSize: settings.fontSize || 15,
-                    language: settings.language || 'en',
-                    updatedAt: window.firebase.firestore.Timestamp.now()
-                }, { merge: true });
-                console.log('[Persistence] Settings saved to Firestore');
+                const response = await fetch('/api/account-settings', {
+                    method: 'PATCH',
+                    headers: this.getAuthHeaders(),
+                    body: JSON.stringify(settings || {})
+                });
+                if (!response.ok) throw new Error('Shared settings save failed: HTTP ' + response.status);
+                console.log('[Persistence] Shared owner settings saved');
             } catch (err) {
-                console.error('[Persistence] Error saving settings:', err.message);
+                console.error('[Persistence] Error saving shared settings:', err.message);
+                throw err;
             }
         }
 
         async saveChat(chatId, chatData) {
             if (!this.uid) throw new Error('Cannot save chat without an authenticated user.');
             try {
-                const chatRef = window.firebase.firestore().collection('users').doc(this.uid).collection('chats').doc(chatId);
-                await chatRef.set({
-                    title: chatData.title || 'Chat',
-                    pin: chatData.pin || false,
-                    createdAt: window.firebase.firestore.Timestamp.now(),
-                    updatedAt: window.firebase.firestore.Timestamp.now(),
-                    messageCount: chatData.messageCount || 0
-                }, { merge: true });
-                console.log(`[Persistence] Chat ${chatId} saved to Firestore`);
+                const response = await fetch('/api/conversations', {
+                    method: 'POST',
+                    headers: this.getAuthHeaders(),
+                    body: JSON.stringify({
+                        id: String(chatId),
+                        title: chatData?.title || 'Chat',
+                        pin: Boolean(chatData?.pin),
+                        session_id: localStorage.getItem('mi_account') || this.uid
+                    })
+                });
+                if (!response.ok) throw new Error('Shared chat save failed: HTTP ' + response.status);
             } catch (err) {
-                console.error('[Persistence] Error saving chat:', err.message);
+                console.error('[Persistence] Error saving shared chat:', err.message);
+                throw err;
             }
         }
 
         async saveMessage(chatId, messageId, message) {
             if (!this.uid) throw new Error('Cannot save message without an authenticated user.');
             try {
-                const messageRef = window.firebase.firestore().collection('users').doc(this.uid)
-                    .collection('chats').doc(chatId)
-                    .collection('messages').doc(messageId);
-                await messageRef.set({
-                    role: message.role || 'user',
-                    text: message.text || '',
-                    createdAt: window.firebase.firestore.Timestamp.now()
-                }, { merge: true });
-                console.log(`[Persistence] Message ${messageId} saved to Firestore`);
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: this.getAuthHeaders(),
+                    body: JSON.stringify({
+                        conversation_id: String(chatId),
+                        session_id: localStorage.getItem('mi_account') || this.uid,
+                        id: String(messageId),
+                        role: message?.role === 'me' ? 'me' : 'ai',
+                        content: message?.text || ''
+                    })
+                });
+                if (!response.ok) throw new Error('Shared message save failed: HTTP ' + response.status);
             } catch (err) {
-                console.error('[Persistence] Error saving message:', err.message);
+                console.error('[Persistence] Error saving shared message:', err.message);
+                throw err;
             }
         }
 
         async loadUserData() {
             const requestedUid = this.uid;
-            if (!requestedUid) throw new Error('Cannot load chats without an authenticated user.');
+            if (!requestedUid) throw new Error('Cannot load shared data without an authenticated user.');
+            const token = localStorage.getItem('mi_supabase_token') || '';
+            if (!token) throw new Error('Authentication token is missing.');
             try {
-                const userRef = window.firebase.firestore().collection('users').doc(requestedUid);
+                const headers = this.getAuthHeaders();
+                const [conversationResponse, settingsResponse] = await Promise.all([
+                    fetch('/api/conversations', { headers }),
+                    fetch('/api/account-settings', { headers })
+                ]);
+                if (!conversationResponse.ok) throw new Error('Shared conversations load failed: HTTP ' + conversationResponse.status);
+                if (!settingsResponse.ok) throw new Error('Shared settings load failed: HTTP ' + settingsResponse.status);
 
-                // Load settings
-                const settingsDoc = await userRef.collection('settings').doc('general').get();
-                const settings = settingsDoc.exists ? settingsDoc.data() : {};
-
-                // Load chats and messages
-                const chatsSnapshot = await userRef.collection('chats').get();
+                const conversationsJson = await conversationResponse.json();
+                const settingsJson = await settingsResponse.json();
                 const chats = {};
+                const conversations = Array.isArray(conversationsJson.conversations) ? conversationsJson.conversations : [];
 
-                for (const chatDoc of chatsSnapshot.docs) {
-                    const chatId = chatDoc.id;
-                    const chatData = chatDoc.data();
-
-                    const messagesSnapshot = await userRef.collection('chats').doc(chatId).collection('messages').get();
-                    const messages = messagesSnapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            role: data.role === 'ai' ? 'ai' : 'me',
-                            text: data.text || ''
-                        };
-                    });
-
-                    chats[chatId] = messages;
-                    chats[chatId].title = chatData.title || chatId;
-                    chats[chatId].pin = chatData.pin || false;
-                    chats[chatId].messageCount = messages.length;
+                for (const conversation of conversations) {
+                    const chatId = String(conversation.id);
+                    const chatMessages = [];
+                    chatMessages.title = conversation.title || 'New chat';
+                    chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
+                    chatMessages.lastPreview = conversation.last_preview || '';
+                    chatMessages.messageCount = Number(conversation.message_count || 0);
+                    chatMessages.pin = Boolean(conversation.pin);
+                    chatMessages.attachments = [];
+                    try {
+                        const messageResponse = await fetch('/api/messages?conversation_id=' + encodeURIComponent(chatId), { headers });
+                        if (messageResponse.ok) {
+                            const messageJson = await messageResponse.json();
+                            if (Array.isArray(messageJson.messages)) {
+                                chatMessages.push(...messageJson.messages.map(message => ({
+                                    id: message.id,
+                                    role: message.role === 'me' ? 'me' : 'ai',
+                                    text: message.content || '',
+                                    createdAt: message.created_at
+                                })));
+                                chatMessages.messageCount = chatMessages.length;
+                                chatMessages.lastPreview = chatMessages[chatMessages.length - 1]?.text || chatMessages.lastPreview;
+                            }
+                        }
+                    } catch (messageError) {
+                        console.warn('[Persistence] Shared message load failed for', chatId, messageError);
+                    }
+                    chats[chatId] = chatMessages;
                 }
 
-                if (this.uid !== requestedUid) {
-                    throw new Error('Authenticated user changed while loading chats.');
+                if (this.uid !== requestedUid || window.miFirebaseUser?.uid !== requestedUid) {
+                    throw new Error('Authenticated user changed while loading shared data.');
                 }
-
-                console.log('[Persistence] User data loaded from Firestore:', { chats: Object.keys(chats), settings });
-                return { chats, settings };
+                console.log('[Persistence] Shared owner data loaded:', { chatCount: Object.keys(chats).length });
+                return { chats, settings: settingsJson.settings || {} };
             } catch (err) {
-                console.error('[Persistence] Error loading user data:', err.message);
+                console.error('[Persistence] Error loading shared owner data:', err.message);
                 throw err;
             }
         }
@@ -13399,6 +13432,39 @@ function isCurrentAuthenticatedUser(userId) {
     return Boolean(userId && currentUid && String(userId) === String(currentUid));
 }
 
+function mergeChatCollections(baseChats, incomingChats) {
+    const base = (baseChats && typeof baseChats === 'object' && !Array.isArray(baseChats)) ? baseChats : {};
+    const incoming = (incomingChats && typeof incomingChats === 'object' && !Array.isArray(incomingChats)) ? incomingChats : {};
+    const merged = { ...base };
+    for (const [chatId, incomingChat] of Object.entries(incoming)) {
+        if (!Object.prototype.hasOwnProperty.call(merged, chatId)) {
+            merged[chatId] = incomingChat;
+            continue;
+        }
+        const existingChat = merged[chatId];
+        if (Array.isArray(existingChat) && Array.isArray(incomingChat)) {
+            const byId = new Map();
+            for (const message of existingChat) {
+                if (message?.id != null) byId.set(String(message.id), message);
+                else byId.set('fallback:' + byId.size, message);
+            }
+            for (const message of incomingChat) {
+                if (message?.id != null) byId.set(String(message.id), message);
+                else if (![...byId.values()].some(m => m?.text === message?.text && m?.role === message?.role)) byId.set('fallback:incoming:' + byId.size, message);
+            }
+            const result = Array.from(byId.values());
+            for (const key of ['title','name','chatName','pin','updatedAt','lastPreview','messageCount','attachments']) {
+                if (incomingChat[key] !== undefined) result[key] = incomingChat[key];
+                else if (existingChat[key] !== undefined) result[key] = existingChat[key];
+            }
+            merged[chatId] = result;
+        } else {
+            merged[chatId] = incomingChat || existingChat;
+        }
+    }
+    return merged;
+}
+
 async function loadUserChats() {
   const token = localStorage.getItem('mi_supabase_token');
   const userId = localStorage.getItem('mi_user_id');
@@ -13491,11 +13557,15 @@ async function loadUserChats() {
     }
 
     if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
-    chats = loadedChats;
+    // Never replace the complete local state with a partial/empty response.
+    // The backend is authoritative, but merging protects against transient or
+    // incomplete responses during authentication/refresh.
+    chats = mergeChatCollections(chats, loadedChats);
     currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : Object.keys(chats || {})[0] || null;
 
     const storageKey = getUserChatStorageKey();
     localStorage.setItem(storageKey, JSON.stringify(chats));
+    // Safe persistence: only after a successful authenticated load.
     save();
     renderList();
     if (currentChat) {
@@ -13505,22 +13575,22 @@ async function loadUserChats() {
     }
   } catch (e) {
     if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId)) return;
-    chats = {};
-    currentChat = null;
+    // Network/auth errors are NOT deletion events. Preserve the current
+    // in-memory state and use cache only as an additional recovery source.
     const storageKey = getUserChatStorageKey();
     const cached = localStorage.getItem(storageKey);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          chats = parsed;
-          currentChat = Object.keys(chats || {})[0] || null;
+          chats = mergeChatCollections(chats, parsed);
         }
-      } catch {
-        chats = {};
-      }
+      } catch {}
     }
-    save();
+    currentChat = currentChat && chats[currentChat] ? currentChat : Object.keys(chats || {})[0] || null;
+    // IMPORTANT: do not call save() after a failed load. That could persist a
+    // stale/partial state back to the shared backend.
+
     renderList();
     if (currentChat) {
       openChat(currentChat);
@@ -36325,7 +36395,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
         "╜",
         "╣",
         "╬",
-        "�"
+        " "
     ];
 
     const storageKeys = [
@@ -37789,7 +37859,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
                             );
 
                         if (
-                            /(?:├|┬|┼|ΓÇ|Γé|Ã|Â|�)/
+                            /(?:├|┬|┼|ΓÇ|Γé|Ã|Â| )/
                                 .test(value)
                         ) {
                             node.nodeValue = "";
@@ -38212,7 +38282,7 @@ option,
     };
 
     const brokenPattern =
-        /(?:├|┬|┼|ΓÇ|Γé|Ã|Â|â€|â‚|â„|�)/;
+        /(?:├|┬|┼|ΓÇ|Γé|Ã|Â|â€|â‚|â„| )/;
 
     function normalize(value) {
         return String(value || "")
