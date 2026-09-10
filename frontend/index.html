@@ -12021,50 +12021,7 @@ textarea:disabled,
 }
 
 </style>
-<style id="MI_VOICE_ASSISTANT_LAYOUT_FIX">
-/* Voice Assistant - fixed inside message input row */
-#inputBox > div > div[style*="display:flex"][style*="align-items:flex-end"]{
-    display:flex !important;
-    align-items:flex-end !important;
-    gap:8px !important;
-    width:100% !important;
-}
 
-#inputBox #msg{
-    flex:1 1 auto !important;
-    min-width:0 !important;
-}
-
-#inputBox #miVoiceAssistantRealBtn{
-    display:flex !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    position:relative !important;
-    flex:0 0 auto !important;
-    width:auto !important;
-    min-width:150px !important;
-    height:42px !important;
-    padding:0 14px !important;
-    margin:0 !important;
-    border:1px solid rgba(0,200,255,.65) !important;
-    border-radius:12px !important;
-    background:linear-gradient(135deg,#071827,#0b3045) !important;
-    color:#7ee7ff !important;
-    font-weight:700 !important;
-    font-size:12px !important;
-    cursor:pointer !important;
-    z-index:999999 !important;
-    white-space:nowrap !important;
-}
-
-#inputBox #miVoiceAssistantRealBtn:hover{
-    box-shadow:0 0 18px rgba(0,200,255,.4) !important;
-}
-
-#inputBox #sendBtn{
-    flex:0 0 auto !important;
-}
-</style>
 <style id="MI_VOICE_FINAL_INPUT_BUTTON">
 #miVoiceAssistantRealBtn{
     display:inline-flex !important;
@@ -12106,6 +12063,44 @@ textarea:disabled,
 #inputBox #sendBtn{
     display:inline-flex !important;
     flex:0 0 auto !important;
+}
+</style>
+<style id="MI_VOICE_ASSISTANT_FINAL_FIX">
+#inputBox #miVoiceAssistantBtnFinal{
+    display:flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    position:relative !important;
+    flex:0 0 auto !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:auto !important;
+    min-width:155px !important;
+    height:42px !important;
+    padding:0 14px !important;
+    margin:0 !important;
+    border-radius:12px !important;
+    border:1px solid rgba(0,200,255,.65) !important;
+    background:rgba(20,30,45,.96) !important;
+    color:#7ee7ff !important;
+    font-size:12px !important;
+    font-weight:700 !important;
+    line-height:1 !important;
+    cursor:pointer !important;
+    white-space:nowrap !important;
+    z-index:999999 !important;
+}
+
+#inputBox #miVoiceAssistantBtnFinal:hover{
+    filter:brightness(1.15) !important;
+}
+
+#inputBox #miVoiceAssistantBtnFinal:active{
+    transform:scale(.98) !important;
+}
+
+#inputBox #miVoiceAssistantBtnFinal *{
+    pointer-events:none !important;
 }
 </style>
 </head>
@@ -12260,10 +12255,8 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
     <textarea id="msg" placeholder="ASK ANYTHING FROM CORTEX CORE AI"></textarea>
-      <button id="miVoiceAssistantRealBtn" type="button" title="Voice Assistant">
-    🎙️ VOICE ASSISTANT
-</button>
-      <button id="sendBtn" type="button" onclick="sendOrStop()">├ó┼╛┬ñ</button>
+      
+      <button id="miVoiceAssistantBtnFinal" type="button" title="Voice Assistant">🎙️ VOICE ASSISTANT</button><button id="sendBtn" type="button" onclick="sendOrStop()">├ó┼╛┬ñ</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -40228,6 +40221,153 @@ if(document.readyState === "loading"){
 })();
 </script>
 <!-- /MI_VOICE_ASSISTANT_V2 -->
+<script id="MI_VOICE_ASSISTANT_FINAL_JS">
+(function(){
+    "use strict";
+
+    function initVoiceAssistant(){
+        const btn = document.getElementById("miVoiceAssistantBtnFinal");
+        if(!btn) return;
+
+        if(btn.dataset.voiceBound === "1") return;
+        btn.dataset.voiceBound = "1";
+
+        btn.addEventListener("click", async function(){
+            if(btn.dataset.busy === "1") return;
+
+            if(!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)){
+                alert("Voice Assistant is not supported in this browser.");
+                return;
+            }
+
+            const SpeechRecognition =
+                window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = "en-US";
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            btn.dataset.busy = "1";
+            btn.textContent = "🎙️ LISTENING...";
+
+            recognition.onresult = async function(event){
+                const spokenText =
+                    event.results?.[0]?.[0]?.transcript?.trim() || "";
+
+                if(!spokenText) return;
+
+                btn.textContent = "🤖 THINKING...";
+
+                try{
+                    const response = await fetch("/chat", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            message: spokenText
+                        })
+                    });
+
+                    if(!response.ok){
+                        throw new Error("Voice request failed");
+                    }
+
+                    const data = await response.json();
+
+                    const reply =
+                        data.reply ||
+                        data.response ||
+                        data.message ||
+                        "";
+
+                    if(reply){
+                        const utterance = new SpeechSynthesisUtterance(reply);
+                        utterance.lang = "en-US";
+                        utterance.rate = 1;
+                        utterance.pitch = 1;
+                        window.speechSynthesis.cancel();
+                        window.speechSynthesis.speak(utterance);
+                    }
+                }catch(error){
+                    console.error("Voice Assistant error:", error);
+                    alert("Voice Assistant could not process the request.");
+                }finally{
+                    btn.dataset.busy = "0";
+                    btn.textContent = "🎙️ VOICE ASSISTANT";
+                }
+            };
+
+            recognition.onerror = function(error){
+                console.error("Speech recognition error:", error);
+                btn.dataset.busy = "0";
+                btn.textContent = "🎙️ VOICE ASSISTANT";
+            };
+
+            recognition.onend = function(){
+                if(btn.dataset.busy === "1"){
+                    btn.textContent = "🤖 THINKING...";
+                }
+            };
+
+            try{
+                recognition.start();
+            }catch(error){
+                console.error("Recognition start error:", error);
+                btn.dataset.busy = "0";
+                btn.textContent = "🎙️ VOICE ASSISTANT";
+            }
+        });
+    }
+
+    function forceButton(){
+        const sendBtn = document.getElementById("sendBtn");
+        if(!sendBtn || !sendBtn.parentElement) return;
+
+        let btn = document.getElementById("miVoiceAssistantBtnFinal");
+
+        if(!btn){
+            btn = document.createElement("button");
+            btn.id = "miVoiceAssistantBtnFinal";
+            btn.type = "button";
+            btn.title = "Voice Assistant";
+            btn.textContent = "🎙️ VOICE ASSISTANT";
+            sendBtn.parentElement.insertBefore(btn, sendBtn);
+        }else{
+            if(btn.nextElementSibling !== sendBtn){
+                sendBtn.parentElement.insertBefore(btn, sendBtn);
+            }
+        }
+
+        initVoiceAssistant();
+    }
+
+    function boot(){
+        forceButton();
+
+        const observer = new MutationObserver(function(){
+            forceButton();
+        });
+
+        observer.observe(document.body, {
+            childList:true,
+            subtree:true
+        });
+
+        setTimeout(forceButton, 500);
+        setTimeout(forceButton, 1500);
+        setTimeout(forceButton, 3000);
+    }
+
+    if(document.readyState === "loading"){
+        document.addEventListener("DOMContentLoaded", boot);
+    }else{
+        boot();
+    }
+})();
+</script>
 </body>
 </html>
 
@@ -40652,6 +40792,7 @@ if(document.readyState === "loading"){
 
 })();
 </script>
+
 
 
 
