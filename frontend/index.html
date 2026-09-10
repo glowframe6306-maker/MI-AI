@@ -12021,6 +12021,50 @@ textarea:disabled,
 }
 
 </style>
+<style id="MI_VOICE_ASSISTANT_LAYOUT_FIX">
+/* Voice Assistant - fixed inside message input row */
+#inputBox > div > div[style*="display:flex"][style*="align-items:flex-end"]{
+    display:flex !important;
+    align-items:flex-end !important;
+    gap:8px !important;
+    width:100% !important;
+}
+
+#inputBox #msg{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+}
+
+#inputBox #miVoiceAssistantBtn{
+    display:flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    position:relative !important;
+    flex:0 0 auto !important;
+    width:auto !important;
+    min-width:150px !important;
+    height:42px !important;
+    padding:0 14px !important;
+    margin:0 !important;
+    border:1px solid rgba(0,200,255,.65) !important;
+    border-radius:12px !important;
+    background:linear-gradient(135deg,#071827,#0b3045) !important;
+    color:#7ee7ff !important;
+    font-weight:700 !important;
+    font-size:12px !important;
+    cursor:pointer !important;
+    z-index:999999 !important;
+    white-space:nowrap !important;
+}
+
+#inputBox #miVoiceAssistantBtn:hover{
+    box-shadow:0 0 18px rgba(0,200,255,.4) !important;
+}
+
+#inputBox #sendBtn{
+    flex:0 0 auto !important;
+}
+</style>
 </head>
 
 <body>
@@ -40565,6 +40609,7 @@ if(document.readyState === "loading"){
 
 })();
 </script>
+
 
 
 
