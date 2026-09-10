@@ -39925,1252 +39925,216 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 </script>
 <!-- MI_VOICE_ASSISTANT_V2 -->
 <style>
-#miVoiceAssistantBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 42px;
-    padding: 0 16px;
-    margin-right: 8px;
-    border: 1px solid rgba(59,130,246,.55);
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(37,99,235,.22), rgba(30,64,175,.12));
-    color: #fff;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: .5px;
-    cursor: pointer;
-    transition: .2s ease;
+#miVoiceAssistantBtn{
+    margin-right:8px !important;
+    min-width:145px !important;
+    height:42px !important;
+    padding:0 16px !important;
+    border:1px solid rgba(0,200,255,.55) !important;
+    border-radius:12px !important;
+    background:linear-gradient(135deg,#071827,#0b3045) !important;
+    color:#7ee7ff !important;
+    font-weight:700 !important;
+    font-size:13px !important;
+    cursor:pointer !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:7px !important;
+    z-index:999999 !important;
 }
-
-#miVoiceAssistantBtn:hover {
-    transform: translateY(-1px);
-    border-color: rgba(96,165,250,.9);
-    box-shadow: 0 0 18px rgba(59,130,246,.25);
+#miVoiceAssistantBtn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 0 18px rgba(0,200,255,.35);
 }
-
-#miVoiceAssistantPanel {
-    position: fixed;
-    right: 24px;
-    bottom: 90px;
-    width: 340px;
-    max-width: calc(100vw - 32px);
-    padding: 20px;
-    border: 1px solid rgba(59,130,246,.4);
-    border-radius: 20px;
-    background: rgba(10,15,30,.97);
-    color: #fff;
-    box-shadow: 0 20px 60px rgba(0,0,0,.45), 0 0 30px rgba(59,130,246,.12);
-    z-index: 99999;
-    display: none;
-    backdrop-filter: blur(18px);
+#miVoiceAssistantPanel{
+    position:fixed;
+    right:25px;
+    bottom:90px;
+    width:330px;
+    padding:20px;
+    border-radius:18px;
+    background:rgba(8,15,25,.97);
+    border:1px solid rgba(0,200,255,.45);
+    box-shadow:0 15px 45px rgba(0,0,0,.55),0 0 25px rgba(0,200,255,.15);
+    color:white;
+    z-index:999999;
+    display:none;
+    font-family:inherit;
 }
-
-#miVoiceAssistantPanel.active {
-    display: block;
+#miVoiceAssistantPanel.show{display:block}
+#miVoiceStatus{
+    text-align:center;
+    margin:12px 0;
+    color:#7ee7ff;
 }
-
-.mi-va-title {
-    font-size: 18px;
-    font-weight: 800;
-    margin-bottom: 6px;
+#miVoiceMic{
+    width:100%;
+    height:45px;
+    border:0;
+    border-radius:12px;
+    background:#0b6f91;
+    color:white;
+    font-weight:700;
+    cursor:pointer;
 }
-
-.mi-va-status {
-    font-size: 12px;
-    opacity: .72;
-    margin-bottom: 18px;
-}
-
-#miVoiceAssistantMic {
-    width: 76px;
-    height: 76px;
-    margin: 0 auto 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 50%;
-    background: linear-gradient(145deg, #2563eb, #1d4ed8);
-    color: #fff;
-    font-size: 28px;
-    cursor: pointer;
-    box-shadow: 0 0 30px rgba(37,99,235,.35);
-}
-
-#miVoiceAssistantMic.listening {
-    animation: miVoicePulse 1.2s infinite;
-}
-
-@keyframes miVoicePulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,.45); }
-    50% { box-shadow: 0 0 0 18px rgba(59,130,246,0); }
-}
-
-#miVoiceAssistantClose {
-    width: 100%;
-    min-height: 38px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 10px;
-    background: rgba(255,255,255,.06);
-    color: #fff;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-#miVoiceAssistantTranscript {
-    min-height: 20px;
-    margin: 8px 0 14px;
-    font-size: 13px;
-    opacity: .82;
-    word-break: break-word;
+#miVoiceClose{
+    float:right;
+    border:0;
+    background:transparent;
+    color:#aaa;
+    font-size:20px;
+    cursor:pointer;
 }
 </style>
 
 <div id="miVoiceAssistantPanel">
-    <div class="mi-va-title">VOICE ASSISTANT</div>
-    <div id="miVoiceAssistantStatus" class="mi-va-status">READY</div>
-
-    <button id="miVoiceAssistantMic" type="button" title="Speak">
-        🎤
-    </button>
-
-    <div id="miVoiceAssistantTranscript"></div>
-
-    <button id="miVoiceAssistantClose" type="button">
-        CLOSE
-    </button>
+    <button id="miVoiceClose">×</button>
+    <h3 style="margin:0">🎙️ Voice Assistant</h3>
+    <div id="miVoiceStatus">Ready</div>
+    <button id="miVoiceMic">🎤 START LISTENING</button>
 </div>
 
 <script>
-(function () {
-    "use strict";
+(function(){
 
-    function initMIVoiceAssistant() {
-        if (window.__MI_VOICE_ASSISTANT_V2_READY__) return;
+function createVoiceButton(){
+    const sendBtn = document.getElementById("sendBtn");
+    if(!sendBtn) return false;
 
-        const sendBtn = document.getElementById("sendBtn");
+    if(document.getElementById("miVoiceAssistantBtn")) return true;
 
-        if (!sendBtn) {
-            setTimeout(initMIVoiceAssistant, 500);
-            return;
-        }
+    const btn = document.createElement("button");
+    btn.id = "miVoiceAssistantBtn";
+    btn.type = "button";
+    btn.innerHTML = "🎙️ VOICE ASSISTANT";
 
-        window.__MI_VOICE_ASSISTANT_V2_READY__ = true;
+    sendBtn.parentNode.insertBefore(btn, sendBtn);
 
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
+    const panel = document.getElementById("miVoiceAssistantPanel");
+    const close = document.getElementById("miVoiceClose");
+    const mic = document.getElementById("miVoiceMic");
+    const status = document.getElementById("miVoiceStatus");
 
-        const button = document.createElement("button");
-        button.id = "miVoiceAssistantBtn";
-        button.type = "button";
-        button.innerHTML = "🎙️ VOICE ASSISTANT";
-        button.title = "Open Voice Assistant";
+    btn.addEventListener("click", function(){
+        panel.classList.toggle("show");
+    });
 
-        sendBtn.parentNode.insertBefore(button, sendBtn);
+    close.addEventListener("click", function(){
+        panel.classList.remove("show");
+    });
 
-        const panel = document.getElementById("miVoiceAssistantPanel");
-        const mic = document.getElementById("miVoiceAssistantMic");
-        const close = document.getElementById("miVoiceAssistantClose");
-        const status = document.getElementById("miVoiceAssistantStatus");
-        const transcript = document.getElementById("miVoiceAssistantTranscript");
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
 
-        function setStatus(value) {
-            if (status) {
-                status.textContent = String(value || "READY");
-            }
-        }
+    if(!SpeechRecognition){
+        mic.disabled = true;
+        status.textContent = "Speech recognition is not supported.";
+        return true;
+    }
 
-        window.miVoiceAssistantSetStatus = setStatus;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.continuous = false;
 
-        let recognition = null;
-        let listening = false;
+    mic.addEventListener("click", function(){
+        try{
+            status.textContent = "🎤 Listening...";
+            mic.textContent = "🛑 LISTENING...";
+            recognition.start();
+        }catch(e){}
+    });
 
-        button.addEventListener("click", function () {
-            panel.classList.toggle("active");
+    recognition.onresult = async function(event){
+        const spokenText =
+            event.results[0][0].transcript.trim();
 
-            if (panel.classList.contains("active")) {
-                setStatus("READY");
-            } else {
-                if (window.speechSynthesis) {
-                    window.speechSynthesis.cancel();
-                }
+        if(!spokenText) return;
 
-                if (recognition) {
-                    try {
-                        recognition.stop();
-                    } catch (_) {}
-                }
-            }
-        });
+        status.textContent = "🤖 Thinking...";
+        mic.textContent = "🎤 START LISTENING";
 
-        close.addEventListener("click", function () {
-            panel.classList.remove("active");
+        try{
+            const response = await fetch("/chat", {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    message: spokenText,
+                    history:[]
+                })
+            });
 
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-            }
+            const data = await response.json();
 
-            if (recognition) {
-                try {
-                    recognition.stop();
-                } catch (_) {}
-            }
+            const reply =
+                data.response ||
+                data.reply ||
+                "";
 
-            listening = false;
-            mic.classList.remove("listening");
-            setStatus("READY");
-        });
-
-        async function askAI(message) {
-            const text = String(message || "").trim();
-
-            if (!text) return;
-
-            try {
-                setStatus("THINKING...");
-
-                const response = await fetch("/chat", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        message: text,
-                        history: []
-                    })
-                });
-
-                const data = await response.json().catch(function () {
-                    return {};
-                });
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.response ||
-                        data.reply ||
-                        data.message ||
-                        "AI request failed."
-                    );
-                }
-
-                const reply = String(
-                    data.response ||
-                    data.reply ||
-                    ""
-                ).trim();
-
-                if (!reply) {
-                    throw new Error("AI returned an empty response.");
-                }
-
-                setStatus("SPEAKING...");
-
-                if (!("speechSynthesis" in window)) {
-                    throw new Error(
-                        "Voice output is not supported by this browser."
-                    );
-                }
-
-                /*
-                 * VOICE ONLY
-                 *
-                 * The normal chat send() function is NEVER called.
-                 * #msg is NEVER modified.
-                 * No assistant message is added to chats.
-                 * No Firestore chat message is created.
-                 */
-
-                window.speechSynthesis.cancel();
-
-                const utterance =
-                    new SpeechSynthesisUtterance(reply);
-
-                utterance.lang = "en-US";
-                utterance.rate = 1.0;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-
-                utterance.onend = function () {
-                    setStatus("READY");
-                };
-
-                utterance.onerror = function () {
-                    setStatus("READY");
-                };
-
-                window.speechSynthesis.speak(utterance);
-
-            } catch (error) {
-                console.error(
-                    "MI Voice Assistant AI error:",
-                    error
-                );
-
-                setStatus("ERROR");
-
-                if ("speechSynthesis" in window) {
-                    window.speechSynthesis.cancel();
-
-                    const errorSpeech =
-                        new SpeechSynthesisUtterance(
-                            "Sorry, I could not process that request."
-                        );
-
-                    errorSpeech.lang = "en-US";
-                    errorSpeech.rate = 1.0;
-
-                    errorSpeech.onend = function () {
-                        setStatus("READY");
-                    };
-
-                    window.speechSynthesis.speak(errorSpeech);
-                }
-            }
-        }
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = "en-US";
-            recognition.maxAlternatives = 1;
-
-            recognition.onstart = function () {
-                listening = true;
-                mic.classList.add("listening");
-                setStatus("LISTENING...");
-                transcript.textContent = "";
-            };
-
-            recognition.onresult = function (event) {
-                const result =
-                    event.results &&
-                    event.results[0] &&
-                    event.results[0][0];
-
-                const message = result
-                    ? String(result.transcript || "").trim()
-                    : "";
-
-                if (!message) return;
-
-                transcript.textContent = "You: " + message;
-
-                askAI(message);
-            };
-
-            recognition.onerror = function (event) {
-                listening = false;
-                mic.classList.remove("listening");
-
-                console.error(
-                    "MI Voice Assistant microphone error:",
-                    event.error
-                );
-
-                if (
-                    event.error === "not-allowed" ||
-                    event.error === "service-not-allowed"
-                ) {
-                    setStatus("MICROPHONE PERMISSION REQUIRED");
-                } else if (event.error === "no-speech") {
-                    setStatus("NO SPEECH DETECTED");
-                } else {
-                    setStatus("MICROPHONE ERROR");
-                }
-            };
-
-            recognition.onend = function () {
-                listening = false;
-                mic.classList.remove("listening");
-
-                if (
-                    status &&
-                    status.textContent === "LISTENING..."
-                ) {
-                    setStatus("READY");
-                }
-            };
-        }
-
-        mic.addEventListener("click", function () {
-            if (!recognition) {
-                setStatus(
-                    "VOICE INPUT IS NOT SUPPORTED BY THIS BROWSER"
-                );
+            if(!reply){
+                status.textContent = "No response.";
                 return;
             }
 
-            if (listening) {
-                try {
-                    recognition.stop();
-                } catch (_) {}
-                return;
-            }
+            status.textContent = "🔊 Speaking...";
 
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-            }
+            window.speechSynthesis.cancel();
 
-            transcript.textContent = "";
-            setStatus("STARTING MICROPHONE...");
+            const utterance =
+                new SpeechSynthesisUtterance(reply);
 
-            try {
-                recognition.start();
-            } catch (error) {
-                console.error(error);
-                setStatus("MICROPHONE COULD NOT START");
-            }
-        });
-    }
+            utterance.lang = "en-US";
+            utterance.rate = 1;
+            utterance.pitch = 1;
 
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            initMIVoiceAssistant
-        );
-    } else {
-        initMIVoiceAssistant();
-    }
-})();
-</script>
-<!-- /MI_VOICE_ASSISTANT_V2 -->
-<!-- MI_VOICE_ASSISTANT_V2 -->
-<style>
-#miVoiceAssistantBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 42px;
-    padding: 0 16px;
-    margin-right: 8px;
-    border: 1px solid rgba(59,130,246,.55);
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(37,99,235,.22), rgba(30,64,175,.12));
-    color: #fff;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: .5px;
-    cursor: pointer;
-    transition: .2s ease;
-}
-
-#miVoiceAssistantBtn:hover {
-    transform: translateY(-1px);
-    border-color: rgba(96,165,250,.9);
-    box-shadow: 0 0 18px rgba(59,130,246,.25);
-}
-
-#miVoiceAssistantPanel {
-    position: fixed;
-    right: 24px;
-    bottom: 90px;
-    width: 340px;
-    max-width: calc(100vw - 32px);
-    padding: 20px;
-    border: 1px solid rgba(59,130,246,.4);
-    border-radius: 20px;
-    background: rgba(10,15,30,.97);
-    color: #fff;
-    box-shadow: 0 20px 60px rgba(0,0,0,.45), 0 0 30px rgba(59,130,246,.12);
-    z-index: 99999;
-    display: none;
-    backdrop-filter: blur(18px);
-}
-
-#miVoiceAssistantPanel.active {
-    display: block;
-}
-
-.mi-va-title {
-    font-size: 18px;
-    font-weight: 800;
-    margin-bottom: 6px;
-}
-
-.mi-va-status {
-    font-size: 12px;
-    opacity: .72;
-    margin-bottom: 18px;
-}
-
-#miVoiceAssistantMic {
-    width: 76px;
-    height: 76px;
-    margin: 0 auto 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 50%;
-    background: linear-gradient(145deg, #2563eb, #1d4ed8);
-    color: #fff;
-    font-size: 28px;
-    cursor: pointer;
-    box-shadow: 0 0 30px rgba(37,99,235,.35);
-}
-
-#miVoiceAssistantMic.listening {
-    animation: miVoicePulse 1.2s infinite;
-}
-
-@keyframes miVoicePulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,.45); }
-    50% { box-shadow: 0 0 0 18px rgba(59,130,246,0); }
-}
-
-#miVoiceAssistantClose {
-    width: 100%;
-    min-height: 38px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 10px;
-    background: rgba(255,255,255,.06);
-    color: #fff;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-#miVoiceAssistantTranscript {
-    min-height: 20px;
-    margin: 8px 0 14px;
-    font-size: 13px;
-    opacity: .82;
-    word-break: break-word;
-}
-</style>
-
-<div id="miVoiceAssistantPanel">
-    <div class="mi-va-title">VOICE ASSISTANT</div>
-    <div id="miVoiceAssistantStatus" class="mi-va-status">READY</div>
-
-    <button id="miVoiceAssistantMic" type="button" title="Speak">
-        🎤
-    </button>
-
-    <div id="miVoiceAssistantTranscript"></div>
-
-    <button id="miVoiceAssistantClose" type="button">
-        CLOSE
-    </button>
-</div>
-
-<script>
-(function () {
-    "use strict";
-
-    function initMIVoiceAssistant() {
-        if (window.__MI_VOICE_ASSISTANT_V2_READY__) return;
-
-        const sendBtn = document.getElementById("sendBtn");
-
-        if (!sendBtn) {
-            setTimeout(initMIVoiceAssistant, 500);
-            return;
-        }
-
-        window.__MI_VOICE_ASSISTANT_V2_READY__ = true;
-
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-        const button = document.createElement("button");
-        button.id = "miVoiceAssistantBtn";
-        button.type = "button";
-        button.innerHTML = "🎙️ VOICE ASSISTANT";
-        button.title = "Open Voice Assistant";
-
-        sendBtn.parentNode.insertBefore(button, sendBtn);
-
-        const panel = document.getElementById("miVoiceAssistantPanel");
-        const mic = document.getElementById("miVoiceAssistantMic");
-        const close = document.getElementById("miVoiceAssistantClose");
-        const status = document.getElementById("miVoiceAssistantStatus");
-        const transcript = document.getElementById("miVoiceAssistantTranscript");
-
-        function setStatus(value) {
-            if (status) {
-                status.textContent = String(value || "READY");
-            }
-        }
-
-        window.miVoiceAssistantSetStatus = setStatus;
-
-        let recognition = null;
-        let listening = false;
-
-        button.addEventListener("click", function () {
-            panel.classList.toggle("active");
-
-            if (panel.classList.contains("active")) {
-                setStatus("READY");
-            } else {
-                if (window.speechSynthesis) {
-                    window.speechSynthesis.cancel();
-                }
-
-                if (recognition) {
-                    try {
-                        recognition.stop();
-                    } catch (_) {}
-                }
-            }
-        });
-
-        close.addEventListener("click", function () {
-            panel.classList.remove("active");
-
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-            }
-
-            if (recognition) {
-                try {
-                    recognition.stop();
-                } catch (_) {}
-            }
-
-            listening = false;
-            mic.classList.remove("listening");
-            setStatus("READY");
-        });
-
-        async function askAI(message) {
-            const text = String(message || "").trim();
-
-            if (!text) return;
-
-            try {
-                setStatus("THINKING...");
-
-                const response = await fetch("/chat", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        message: text,
-                        history: []
-                    })
-                });
-
-                const data = await response.json().catch(function () {
-                    return {};
-                });
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.response ||
-                        data.reply ||
-                        data.message ||
-                        "AI request failed."
-                    );
-                }
-
-                const reply = String(
-                    data.response ||
-                    data.reply ||
-                    ""
-                ).trim();
-
-                if (!reply) {
-                    throw new Error("AI returned an empty response.");
-                }
-
-                setStatus("SPEAKING...");
-
-                if (!("speechSynthesis" in window)) {
-                    throw new Error(
-                        "Voice output is not supported by this browser."
-                    );
-                }
-
-                /*
-                 * VOICE ONLY
-                 *
-                 * The normal chat send() function is NEVER called.
-                 * #msg is NEVER modified.
-                 * No assistant message is added to chats.
-                 * No Firestore chat message is created.
-                 */
-
-                window.speechSynthesis.cancel();
-
-                const utterance =
-                    new SpeechSynthesisUtterance(reply);
-
-                utterance.lang = "en-US";
-                utterance.rate = 1.0;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-
-                utterance.onend = function () {
-                    setStatus("READY");
-                };
-
-                utterance.onerror = function () {
-                    setStatus("READY");
-                };
-
-                window.speechSynthesis.speak(utterance);
-
-            } catch (error) {
-                console.error(
-                    "MI Voice Assistant AI error:",
-                    error
-                );
-
-                setStatus("ERROR");
-
-                if ("speechSynthesis" in window) {
-                    window.speechSynthesis.cancel();
-
-                    const errorSpeech =
-                        new SpeechSynthesisUtterance(
-                            "Sorry, I could not process that request."
-                        );
-
-                    errorSpeech.lang = "en-US";
-                    errorSpeech.rate = 1.0;
-
-                    errorSpeech.onend = function () {
-                        setStatus("READY");
-                    };
-
-                    window.speechSynthesis.speak(errorSpeech);
-                }
-            }
-        }
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = "en-US";
-            recognition.maxAlternatives = 1;
-
-            recognition.onstart = function () {
-                listening = true;
-                mic.classList.add("listening");
-                setStatus("LISTENING...");
-                transcript.textContent = "";
+            utterance.onend = function(){
+                status.textContent = "Ready";
             };
 
-            recognition.onresult = function (event) {
-                const result =
-                    event.results &&
-                    event.results[0] &&
-                    event.results[0][0];
+            window.speechSynthesis.speak(utterance);
 
-                const message = result
-                    ? String(result.transcript || "").trim()
-                    : "";
-
-                if (!message) return;
-
-                transcript.textContent = "You: " + message;
-
-                askAI(message);
-            };
-
-            recognition.onerror = function (event) {
-                listening = false;
-                mic.classList.remove("listening");
-
-                console.error(
-                    "MI Voice Assistant microphone error:",
-                    event.error
-                );
-
-                if (
-                    event.error === "not-allowed" ||
-                    event.error === "service-not-allowed"
-                ) {
-                    setStatus("MICROPHONE PERMISSION REQUIRED");
-                } else if (event.error === "no-speech") {
-                    setStatus("NO SPEECH DETECTED");
-                } else {
-                    setStatus("MICROPHONE ERROR");
-                }
-            };
-
-            recognition.onend = function () {
-                listening = false;
-                mic.classList.remove("listening");
-
-                if (
-                    status &&
-                    status.textContent === "LISTENING..."
-                ) {
-                    setStatus("READY");
-                }
-            };
+        }catch(error){
+            console.error("Voice Assistant error:",error);
+            status.textContent = "Connection error.";
+            mic.textContent = "🎤 START LISTENING";
         }
+    };
 
-        mic.addEventListener("click", function () {
-            if (!recognition) {
-                setStatus(
-                    "VOICE INPUT IS NOT SUPPORTED BY THIS BROWSER"
-                );
-                return;
-            }
+    recognition.onerror = function(){
+        status.textContent = "Microphone error.";
+        mic.textContent = "🎤 START LISTENING";
+    };
 
-            if (listening) {
-                try {
-                    recognition.stop();
-                } catch (_) {}
-                return;
-            }
+    recognition.onend = function(){
+        mic.textContent = "🎤 START LISTENING";
+    };
 
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-            }
-
-            transcript.textContent = "";
-            setStatus("STARTING MICROPHONE...");
-
-            try {
-                recognition.start();
-            } catch (error) {
-                console.error(error);
-                setStatus("MICROPHONE COULD NOT START");
-            }
-        });
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            initMIVoiceAssistant
-        );
-    } else {
-        initMIVoiceAssistant();
-    }
-})();
-</script>
-<!-- /MI_VOICE_ASSISTANT_V2 -->
-<!-- MI_VOICE_ASSISTANT_V2 -->
-<style>
-#miVoiceAssistantBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 42px;
-    padding: 0 16px;
-    margin-right: 8px;
-    border: 1px solid rgba(59,130,246,.55);
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(37,99,235,.22), rgba(30,64,175,.12));
-    color: #fff;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: .5px;
-    cursor: pointer;
-    transition: .2s ease;
+    return true;
 }
 
-#miVoiceAssistantBtn:hover {
-    transform: translateY(-1px);
-    border-color: rgba(96,165,250,.9);
-    box-shadow: 0 0 18px rgba(59,130,246,.25);
-}
+function initVoiceAssistant(){
+    if(createVoiceButton()) return;
 
-#miVoiceAssistantPanel {
-    position: fixed;
-    right: 24px;
-    bottom: 90px;
-    width: 340px;
-    max-width: calc(100vw - 32px);
-    padding: 20px;
-    border: 1px solid rgba(59,130,246,.4);
-    border-radius: 20px;
-    background: rgba(10,15,30,.97);
-    color: #fff;
-    box-shadow: 0 20px 60px rgba(0,0,0,.45), 0 0 30px rgba(59,130,246,.12);
-    z-index: 99999;
-    display: none;
-    backdrop-filter: blur(18px);
-}
+    let attempts = 0;
+    const timer = setInterval(function(){
+        attempts++;
 
-#miVoiceAssistantPanel.active {
-    display: block;
-}
-
-.mi-va-title {
-    font-size: 18px;
-    font-weight: 800;
-    margin-bottom: 6px;
-}
-
-.mi-va-status {
-    font-size: 12px;
-    opacity: .72;
-    margin-bottom: 18px;
-}
-
-#miVoiceAssistantMic {
-    width: 76px;
-    height: 76px;
-    margin: 0 auto 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 50%;
-    background: linear-gradient(145deg, #2563eb, #1d4ed8);
-    color: #fff;
-    font-size: 28px;
-    cursor: pointer;
-    box-shadow: 0 0 30px rgba(37,99,235,.35);
-}
-
-#miVoiceAssistantMic.listening {
-    animation: miVoicePulse 1.2s infinite;
-}
-
-@keyframes miVoicePulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,.45); }
-    50% { box-shadow: 0 0 0 18px rgba(59,130,246,0); }
-}
-
-#miVoiceAssistantClose {
-    width: 100%;
-    min-height: 38px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 10px;
-    background: rgba(255,255,255,.06);
-    color: #fff;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-#miVoiceAssistantTranscript {
-    min-height: 20px;
-    margin: 8px 0 14px;
-    font-size: 13px;
-    opacity: .82;
-    word-break: break-word;
-}
-</style>
-
-<div id="miVoiceAssistantPanel">
-    <div class="mi-va-title">VOICE ASSISTANT</div>
-    <div id="miVoiceAssistantStatus" class="mi-va-status">READY</div>
-
-    <button id="miVoiceAssistantMic" type="button" title="Speak">
-        🎤
-    </button>
-
-    <div id="miVoiceAssistantTranscript"></div>
-
-    <button id="miVoiceAssistantClose" type="button">
-        CLOSE
-    </button>
-</div>
-
-<script>
-(function () {
-    "use strict";
-
-    function initMIVoiceAssistant() {
-        if (window.__MI_VOICE_ASSISTANT_V2_READY__) return;
-
-        const sendBtn = document.getElementById("sendBtn");
-
-        if (!sendBtn) {
-            setTimeout(initMIVoiceAssistant, 500);
-            return;
+        if(createVoiceButton() || attempts >= 30){
+            clearInterval(timer);
         }
+    },500);
+}
 
-        window.__MI_VOICE_ASSISTANT_V2_READY__ = true;
+if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded",initVoiceAssistant);
+}else{
+    initVoiceAssistant();
+}
 
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-        const button = document.createElement("button");
-        button.id = "miVoiceAssistantBtn";
-        button.type = "button";
-        button.innerHTML = "🎙️ VOICE ASSISTANT";
-        button.title = "Open Voice Assistant";
-
-        sendBtn.parentNode.insertBefore(button, sendBtn);
-
-        const panel = document.getElementById("miVoiceAssistantPanel");
-        const mic = document.getElementById("miVoiceAssistantMic");
-        const close = document.getElementById("miVoiceAssistantClose");
-        const status = document.getElementById("miVoiceAssistantStatus");
-        const transcript = document.getElementById("miVoiceAssistantTranscript");
-
-        function setStatus(value) {
-            if (status) {
-                status.textContent = String(value || "READY");
-            }
-        }
-
-        window.miVoiceAssistantSetStatus = setStatus;
-
-        let recognition = null;
-        let listening = false;
-
-        button.addEventListener("click", function () {
-            panel.classList.toggle("active");
-
-            if (panel.classList.contains("active")) {
-                setStatus("READY");
-            } else {
-                if (window.speechSynthesis) {
-                    window.speechSynthesis.cancel();
-                }
-
-                if (recognition) {
-                    try {
-                        recognition.stop();
-                    } catch (_) {}
-                }
-            }
-        });
-
-        close.addEventListener("click", function () {
-            panel.classList.remove("active");
-
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-            }
-
-            if (recognition) {
-                try {
-                    recognition.stop();
-                } catch (_) {}
-            }
-
-            listening = false;
-            mic.classList.remove("listening");
-            setStatus("READY");
-        });
-
-        async function askAI(message) {
-            const text = String(message || "").trim();
-
-            if (!text) return;
-
-            try {
-                setStatus("THINKING...");
-
-                const response = await fetch("/chat", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        message: text,
-                        history: []
-                    })
-                });
-
-                const data = await response.json().catch(function () {
-                    return {};
-                });
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.response ||
-                        data.reply ||
-                        data.message ||
-                        "AI request failed."
-                    );
-                }
-
-                const reply = String(
-                    data.response ||
-                    data.reply ||
-                    ""
-                ).trim();
-
-                if (!reply) {
-                    throw new Error("AI returned an empty response.");
-                }
-
-                setStatus("SPEAKING...");
-
-                if (!("speechSynthesis" in window)) {
-                    throw new Error(
-                        "Voice output is not supported by this browser."
-                    );
-                }
-
-                /*
-                 * VOICE ONLY
-                 *
-                 * The normal chat send() function is NEVER called.
-                 * #msg is NEVER modified.
-                 * No assistant message is added to chats.
-                 * No Firestore chat message is created.
-                 */
-
-                window.speechSynthesis.cancel();
-
-                const utterance =
-                    new SpeechSynthesisUtterance(reply);
-
-                utterance.lang = "en-US";
-                utterance.rate = 1.0;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-
-                utterance.onend = function () {
-                    setStatus("READY");
-                };
-
-                utterance.onerror = function () {
-                    setStatus("READY");
-                };
-
-                window.speechSynthesis.speak(utterance);
-
-            } catch (error) {
-                console.error(
-                    "MI Voice Assistant AI error:",
-                    error
-                );
-
-                setStatus("ERROR");
-
-                if ("speechSynthesis" in window) {
-                    window.speechSynthesis.cancel();
-
-                    const errorSpeech =
-                        new SpeechSynthesisUtterance(
-                            "Sorry, I could not process that request."
-                        );
-
-                    errorSpeech.lang = "en-US";
-                    errorSpeech.rate = 1.0;
-
-                    errorSpeech.onend = function () {
-                        setStatus("READY");
-                    };
-
-                    window.speechSynthesis.speak(errorSpeech);
-                }
-            }
-        }
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = "en-US";
-            recognition.maxAlternatives = 1;
-
-            recognition.onstart = function () {
-                listening = true;
-                mic.classList.add("listening");
-                setStatus("LISTENING...");
-                transcript.textContent = "";
-            };
-
-            recognition.onresult = function (event) {
-                const result =
-                    event.results &&
-                    event.results[0] &&
-                    event.results[0][0];
-
-                const message = result
-                    ? String(result.transcript || "").trim()
-                    : "";
-
-                if (!message) return;
-
-                transcript.textContent = "You: " + message;
-
-                askAI(message);
-            };
-
-            recognition.onerror = function (event) {
-                listening = false;
-                mic.classList.remove("listening");
-
-                console.error(
-                    "MI Voice Assistant microphone error:",
-                    event.error
-                );
-
-                if (
-                    event.error === "not-allowed" ||
-                    event.error === "service-not-allowed"
-                ) {
-                    setStatus("MICROPHONE PERMISSION REQUIRED");
-                } else if (event.error === "no-speech") {
-                    setStatus("NO SPEECH DETECTED");
-                } else {
-                    setStatus("MICROPHONE ERROR");
-                }
-            };
-
-            recognition.onend = function () {
-                listening = false;
-                mic.classList.remove("listening");
-
-                if (
-                    status &&
-                    status.textContent === "LISTENING..."
-                ) {
-                    setStatus("READY");
-                }
-            };
-        }
-
-        mic.addEventListener("click", function () {
-            if (!recognition) {
-                setStatus(
-                    "VOICE INPUT IS NOT SUPPORTED BY THIS BROWSER"
-                );
-                return;
-            }
-
-            if (listening) {
-                try {
-                    recognition.stop();
-                } catch (_) {}
-                return;
-            }
-
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-            }
-
-            transcript.textContent = "";
-            setStatus("STARTING MICROPHONE...");
-
-            try {
-                recognition.start();
-            } catch (error) {
-                console.error(error);
-                setStatus("MICROPHONE COULD NOT START");
-            }
-        });
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            initMIVoiceAssistant
-        );
-    } else {
-        initMIVoiceAssistant();
-    }
 })();
 </script>
 <!-- /MI_VOICE_ASSISTANT_V2 -->
@@ -41598,6 +40562,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
+
 
 
 
