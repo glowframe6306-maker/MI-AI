@@ -6551,35 +6551,74 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 (function () {
     "use strict";
 
-    if (window.__miVoiceAssistantCanonical) return;
-    window.__miVoiceAssistantCanonical = true;
+    if (window.__miDynamicSendButtonReady) return;
+    window.__miDynamicSendButtonReady = true;
 
+    const INPUT_ID = "msg";
+    const SEND_BUTTON_ID = "sendBtn";
     const DEFAULT_LABEL = "🎙️ VOICE ASSISTANT";
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SEND_LABEL = "➤ SEND";
+    const LISTENING_LABEL = "🎙️ LISTENING...";
+    const THINKING_LABEL = "🤖 THINKING...";
+    const SPEAKING_LABEL = "🔊 SPEAKING...";
+    const STOP_LABEL = "■ STOP";
+
     let recognition = null;
-    let state = "idle";
+    let voiceBusy = false;
+    let noticeTimer = null;
 
-    function getButton() {
-        return document.getElementById("miVoiceAssistantBtn");
+    function getInput() {
+        return document.getElementById(INPUT_ID);
     }
 
-    function setState(nextState, message) {
-        state = nextState;
-        const button = getButton();
-        if (!button) return;
-        const labels = {
-            idle: DEFAULT_LABEL,
-            listening: "🎙️ LISTENING...",
-            thinking: "🤖 THINKING...",
-            speaking: "🔊 SPEAKING..."
+    function getSendButton() {
+        return document.getElementById(SEND_BUTTON_ID);
+    }
+
+    function removeLegacyVoiceButtons() {
+        document.querySelectorAll("#miVoiceAssistantBtn, #miVoiceAssistantBtnFinal, #miVoiceAssistantRealBtn").forEach((button) => {
+            if (button && button.id !== SEND_BUTTON_ID) {
+                button.remove();
+            }
+        });
+    }
+
+    function setSendButtonLabel(mode) {
+        const sendButton = getSendButton();
+        if (!sendButton) return;
+
+        const modes = {
+            voice: { label: DEFAULT_LABEL, title: "Voice Assistant", disabled: false },
+            send: { label: SEND_LABEL, title: "Send message", disabled: false },
+            listening: { label: LISTENING_LABEL, title: "Listening", disabled: true },
+            thinking: { label: THINKING_LABEL, title: "Thinking", disabled: true },
+            speaking: { label: SPEAKING_LABEL, title: "Speaking", disabled: true },
+            stop: { label: STOP_LABEL, title: "Stop reply", disabled: false }
         };
-        button.textContent = labels[nextState] || DEFAULT_LABEL;
-        button.dataset.voiceState = nextState;
-        button.disabled = nextState === "thinking" || nextState === "speaking";
-        if (message) showMessage(message);
+
+        const definition = modes[mode] || modes.voice;
+        sendButton.innerHTML = definition.label;
+        sendButton.title = definition.title;
+        sendButton.disabled = definition.disabled;
+        sendButton.dataset.voiceMode = mode;
     }
 
-    function showMessage(message) {
+    function updateComposerButtonState() {
+        const input = getInput();
+        const sendButton = getSendButton();
+        if (!input || !sendButton) return;
+
+        if (voiceBusy) return;
+
+        if (window.replyInProgress) {
+            setSendButtonLabel("stop");
+            return;
+        }
+
+        setSendButtonLabel(input.value.trim().length > 0 ? "send" : "voice");
+    }
+
+    function showNotice(message) {
         let notice = document.getElementById("miVoiceAssistantNotice");
         if (!notice) {
             notice = document.createElement("div");
@@ -6588,12 +6627,15 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
             document.body.appendChild(notice);
         }
         notice.textContent = message;
-        clearTimeout(notice.__hideTimer);
-        notice.__hideTimer = setTimeout(() => notice.remove(), 2800);
+        clearTimeout(noticeTimer);
+        noticeTimer = setTimeout(() => {
+            notice.remove();
+        }, 2800);
     }
 
     function currentLanguage() {
-        return document.documentElement.lang || "en-US";
+        const lang = document.documentElement.lang || "en-US";
+        return lang.toLowerCase().startsWith("en") ? "en-US" : lang;
     }
 
     async function getAuthHeaders() {
@@ -6615,125 +6657,201 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
             credentials: "include",
             body: JSON.stringify({ message: spokenText, history: [] })
         });
+
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.error_code || payload.error) {
             throw new Error(payload.error || payload.message || "Voice Assistant request failed.");
         }
+
         const reply = String(payload.reply || payload.response || payload.message || "").trim();
-        if (!reply) throw new Error("The AI returned an empty response.");
+        if (!reply) {
+            throw new Error("The AI returned an empty response.");
+        }
+
         return reply;
     }
 
-    function finish() {
+    function finishVoiceSession() {
         recognition = null;
-        setState("idle");
+        voiceBusy = false;
+        updateComposerButtonState();
     }
 
-    function cancel() {
-        try { recognition?.stop(); } catch (error) {}
+    function cancelVoiceSession() {
+        try {
+            if (recognition && typeof recognition.stop === "function") {
+                recognition.stop();
+            }
+        } catch (error) {}
+
         recognition = null;
-        if (window.speechSynthesis) window.speechSynthesis.cancel();
-        finish();
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        voiceBusy = false;
+        updateComposerButtonState();
     }
 
-    function start() {
-        if (state === "listening") {
-            cancel();
-            return;
-        }
-        if (state === "thinking" || state === "speaking") return;
-        if (!SpeechRecognition) {
-            showMessage("Voice recognition is not supported in this browser.");
+    async function startVoiceAssistant() {
+        if (window.replyInProgress && typeof window.stopReply === "function") {
+            window.stopReply();
             return;
         }
 
-        recognition = new SpeechRecognition();
-        recognition.lang = currentLanguage().toLowerCase() === "en" ? "en-US" : currentLanguage();
+        const supportedRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!supportedRecognition) {
+            showNotice("Voice Assistant is not supported in this browser.");
+            updateComposerButtonState();
+            return;
+        }
+
+        if (voiceBusy) {
+            cancelVoiceSession();
+            return;
+        }
+
+        voiceBusy = true;
+        setSendButtonLabel("listening");
+
+        const SpeechRecognitionCtor = supportedRecognition;
+        recognition = new SpeechRecognitionCtor();
+        recognition.lang = currentLanguage();
         recognition.interimResults = false;
         recognition.continuous = false;
         recognition.maxAlternatives = 1;
+
         recognition.onresult = async (event) => {
             const spokenText = String(event.results?.[0]?.[0]?.transcript || "").trim();
             if (!spokenText) {
-                finish();
-                showMessage("I did not hear anything. Please try again.");
+                finishVoiceSession();
+                showNotice("I did not hear anything. Please try again.");
                 return;
             }
-            setState("thinking");
+
+            setSendButtonLabel("thinking");
+
             try {
                 const reply = await askAssistant(spokenText);
+
                 if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance !== "function") {
-                    finish();
-                    showMessage("Speech output is not supported in this browser.");
+                    finishVoiceSession();
+                    showNotice("Speech output is not supported in this browser.");
                     return;
                 }
-                setState("speaking");
+
+                setSendButtonLabel("speaking");
                 window.speechSynthesis.cancel();
+
                 const utterance = new SpeechSynthesisUtterance(reply);
                 utterance.lang = recognition?.lang || "en-US";
                 utterance.rate = 1;
                 utterance.pitch = 1;
-                utterance.onend = finish;
-                utterance.onerror = () => { finish(); showMessage("Speech output failed."); };
+
+                utterance.onend = () => {
+                    finishVoiceSession();
+                };
+
+                utterance.onerror = () => {
+                    finishVoiceSession();
+                    showNotice("Speech output failed.");
+                };
+
                 window.speechSynthesis.speak(utterance);
             } catch (error) {
                 console.error("[MI-VOICE] Assistant request failed:", error);
-                finish();
-                showMessage("Voice Assistant could not process that request.");
+                finishVoiceSession();
+                showNotice("Voice Assistant could not process that request.");
             }
         };
+
         recognition.onerror = (event) => {
             const denied = event?.error === "not-allowed" || event?.error === "service-not-allowed";
-            finish();
-            showMessage(denied ? "Microphone access is required for Voice Assistant." : "Voice recognition failed. Please try again.");
+            finishVoiceSession();
+            showNotice(denied ? "Microphone access is required for Voice Assistant." : "Voice recognition failed. Please try again.");
         };
+
         recognition.onend = () => {
-            if (state === "listening") setState("idle");
+            if (voiceBusy) {
+                finishVoiceSession();
+            }
         };
-        setState("listening");
+
         try {
             recognition.start();
         } catch (error) {
-            finish();
-            showMessage("Microphone could not be started.");
+            finishVoiceSession();
+            showNotice("Microphone could not be started.");
         }
     }
 
-    function ensureButton() {
-        const sendButton = document.getElementById("sendBtn");
-        if (!sendButton || !sendButton.parentElement) return;
-        const buttons = Array.from(document.querySelectorAll("#miVoiceAssistantBtn"));
-        const button = buttons[0] || document.createElement("button");
-        buttons.slice(1).forEach(item => item.remove());
-        button.id = "miVoiceAssistantBtn";
-        button.type = "button";
-        button.title = "Voice Assistant";
-        button.setAttribute("aria-label", "Voice Assistant");
-        button.dataset.voiceBound = button.dataset.voiceBound || "0";
-        if (!button.textContent.trim() || state === "idle") button.textContent = DEFAULT_LABEL;
-        if (button.nextElementSibling !== sendButton) sendButton.parentElement.insertBefore(button, sendButton);
-        if (button.dataset.voiceBound !== "1") {
-            button.dataset.voiceBound = "1";
-            button.addEventListener("click", start);
+    function handleSendButtonClick(event) {
+        if (event && typeof event.preventDefault === "function") {
+            event.preventDefault();
         }
+
+        const input = getInput();
+        if (!input) return;
+
+        if (window.replyInProgress && typeof window.stopReply === "function") {
+            window.stopReply();
+            return;
+        }
+
+        if (input.value.trim().length > 0) {
+            if (typeof window.sendOrStop === "function") {
+                window.sendOrStop();
+            } else if (typeof window.send === "function") {
+                window.send();
+            }
+            return;
+        }
+
+        startVoiceAssistant();
+    }
+
+    function bindComposerControls() {
+        removeLegacyVoiceButtons();
+
+        const input = getInput();
+        const sendButton = getSendButton();
+        if (!input || !sendButton) return;
+
+        if (sendButton.dataset.voiceBound === "1") {
+            updateComposerButtonState();
+            return;
+        }
+
+        sendButton.dataset.voiceBound = "1";
+        sendButton.type = "button";
+        sendButton.setAttribute("aria-label", "Voice Assistant / Send");
+        sendButton.onclick = function (event) {
+            handleSendButtonClick(event);
+        };
+
+        input.addEventListener("input", updateComposerButtonState, { passive: true });
+        updateComposerButtonState();
     }
 
     function boot() {
-        ensureButton();
-        if (!window.__miVoiceAssistantObserver) {
-            window.__miVoiceAssistantObserver = new MutationObserver(() => ensureButton());
-            window.__miVoiceAssistantObserver.observe(document.body, { childList: true, subtree: true });
-        }
-        if (!window.__miVoiceAssistantLabelTimer) {
-            window.__miVoiceAssistantLabelTimer = window.setInterval(() => {
-                const button = getButton();
-                if (button && state === "idle" && !button.textContent.trim()) button.textContent = DEFAULT_LABEL;
-            }, 250);
+        bindComposerControls();
+
+        if (!window.__miDynamicSendButtonObserver) {
+            window.__miDynamicSendButtonObserver = new MutationObserver(function () {
+                removeLegacyVoiceButtons();
+                bindComposerControls();
+            });
+            window.__miDynamicSendButtonObserver.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
         }
     }
 
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
-    else boot();
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", boot, { once: true });
+    } else {
+        boot();
+    }
 })();
 /* MI_VOICE_ASSISTANT_CANONICAL_END */
 // This handles the case where vendor scripts load asynchronously on Vercel
@@ -12211,102 +12329,6 @@ textarea:disabled,
 
 </style>
 
-<style id="MI_VOICE_FINAL_INPUT_BUTTON">
-#miVoiceAssistantRealBtn{
-    display:inline-flex !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    position:relative !important;
-    flex:0 0 auto !important;
-    width:170px !important;
-    min-width:170px !important;
-    max-width:170px !important;
-    height:48px !important;
-    min-height:48px !important;
-    margin:0 !important;
-    padding:0 12px !important;
-    align-items:center !important;
-    justify-content:center !important;
-    white-space:nowrap !important;
-    overflow:visible !important;
-    z-index:9999999 !important;
-    cursor:pointer !important;
-    border-radius:12px !important;
-    font-size:12px !important;
-    font-weight:700 !important;
-}
-
-#inputBox > div > div[style*="align-items:flex-end"]{
-    display:flex !important;
-    flex-direction:row !important;
-    align-items:flex-end !important;
-    width:100% !important;
-    gap:8px !important;
-}
-
-#inputBox #msg{
-    flex:1 1 auto !important;
-    min-width:0 !important;
-}
-
-#inputBox #sendBtn{
-    display:inline-flex !important;
-    flex:0 0 auto !important;
-}
-</style>
-<style id="MI_VOICE_ASSISTANT_CANONICAL_STYLE">
-#inputBox #miVoiceAssistantBtn{
-    display:flex !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    position:relative !important;
-    flex:0 0 auto !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:auto !important;
-    min-width:155px !important;
-    height:42px !important;
-    padding:0 14px !important;
-    margin:0 !important;
-    border-radius:12px !important;
-    border:1px solid rgba(0,200,255,.65) !important;
-    background:rgba(20,30,45,.96) !important;
-    color:#7ee7ff !important;
-    font-size:12px !important;
-    font-weight:700 !important;
-    line-height:1 !important;
-    cursor:pointer !important;
-    white-space:nowrap !important;
-    z-index:999999 !important;
-}
-
-#inputBox #miVoiceAssistantBtn:hover{
-    filter:brightness(1.15) !important;
-}
-
-#inputBox #miVoiceAssistantBtn:active{
-    transform:scale(.98) !important;
-}
-
-#inputBox #miVoiceAssistantBtn *{
-    pointer-events:none !important;
-}
-@media (max-width: 600px){
-    #inputBox > div > div[style*="align-items:flex-end"]{
-        flex-wrap:wrap !important;
-    }
-    #inputBox #msg{
-        flex:1 1 100% !important;
-        width:100% !important;
-    }
-    #inputBox #miVoiceAssistantBtn,
-    #inputBox #sendBtn{
-        flex:1 1 calc(50% - 4px) !important;
-        min-width:0 !important;
-        width:auto !important;
-    }
-}
-</style>
 </head>
 
 <body>
@@ -12459,7 +12481,7 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
     <textarea id="msg" placeholder="ASK ANYTHING FROM CORTEX CORE AI"></textarea>
-    <button id="miVoiceAssistantBtn" type="button" title="Voice Assistant" aria-label="Voice Assistant">🎙️ VOICE ASSISTANT</button><button id="sendBtn" type="button" onclick="sendOrStop()">├ó┼╛┬ñ</button>
+    <button id="sendBtn" type="button" aria-label="Voice Assistant / Send">🎙️ VOICE ASSISTANT</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -15921,10 +15943,14 @@ async function save() {
 
 function setReplyControlState(isActive) {
     const sendButton = document.getElementById('sendBtn');
-    if (sendButton) {
-        sendButton.innerHTML = isActive ? '├ó┼╛┼ô' : '├ó┬¼ΓÇá';
-        sendButton.title = isActive ? 'Stop reply' : 'Send message';
-    }
+    if (!sendButton) return;
+
+    const input = document.getElementById('msg');
+    const hasText = input && input.value.trim().length > 0;
+
+    sendButton.innerHTML = isActive ? '■ STOP' : (hasText ? 'SEND' : '🎙️ VOICE ASSISTANT');
+    sendButton.title = isActive ? 'Stop reply' : (hasText ? 'Send message' : 'Voice Assistant');
+    sendButton.dataset.voiceMode = isActive ? 'stop' : (hasText ? 'send' : 'voice');
 }
 
 function stopReply() {
@@ -40286,370 +40312,6 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     });
 
     setTimeout(migrateLocalChats, 3500);
-})();
-</script>
-<!-- MI_VOICE_ASSISTANT_V2 -->
-<style>
-#miVoiceAssistantRealBtn{
-    margin-right:8px !important;
-    min-width:145px !important;
-    height:42px !important;
-    padding:0 16px !important;
-    border:1px solid rgba(0,200,255,.55) !important;
-    border-radius:12px !important;
-    background:linear-gradient(135deg,#071827,#0b3045) !important;
-    color:#7ee7ff !important;
-    font-weight:700 !important;
-    font-size:13px !important;
-    cursor:pointer !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    gap:7px !important;
-    z-index:999999 !important;
-}
-#miVoiceAssistantRealBtn:hover{
-    transform:translateY(-1px);
-    box-shadow:0 0 18px rgba(0,200,255,.35);
-}
-#miVoiceAssistantPanel{
-    position:fixed;
-    right:25px;
-    bottom:90px;
-    width:330px;
-    padding:20px;
-    border-radius:18px;
-    background:rgba(8,15,25,.97);
-    border:1px solid rgba(0,200,255,.45);
-    box-shadow:0 15px 45px rgba(0,0,0,.55),0 0 25px rgba(0,200,255,.15);
-    color:white;
-    z-index:999999;
-    display:none;
-    font-family:inherit;
-}
-#miVoiceAssistantPanel.show{display:block}
-#miVoiceStatus{
-    text-align:center;
-    margin:12px 0;
-    color:#7ee7ff;
-}
-#miVoiceMic{
-    width:100%;
-    height:45px;
-    border:0;
-    border-radius:12px;
-    background:#0b6f91;
-    color:white;
-    font-weight:700;
-    cursor:pointer;
-}
-#miVoiceClose{
-    float:right;
-    border:0;
-    background:transparent;
-    color:#aaa;
-    font-size:20px;
-    cursor:pointer;
-}
-</style>
-
-<div id="miVoiceAssistantPanel">
-    <button id="miVoiceClose">×</button>
-    <h3 style="margin:0">🎙️ Voice Assistant</h3>
-    <div id="miVoiceStatus">Ready</div>
-    <button id="miVoiceMic">🎤 START LISTENING</button>
-</div>
-
-<script>
-(function(){
-
-function createVoiceButton(){
-    return false;
-    const sendBtn = document.getElementById("sendBtn");
-    if(!sendBtn) return false;
-
-    if(document.getElementById("miVoiceAssistantRealBtn")) return true;
-
-    const btn = document.createElement("button");
-    btn.id = "miVoiceAssistantRealBtn";
-    btn.type = "button";
-    btn.innerHTML = "🎙️ VOICE ASSISTANT";
-
-    sendBtn.parentNode.insertBefore(btn, sendBtn);
-
-    const panel = document.getElementById("miVoiceAssistantPanel");
-    const close = document.getElementById("miVoiceClose");
-    const mic = document.getElementById("miVoiceMic");
-    const status = document.getElementById("miVoiceStatus");
-
-    btn.addEventListener("click", function(){
-        panel.classList.toggle("show");
-    });
-
-    close.addEventListener("click", function(){
-        panel.classList.remove("show");
-    });
-
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-    if(!SpeechRecognition){
-        mic.disabled = true;
-        status.textContent = "Speech recognition is not supported.";
-        return true;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.continuous = false;
-
-    mic.addEventListener("click", function(){
-        try{
-            status.textContent = "🎤 Listening...";
-            mic.textContent = "🛑 LISTENING...";
-            recognition.start();
-        }catch(e){}
-    });
-
-    recognition.onresult = async function(event){
-        const spokenText =
-            event.results[0][0].transcript.trim();
-
-        if(!spokenText) return;
-
-        status.textContent = "🤖 Thinking...";
-        mic.textContent = "🎤 START LISTENING";
-
-        try{
-            const response = await fetch("/chat", {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body:JSON.stringify({
-                    message: spokenText,
-                    history:[]
-                })
-            });
-
-            const data = await response.json();
-
-            const reply =
-                data.response ||
-                data.reply ||
-                "";
-
-            if(!reply){
-                status.textContent = "No response.";
-                return;
-            }
-
-            status.textContent = "🔊 Speaking...";
-
-            window.speechSynthesis.cancel();
-
-            const utterance =
-                new SpeechSynthesisUtterance(reply);
-
-            utterance.lang = "en-US";
-            utterance.rate = 1;
-            utterance.pitch = 1;
-
-            utterance.onend = function(){
-                status.textContent = "Ready";
-            };
-
-            window.speechSynthesis.speak(utterance);
-
-        }catch(error){
-            console.error("Voice Assistant error:",error);
-            status.textContent = "Connection error.";
-            mic.textContent = "🎤 START LISTENING";
-        }
-    };
-
-    recognition.onerror = function(){
-        status.textContent = "Microphone error.";
-        mic.textContent = "🎤 START LISTENING";
-    };
-
-    recognition.onend = function(){
-        mic.textContent = "🎤 START LISTENING";
-    };
-
-    return true;
-}
-
-function initVoiceAssistant(){
-    if(createVoiceButton()) return;
-
-    let attempts = 0;
-    const timer = setInterval(function(){
-        attempts++;
-
-        if(createVoiceButton() || attempts >= 30){
-            clearInterval(timer);
-        }
-    },500);
-}
-
-if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded",initVoiceAssistant);
-}else{
-    initVoiceAssistant();
-}
-
-})();
-</script>
-<!-- /MI_VOICE_ASSISTANT_V2 -->
-<script id="MI_VOICE_ASSISTANT_FINAL_JS">
-(function(){
-    "use strict";
-    return;
-
-    function initVoiceAssistant(){
-        const btn = document.getElementById("miVoiceAssistantBtnFinal");
-        if(!btn) return;
-
-        if(btn.dataset.voiceBound === "1") return;
-        btn.dataset.voiceBound = "1";
-
-        btn.addEventListener("click", async function(){
-            if(btn.dataset.busy === "1") return;
-
-            if(!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)){
-                alert("Voice Assistant is not supported in this browser.");
-                return;
-            }
-
-            const SpeechRecognition =
-                window.SpeechRecognition || window.webkitSpeechRecognition;
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = "en-US";
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            btn.dataset.busy = "1";
-            btn.textContent = "🎙️ LISTENING...";
-
-            recognition.onresult = async function(event){
-                const spokenText =
-                    event.results?.[0]?.[0]?.transcript?.trim() || "";
-
-                if(!spokenText) return;
-
-                btn.textContent = "🤖 THINKING...";
-
-                try{
-                    const response = await fetch("/chat", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        credentials: "include",
-                        body: JSON.stringify({
-                            message: spokenText
-                        })
-                    });
-
-                    if(!response.ok){
-                        throw new Error("Voice request failed");
-                    }
-
-                    const data = await response.json();
-
-                    const reply =
-                        data.reply ||
-                        data.response ||
-                        data.message ||
-                        "";
-
-                    if(reply){
-                        const utterance = new SpeechSynthesisUtterance(reply);
-                        utterance.lang = "en-US";
-                        utterance.rate = 1;
-                        utterance.pitch = 1;
-                        window.speechSynthesis.cancel();
-                        window.speechSynthesis.speak(utterance);
-                    }
-                }catch(error){
-                    console.error("Voice Assistant error:", error);
-                    alert("Voice Assistant could not process the request.");
-                }finally{
-                    btn.dataset.busy = "0";
-                    btn.textContent = "🎙️ VOICE ASSISTANT";
-                }
-            };
-
-            recognition.onerror = function(error){
-                console.error("Speech recognition error:", error);
-                btn.dataset.busy = "0";
-                btn.textContent = "🎙️ VOICE ASSISTANT";
-            };
-
-            recognition.onend = function(){
-                if(btn.dataset.busy === "1"){
-                    btn.textContent = "🤖 THINKING...";
-                }
-            };
-
-            try{
-                recognition.start();
-            }catch(error){
-                console.error("Recognition start error:", error);
-                btn.dataset.busy = "0";
-                btn.textContent = "🎙️ VOICE ASSISTANT";
-            }
-        });
-    }
-
-    function forceButton(){
-        const sendBtn = document.getElementById("sendBtn");
-        if(!sendBtn || !sendBtn.parentElement) return;
-
-        let btn = document.getElementById("miVoiceAssistantBtnFinal");
-
-        if(!btn){
-            btn = document.createElement("button");
-            btn.id = "miVoiceAssistantBtnFinal";
-            btn.type = "button";
-            btn.title = "Voice Assistant";
-            btn.textContent = "🎙️ VOICE ASSISTANT";
-            sendBtn.parentElement.insertBefore(btn, sendBtn);
-        }else{
-            if(btn.nextElementSibling !== sendBtn){
-                sendBtn.parentElement.insertBefore(btn, sendBtn);
-            }
-        }
-
-        initVoiceAssistant();
-    }
-
-    function boot(){
-        forceButton();
-
-        const observer = new MutationObserver(function(){
-            forceButton();
-        });
-
-        observer.observe(document.body, {
-            childList:true,
-            subtree:true
-        });
-
-        setTimeout(forceButton, 500);
-        setTimeout(forceButton, 1500);
-        setTimeout(forceButton, 3000);
-    }
-
-    if(document.readyState === "loading"){
-        document.addEventListener("DOMContentLoaded", boot);
-    }else{
-        boot();
-    }
 })();
 </script>
 </body>
