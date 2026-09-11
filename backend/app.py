@@ -506,8 +506,15 @@ def mi_migrate_uid_chats_to_owner(uid, owner_id):
         target_ref = target.document(chat_doc.id)
         target_ref.set({**(chat_doc.to_dict() or {}), "sourceUid": uid, "ownerId": owner_id}, merge=True)
         for message_doc in chat_doc.reference.collection("messages").stream():
+            source_message = message_doc.to_dict() or {}
             target_ref.collection("messages").document(message_doc.id).set({
-                **(message_doc.to_dict() or {}), "sourceUid": uid, "ownerId": owner_id
+                **source_message,
+                "id": str(source_message.get("id") or message_doc.id),
+                "role": "me" if source_message.get("role") in {"me", "user"} else "ai",
+                "content": source_message.get("content") or source_message.get("text") or "",
+                "created_at": source_message.get("created_at") or source_message.get("createdAt") or datetime.utcnow().isoformat(),
+                "sourceUid": uid,
+                "ownerId": owner_id,
             }, merge=True)
     settings_source = MI_FIREBASE_DB.collection("users").document(uid).collection("settings").document("general").get()
     if settings_source.exists:
@@ -2854,7 +2861,15 @@ def owner_conversation_import():
         for message in item.get("messages") or []:
             if isinstance(message, dict):
                 message_id = str(message.get("id") or uuid.uuid4())
-                chat_ref.collection("messages").document(message_id).set({**message, "id": message_id, "ownerId": owner_id, "sourceUid": account["uid"]}, merge=True)
+                chat_ref.collection("messages").document(message_id).set({
+                    **message,
+                    "id": message_id,
+                    "role": "me" if message.get("role") in {"me", "user"} else "ai",
+                    "content": message.get("content") or message.get("text") or "",
+                    "created_at": message.get("created_at") or message.get("createdAt") or datetime.utcnow().isoformat(),
+                    "ownerId": owner_id,
+                    "sourceUid": account["uid"],
+                }, merge=True)
         imported_count += 1
     return jsonify({"success": True, "imported": imported_count, "ownerId": owner_id})
 
@@ -2877,11 +2892,11 @@ def messages():
             return jsonify({"messages": []})
         messages_list = [doc.to_dict() or {} for doc in conversation_ref.collection("messages").stream()]
         return jsonify({"messages": [{
-            "id": message["id"],
+            "id": str(message.get("id") or uuid.uuid4()),
             "conversation_id": message.get("conversation_id"),
-            "role": message.get("role"),
-            "content": message.get("content"),
-            "created_at": message.get("created_at"),
+            "role": "me" if message.get("role") in {"me", "user"} else "ai",
+            "content": message.get("content") or message.get("text") or "",
+            "created_at": message.get("created_at") or message.get("createdAt"),
         } for message in messages_list]})
 
     data = request.get_json(silent=True) or {}

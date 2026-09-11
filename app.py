@@ -1277,6 +1277,10 @@ try:
 except Exception as customer_service_import_error:
     app.logger.exception("Customer Service local route registration failed: %s", customer_service_import_error)
 
+# The canonical backend owns authenticated chat/settings storage. Keep this
+# legacy launcher pointed at it so local execution cannot reintroduce UID paths.
+from backend.app import app as canonical_backend_app
+app = canonical_backend_app
 
 if __name__=="__main__":
     app.run(

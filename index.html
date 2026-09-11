@@ -14886,6 +14886,65 @@ function mergeChatCollections(existingChats, incomingChats) {
     return merged;
 }
 
+function getAuthenticatedChatCacheCollections() {
+    const collections = [];
+    const unifiedKey = getUserChatStorageKey();
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key || (key !== unifiedKey && !key.startsWith('mi_chats_'))) continue;
+        try {
+            const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) collections.push(parsed);
+        } catch (error) {
+            console.warn('[MI-SHARED-CHAT] Ignoring invalid cache:', key);
+        }
+    }
+    return collections;
+}
+
+function prepareChatsForMigration(collections) {
+    let merged = {};
+    for (const collection of collections) {
+        const normalized = {};
+        for (const [chatId, chatData] of Object.entries(collection)) {
+            const messages = (Array.isArray(chatData) ? chatData : []).map((message, index) => ({
+                id: String(message?.id || `${chatId}_legacy_message_${index}`),
+                role: message?.role === 'me' || message?.role === 'user' ? 'me' : 'ai',
+                text: String(message?.text || message?.content || ''),
+                createdAt: message?.createdAt || message?.created_at || null,
+            }));
+            for (const key of ['title', 'name', 'chatName', 'pin', 'updatedAt', 'lastPreview', 'messageCount', 'attachments']) {
+                if (chatData?.[key] !== undefined) messages[key] = chatData[key];
+            }
+            normalized[chatId] = messages;
+        }
+        merged = mergeChatCollections(merged, normalized);
+    }
+    return merged;
+}
+
+async function migrateAuthenticatedChatCaches(token, userId, email) {
+    const cachedChats = prepareChatsForMigration(getAuthenticatedChatCacheCollections());
+    console.log('[MI-SHARED-CHAT] current Firebase UID:', userId);
+    console.log('[MI-SHARED-CHAT] resolved owner:', 'MI_CORTEX_X_UNIFIED_OWNER');
+    console.log('[MI-SHARED-CHAT] local cached chat count:', Object.keys(cachedChats).length);
+    console.log('[MI-SHARED-CHAT] old UID chat count:', Object.keys(cachedChats).length);
+    console.log('[MI-SHARED-CHAT] legacy owner chat count:', 0);
+    if (!Object.keys(cachedChats).length) return;
+    const response = await fetch('/api/conversations/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, 'X-User-Id': userId, 'X-User-Email': email },
+        body: JSON.stringify({ conversations: Object.entries(cachedChats).map(([id, chatData]) => ({
+            id,
+            title: chatData.title || chatData.name || chatData.chatName || 'New chat',
+            pin: Boolean(chatData.pin),
+            updated_at: chatData.updatedAt || Date.now(),
+            messages: Array.isArray(chatData) ? chatData : [],
+        })) }),
+    });
+    if (!response.ok) throw new Error('Local chat migration failed: HTTP ' + response.status);
+}
+
 function isCurrentAuthenticatedUser(userId) {
     const currentUid = window.miFirebaseUser?.uid || window.miFirebaseAuth?.currentUser?.uid || user?.id || '';
     return Boolean(userId && currentUid && String(userId) === String(currentUid));
@@ -14918,6 +14977,7 @@ async function loadUserChats() {
         chatDataTrace('BEFORE_LOAD', { count: Object.keys(existingChats).length, ids: Object.keys(existingChats), source: 'authenticated-load-start' });
 
   try {
+        await migrateAuthenticatedChatCaches(token, userId, email);
     const res = await fetch('/conversations', {
       headers: {
         Authorization: 'Bearer ' + token,
@@ -14993,6 +15053,8 @@ async function loadUserChats() {
     const mergedChats = mergeChatCollections(existingChats, loadedChats);
     chatDataTrace('MERGED', { count: Object.keys(mergedChats).length, ids: Object.keys(mergedChats), source: 'authenticated-load-merge' });
     chats = mergedChats;
+    console.log('[MI-SHARED-CHAT] unified server chat count:', Object.keys(loadedChats).length);
+    console.log('[MI-SHARED-CHAT] merged final chat count:', Object.keys(mergedChats).length);
     currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : Object.keys(chats || {})[0] || null;
 
     const storageKey = getUserChatStorageKey();

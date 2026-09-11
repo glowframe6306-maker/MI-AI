@@ -13548,6 +13548,72 @@ function mergeChatCollections(baseChats, incomingChats) {
     return merged;
 }
 
+function getAuthenticatedChatCacheCollections() {
+    const collections = [];
+    const unifiedKey = getUserChatStorageKey();
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key || (key !== unifiedKey && !key.startsWith('mi_chats_'))) continue;
+        try {
+            const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) collections.push(parsed);
+        } catch (error) {
+            console.warn('[MI-SHARED-CHAT] Ignoring invalid cache:', key);
+        }
+    }
+    return collections;
+}
+
+function prepareChatsForMigration(collections) {
+    let merged = {};
+    for (const collection of collections) {
+        const normalized = {};
+        for (const [chatId, chatData] of Object.entries(collection)) {
+            const messages = (Array.isArray(chatData) ? chatData : []).map((message, index) => ({
+                id: String(message?.id || `${chatId}_legacy_message_${index}`),
+                role: message?.role === 'me' || message?.role === 'user' ? 'me' : 'ai',
+                text: String(message?.text || message?.content || ''),
+                createdAt: message?.createdAt || message?.created_at || null,
+            }));
+            for (const key of ['title', 'name', 'chatName', 'pin', 'updatedAt', 'lastPreview', 'messageCount', 'attachments']) {
+                if (chatData?.[key] !== undefined) messages[key] = chatData[key];
+            }
+            normalized[chatId] = messages;
+        }
+        merged = mergeChatCollections(merged, normalized);
+    }
+    return merged;
+}
+
+async function migrateAuthenticatedChatCaches(token, userId, email) {
+    const cachedChats = prepareChatsForMigration(getAuthenticatedChatCacheCollections());
+    console.log('[MI-SHARED-CHAT] current Firebase UID:', userId);
+    console.log('[MI-SHARED-CHAT] resolved owner:', 'MI_CORTEX_X_UNIFIED_OWNER');
+    console.log('[MI-SHARED-CHAT] local cached chat count:', Object.keys(cachedChats).length);
+    console.log('[MI-SHARED-CHAT] old UID chat count:', Object.keys(cachedChats).length);
+    console.log('[MI-SHARED-CHAT] legacy owner chat count:', 0);
+    if (!Object.keys(cachedChats).length) return;
+    const response = await fetch('/api/conversations/import', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+            'X-User-Id': userId,
+            'X-User-Email': email,
+        },
+        body: JSON.stringify({
+            conversations: Object.entries(cachedChats).map(([id, chatData]) => ({
+                id,
+                title: chatData.title || chatData.name || chatData.chatName || 'New chat',
+                pin: Boolean(chatData.pin),
+                updated_at: chatData.updatedAt || Date.now(),
+                messages: Array.isArray(chatData) ? chatData : [],
+            })),
+        }),
+    });
+    if (!response.ok) throw new Error('Local chat migration failed: HTTP ' + response.status);
+}
+
 async function loadUserChats() {
   const token = localStorage.getItem('mi_supabase_token');
   const userId = localStorage.getItem('mi_user_id');
@@ -13568,10 +13634,10 @@ async function loadUserChats() {
     const requestId = ++chatLoadSequence;
     const requestedUserId = userId;
     if (!isCurrentAuthenticatedUser(requestedUserId)) return;
-  resetChatStateForAuthChange();
   const previousCurrentChat = currentChat || localStorage.getItem('last_chat');
 
   try {
+        await migrateAuthenticatedChatCaches(token, userId, email);
     const res = await fetch('/api/conversations', {
       headers: {
         Authorization: 'Bearer ' + token,
@@ -13643,7 +13709,14 @@ async function loadUserChats() {
     // Never replace the complete local state with a partial/empty response.
     // The backend is authoritative, but merging protects against transient or
     // incomplete responses during authentication/refresh.
-    chats = mergeChatCollections(chats, loadedChats);
+        const oldChatCount = Object.keys(chats || {}).length;
+        chats = mergeChatCollections(chats, loadedChats);
+        const finalChatCount = Object.keys(chats || {}).length;
+        if (finalChatCount < oldChatCount) {
+            console.warn('[MI-SHARED-CHAT] BLOCKED CHAT LOSS', { oldCount: oldChatCount, newCount: finalChatCount });
+        }
+        console.log('[MI-SHARED-CHAT] unified server chat count:', Object.keys(loadedChats).length);
+        console.log('[MI-SHARED-CHAT] merged final chat count:', finalChatCount);
     currentChat = previousCurrentChat && chats[previousCurrentChat] ? previousCurrentChat : Object.keys(chats || {})[0] || null;
 
     const storageKey = getUserChatStorageKey();
@@ -13808,20 +13881,8 @@ try {
             // Load user data from Firestore on login
             if (window.firestorePersistence) {
                 try {
-                    const { chats: firestoreChats, settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
-
-                    // Only load if there's actual data
-                    if (Object.keys(firestoreChats).length > 0) {
-                        chats = firestoreChats;
-                        currentChat = localStorage.getItem('last_chat') && chats[localStorage.getItem('last_chat')]
-                            ? localStorage.getItem('last_chat')
-                            : Object.keys(chats)[0] || null;
-                        renderList();
-                        if (currentChat) openChat(currentChat);
-                        console.log('[Persistence] User chats loaded from Firestore:', Object.keys(chats).length);
-                    } else {
-                        await loadUserChats();
-                    }
+                    const { settings: firestoreSettings } = await window.firestorePersistence.loadUserData();
+                    await loadUserChats();
 
                     // Apply loaded settings
                     if (firestoreSettings.theme) {
@@ -14330,17 +14391,6 @@ delete chats[chatId];
 if(currentChat===chatId){
 currentChat=null;
 chatBox.innerHTML="";
-}
-
-// Auto-delete from Firestore
-if (isAuthenticated() && window.firestorePersistence && window.miFirebaseUser) {
-    try {
-        const db = window.firebase.firestore();
-        db.collection('users').doc(window.miFirebaseUser.uid).collection('chats').doc(chatId).delete()
-            .catch(err => console.error('[Persistence] Chat delete error:', err));
-    } catch (err) {
-        console.error('[Persistence] Error deleting chat from Firestore:', err);
-    }
 }
 
 save();
