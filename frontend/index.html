@@ -12510,6 +12510,117 @@ textarea:disabled,
     }
 }
 </style>
+<style id="MI_SEND_BUTTON_PSEUDO_FIX">
+/* =========================================================
+   ABSOLUTE FINAL SEND BUTTON VISUAL FIX
+   Existing #sendBtn ONLY
+   ========================================================= */
+
+#inputBox #sendBtn,
+#sendBtn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    position: relative !important;
+    z-index: 2147483647 !important;
+
+    width: auto !important;
+    min-width: 170px !important;
+    max-width: 230px !important;
+
+    height: 44px !important;
+    min-height: 44px !important;
+
+    flex: 0 0 auto !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 0 14px !important;
+    margin: 0 !important;
+
+    overflow: visible !important;
+    white-space: nowrap !important;
+
+    pointer-events: auto !important;
+    cursor: pointer !important;
+
+    background: linear-gradient(
+        135deg,
+        #0787ff,
+        #075fd8
+    ) !important;
+
+    color: transparent !important;
+
+    border: 1px solid rgba(160,220,255,.85) !important;
+    border-radius: 12px !important;
+
+    box-shadow:
+        0 8px 24px rgba(0,120,255,.30),
+        inset 0 1px 0 rgba(255,255,255,.35) !important;
+
+    font-size: 0 !important;
+}
+
+#inputBox #sendBtn::after,
+#sendBtn::after {
+    content: "🎙️ VOICE ASSISTANT";
+
+    color: #ffffff !important;
+
+    font-size: 12px !important;
+    font-weight: 800 !important;
+
+    line-height: 1 !important;
+
+    display: inline-block !important;
+
+    pointer-events: none !important;
+}
+
+#inputBox #sendBtn.mi-send-mode::after,
+#sendBtn.mi-send-mode::after {
+    content: "➤ SEND";
+}
+
+#inputBox #sendBtn.mi-listening-mode::after,
+#sendBtn.mi-listening-mode::after {
+    content: "🎙️ LISTENING...";
+}
+
+#inputBox #sendBtn.mi-thinking-mode::after,
+#sendBtn.mi-thinking-mode::after {
+    content: "🤖 THINKING...";
+}
+
+#inputBox #sendBtn.mi-speaking-mode::after,
+#sendBtn.mi-speaking-mode::after {
+    content: "🔊 SPEAKING...";
+}
+
+#inputBox #sendBtn.mi-stop-mode::after,
+#sendBtn.mi-stop-mode::after {
+    content: "■ STOP";
+}
+
+@media (max-width: 700px) {
+    #inputBox #sendBtn,
+    #sendBtn {
+        min-width: 145px !important;
+        max-width: 195px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        padding: 0 10px !important;
+    }
+
+    #inputBox #sendBtn::after,
+    #sendBtn::after {
+        font-size: 11px !important;
+    }
+}
+</style>
 </head>
 
 <body>
@@ -41692,6 +41803,503 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
+<script id="MI_SEND_BUTTON_PSEUDO_FIX_JS">
+(function () {
+
+    "use strict";
+
+    if (window.__MI_SEND_BUTTON_PSEUDO_FIX__) {
+        return;
+    }
+
+    window.__MI_SEND_BUTTON_PSEUDO_FIX__ = true;
+
+    let voiceBusy = false;
+    let recognition = null;
+
+    function msg() {
+        return document.getElementById("msg");
+    }
+
+    function btn() {
+        return document.getElementById("sendBtn");
+    }
+
+    function makeVisible(button) {
+
+        if (!button) return;
+
+        button.style.setProperty(
+            "display",
+            "inline-flex",
+            "important"
+        );
+
+        button.style.setProperty(
+            "visibility",
+            "visible",
+            "important"
+        );
+
+        button.style.setProperty(
+            "opacity",
+            "1",
+            "important"
+        );
+
+        button.style.setProperty(
+            "position",
+            "relative",
+            "important"
+        );
+
+        button.style.setProperty(
+            "z-index",
+            "2147483647",
+            "important"
+        );
+
+        button.style.setProperty(
+            "pointer-events",
+            "auto",
+            "important"
+        );
+
+        button.style.setProperty(
+            "width",
+            "auto",
+            "important"
+        );
+
+        button.style.setProperty(
+            "min-width",
+            "170px",
+            "important"
+        );
+
+        button.style.setProperty(
+            "height",
+            "44px",
+            "important"
+        );
+
+        button.style.setProperty(
+            "min-height",
+            "44px",
+            "important"
+        );
+
+        button.style.setProperty(
+            "flex",
+            "0 0 auto",
+            "important"
+        );
+
+        button.style.setProperty(
+            "background",
+            "linear-gradient(135deg,#0787ff,#075fd8)",
+            "important"
+        );
+    }
+
+    function setMode(mode) {
+
+        const button = btn();
+
+        if (!button) return;
+
+        makeVisible(button);
+
+        button.classList.remove(
+            "mi-send-mode",
+            "mi-listening-mode",
+            "mi-thinking-mode",
+            "mi-speaking-mode",
+            "mi-stop-mode"
+        );
+
+        if (mode === "send") {
+            button.classList.add("mi-send-mode");
+            button.dataset.mode = "send";
+            button.title = "Send message";
+        }
+
+        else if (mode === "listening") {
+            button.classList.add("mi-listening-mode");
+            button.dataset.mode = "listening";
+            button.title = "Listening";
+        }
+
+        else if (mode === "thinking") {
+            button.classList.add("mi-thinking-mode");
+            button.dataset.mode = "thinking";
+        }
+
+        else if (mode === "speaking") {
+            button.classList.add("mi-speaking-mode");
+            button.dataset.mode = "speaking";
+        }
+
+        else if (mode === "stop") {
+            button.classList.add("mi-stop-mode");
+            button.dataset.mode = "stop";
+            button.title = "Stop reply";
+        }
+
+        else {
+            button.dataset.mode = "voice";
+            button.title = "Voice Assistant";
+        }
+    }
+
+    function refresh() {
+
+        const input = msg();
+
+        if (!input) return;
+
+        if (voiceBusy) return;
+
+        if (window.replyInProgress === true) {
+            setMode("stop");
+            return;
+        }
+
+        if (input.value.trim().length > 0) {
+            setMode("send");
+        } else {
+            setMode("voice");
+        }
+    }
+
+    async function voiceAssistant() {
+
+        if (voiceBusy) return;
+
+        const Recognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        if (!Recognition) {
+            alert(
+                "Voice Assistant is not supported in this browser."
+            );
+            refresh();
+            return;
+        }
+
+        voiceBusy = true;
+
+        setMode("listening");
+
+        recognition = new Recognition();
+
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = async function (event) {
+
+            const speech =
+                String(
+                    event?.results?.[0]?.[0]?.transcript || ""
+                ).trim();
+
+            if (!speech) {
+                finish();
+                return;
+            }
+
+            setMode("thinking");
+
+            try {
+
+                const response = await fetch(
+                    "/api/chat",
+                    {
+                        method: "POST",
+                        credentials: "include",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            message: speech,
+                            history: []
+                        })
+                    }
+                );
+
+                const data =
+                    await response.json().catch(
+                        () => ({})
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error ||
+                        data.message ||
+                        "AI request failed"
+                    );
+                }
+
+                const reply =
+                    String(
+                        data.reply ||
+                        data.response ||
+                        data.message ||
+                        ""
+                    ).trim();
+
+                if (!reply) {
+                    throw new Error(
+                        "AI returned an empty response"
+                    );
+                }
+
+                setMode("speaking");
+
+                if (
+                    "speechSynthesis" in window &&
+                    typeof SpeechSynthesisUtterance === "function"
+                ) {
+
+                    await new Promise(function (resolve) {
+
+                        window.speechSynthesis.cancel();
+
+                        const speechOut =
+                            new SpeechSynthesisUtterance(reply);
+
+                        speechOut.lang = "en-US";
+                        speechOut.rate = 1;
+                        speechOut.pitch = 1;
+
+                        speechOut.onend = resolve;
+                        speechOut.onerror = resolve;
+
+                        window.speechSynthesis.speak(
+                            speechOut
+                        );
+                    });
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "[MI Voice Assistant]",
+                    error
+                );
+
+            } finally {
+
+                finish();
+            }
+        };
+
+        recognition.onerror = function () {
+            finish();
+        };
+
+        try {
+            recognition.start();
+        } catch (error) {
+            finish();
+        }
+    }
+
+    function finish() {
+
+        try {
+            if (recognition) {
+                recognition.stop();
+            }
+        } catch (e) {}
+
+        recognition = null;
+        voiceBusy = false;
+
+        refresh();
+    }
+
+    function normalSend() {
+
+        if (
+            typeof window.sendOrStop ===
+            "function"
+        ) {
+            window.sendOrStop();
+            return;
+        }
+
+        if (
+            typeof window.send ===
+            "function"
+        ) {
+            window.send();
+        }
+    }
+
+    function install() {
+
+        const input = msg();
+        const button = btn();
+
+        if (!input || !button) {
+            return;
+        }
+
+        makeVisible(button);
+
+        if (
+            input.dataset.miPseudoVoiceBound !== "1"
+        ) {
+
+            input.addEventListener(
+                "input",
+                function () {
+                    refresh();
+                },
+                true
+            );
+
+            input.addEventListener(
+                "paste",
+                function () {
+                    setTimeout(
+                        refresh,
+                        0
+                    );
+                },
+                true
+            );
+
+            input.addEventListener(
+                "cut",
+                function () {
+                    setTimeout(
+                        refresh,
+                        0
+                    );
+                },
+                true
+            );
+
+            input.dataset.miPseudoVoiceBound = "1";
+        }
+
+        /*
+         * CAPTURE PHASE
+         *
+         * This runs before old bubble listeners
+         * can change the button behavior.
+         */
+        if (
+            button.dataset.miPseudoVoiceClick !== "1"
+        ) {
+
+            button.addEventListener(
+                "click",
+                function (event) {
+
+                    const currentInput = msg();
+
+                    if (!currentInput) {
+                        return;
+                    }
+
+                    /*
+                     * Existing generation -> keep STOP.
+                     */
+                    if (
+                        window.replyInProgress ===
+                        true
+                    ) {
+                        return;
+                    }
+
+                    /*
+                     * Text exists -> existing SEND.
+                     */
+                    if (
+                        currentInput.value
+                            .trim()
+                            .length > 0
+                    ) {
+
+                        return;
+                    }
+
+                    /*
+                     * EMPTY -> VOICE ASSISTANT.
+                     *
+                     * Stop other click handlers.
+                     */
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+
+                    voiceAssistant();
+
+                },
+                true
+            );
+
+            button.dataset.miPseudoVoiceClick = "1";
+        }
+
+        refresh();
+    }
+
+    function boot() {
+
+        install();
+
+        const observer =
+            new MutationObserver(
+                function () {
+                    install();
+                }
+            );
+
+        if (document.body) {
+
+            observer.observe(
+                document.body,
+                {
+                    childList: true,
+                    subtree: true
+                }
+            );
+        }
+
+        /*
+         * Reapply state because the existing
+         * application has several older scripts
+         * that modify #sendBtn.
+         */
+        setInterval(
+            install,
+            300
+        );
+    }
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            boot
+        );
+
+    } else {
+
+        boot();
+    }
+
+})();
+</script>
 </body>
 </html>
 
@@ -42116,6 +42724,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
+
 
 
 
