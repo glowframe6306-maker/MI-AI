@@ -2001,7 +2001,11 @@ def _get_ai_horde_api_key():
 
 
 def _get_ai_horde_model():
-    return (os.getenv("AI_HORDE_MODEL") or os.getenv("STABLE_HORDE_MODEL") or "SDXL").strip()
+    return (
+        os.getenv("AI_HORDE_MODEL")
+        or os.getenv("STABLE_HORDE_MODEL")
+        or "Realistic Vision"
+    ).strip()
 
 
 def _normalize_image_prompt(prompt):
@@ -3502,8 +3506,10 @@ def api_generate_image():
     if not _is_image_generation_request(user_prompt):
         return jsonify({"success": False, "error": "Image generation request not recognized."}), 400
 
-    width = int(payload.get("width") or 1024)
-    height = int(payload.get("height") or 1024)
+    width = int(payload.get("width") or 512)
+    height = int(payload.get("height") or 512)
+    width = max(256, min(width, 512))
+    height = max(256, min(height, 512))
     steps = int(payload.get("steps") or 25)
     cfg_scale = float(payload.get("cfg_scale") or 7)
 

@@ -15622,8 +15622,8 @@ async function submitImageGeneration(prompt, conversationId, options = {}) {
             },
             body: JSON.stringify({
                 prompt: safePrompt,
-                width: 1024,
-                height: 1024,
+                width: 512,
+                height: 512,
                 steps: 25,
                 cfg_scale: 7
             })
@@ -29259,141 +29259,6 @@ document.addEventListener(
 
 /* CORTEX CORE AI GOLD IDLE DYNAMIC ISLAND V2 JS - END */
 </script>
-<!-- === CORTEX CORE AI WEB PHOTO SEARCH START === -->
-<script>
-(() => {
-    "use strict";
-
-    if (window.__miWebPhotoSearchV1) return;
-    window.__miWebPhotoSearchV1 = true;
-
-    const nativeFetch = window.fetch.bind(window);
-
-    function readJsonBody(options) {
-        if (!options || typeof options.body !== "string") return null;
-        try {
-            return JSON.parse(options.body);
-        } catch (_) {
-            return null;
-        }
-    }
-
-    function findUserText(payload) {
-        if (!payload || typeof payload !== "object") return "";
-
-        for (const key of ["message", "prompt", "query", "text", "input", "content"]) {
-            if (typeof payload[key] === "string" && payload[key].trim()) {
-                return payload[key].trim();
-            }
-        }
-
-        if (Array.isArray(payload.messages)) {
-            for (let index = payload.messages.length - 1; index >= 0; index -= 1) {
-                const item = payload.messages[index];
-                if (!item || typeof item !== "object") continue;
-
-                const role = String(item.role || "").toLowerCase();
-                if (role && role !== "user") continue;
-
-                if (typeof item.content === "string" && item.content.trim()) {
-                    return item.content.trim();
-                }
-
-                if (Array.isArray(item.content)) {
-                    const part = item.content.find(
-                        value =>
-                            value &&
-                            typeof value === "object" &&
-                            typeof value.text === "string" &&
-                            value.text.trim()
-                    );
-
-                    if (part) return part.text.trim();
-                }
-            }
-        }
-
-        return "";
-    }
-
-    function isPhotoRequest(value) {
-        const text = String(value || "").trim().toLowerCase();
-        if (!text) return false;
-
-        const imageTerms = [
-            "photo", "photos", "image", "images", "picture", "pictures",
-            "wallpaper", "pic", "pics",
-            "├á┬╖ΓÇá├á┬╖┼ô├á┬╢┬º├á┬╖┬¥", "├á┬╢┬┤├á┬╖ΓÇÖ├á┬╢┬▒├á┬╖┼á├á┬╢┬¡├á┬╖ΓÇô├á┬╢┬╗", "├á┬╢┬┤├á┬╖ΓÇÖ├á┬╢┬▒├á┬╖┼á├á┬╢┬¡├á┬╖ΓÇô├á┬╢┬╗├á┬╢┬║├á┬╢┼í├á┬╖┼á",
-            "photo ekak", "image ekak", "picture ekak",
-            "├á┬«┬¬├á┬«┼╕├á┬«┬«├á┬»┬ì", "├á┬«┬¬├á┬»┬ü├á┬«ΓÇó├á┬»╦å├á┬«┬¬├á┬»┬ì├á┬«┬¬├á┬«┼╕├á┬«┬«├á┬»┬ì"
-        ];
-
-        const requestTerms = [
-            "show", "send", "find", "search", "give", "get", "want", "need",
-            "├á┬╢┬┤├á┬╖Γäó├á┬╢┬▒├á┬╖┼á├á┬╢┬▒", "├á┬╢ΓÇÿ├á┬╖Γé¼├á┬╢┬▒├á┬╖┼á├á┬╢┬▒", "├á┬╖ΓÇ₧├á┬╖┼ô├á┬╢┬║", "├á┬╢┬»├á┬╖Γäó├á┬╢┬▒├á┬╖┼á├á┬╢┬▒", "├á┬╢ΓÇó├á┬╢┬▒",
-            "pennanna", "yawanna", "hoyanna", "denna", "ona"
-        ];
-
-        return (
-            imageTerms.some(term => text.includes(term)) &&
-            requestTerms.some(term => text.includes(term))
-        );
-    }
-
-    function isChatRequest(input) {
-        let rawUrl = "";
-
-        if (typeof input === "string") {
-            rawUrl = input;
-        } else if (input && typeof input.url === "string") {
-            rawUrl = input.url;
-        }
-
-        try {
-            const url = new URL(rawUrl, window.location.origin);
-            return url.pathname === "/api/chat" || url.pathname === "/chat";
-        } catch (_) {
-            return false;
-        }
-    }
-
-    window.fetch = async function(input, options) {
-        const method = String(
-            (options && options.method) ||
-            (input && input.method) ||
-            "GET"
-        ).toUpperCase();
-
-        if (method !== "POST" || !isChatRequest(input)) {
-            return nativeFetch(input, options);
-        }
-
-        const payload = readJsonBody(options);
-        const userText = findUserText(payload);
-
-        if (!isPhotoRequest(userText)) {
-            return nativeFetch(input, options);
-        }
-
-        try {
-            const headers = new Headers((options && options.headers) || {});
-            headers.set("Content-Type", "application/json");
-
-            return await nativeFetch("/api/image-search", {
-                method: "POST",
-                headers,
-                body: JSON.stringify({ query: userText })
-            });
-        } catch (error) {
-            console.warn("[CORTEX CORE AI Photo Search] Normal chat fallback:", error);
-            return nativeFetch(input, options);
-        }
-    };
-
-    console.log("[CORTEX CORE AI] Web photo-link search enabled.");
-})();
-</script>
-<!-- === CORTEX CORE AI WEB PHOTO SEARCH END === -->
 
 
 <!-- CORTEX CORE AI CLICKABLE LINKS FINAL START -->
