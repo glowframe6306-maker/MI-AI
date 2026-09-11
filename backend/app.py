@@ -1994,7 +1994,252 @@ def _extract_text_from_groq_response(response):
         app.logger.exception("Groq response extraction failed: %s", exc)
 
     return ""
-    
+
+
+def _get_ai_horde_api_key():
+    return (os.getenv("AI_HORDE_API_KEY") or os.getenv("STABLE_HORDE_API_KEY") or "0000000000").strip()
+
+
+def _get_ai_horde_model():
+    return (os.getenv("AI_HORDE_MODEL") or os.getenv("STABLE_HORDE_MODEL") or "SDXL").strip()
+
+
+def _normalize_image_prompt(prompt):
+    normalized = str(prompt or "").strip()
+    if not normalized:
+        return ""
+
+    normalized = re.sub(r"\s+", " ", normalized)
+    normalized = re.sub(
+        r"^(?:give me|create|generate|make|draw|show me|produce|design|craft|render|build|make a|create a|generate a|draw a)\s+",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    ).strip()
+
+    normalized = re.sub(r"^(?:a|an|the)\s+", "", normalized, flags=re.IGNORECASE).strip()
+    normalized = normalized.strip(" .!?;:")
+
+    return normalized
+
+
+def _is_image_generation_request(prompt):
+    normalized = str(prompt or "").strip()
+    if not normalized:
+        return False
+
+    lowered = normalized.lower()
+
+    if re.match(r"^(?:what|who|when|where|why|how|tell me|explain|describe|summarize|list)\b", lowered):
+        return False
+
+    if not re.match(r"^(?:give me|create|generate|make|draw|show me|produce|design|craft|render|build)\b", lowered):
+        return False
+
+    return True
+
+
+def _get_ai_horde_headers():
+    return {
+        "apikey": _get_ai_horde_api_key(),
+        "Content-Type": "application/json",
+    }
+
+
+def _extract_ai_horde_image_payload(payload):
+    if not isinstance(payload, dict):
+        return None, None
+
+    generations = payload.get("generations")
+    if isinstance(generations, list):
+        for item in generations:
+            if isinstance(item, dict):
+                image_source = (
+                    item.get("img")
+                    or item.get("image")
+                    or item.get("base64")
+                    or item.get("url")
+                    or item.get("src")
+                    or item.get("uri")
+                    or item.get("image_url")
+                )
+                if image_source:
+                    return image_source, item
+
+    for key in ["img", "image", "base64", "url", "src", "uri", "image_url"]:
+        image_source = payload.get(key)
+        if image_source:
+            return image_source, payload
+
+    return None, None
+
+
+def _infer_image_format_from_text(value):
+    if not value:
+        return "webp"
+
+    if isinstance(value, str):
+        lowered = value.lower()
+        if "data:image/" in lowered:
+            match = re.search(r"data:image/([a-zA-Z0-9]+)", lowered)
+            if match:
+                return match.group(1)
+        match = re.search(r"\.([a-zA-Z0-9]+)(?:\?|$)", lowered)
+        if match:
+            return match.group(1).lower()
+
+    return "webp"
+
+
+def _make_data_url_from_base64(base64_text, image_format):
+    cleaned = str(base64_text or "").strip()
+    if cleaned.startswith("data:"):
+        return cleaned
+
+    if cleaned.startswith("http://") or cleaned.startswith("https://"):
+        return cleaned
+
+    try:
+        base64.b64decode(cleaned, validate=True)
+    except Exception:
+        return None
+
+    return f"data:image/{image_format};base64,{cleaned}"
+
+
+def _finalize_ai_horde_image_result(payload):
+    image_source, generation = _extract_ai_horde_image_payload(payload)
+    if not image_source:
+        return None, None
+
+    if isinstance(image_source, str):
+        source = image_source.strip()
+        source_lower = source.lower()
+
+        if source_lower.startswith("data:"):
+            image_format = _infer_image_format_from_text(source)
+            return source, image_format
+
+        if source_lower.startswith("http://") or source_lower.startswith("https://"):
+            image_format = _infer_image_format_from_text(source)
+            return source, image_format
+
+        image_format = (
+            (generation or {}).get("format")
+            or (generation or {}).get("type")
+            or (generation or {}).get("mime_type")
+            or "webp"
+        )
+
+        if isinstance(image_format, str) and "/" in image_format:
+            image_format = image_format.split("/")[-1]
+        image_format = str(image_format).strip().lower() or "webp"
+
+        data_url = _make_data_url_from_base64(source, image_format)
+        if data_url:
+            return data_url, image_format
+
+    return None, None
+
+
+def generate_ai_horde_image(prompt, width=1024, height=1024, steps=25, cfg_scale=7):
+    payload = {
+        "prompt": str(prompt or "").strip(),
+        "params": {
+            "width": int(width or 1024),
+            "height": int(height or 1024),
+            "steps": int(steps or 25),
+            "cfg_scale": float(cfg_scale or 7),
+        },
+        "models": [_get_ai_horde_model()],
+    }
+
+    response = requests.post(
+        "https://stablehorde.net/api/v2/generate/async",
+        json=payload,
+        headers=_get_ai_horde_headers(),
+        timeout=30,
+    )
+
+    if response.status_code not in {200, 202}:
+        raise RuntimeError(
+            f"AI Horde request failed with status {response.status_code}: {response.text}"
+        )
+
+    try:
+        response_payload = response.json()
+    except Exception:
+        response_payload = {}
+
+    generation_id = response_payload.get("id") or response_payload.get("gen_id")
+    if not generation_id:
+        raise RuntimeError("AI Horde did not return a generation id.")
+
+    return generation_id
+
+
+def wait_for_ai_horde_generation(generation_id, timeout_seconds=180, poll_interval_seconds=3):
+    deadline = time.time() + max(timeout_seconds, 1)
+
+    while True:
+        if time.time() >= deadline:
+            raise TimeoutError("Image generation timed out.")
+
+        check_response = requests.get(
+            f"https://stablehorde.net/api/v2/generate/check/{generation_id}",
+            headers=_get_ai_horde_headers(),
+            timeout=30,
+        )
+
+        if check_response.status_code != 200:
+            raise RuntimeError(
+                f"AI Horde check failed with status {check_response.status_code}: {check_response.text}"
+            )
+
+        try:
+            check_payload = check_response.json()
+        except Exception:
+            check_payload = {}
+
+        if check_payload.get("done") is True or check_payload.get("finished") in {1, True}:
+            break
+
+        if check_payload.get("faulted") is True:
+            raise RuntimeError("AI Horde reported a generation fault.")
+
+        time.sleep(poll_interval_seconds)
+
+    status_response = requests.get(
+        f"https://stablehorde.net/api/v2/generate/status/{generation_id}",
+        headers=_get_ai_horde_headers(),
+        timeout=30,
+    )
+
+    if status_response.status_code != 200:
+        raise RuntimeError(
+            f"AI Horde status request failed with status {status_response.status_code}: {status_response.text}"
+        )
+
+    try:
+        status_payload = status_response.json()
+    except Exception:
+        status_payload = {}
+
+    image_source, image_format = _finalize_ai_horde_image_result(status_payload)
+    if image_source is None:
+        raise RuntimeError("AI Horde returned no image data.")
+
+    return {
+        "image": image_source,
+        "format": image_format or "webp",
+        "prompt": (
+            status_payload.get("prompt")
+            or status_payload.get("input_prompt")
+            or ""
+        ),
+    }
+
+
 def _extract_text_from_groq_chunk(chunk):
     if chunk is None:
         return ""
@@ -3239,6 +3484,53 @@ def debug_chat():
         "groq_model_configured": model_configured,
         "groq_fallback_configured": fallback_configured,
         "environment": "vercel",
+    })
+
+
+@app.route("/api/generate-image", methods=["POST"])
+def api_generate_image():
+    payload = request.get_json(silent=True) or {}
+    user_prompt = str(payload.get("prompt") or payload.get("input") or "").strip()
+
+    if not user_prompt:
+        return jsonify({"success": False, "error": "Please provide an image prompt."}), 400
+
+    normalized_prompt = _normalize_image_prompt(user_prompt)
+    if not normalized_prompt:
+        return jsonify({"success": False, "error": "Please provide an image prompt."}), 400
+
+    if not _is_image_generation_request(user_prompt):
+        return jsonify({"success": False, "error": "Image generation request not recognized."}), 400
+
+    width = int(payload.get("width") or 1024)
+    height = int(payload.get("height") or 1024)
+    steps = int(payload.get("steps") or 25)
+    cfg_scale = float(payload.get("cfg_scale") or 7)
+
+    try:
+        generation_id = generate_ai_horde_image(
+            normalized_prompt,
+            width=width,
+            height=height,
+            steps=steps,
+            cfg_scale=cfg_scale,
+        )
+        result = wait_for_ai_horde_generation(
+            generation_id,
+            timeout_seconds=int(os.getenv("AI_HORDE_TIMEOUT_SECONDS", "180")),
+            poll_interval_seconds=int(os.getenv("AI_HORDE_POLL_INTERVAL_SECONDS", "3")),
+        )
+    except TimeoutError:
+        return jsonify({"success": False, "error": "Image generation timed out."}), 504
+    except Exception as exc:
+        app.logger.exception("AI Horde image generation failed: %s", exc)
+        return jsonify({"success": False, "error": "Image generation failed. Please try again."}), 502
+
+    return jsonify({
+        "success": True,
+        "image": result.get("image"),
+        "prompt": normalized_prompt,
+        "format": result.get("format") or "webp",
     })
 
 

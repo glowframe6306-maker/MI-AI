@@ -14728,7 +14728,11 @@ if (attachments.length > 0) {
 }
 (Array.isArray(chatData) ? chatData : []).forEach(m => {
     if (m.role === 'ai') {
-        appendAiMessage(chatBox, m.text);
+        if (m.image) {
+            appendGeneratedImageMessage(chatBox, m);
+        } else {
+            appendAiMessage(chatBox, m.text);
+        }
     } else {
         let d = document.createElement("div");
         d.className = m.role;
@@ -15496,6 +15500,186 @@ async function fetchChatReply(options = {}, signal = null) {
     return response;
 }
 
+function extractImagePrompt(message) {
+    const raw = String(message || '').trim();
+    if (!raw) return '';
+
+    const lowered = raw.toLowerCase();
+    const startsWithImageCommand = /^(give me|create|generate|make|draw|show me|produce|design|craft|render|build)\b/i.test(raw);
+    if (!startsWithImageCommand) return '';
+
+    const match = raw.match(/^(?:give me|create|generate|make|draw|show me|produce|design|craft|render|build)\s+(?:a\s+|an\s+|the\s+)?/i);
+    let prompt = match ? raw.slice(match[0].length).trim() : raw.trim();
+
+    prompt = prompt.replace(/^\s*[-–—]\s*/, '').trim();
+    prompt = prompt.replace(/[.!?]+$/, '').trim();
+    return prompt;
+}
+
+function isImageGenerationRequest(message) {
+    const raw = String(message || '').trim();
+    if (!raw) return false;
+
+    if (/^(what|who|when|where|why|how|tell me|explain|describe|summarize|list)\b/i.test(raw)) {
+        return false;
+    }
+
+    return Boolean(extractImagePrompt(raw));
+}
+
+function inferImageFormatFromUrl(url) {
+    const value = String(url || '').toLowerCase();
+    const match = value.match(/\.([a-z0-9]+)(?:\?.*)?$/i);
+    if (match) return match[1];
+    if (value.startsWith('data:image/')) {
+        const mime = value.match(/data:image\/([a-z0-9]+);/i);
+        if (mime) return mime[1];
+    }
+    return 'webp';
+}
+
+function appendGeneratedImageMessage(container, message) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ai';
+    wrap.dataset.imagePrompt = message.prompt || '';
+
+    const body = document.createElement('div');
+    body.className = 'aiMessageBody';
+    body.style.display = 'flex';
+    body.style.flexDirection = 'column';
+    body.style.gap = '8px';
+
+    const label = document.createElement('div');
+    label.textContent = 'AI Generated Image';
+    label.style.fontWeight = '700';
+    label.style.fontSize = '12px';
+    label.style.opacity = '0.85';
+
+    const image = document.createElement('img');
+    image.src = message.image || '';
+    image.alt = message.prompt || 'Generated image';
+    image.style.maxWidth = '100%';
+    image.style.width = 'min(100%, 640px)';
+    image.style.borderRadius = '16px';
+    image.style.border = '1px solid rgba(255,255,255,0.12)';
+    image.style.display = 'block';
+
+    const controls = document.createElement('div');
+    controls.style.display = 'flex';
+    controls.style.gap = '8px';
+    controls.style.flexWrap = 'wrap';
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.type = 'button';
+    downloadBtn.textContent = 'Download';
+    downloadBtn.className = 'cortex-final-action';
+    downloadBtn.onclick = function () {
+        const a = document.createElement('a');
+        a.href = message.image || '#';
+        a.download = `mi-ai-generated-image.${message.format || inferImageFormatFromUrl(message.image)}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
+
+    const regenerateBtn = document.createElement('button');
+    regenerateBtn.type = 'button';
+    regenerateBtn.textContent = 'Regenerate';
+    regenerateBtn.className = 'cortex-final-action';
+    regenerateBtn.onclick = async function () {
+        if (!message.prompt) return;
+        await submitImageGeneration(message.prompt, currentChat, { reusePrompt: true });
+    };
+
+    controls.appendChild(downloadBtn);
+    controls.appendChild(regenerateBtn);
+
+    body.appendChild(label);
+    body.appendChild(image);
+    body.appendChild(controls);
+
+    wrap.appendChild(body);
+    container.appendChild(wrap);
+    return wrap;
+}
+
+async function submitImageGeneration(prompt, conversationId, options = {}) {
+    const safePrompt = String(prompt || '').trim();
+    if (!safePrompt) return;
+
+    const loading = document.createElement('div');
+    loading.className = 'thinking';
+    loading.innerHTML = '<span class="label">🎨 Generating image...</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    chatBox.appendChild(loading);
+    scroll();
+
+    try {
+        const response = await fetch('/api/generate-image', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: safePrompt,
+                width: 1024,
+                height: 1024,
+                steps: 25,
+                cfg_scale: 7
+            })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Image generation failed.');
+        }
+
+        if (!data.image) {
+            throw new Error('Image generation returned no image.');
+        }
+
+        if (loading && loading.parentNode) {
+            loading.remove();
+        }
+
+        const imageMessage = {
+            role: 'ai',
+            text: 'AI Generated Image',
+            image: data.image,
+            format: data.format || inferImageFormatFromUrl(data.image),
+            prompt: data.prompt || safePrompt,
+            type: 'image'
+        };
+
+        const chatData = chats[conversationId] || [];
+        chatData.push(imageMessage);
+        chatData.updatedAt = Date.now();
+        chatData.messageCount = (chatData.messageCount || 0) + 1;
+        chatData.lastPreview = imageMessage.text;
+        chats[conversationId] = chatData;
+        save();
+        scroll();
+        maybeShowLoginPrompt(conversationId);
+
+        appendGeneratedImageMessage(chatBox, imageMessage);
+    } catch (error) {
+        if (loading && loading.parentNode) {
+            loading.remove();
+        }
+
+        const errorBubble = document.createElement('div');
+        errorBubble.className = 'ai';
+        errorBubble.innerText = 'Image generation failed. Please try again.';
+        chatBox.appendChild(errorBubble);
+        scroll();
+        console.error('[MI-IMAGE] Generation failed:', error);
+    } finally {
+        replyInProgress = false;
+        setReplyControlState(false);
+    }
+}
+
 function createStreamingReplyBubble(initialText = '') {
     const d = document.createElement('div');
     d.className = 'ai';
@@ -15840,6 +16024,13 @@ async function send() {
     chats[conversationId].lastPreview = msg;
     save();
     scroll();
+
+    if (isImageGenerationRequest(msg)) {
+        const prompt = extractImagePrompt(msg);
+        await submitImageGeneration(prompt, conversationId);
+        return;
+    }
+
     const t = document.createElement('div');
     t.className = 'thinking';
     t.innerHTML = `<span class="label">CORTEX CORE AI</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>`;

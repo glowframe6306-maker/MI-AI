@@ -116,6 +116,45 @@ def test_backend_dotenv_file_is_loaded_for_groq_settings(tmp_path, monkeypatch):
         reload(app_module)
 
 
+def test_generate_image_route_returns_generated_image(monkeypatch):
+    app_module = import_module("backend.app")
+
+    class FakeAsyncResponse:
+        status_code = 202
+        text = '{"id": "abc123"}'
+
+    class FakeCheckResponse:
+        status_code = 200
+        text = '{"done": true, "finished": 1}'
+
+    class FakeStatusResponse:
+        status_code = 200
+        text = '{"generations": [{"img": "dGVzdA=="}, {"image": "dGVzdA=="}]}'
+
+    def fake_post(url, **kwargs):
+        return FakeAsyncResponse()
+
+    def fake_get(url, **kwargs):
+        if url.endswith("/check/abc123"):
+            return FakeCheckResponse()
+        if url.endswith("/status/abc123"):
+            return FakeStatusResponse()
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    monkeypatch.setattr(app_module.requests, "post", fake_post)
+    monkeypatch.setattr(app_module.requests, "get", fake_get)
+
+    client = app_module.app.test_client()
+    response = client.post("/api/generate-image", json={"prompt": "Give me a lion photo"})
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert payload["prompt"] == "lion photo"
+    assert payload["format"] == "webp"
+    assert payload["image"].startswith("data:image/webp;base64,")
+
+
 def test_assistant_info_route_returns_identity_and_contacts():
     app_module = import_module("backend.app")
 
