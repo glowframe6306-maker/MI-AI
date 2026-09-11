@@ -12329,86 +12329,125 @@ textarea:disabled,
 
 </style>
 
-<style id="MI_SEND_VOICE_VISIBILITY_FIX">
-/* =========================================================
-   MI-AI FINAL DYNAMIC SEND / VOICE BUTTON FIX
-   Uses the EXISTING #sendBtn only.
-   ========================================================= */
+
+<style id="MI_DYNAMIC_SEND_VOICE_FINAL_CSS">
+
+/* ==========================================================
+   ONE BUTTON ONLY:
+   #sendBtn = Voice Assistant when empty
+   #sendBtn = Send when text exists
+   ========================================================== */
 
 #inputBox #sendBtn,
-#sendBtn{
-    display:inline-flex !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    position:relative !important;
-    z-index:999999 !important;
+#sendBtn {
 
-    flex:0 0 auto !important;
-    align-items:center !important;
-    justify-content:center !important;
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 
-    width:auto !important;
-    min-width:155px !important;
-    max-width:none !important;
+    position: relative !important;
+    z-index: 2147483647 !important;
 
-    min-height:42px !important;
-    height:42px !important;
+    flex: 0 0 auto !important;
 
-    padding:0 14px !important;
-    margin:0 !important;
+    align-items: center !important;
+    justify-content: center !important;
 
-    overflow:visible !important;
-    white-space:nowrap !important;
-    text-overflow:clip !important;
+    box-sizing: border-box !important;
 
-    pointer-events:auto !important;
-    cursor:pointer !important;
+    width: auto !important;
+    min-width: 160px !important;
+    max-width: 220px !important;
 
-    box-sizing:border-box !important;
+    height: 44px !important;
+    min-height: 44px !important;
+
+    padding: 0 14px !important;
+    margin: 0 !important;
+
+    overflow: visible !important;
+    white-space: nowrap !important;
+
+    pointer-events: auto !important;
+    cursor: pointer !important;
+
+    font-size: 12px !important;
+    line-height: 1 !important;
+
+    text-overflow: clip !important;
 }
 
-/* Make sure the actual composer row does not hide/crop the button */
-#inputBox > div > div[style*="align-items:flex-end"]{
-    display:flex !important;
-    align-items:flex-end !important;
-    width:100% !important;
-    min-width:0 !important;
-    overflow:visible !important;
-}
-
-#inputBox #msg{
-    flex:1 1 auto !important;
-    min-width:0 !important;
-    max-width:none !important;
-}
-
-/* Voice mode can use the existing button styling */
-#sendBtn[data-voice-mode="voice"]{
-    min-width:155px !important;
-}
-
-/* Listening / thinking / speaking states */
-#sendBtn[data-voice-mode="listening"],
-#sendBtn[data-voice-mode="thinking"],
-#sendBtn[data-voice-mode="speaking"]{
-    min-width:145px !important;
-}
-
-/* Mobile */
-@media (max-width:700px){
+/*
+   Override the older mobile rules that force 48px / 56px.
+*/
+@media (max-width: 700px) {
 
     #inputBox #sendBtn,
-    #sendBtn{
-        min-width:140px !important;
-        height:42px !important;
-        padding:0 10px !important;
-        font-size:11px !important;
+    #sendBtn {
+
+        width: auto !important;
+        min-width: 145px !important;
+        max-width: 190px !important;
+
+        height: 44px !important;
+        min-height: 44px !important;
+
+        padding: 0 10px !important;
+
+        flex: 0 0 auto !important;
+
+        font-size: 11px !important;
     }
 
-    #inputBox #msg{
-        min-width:0 !important;
+    #inputBox > div > div[style*="align-items:flex-end"] {
+
+        display: flex !important;
+        align-items: flex-end !important;
+        gap: 8px !important;
+
+        width: 100% !important;
+        min-width: 0 !important;
+
+        overflow: visible !important;
+    }
+
+    #inputBox #msg {
+
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        width: auto !important;
     }
 }
+
+#inputBox > div > div[style*="align-items:flex-end"] {
+
+    display: flex !important;
+    align-items: flex-end !important;
+
+    gap: 8px !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+
+    overflow: visible !important;
+}
+
+#inputBox #msg {
+
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+/* Make sure no old rule hides it */
+#sendBtn[hidden],
+#sendBtn[style*="display: none"],
+#sendBtn[style*="visibility: hidden"] {
+
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 </style>
 </head>
 
@@ -40395,202 +40434,763 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     setTimeout(migrateLocalChats, 3500);
 })();
 </script>
-<script id="MI_SEND_VOICE_RUNTIME_FIX">
-(function(){
+
+<script id="MI_DYNAMIC_SEND_VOICE_FINAL_JS">
+(function () {
 
     "use strict";
 
-    let composerObserver = null;
-    let stateTimer = null;
+    /*
+     * FINAL CONTROLLER
+     *
+     * Existing #sendBtn ONLY.
+     * No second button.
+     */
 
-    function getElements(){
-        return {
-            msg: document.getElementById("msg"),
-            send: document.getElementById("sendBtn")
-        };
+    if (window.__MI_DYNAMIC_SEND_VOICE_FINAL__) {
+        return;
     }
 
-    function forceVisibleButton(){
+    window.__MI_DYNAMIC_SEND_VOICE_FINAL__ = true;
 
-        const {msg, send} = getElements();
+    let recognition = null;
+    let voiceBusy = false;
+    let speakTimer = null;
 
-        if(!send){
+    function getMsg() {
+        return document.getElementById("msg");
+    }
+
+    function getSend() {
+        return document.getElementById("sendBtn");
+    }
+
+    function hasMessageText() {
+
+        const msg = getMsg();
+
+        if (!msg) {
+            return false;
+        }
+
+        return msg.value.trim().length > 0;
+    }
+
+    function forceButtonVisible() {
+
+        const btn = getSend();
+
+        if (!btn) {
+            return;
+        }
+
+        btn.style.setProperty("display", "inline-flex", "important");
+        btn.style.setProperty("visibility", "visible", "important");
+        btn.style.setProperty("opacity", "1", "important");
+        btn.style.setProperty("position", "relative", "important");
+        btn.style.setProperty("z-index", "2147483647", "important");
+        btn.style.setProperty("pointer-events", "auto", "important");
+
+        btn.style.setProperty("width", "auto", "important");
+        btn.style.setProperty("min-width", "160px", "important");
+        btn.style.setProperty("max-width", "220px", "important");
+
+        btn.style.setProperty("height", "44px", "important");
+        btn.style.setProperty("min-height", "44px", "important");
+
+        btn.style.setProperty("flex", "0 0 auto", "important");
+
+        btn.style.setProperty("white-space", "nowrap", "important");
+        btn.style.setProperty("overflow", "visible", "important");
+
+        btn.type = "button";
+    }
+
+    function setMode(mode) {
+
+        const btn = getSend();
+
+        if (!btn) {
+            return;
+        }
+
+        forceButtonVisible();
+
+        if (mode === "voice") {
+
+            btn.textContent = "🎙️ VOICE ASSISTANT";
+
+            btn.title = "Voice Assistant";
+            btn.setAttribute(
+                "aria-label",
+                "Voice Assistant"
+            );
+
+            btn.dataset.voiceMode = "voice";
+
+            btn.disabled = false;
+
+            return;
+        }
+
+        if (mode === "send") {
+
+            btn.textContent = "➤ SEND";
+
+            btn.title = "Send message";
+            btn.setAttribute(
+                "aria-label",
+                "Send message"
+            );
+
+            btn.dataset.voiceMode = "send";
+
+            btn.disabled = false;
+
+            return;
+        }
+
+        if (mode === "listening") {
+
+            btn.textContent = "🎙️ LISTENING...";
+
+            btn.title = "Listening";
+            btn.dataset.voiceMode = "listening";
+
+            btn.disabled = false;
+
+            return;
+        }
+
+        if (mode === "thinking") {
+
+            btn.textContent = "🤖 THINKING...";
+
+            btn.title = "Thinking";
+            btn.dataset.voiceMode = "thinking";
+
+            btn.disabled = true;
+
+            return;
+        }
+
+        if (mode === "speaking") {
+
+            btn.textContent = "🔊 SPEAKING...";
+
+            btn.title = "Speaking";
+            btn.dataset.voiceMode = "speaking";
+
+            btn.disabled = true;
+
+            return;
+        }
+
+        if (mode === "stop") {
+
+            btn.textContent = "■ STOP";
+
+            btn.title = "Stop reply";
+            btn.setAttribute(
+                "aria-label",
+                "Stop reply"
+            );
+
+            btn.dataset.voiceMode = "stop";
+
+            btn.disabled = false;
+        }
+    }
+
+    function refreshButton() {
+
+        const btn = getSend();
+
+        if (!btn) {
+            return;
+        }
+
+        forceButtonVisible();
+
+        /*
+         * Never overwrite an active voice operation.
+         */
+        if (voiceBusy) {
             return;
         }
 
         /*
-         * NEVER CREATE ANOTHER BUTTON.
-         * ONLY FIX THE EXISTING #sendBtn.
+         * Preserve existing STOP state.
          */
+        if (window.replyInProgress === true) {
 
-        send.style.setProperty("display", "inline-flex", "important");
-        send.style.setProperty("visibility", "visible", "important");
-        send.style.setProperty("opacity", "1", "important");
-        send.style.setProperty("position", "relative", "important");
-        send.style.setProperty("z-index", "999999", "important");
-        send.style.setProperty("pointer-events", "auto", "important");
-        send.style.setProperty("flex", "0 0 auto", "important");
-        send.style.setProperty("align-items", "center", "important");
-        send.style.setProperty("justify-content", "center", "important");
-        send.style.setProperty("min-width", "155px", "important");
-        send.style.setProperty("min-height", "42px", "important");
-        send.style.setProperty("height", "42px", "important");
-        send.style.setProperty("width", "auto", "important");
-        send.style.setProperty("max-width", "none", "important");
-        send.style.setProperty("overflow", "visible", "important");
-        send.style.setProperty("white-space", "nowrap", "important");
+            setMode("stop");
 
-        if(msg){
+            return;
+        }
 
-            const hasText = msg.value.trim().length > 0;
+        /*
+         * THE IMPORTANT RULE:
+         *
+         * EMPTY = VOICE ASSISTANT
+         * TEXT  = SEND
+         */
+        if (hasMessageText()) {
+
+            setMode("send");
+
+        } else {
+
+            setMode("voice");
+        }
+    }
+
+    async function getHeaders() {
+
+        const headers = {
+            "Content-Type": "application/json"
+        };
+
+        try {
+
+            const firebaseUser =
+                window.miFirebaseUser ||
+                window.miFirebaseAuth?.currentUser;
+
+            if (
+                firebaseUser &&
+                typeof firebaseUser.getIdToken === "function"
+            ) {
+
+                const token =
+                    await firebaseUser.getIdToken();
+
+                if (token) {
+
+                    headers.Authorization =
+                        "Bearer " + token;
+                }
+            }
+
+        } catch (e) {
+
+            console.warn(
+                "[MI Voice] Auth token unavailable:",
+                e
+            );
+        }
+
+        return headers;
+    }
+
+    function speak(text) {
+
+        if (
+            !text ||
+            !("speechSynthesis" in window) ||
+            typeof SpeechSynthesisUtterance !== "function"
+        ) {
+
+            return Promise.resolve();
+        }
+
+        return new Promise(function (resolve) {
+
+            try {
+
+                speechSynthesis.cancel();
+
+                const utterance =
+                    new SpeechSynthesisUtterance(text);
+
+                utterance.lang =
+                    document.documentElement.lang?.toLowerCase().startsWith("en")
+                        ? "en-US"
+                        : (
+                            document.documentElement.lang ||
+                            "en-US"
+                        );
+
+                utterance.rate = 1;
+                utterance.pitch = 1;
+
+                utterance.onend = function () {
+
+                    resolve();
+                };
+
+                utterance.onerror = function () {
+
+                    resolve();
+                };
+
+                speechSynthesis.speak(utterance);
+
+            } catch (e) {
+
+                console.error(
+                    "[MI Voice] speech error:",
+                    e
+                );
+
+                resolve();
+            }
+        });
+    }
+
+    function notify(message) {
+
+        let n =
+            document.getElementById(
+                "miDynamicVoiceNoticeFinal"
+            );
+
+        if (!n) {
+
+            n = document.createElement("div");
+
+            n.id =
+                "miDynamicVoiceNoticeFinal";
+
+            n.style.cssText =
+                [
+                    "position:fixed",
+                    "left:50%",
+                    "bottom:95px",
+                    "transform:translateX(-50%)",
+                    "z-index:2147483647",
+                    "padding:9px 13px",
+                    "border-radius:10px",
+                    "background:rgba(15,23,42,.96)",
+                    "color:white",
+                    "font:600 13px sans-serif",
+                    "box-shadow:0 10px 30px rgba(0,0,0,.3)"
+                ].join(";");
+
+            document.body.appendChild(n);
+        }
+
+        n.textContent = message;
+
+        clearTimeout(n.__timer);
+
+        n.__timer = setTimeout(function () {
+
+            try {
+                n.remove();
+            } catch (e) {}
+
+        }, 2500);
+    }
+
+    async function voiceAssistant() {
+
+        if (voiceBusy) {
+            return;
+        }
+
+        const Recognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        if (!Recognition) {
+
+            notify(
+                "Voice Assistant is not supported in this browser."
+            );
+
+            refreshButton();
+
+            return;
+        }
+
+        /*
+         * Do not start voice mode if there is text.
+         */
+        if (hasMessageText()) {
 
             /*
-             * Do NOT change the existing send/voice logic if
-             * another voice session is active.
+             * Existing normal Send function.
              */
-            const mode = send.dataset.voiceMode || "";
+            if (typeof window.sendOrStop === "function") {
 
-            if(
-                mode !== "listening" &&
-                mode !== "thinking" &&
-                mode !== "speaking" &&
-                mode !== "stop"
-            ){
+                window.sendOrStop();
 
-                if(hasText){
+            } else if (
+                typeof window.send === "function"
+            ) {
 
-                    /*
-                     * Normal typed-message state.
-                     * Preserve existing send behavior.
-                     */
-                    if(typeof window.updateComposerButtonState === "function"){
-                        try{
-                            window.updateComposerButtonState();
-                        }catch(e){}
-                    }
-
-                }else{
-
-                    /*
-                     * Empty textbox = Voice Assistant.
-                     */
-                    send.innerHTML = "🎙️ VOICE ASSISTANT";
-                    send.textContent = "🎙️ VOICE ASSISTANT";
-
-                    send.title = "Voice Assistant";
-                    send.setAttribute(
-                        "aria-label",
-                        "Voice Assistant"
-                    );
-
-                    send.dataset.voiceMode = "voice";
-                }
+                window.send();
             }
-        }
-    }
 
-    function bindComposer(){
-
-        const {msg, send} = getElements();
-
-        if(!msg || !send){
             return;
         }
 
-        /*
-         * Existing application already has the click behavior.
-         * Do NOT replace it.
-         */
+        voiceBusy = true;
 
-        if(msg.dataset.miDynamicVoiceBound !== "1"){
+        setMode("listening");
 
-            msg.addEventListener("input", function(){
+        recognition = new Recognition();
 
-                /*
-                 * Let the existing implementation update first.
-                 */
-                setTimeout(function(){
-                    forceVisibleButton();
-                }, 0);
+        recognition.lang = "en-US";
 
-            });
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 1;
 
-            msg.addEventListener("change", function(){
+        recognition.onresult = async function (event) {
 
-                setTimeout(function(){
-                    forceVisibleButton();
-                }, 0);
+            const spoken =
+                String(
+                    event?.results?.[0]?.[0]?.transcript || ""
+                ).trim();
 
-            });
+            if (!spoken) {
 
-            msg.addEventListener("paste", function(){
+                finish();
 
-                setTimeout(function(){
-                    forceVisibleButton();
-                }, 0);
+                return;
+            }
 
-            });
+            setMode("thinking");
 
-            msg.addEventListener("cut", function(){
+            try {
 
-                setTimeout(function(){
-                    forceVisibleButton();
-                }, 0);
+                const response =
+                    await fetch("/api/chat", {
+                        method: "POST",
+                        credentials: "include",
+                        headers: await getHeaders(),
+                        body: JSON.stringify({
+                            message: spoken,
+                            history: []
+                        })
+                    });
 
-            });
+                const data =
+                    await response.json().catch(
+                        function () {
+                            return {};
+                        }
+                    );
 
-            msg.dataset.miDynamicVoiceBound = "1";
-        }
+                if (!response.ok) {
 
-        forceVisibleButton();
-    }
-
-    function start(){
-
-        bindComposer();
-
-        /*
-         * The application can recreate the composer dynamically.
-         * Observe the document and restore the EXISTING button only.
-         */
-        if(!composerObserver){
-
-            composerObserver = new MutationObserver(function(){
-
-                if(stateTimer){
-                    clearTimeout(stateTimer);
+                    throw new Error(
+                        data.error ||
+                        data.message ||
+                        "AI request failed."
+                    );
                 }
 
-                stateTimer = setTimeout(function(){
-                    bindComposer();
-                }, 0);
+                const reply =
+                    String(
+                        data.reply ||
+                        data.response ||
+                        data.message ||
+                        ""
+                    ).trim();
 
-            });
+                if (!reply) {
 
-            if(document.body){
+                    throw new Error(
+                        "AI returned an empty response."
+                    );
+                }
 
-                composerObserver.observe(document.body, {
-                    childList:true,
-                    subtree:true
-                });
+                setMode("speaking");
 
+                await speak(reply);
+
+            } catch (error) {
+
+                console.error(
+                    "[MI Voice] request failed:",
+                    error
+                );
+
+                notify(
+                    "Voice Assistant could not process the request."
+                );
+
+            } finally {
+
+                finish();
             }
+        };
+
+        recognition.onerror = function (event) {
+
+            console.error(
+                "[MI Voice] recognition error:",
+                event
+            );
+
+            if (
+                event?.error === "not-allowed" ||
+                event?.error === "service-not-allowed"
+            ) {
+
+                notify(
+                    "Microphone access is required for Voice Assistant."
+                );
+
+            } else {
+
+                notify(
+                    "Voice recognition failed. Please try again."
+                );
+            }
+
+            finish();
+        };
+
+        recognition.onend = function () {
+
+            /*
+             * If onresult already started processing,
+             * do not interrupt it.
+             */
+        };
+
+        try {
+
+            recognition.start();
+
+        } catch (error) {
+
+            console.error(
+                "[MI Voice] start error:",
+                error
+            );
+
+            finish();
+        }
+    }
+
+    function finish() {
+
+        try {
+
+            if (recognition) {
+
+                recognition.onresult = null;
+                recognition.onerror = null;
+                recognition.onend = null;
+
+                if (
+                    typeof recognition.stop === "function"
+                ) {
+
+                    recognition.stop();
+                }
+            }
+
+        } catch (e) {}
+
+        recognition = null;
+
+        voiceBusy = false;
+
+        refreshButton();
+    }
+
+    function install() {
+
+        const msg = getMsg();
+        const btn = getSend();
+
+        if (!msg || !btn) {
+
+            return;
+        }
+
+        forceButtonVisible();
+
+        /*
+         * Bind input exactly once.
+         */
+        if (
+            msg.dataset.miFinalVoiceBound !== "1"
+        ) {
+
+            msg.addEventListener(
+                "input",
+                function () {
+
+                    /*
+                     * Immediate mode change.
+                     */
+                    refreshButton();
+                }
+            );
+
+            msg.addEventListener(
+                "change",
+                refreshButton
+            );
+
+            msg.addEventListener(
+                "paste",
+                function () {
+
+                    setTimeout(
+                        refreshButton,
+                        0
+                    );
+                }
+            );
+
+            msg.addEventListener(
+                "cut",
+                function () {
+
+                    setTimeout(
+                        refreshButton,
+                        0
+                    );
+                }
+            );
+
+            msg.dataset.miFinalVoiceBound = "1";
         }
 
         /*
-         * Extra initialization passes for dynamically loaded UI.
+         * IMPORTANT:
+         *
+         * Do not depend on HTML onclick.
+         * Replace only the existing #sendBtn action.
          */
-        setTimeout(bindComposer, 100);
-        setTimeout(bindComposer, 500);
-        setTimeout(bindComposer, 1000);
-        setTimeout(bindComposer, 2000);
+        if (
+            btn.dataset.miFinalVoiceClickBound !== "1"
+        ) {
+
+            btn.dataset.miFinalVoiceClickBound = "1";
+
+            btn.onclick = function (event) {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                /*
+                 * Active generation -> existing STOP.
+                 */
+                if (window.replyInProgress === true) {
+
+                    if (
+                        typeof window.sendOrStop ===
+                        "function"
+                    ) {
+
+                        window.sendOrStop();
+                    }
+
+                    return;
+                }
+
+                /*
+                 * TEXT EXISTS -> EXISTING SEND.
+                 */
+                if (hasMessageText()) {
+
+                    if (
+                        typeof window.sendOrStop ===
+                        "function"
+                    ) {
+
+                        window.sendOrStop();
+
+                    } else if (
+                        typeof window.send ===
+                        "function"
+                    ) {
+
+                        window.send();
+                    }
+
+                    return;
+                }
+
+                /*
+                 * EMPTY -> VOICE ASSISTANT.
+                 */
+                voiceAssistant();
+            };
+        }
+
+        refreshButton();
     }
 
-    if(document.readyState === "loading"){
-        document.addEventListener("DOMContentLoaded", start);
-    }else{
-        start();
+    /*
+     * Initial installation.
+     */
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            install
+        );
+
+    } else {
+
+        install();
     }
+
+    /*
+     * Composer can be recreated.
+     * Reconnect to the EXISTING button.
+     */
+    const observer =
+        new MutationObserver(
+            function () {
+
+                install();
+            }
+        );
+
+    function observe() {
+
+        if (document.body) {
+
+            observer.observe(
+                document.body,
+                {
+                    childList: true,
+                    subtree: true
+                }
+            );
+        }
+    }
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            observe
+        );
+
+    } else {
+
+        observe();
+    }
+
+    /*
+     * Backup synchronization.
+     */
+    setInterval(
+        function () {
+
+            install();
+
+        },
+        1200
+    );
 
 })();
 </script>
@@ -41018,6 +41618,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
+
 
 
 
