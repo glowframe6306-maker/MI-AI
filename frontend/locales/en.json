@@ -1,0 +1,19 @@
+{
+  "app.title": "CORTEX CORE AI",
+  "auth.login": "Login",
+  "auth.logout": "Logout",
+  "auth.signIn": "Sign In",
+  "auth.register": "Register",
+  "auth.resetPassword": "Reset password",
+  "sidebar.newChat": "New Chat",
+  "sidebar.settings": "Settings",
+  "sidebar.support": "Customer Support",
+  "nav.closeMenu": "Close menu",
+  "nav.openMenu": "Open menu",
+  "settings.title": "Settings",
+  "settings.language": "Language",
+  "settings.theme": "Theme",
+  "settings.fontSize": "Font Size",
+  "settings.apply": "Apply",
+  "chat.send": "Send"
+}

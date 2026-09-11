@@ -6547,6 +6547,195 @@ body.mi-smooth-loading #chat,body.mi-smooth-loading #chatList{opacity:0;pointer-
 
 <script>
 // Step 1: Create a Promise that detects when Firebase SDK is loaded
+/* MI_VOICE_ASSISTANT_CANONICAL_START */
+(function () {
+    "use strict";
+
+    if (window.__miVoiceAssistantCanonical) return;
+    window.__miVoiceAssistantCanonical = true;
+
+    const DEFAULT_LABEL = "🎙️ VOICE ASSISTANT";
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let state = "idle";
+
+    function getButton() {
+        return document.getElementById("miVoiceAssistantBtn");
+    }
+
+    function setState(nextState, message) {
+        state = nextState;
+        const button = getButton();
+        if (!button) return;
+        const labels = {
+            idle: DEFAULT_LABEL,
+            listening: "🎙️ LISTENING...",
+            thinking: "🤖 THINKING...",
+            speaking: "🔊 SPEAKING..."
+        };
+        button.textContent = labels[nextState] || DEFAULT_LABEL;
+        button.dataset.voiceState = nextState;
+        button.disabled = nextState === "thinking" || nextState === "speaking";
+        if (message) showMessage(message);
+    }
+
+    function showMessage(message) {
+        let notice = document.getElementById("miVoiceAssistantNotice");
+        if (!notice) {
+            notice = document.createElement("div");
+            notice.id = "miVoiceAssistantNotice";
+            notice.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:2147483000;max-width:calc(100vw - 32px);padding:9px 13px;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:rgba(15,23,42,.96);color:#f8fafc;font:600 13px/1.35 sans-serif;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.28);";
+            document.body.appendChild(notice);
+        }
+        notice.textContent = message;
+        clearTimeout(notice.__hideTimer);
+        notice.__hideTimer = setTimeout(() => notice.remove(), 2800);
+    }
+
+    function currentLanguage() {
+        return document.documentElement.lang || "en-US";
+    }
+
+    async function getAuthHeaders() {
+        const headers = { "Content-Type": "application/json" };
+        const firebaseUser = window.miFirebaseUser || window.miFirebaseAuth?.currentUser;
+        if (firebaseUser && typeof firebaseUser.getIdToken === "function") {
+            headers.Authorization = "Bearer " + await firebaseUser.getIdToken();
+        } else {
+            const token = localStorage.getItem("mi_supabase_token");
+            if (token) headers.Authorization = "Bearer " + token;
+        }
+        return headers;
+    }
+
+    async function askAssistant(spokenText) {
+        const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: await getAuthHeaders(),
+            credentials: "include",
+            body: JSON.stringify({ message: spokenText, history: [] })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.error_code || payload.error) {
+            throw new Error(payload.error || payload.message || "Voice Assistant request failed.");
+        }
+        const reply = String(payload.reply || payload.response || payload.message || "").trim();
+        if (!reply) throw new Error("The AI returned an empty response.");
+        return reply;
+    }
+
+    function finish() {
+        recognition = null;
+        setState("idle");
+    }
+
+    function cancel() {
+        try { recognition?.stop(); } catch (error) {}
+        recognition = null;
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        finish();
+    }
+
+    function start() {
+        if (state === "listening") {
+            cancel();
+            return;
+        }
+        if (state === "thinking" || state === "speaking") return;
+        if (!SpeechRecognition) {
+            showMessage("Voice recognition is not supported in this browser.");
+            return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = currentLanguage().toLowerCase() === "en" ? "en-US" : currentLanguage();
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 1;
+        recognition.onresult = async (event) => {
+            const spokenText = String(event.results?.[0]?.[0]?.transcript || "").trim();
+            if (!spokenText) {
+                finish();
+                showMessage("I did not hear anything. Please try again.");
+                return;
+            }
+            setState("thinking");
+            try {
+                const reply = await askAssistant(spokenText);
+                if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance !== "function") {
+                    finish();
+                    showMessage("Speech output is not supported in this browser.");
+                    return;
+                }
+                setState("speaking");
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(reply);
+                utterance.lang = recognition?.lang || "en-US";
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                utterance.onend = finish;
+                utterance.onerror = () => { finish(); showMessage("Speech output failed."); };
+                window.speechSynthesis.speak(utterance);
+            } catch (error) {
+                console.error("[MI-VOICE] Assistant request failed:", error);
+                finish();
+                showMessage("Voice Assistant could not process that request.");
+            }
+        };
+        recognition.onerror = (event) => {
+            const denied = event?.error === "not-allowed" || event?.error === "service-not-allowed";
+            finish();
+            showMessage(denied ? "Microphone access is required for Voice Assistant." : "Voice recognition failed. Please try again.");
+        };
+        recognition.onend = () => {
+            if (state === "listening") setState("idle");
+        };
+        setState("listening");
+        try {
+            recognition.start();
+        } catch (error) {
+            finish();
+            showMessage("Microphone could not be started.");
+        }
+    }
+
+    function ensureButton() {
+        const sendButton = document.getElementById("sendBtn");
+        if (!sendButton || !sendButton.parentElement) return;
+        const buttons = Array.from(document.querySelectorAll("#miVoiceAssistantBtn"));
+        const button = buttons[0] || document.createElement("button");
+        buttons.slice(1).forEach(item => item.remove());
+        button.id = "miVoiceAssistantBtn";
+        button.type = "button";
+        button.title = "Voice Assistant";
+        button.setAttribute("aria-label", "Voice Assistant");
+        button.dataset.voiceBound = button.dataset.voiceBound || "0";
+        if (!button.textContent.trim() || state === "idle") button.textContent = DEFAULT_LABEL;
+        if (button.nextElementSibling !== sendButton) sendButton.parentElement.insertBefore(button, sendButton);
+        if (button.dataset.voiceBound !== "1") {
+            button.dataset.voiceBound = "1";
+            button.addEventListener("click", start);
+        }
+    }
+
+    function boot() {
+        ensureButton();
+        if (!window.__miVoiceAssistantObserver) {
+            window.__miVoiceAssistantObserver = new MutationObserver(() => ensureButton());
+            window.__miVoiceAssistantObserver.observe(document.body, { childList: true, subtree: true });
+        }
+        if (!window.__miVoiceAssistantLabelTimer) {
+            window.__miVoiceAssistantLabelTimer = window.setInterval(() => {
+                const button = getButton();
+                if (button && state === "idle" && !button.textContent.trim()) button.textContent = DEFAULT_LABEL;
+            }, 250);
+        }
+    }
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
+    else boot();
+})();
+/* MI_VOICE_ASSISTANT_CANONICAL_END */
 // This handles the case where vendor scripts load asynchronously on Vercel
 window.miSDKReady = new Promise((resolve, reject) => {
     window._miSDKResolve = resolve;
@@ -12065,8 +12254,8 @@ textarea:disabled,
     flex:0 0 auto !important;
 }
 </style>
-<style id="MI_VOICE_ASSISTANT_FINAL_FIX">
-#inputBox #miVoiceAssistantBtnFinal{
+<style id="MI_VOICE_ASSISTANT_CANONICAL_STYLE">
+#inputBox #miVoiceAssistantBtn{
     display:flex !important;
     visibility:visible !important;
     opacity:1 !important;
@@ -12091,16 +12280,31 @@ textarea:disabled,
     z-index:999999 !important;
 }
 
-#inputBox #miVoiceAssistantBtnFinal:hover{
+#inputBox #miVoiceAssistantBtn:hover{
     filter:brightness(1.15) !important;
 }
 
-#inputBox #miVoiceAssistantBtnFinal:active{
+#inputBox #miVoiceAssistantBtn:active{
     transform:scale(.98) !important;
 }
 
-#inputBox #miVoiceAssistantBtnFinal *{
+#inputBox #miVoiceAssistantBtn *{
     pointer-events:none !important;
+}
+@media (max-width: 600px){
+    #inputBox > div > div[style*="align-items:flex-end"]{
+        flex-wrap:wrap !important;
+    }
+    #inputBox #msg{
+        flex:1 1 100% !important;
+        width:100% !important;
+    }
+    #inputBox #miVoiceAssistantBtn,
+    #inputBox #sendBtn{
+        flex:1 1 calc(50% - 4px) !important;
+        min-width:0 !important;
+        width:auto !important;
+    }
 }
 </style>
 </head>
@@ -12255,8 +12459,7 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
     <div id="attachmentProgress" style="display:none;padding:8px 10px;border-radius:10px;background:rgba(56,189,248,0.12);color:#bae6fd;font-size:12px;"></div>
     <div style="display:flex;gap:8px;align-items:flex-end;">
     <textarea id="msg" placeholder="ASK ANYTHING FROM CORTEX CORE AI"></textarea>
-      
-      <button id="miVoiceAssistantBtnFinal" type="button" title="Voice Assistant">🎙️ VOICE ASSISTANT</button><button id="sendBtn" type="button" onclick="sendOrStop()">├ó┼╛┬ñ</button>
+    <button id="miVoiceAssistantBtn" type="button" title="Voice Assistant" aria-label="Voice Assistant">🎙️ VOICE ASSISTANT</button><button id="sendBtn" type="button" onclick="sendOrStop()">├ó┼╛┬ñ</button>
     </div>
     <div id="sharedRestrictionMessage" style="display:none;color:#fda4af;font-size:12px;margin-left:4px;"></div>
   </div>
@@ -27649,10 +27852,22 @@ document.addEventListener(
             new Promise(function (resolve) { setTimeout(resolve, 1200); })
         ]);
 
+        const firebaseAuth = (
+            window.miFirebaseAuth ||
+            (
+                window.firebase &&
+                Array.isArray(window.firebase.apps) &&
+                window.firebase.apps.length > 0 &&
+                typeof window.firebase.auth === 'function'
+                    ? window.firebase.auth()
+                    : null
+            )
+        );
+
         return (
             currentFirebaseUser ||
             window.miFirebaseUser ||
-            (window.firebase && firebase.auth && firebase.auth().currentUser) ||
+            (firebaseAuth && firebaseAuth.currentUser) ||
             null
         );
     }
@@ -27681,12 +27896,18 @@ document.addEventListener(
     window.miGetFreshFirebaseToken = refreshFirebaseToken;
 
     function connectAuthListener() {
-        if (!window.firebase || !firebase.auth || typeof firebase.auth !== "function") {
+        if (!window.firebase || !Array.isArray(window.firebase.apps) || window.firebase.apps.length === 0) {
             setTimeout(connectAuthListener, 150);
             return;
         }
 
-        firebase.auth().onAuthStateChanged(async function (firebaseUser) {
+        const auth = window.firebase.auth ? window.firebase.auth() : null;
+        if (!auth || typeof auth.onAuthStateChanged !== "function") {
+            setTimeout(connectAuthListener, 150);
+            return;
+        }
+
+        auth.onAuthStateChanged(async function (firebaseUser) {
             currentFirebaseUser = firebaseUser || null;
             window.miFirebaseUser = firebaseUser || null;
 
@@ -30629,7 +30850,18 @@ document.addEventListener(
 'use strict';
 let items=[],unread=0,pollTimer=null,loading=false;
 const api='/api/direct-messages';
-function user(){return window.miFirebaseUser||(window.firebase&&firebase.auth&&firebase.auth().currentUser)||null}
+function user(){
+    if (window.miFirebaseUser) return window.miFirebaseUser;
+    try {
+        if (window.firebase && typeof window.firebase.auth === 'function') {
+            const auth = window.firebase.auth();
+            return auth && auth.currentUser ? auth.currentUser : null;
+        }
+    } catch (error) {
+        console.debug('[MI-FIREBASE] Safe current-user lookup skipped:', error && error.message ? error.message : error);
+    }
+    return null;
+}
 async function token(){const u=user();if(!u||typeof u.getIdToken!=='function')throw new Error('Please login first.');return u.getIdToken(false)}
 async function headers(json){const h={Authorization:'Bearer '+await token()};if(json)h['Content-Type']='application/json';return h}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
@@ -40132,6 +40364,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 (function(){
 
 function createVoiceButton(){
+    return false;
     const sendBtn = document.getElementById("sendBtn");
     if(!sendBtn) return false;
 
@@ -40274,6 +40507,7 @@ if(document.readyState === "loading"){
 <script id="MI_VOICE_ASSISTANT_FINAL_JS">
 (function(){
     "use strict";
+    return;
 
     function initVoiceAssistant(){
         const btn = document.getElementById("miVoiceAssistantBtnFinal");
