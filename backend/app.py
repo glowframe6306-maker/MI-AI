@@ -2015,7 +2015,7 @@ def _normalize_image_prompt(prompt):
 
     normalized = re.sub(r"\s+", " ", normalized)
     normalized = re.sub(
-        r"^(?:give me|create|generate|make|draw|show me|produce|design|craft|render|build|make a|create a|generate a|draw a)\s+",
+        r"^(?:give me|create|generate|make|draw|show me|produce|design|craft|render|build|make a|create a|generate a|draw a|can you|could you|would you|please)\s+",
         "",
         normalized,
         flags=re.IGNORECASE,
@@ -2027,20 +2027,69 @@ def _normalize_image_prompt(prompt):
     return normalized
 
 
+def _extract_image_prompt(text):
+    raw = str(text or "").strip()
+    if not raw:
+        return ""
+
+    cleaned = re.sub(r"\s+", " ", raw).strip()
+    lowered = cleaned.lower()
+
+    question_prefixes = (
+        "what ", "who ", "when ", "where ", "why ", "how ", "tell me ",
+        "explain ", "describe ", "summarize ", "list ", "is there ",
+        "are there ", "do i ", "can i ", "could i ", "would i ",
+        "how can i ", "how do i ", "how would i ", "what is ", "what are ",
+        "what's ", "what are ", "who is ", "who are ",
+    )
+
+    if any(lowered.startswith(prefix) for prefix in question_prefixes):
+        return ""
+
+    image_terms = [
+        "photo", "photos", "image", "images", "picture", "pictures",
+        "wallpaper", "wallpapers", "poster", "posters", "logo", "logos",
+        "illustration", "illustrations", "artwork", "thumbnail", "thumbnails",
+        "cartoon", "cartoons", "portrait", "landscape", "cinematic", "scene",
+        "photo ekak", "image ekak", "picture ekak", "poster ekak", "wallpaper ekak"
+    ]
+    request_terms = [
+        "give me", "show me", "create", "generate", "make", "draw", "produce",
+        "design", "craft", "render", "build", "denna", "pennanna", "hoyanna",
+        "hadanna", "ona", "ekak", "can you", "could you", "would you"
+    ]
+
+    has_image_term = any(term in lowered for term in image_terms)
+    has_request_term = any(term in lowered for term in request_terms)
+
+    if not has_image_term or not has_request_term:
+        return ""
+
+    extracted = re.sub(
+        r"^(?:please\s+)?(?:give me|show me|create|generate|make|draw|produce|design|craft|render|build|can you|could you|would you|i want|i need|i would like)\s+(?:a|an|the)?\s*",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    ).strip()
+
+    extracted = re.sub(
+        r"\s+(?:please|for me|now|today|right now|ekak|denna|pennanna|hoyanna|hadanna|ona)\s*$",
+        "",
+        extracted,
+        flags=re.IGNORECASE,
+    ).strip()
+
+    extracted = re.sub(r"^(?:a|an|the)\s+", "", extracted, flags=re.IGNORECASE).strip()
+    extracted = extracted.strip(" .!?;:")
+
+    if not extracted:
+        return ""
+
+    return extracted
+
+
 def _is_image_generation_request(prompt):
-    normalized = str(prompt or "").strip()
-    if not normalized:
-        return False
-
-    lowered = normalized.lower()
-
-    if re.match(r"^(?:what|who|when|where|why|how|tell me|explain|describe|summarize|list)\b", lowered):
-        return False
-
-    if not re.match(r"^(?:give me|create|generate|make|draw|show me|produce|design|craft|render|build)\b", lowered):
-        return False
-
-    return True
+    return bool(_extract_image_prompt(prompt))
 
 
 def _get_ai_horde_headers():
@@ -2428,11 +2477,54 @@ def _mi_prepare_live_context(user_message, history, include_sources=False):
         )
         return (unavailable_context, []) if include_sources else unavailable_context
 
+def _generate_ai_horde_image(prompt):
+    prompt = str(prompt or "").strip()
+    if not prompt:
+        raise RuntimeError("Image prompt is required.")
+
+    generation_id = generate_ai_horde_image(
+        prompt,
+        width=512,
+        height=512,
+        steps=25,
+        cfg_scale=7,
+    )
+
+    return wait_for_ai_horde_generation(
+        generation_id,
+        timeout_seconds=int(os.getenv("AI_HORDE_TIMEOUT_SECONDS", "180")),
+        poll_interval_seconds=int(os.getenv("AI_HORDE_POLL_INTERVAL_SECONDS", "3")),
+    )
+
+
 def _handle_chat_request():
     payload = request.get_json(silent=True) or {}
     user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
     if not user_message:
         return jsonify({"response": "Please type a message.", "reply": "Please type a message."}), 400
+
+    image_prompt = _extract_image_prompt(user_message)
+    if image_prompt:
+        try:
+            image_result = _generate_ai_horde_image(image_prompt)
+            return jsonify({
+                "success": True,
+                "type": "image",
+                "prompt": image_prompt,
+                "image": image_result.get("image"),
+                "format": image_result.get("format") or "webp",
+                "reply": "",
+                "response": "",
+            })
+        except Exception as exc:
+            app.logger.exception("AI Horde image generation failed for /api/chat: %s", exc)
+            return jsonify({
+                "success": False,
+                "type": "image",
+                "error": "Image generation is temporarily unavailable. Please try again.",
+                "reply": "",
+                "response": "",
+            }), 502
 
     history = payload.get("history") or payload.get("messages") or []
     if not isinstance(history, list):
@@ -3224,6 +3316,49 @@ def api_chat_stream():
         or payload.get("prompt")
         or ""
     ).strip()
+
+    image_prompt = _extract_image_prompt(user_message)
+    if image_prompt:
+        def image_stream():
+            try:
+                image_result = _generate_ai_horde_image(image_prompt)
+                yield _sse_event(
+                    "done",
+                    {
+                        "success": True,
+                        "type": "image",
+                        "prompt": image_prompt,
+                        "image": image_result.get("image"),
+                        "format": image_result.get("format") or "webp",
+                        "reply": "",
+                        "response": "",
+                        "done": True,
+                    },
+                )
+            except Exception as exc:
+                app.logger.exception("AI Horde image generation failed for /api/chat/stream: %s", exc)
+                yield _sse_event(
+                    "error",
+                    {
+                        "success": False,
+                        "type": "image",
+                        "error": "Image generation is temporarily unavailable. Please try again.",
+                        "reply": "",
+                        "response": "",
+                        "done": True,
+                    },
+                )
+
+        return Response(
+            stream_with_context(image_stream()),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+                "X-Accel-Buffering": "no",
+            },
+        )
 
     app.logger.info(
         "CORTEX stream request_id=%s method=%s content_type=%s payload_keys=%s message_length=%d history_items=%d",
