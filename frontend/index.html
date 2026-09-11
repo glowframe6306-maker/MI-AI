@@ -12329,6 +12329,87 @@ textarea:disabled,
 
 </style>
 
+<style id="MI_SEND_VOICE_VISIBILITY_FIX">
+/* =========================================================
+   MI-AI FINAL DYNAMIC SEND / VOICE BUTTON FIX
+   Uses the EXISTING #sendBtn only.
+   ========================================================= */
+
+#inputBox #sendBtn,
+#sendBtn{
+    display:inline-flex !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    position:relative !important;
+    z-index:999999 !important;
+
+    flex:0 0 auto !important;
+    align-items:center !important;
+    justify-content:center !important;
+
+    width:auto !important;
+    min-width:155px !important;
+    max-width:none !important;
+
+    min-height:42px !important;
+    height:42px !important;
+
+    padding:0 14px !important;
+    margin:0 !important;
+
+    overflow:visible !important;
+    white-space:nowrap !important;
+    text-overflow:clip !important;
+
+    pointer-events:auto !important;
+    cursor:pointer !important;
+
+    box-sizing:border-box !important;
+}
+
+/* Make sure the actual composer row does not hide/crop the button */
+#inputBox > div > div[style*="align-items:flex-end"]{
+    display:flex !important;
+    align-items:flex-end !important;
+    width:100% !important;
+    min-width:0 !important;
+    overflow:visible !important;
+}
+
+#inputBox #msg{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+}
+
+/* Voice mode can use the existing button styling */
+#sendBtn[data-voice-mode="voice"]{
+    min-width:155px !important;
+}
+
+/* Listening / thinking / speaking states */
+#sendBtn[data-voice-mode="listening"],
+#sendBtn[data-voice-mode="thinking"],
+#sendBtn[data-voice-mode="speaking"]{
+    min-width:145px !important;
+}
+
+/* Mobile */
+@media (max-width:700px){
+
+    #inputBox #sendBtn,
+    #sendBtn{
+        min-width:140px !important;
+        height:42px !important;
+        padding:0 10px !important;
+        font-size:11px !important;
+    }
+
+    #inputBox #msg{
+        min-width:0 !important;
+    }
+}
+</style>
 </head>
 
 <body>
@@ -40314,6 +40395,205 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
     setTimeout(migrateLocalChats, 3500);
 })();
 </script>
+<script id="MI_SEND_VOICE_RUNTIME_FIX">
+(function(){
+
+    "use strict";
+
+    let composerObserver = null;
+    let stateTimer = null;
+
+    function getElements(){
+        return {
+            msg: document.getElementById("msg"),
+            send: document.getElementById("sendBtn")
+        };
+    }
+
+    function forceVisibleButton(){
+
+        const {msg, send} = getElements();
+
+        if(!send){
+            return;
+        }
+
+        /*
+         * NEVER CREATE ANOTHER BUTTON.
+         * ONLY FIX THE EXISTING #sendBtn.
+         */
+
+        send.style.setProperty("display", "inline-flex", "important");
+        send.style.setProperty("visibility", "visible", "important");
+        send.style.setProperty("opacity", "1", "important");
+        send.style.setProperty("position", "relative", "important");
+        send.style.setProperty("z-index", "999999", "important");
+        send.style.setProperty("pointer-events", "auto", "important");
+        send.style.setProperty("flex", "0 0 auto", "important");
+        send.style.setProperty("align-items", "center", "important");
+        send.style.setProperty("justify-content", "center", "important");
+        send.style.setProperty("min-width", "155px", "important");
+        send.style.setProperty("min-height", "42px", "important");
+        send.style.setProperty("height", "42px", "important");
+        send.style.setProperty("width", "auto", "important");
+        send.style.setProperty("max-width", "none", "important");
+        send.style.setProperty("overflow", "visible", "important");
+        send.style.setProperty("white-space", "nowrap", "important");
+
+        if(msg){
+
+            const hasText = msg.value.trim().length > 0;
+
+            /*
+             * Do NOT change the existing send/voice logic if
+             * another voice session is active.
+             */
+            const mode = send.dataset.voiceMode || "";
+
+            if(
+                mode !== "listening" &&
+                mode !== "thinking" &&
+                mode !== "speaking" &&
+                mode !== "stop"
+            ){
+
+                if(hasText){
+
+                    /*
+                     * Normal typed-message state.
+                     * Preserve existing send behavior.
+                     */
+                    if(typeof window.updateComposerButtonState === "function"){
+                        try{
+                            window.updateComposerButtonState();
+                        }catch(e){}
+                    }
+
+                }else{
+
+                    /*
+                     * Empty textbox = Voice Assistant.
+                     */
+                    send.innerHTML = "🎙️ VOICE ASSISTANT";
+                    send.textContent = "🎙️ VOICE ASSISTANT";
+
+                    send.title = "Voice Assistant";
+                    send.setAttribute(
+                        "aria-label",
+                        "Voice Assistant"
+                    );
+
+                    send.dataset.voiceMode = "voice";
+                }
+            }
+        }
+    }
+
+    function bindComposer(){
+
+        const {msg, send} = getElements();
+
+        if(!msg || !send){
+            return;
+        }
+
+        /*
+         * Existing application already has the click behavior.
+         * Do NOT replace it.
+         */
+
+        if(msg.dataset.miDynamicVoiceBound !== "1"){
+
+            msg.addEventListener("input", function(){
+
+                /*
+                 * Let the existing implementation update first.
+                 */
+                setTimeout(function(){
+                    forceVisibleButton();
+                }, 0);
+
+            });
+
+            msg.addEventListener("change", function(){
+
+                setTimeout(function(){
+                    forceVisibleButton();
+                }, 0);
+
+            });
+
+            msg.addEventListener("paste", function(){
+
+                setTimeout(function(){
+                    forceVisibleButton();
+                }, 0);
+
+            });
+
+            msg.addEventListener("cut", function(){
+
+                setTimeout(function(){
+                    forceVisibleButton();
+                }, 0);
+
+            });
+
+            msg.dataset.miDynamicVoiceBound = "1";
+        }
+
+        forceVisibleButton();
+    }
+
+    function start(){
+
+        bindComposer();
+
+        /*
+         * The application can recreate the composer dynamically.
+         * Observe the document and restore the EXISTING button only.
+         */
+        if(!composerObserver){
+
+            composerObserver = new MutationObserver(function(){
+
+                if(stateTimer){
+                    clearTimeout(stateTimer);
+                }
+
+                stateTimer = setTimeout(function(){
+                    bindComposer();
+                }, 0);
+
+            });
+
+            if(document.body){
+
+                composerObserver.observe(document.body, {
+                    childList:true,
+                    subtree:true
+                });
+
+            }
+        }
+
+        /*
+         * Extra initialization passes for dynamically loaded UI.
+         */
+        setTimeout(bindComposer, 100);
+        setTimeout(bindComposer, 500);
+        setTimeout(bindComposer, 1000);
+        setTimeout(bindComposer, 2000);
+    }
+
+    if(document.readyState === "loading"){
+        document.addEventListener("DOMContentLoaded", start);
+    }else{
+        start();
+    }
+
+})();
+</script>
 </body>
 </html>
 
@@ -40738,6 +41018,7 @@ body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .
 
 })();
 </script>
+
 
 
 
