@@ -1389,12 +1389,12 @@ textarea,
 <style>
 
 :root{
---main:#1e88e5;
---bg:#0b1220;
---panel:#111a2b;
---ai:#263238;
---text:#fff;
---input:#1c2b3a;
+--main:#183D70;
+--bg:#000000;
+--panel:#000000;
+--ai:#292D33;
+--text:#FFFFFF;
+--input:#292D33;
 }
 
 *{box-sizing:border-box;}
@@ -13368,12 +13368,12 @@ body.cortex-light-theme #settingsPanel .mi-settings-control-box label { color:#3
 #settingsPanel .cortex-font-preview { margin-top:12px; padding:10px 12px; border:1px solid rgba(125,211,252,.18); border-radius:10px; color:#dbeafe; background:rgba(14,165,233,.08); text-align:center; font-weight:700; }
 body.cortex-light-theme #settingsPanel .cortex-accent-picker { background:rgba(255,255,255,.82); }
 @media (max-width:600px) { #miIosSelectPopup { min-width:0; width:calc(100vw - 32px) !important; } #settingsPanel .mi-ios-select-trigger { min-height:50px !important; } }
-/* Theme palette overrides: preserve the dark surface, change action treatment. */
-:root { --cortex-gold:#D4AF37; --cortex-gold-hover:#e3c45a; --cortex-navy:#12345b; --cortex-navy-hover:#1b4d80; }
-body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn), body:not(.cortex-light-theme) .headerActions button, body:not(.cortex-light-theme) #inputBox button, body:not(.cortex-light-theme) #loginBox button, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn), body:not(.cortex-light-theme) .cortex-accent-preset { background:var(--cortex-gold) !important; background-image:none !important; color:#17130a !important; border-color:#f1d77a !important; }
-body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn):hover, body:not(.cortex-light-theme) .headerActions button:hover, body:not(.cortex-light-theme) #inputBox button:hover, body:not(.cortex-light-theme) #loginBox button:hover, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn):hover { background:var(--cortex-gold-hover) !important; }
-body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn):focus-visible, body:not(.cortex-light-theme) .headerActions button:focus-visible, body:not(.cortex-light-theme) #inputBox button:focus-visible, body:not(.cortex-light-theme) #settingsPanel button:focus-visible { outline:2px solid #f7e7a3 !important; outline-offset:2px; }
-body:not(.cortex-light-theme) #sidebar > button:disabled, body:not(.cortex-light-theme) #inputBox button:disabled { background:#806c27 !important; color:#e8dfb9 !important; opacity:.7; }
+/* Theme palette overrides: keep dark-mode controls within the approved palette. */
+:root { --cortex-midnight-blue:#183D70; --cortex-midnight-blue-hover:#24538B; --cortex-navy:#12345b; --cortex-navy-hover:#1b4d80; }
+body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn), body:not(.cortex-light-theme) .headerActions button, body:not(.cortex-light-theme) #inputBox button, body:not(.cortex-light-theme) #loginBox button, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn) { background:var(--cortex-midnight-blue) !important; background-image:none !important; color:#FFFFFF !important; border-color:#454B54 !important; }
+body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn):hover, body:not(.cortex-light-theme) .headerActions button:hover, body:not(.cortex-light-theme) #inputBox button:hover, body:not(.cortex-light-theme) #loginBox button:hover, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn):hover { background:var(--cortex-midnight-blue-hover) !important; }
+body:not(.cortex-light-theme) #sidebar > button:not(#supportBtn):not(#settingsBtn):focus-visible, body:not(.cortex-light-theme) .headerActions button:focus-visible, body:not(.cortex-light-theme) #inputBox button:focus-visible, body:not(.cortex-light-theme) #settingsPanel button:focus-visible { outline:2px solid #C4CBD4 !important; outline-offset:2px; }
+body:not(.cortex-light-theme) #sidebar > button:disabled, body:not(.cortex-light-theme) #inputBox button:disabled { background:#454B54 !important; color:#C4CBD4 !important; opacity:.7; }
 body.cortex-light-theme, body.cortex-light-theme #sidebar, body.cortex-light-theme #main, body.cortex-light-theme #chat { background:#f4f7fb !important; color:#10233f !important; }
 body.cortex-light-theme #sidebar { border-color:#d6e0ec !important; }
 body.cortex-light-theme #header, body.cortex-light-theme #inputBox { background:#ffffff !important; color:#10233f !important; border-color:#d6e0ec !important; }
@@ -42140,9 +42140,28 @@ if (false) {
 })();
 </script>
 <style id="cortex-final-theme-palette">
+:root { --main:#183D70; --bg:#000000; --panel:#000000; --ai:#292D33; --text:#FFFFFF; --input:#292D33; --cortex-midnight-blue:#183D70; --cortex-midnight-blue-hover:#24538B; --cortex-navy:#12345b; --cortex-navy-hover:#1b4d80; }
+body.cortex-light-theme { --main:#12345b; --bg:#f1f5f9; --panel:#ffffff; --ai:#263238; --text:#0f172a; --input:#1c2b3a; }
 body.cortex-light-theme #sidebar > button, body.cortex-light-theme .headerActions button, body.cortex-light-theme #inputBox button, body.cortex-light-theme #loginBox button, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn) { background-color:#12345b !important; background-image:none !important; color:#fff !important; }
 body.cortex-light-theme #sidebar > button:hover, body.cortex-light-theme .headerActions button:hover, body.cortex-light-theme #inputBox button:hover, body.cortex-light-theme #loginBox button:hover, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn):hover { background-color:#1b4d80 !important; background-image:none !important; }
-body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .headerActions button, body:not(.cortex-light-theme) #inputBox button, body:not(.cortex-light-theme) #loginBox button, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn) { background-color:#D4AF37 !important; background-image:none !important; color:#17130a !important; }
+html body:not(.cortex-light-theme), body:not(.cortex-light-theme) #sidebar, body:not(.cortex-light-theme) #main, body:not(.cortex-light-theme) #header, body:not(.cortex-light-theme) #chat, body:not(.cortex-light-theme) #inputBox { background:#000000 !important; background-image:none !important; color:#FFFFFF !important; }
+body:not(.cortex-light-theme) #sidebar, body:not(.cortex-light-theme) #header, body:not(.cortex-light-theme) #inputBox, body:not(.cortex-light-theme) #settingsPanel, body:not(.cortex-light-theme) #loginBox, body:not(.cortex-light-theme) .chatItem, body:not(.cortex-light-theme) .history-item, body:not(.cortex-light-theme) .conversation-item { border-color:#454B54 !important; }
+body:not(.cortex-light-theme) #settingsPanel, body:not(.cortex-light-theme) #loginBox { background:#292D33 !important; background-image:none !important; color:#FFFFFF !important; }
+body:not(.cortex-light-theme) .chatItem, body:not(.cortex-light-theme) .history-item, body:not(.cortex-light-theme) .conversation-item { background:#292D33 !important; color:#FFFFFF !important; }
+body:not(.cortex-light-theme) .chatItem:hover, body:not(.cortex-light-theme) .history-item:hover, body:not(.cortex-light-theme) .conversation-item:hover { background:#183D70 !important; }
+body:not(.cortex-light-theme) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), body:not(.cortex-light-theme) textarea, body:not(.cortex-light-theme) select { background:#292D33 !important; border-color:#454B54 !important; color:#FFFFFF !important; }
+body:not(.cortex-light-theme) input::placeholder, body:not(.cortex-light-theme) textarea::placeholder { color:#C4CBD4 !important; opacity:1; }
+body:not(.cortex-light-theme) #chat > .me, body:not(.cortex-light-theme) .me { background:#183D70 !important; color:#FFFFFF !important; border-color:#454B54 !important; }
+body:not(.cortex-light-theme) #chat > .ai, body:not(.cortex-light-theme) .ai { background:#292D33 !important; color:#FFFFFF !important; border-color:#454B54 !important; }
+body:not(.cortex-light-theme) #chat > .ai .aiWritingCard { background:#292D33 !important; border-color:#454B54 !important; color:#FFFFFF !important; }
+body:not(.cortex-light-theme) #chat > .me a, body:not(.cortex-light-theme) #chat > .ai a { color:#C4CBD4 !important; }
+body:not(.cortex-light-theme) #chat > .me a:hover, body:not(.cortex-light-theme) #chat > .ai a:hover { color:#FFFFFF !important; }
+body:not(.cortex-light-theme) small, body:not(.cortex-light-theme) .muted, body:not(.cortex-light-theme) .text-muted, body:not(.cortex-light-theme) .secondary-text, body:not(.cortex-light-theme) .message-time, body:not(.cortex-light-theme) .timestamp { color:#C4CBD4 !important; }
+body:not(.cortex-light-theme) .material-symbols-outlined, body:not(.cortex-light-theme) .material-icons, body:not(.cortex-light-theme) .muted-icon, body:not(.cortex-light-theme) .icon { color:#AEB7C2 !important; }
+body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .headerActions button, body:not(.cortex-light-theme) #inputBox button, body:not(.cortex-light-theme) #loginBox button, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn) { background:#183D70 !important; background-image:none !important; color:#FFFFFF !important; border-color:#454B54 !important; }
+body:not(.cortex-light-theme) #sidebar > button:hover, body:not(.cortex-light-theme) .headerActions button:hover, body:not(.cortex-light-theme) #inputBox button:hover, body:not(.cortex-light-theme) #loginBox button:hover, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn):hover { background:#24538B !important; }
+body:not(.cortex-light-theme) #sidebar > button:focus-visible, body:not(.cortex-light-theme) .headerActions button:focus-visible, body:not(.cortex-light-theme) #inputBox button:focus-visible, body:not(.cortex-light-theme) #loginBox button:focus-visible, body:not(.cortex-light-theme) #settingsPanel button:focus-visible { outline:2px solid #C4CBD4 !important; outline-offset:2px; }
+body:not(.cortex-light-theme) #sidebar > button:disabled, body:not(.cortex-light-theme) #inputBox button:disabled { background:#454B54 !important; color:#C4CBD4 !important; }
 </style>
 <script id="cortex-settings-row-dropdown-bridge">
 (function () {
