@@ -626,7 +626,7 @@ if (!window.__MI_AI_CODE_COPY_BOUND__) {
     return;
 
     const settingsKey = "cortex_clean_settings_v1";
-    const defaults = { appearance: "dark", themeColor: "#1e88e5" };
+    const defaults = { appearance: "dark", themeColor: "#183D70" };
     const getState = () => Object.assign({}, defaults, JSON.parse(localStorage.getItem(settingsKey) || "{}"));
     const saveState = state => localStorage.setItem(settingsKey, JSON.stringify(state));
     const user = () => window.miFirebaseUser || window.miFirebaseAuth?.currentUser || window.firebase?.auth?.()?.currentUser || null;
@@ -1027,7 +1027,7 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
 })();
 </script>
 <style id="cortex-settings-center-style">
-:root { --cortex-accent:#1e88e5; --cortex-accent-rgb:30,136,229; --cortex-panel:#0b1220; --cortex-panel-2:#111c2e; }
+:root { --cortex-accent:#183D70; --cortex-accent-rgb:24,61,112; --cortex-panel:#000000; --cortex-panel-2:#292D33; }
 #settingsPanel { color:#e8eef8; background:linear-gradient(145deg,rgba(13,22,38,.97),rgba(5,11,22,.98)) !important; border:1px solid rgba(var(--cortex-accent-rgb),.38) !important; box-shadow:0 30px 90px rgba(0,0,0,.58),0 0 55px rgba(var(--cortex-accent-rgb),.14) !important; overflow:visible !important; }
 .cortex-settings-heading { padding:8px 18px 20px; border-bottom:1px solid rgba(255,255,255,.09); }
 .cortex-settings-kicker { color:var(--cortex-accent); font-size:10px; font-weight:800; letter-spacing:.18em; }
@@ -1094,18 +1094,18 @@ html.cortex-high-contrast body { filter:contrast(1.12); } html.cortex-reduce-mot
         const light = selected === "light" || (selected === "system" && window.matchMedia("(prefers-color-scheme: light)").matches);
         document.documentElement.dataset.themeMode = selected;
         document.body.classList.toggle("cortex-light-theme", light);
-        const paletteColor = light ? "#12345b" : (localStorage.getItem("cortex_core_theme_color") || "#1e88e5");
+        const paletteColor = light ? "#12345b" : (localStorage.getItem("cortex_core_theme_color") || "#183D70");
         document.documentElement.style.setProperty("--main", paletteColor);
         document.documentElement.style.setProperty("--mi-theme-color", paletteColor);
-        document.documentElement.style.setProperty("--mi-theme-rgb", light ? "18, 52, 91" : "30, 136, 229");
+        document.documentElement.style.setProperty("--mi-theme-rgb", light ? "18, 52, 91" : "24, 61, 112");
         document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
-            button.style.setProperty("background", light ? "#12345b" : "#D4AF37", "important");
-            button.style.setProperty("background-color", light ? "#12345b" : "#D4AF37", "important");
+            button.style.setProperty("background", light ? "#12345b" : "#183D70", "important");
+            button.style.setProperty("background-color", light ? "#12345b" : "#183D70", "important");
             button.style.setProperty("background-image", "none", "important");
-            button.style.setProperty("color", light ? "#ffffff" : "#17130a", "important");
+            button.style.setProperty("color", "#ffffff", "important");
         });
         const reassertButtonPalette = () => { const currentLight = document.body.classList.contains("cortex-light-theme"); document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
-            button.style.setProperty("background-color", currentLight ? "#12345b" : "#D4AF37", "important");
+            button.style.setProperty("background-color", currentLight ? "#12345b" : "#183D70", "important");
             button.style.setProperty("background-image", "none", "important");
         }); };
         setTimeout(reassertButtonPalette, 0);
@@ -1113,11 +1113,11 @@ html.cortex-high-contrast body { filter:contrast(1.12); } html.cortex-reduce-mot
         if (!window.__cortexThemePaletteObserver) {
             window.__cortexThemePaletteObserver = new MutationObserver(() => {
                 const currentLight = document.body.classList.contains("cortex-light-theme");
-                const desired = currentLight ? "rgb(18, 52, 91)" : "rgb(212, 175, 55)";
+                const desired = currentLight ? "rgb(18, 52, 91)" : "rgb(24, 61, 112)";
                 document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
                     if (getComputedStyle(button).backgroundColor !== desired) {
-                        button.style.setProperty("background", currentLight ? "#12345b" : "#D4AF37", "important");
-                        button.style.setProperty("background-color", currentLight ? "#12345b" : "#D4AF37", "important");
+                        button.style.setProperty("background", currentLight ? "#12345b" : "#183D70", "important");
+                        button.style.setProperty("background-color", currentLight ? "#12345b" : "#183D70", "important");
                         button.style.setProperty("background-image", "none", "important");
                     }
                 });
@@ -1128,9 +1128,9 @@ html.cortex-high-contrast body { filter:contrast(1.12); } html.cortex-reduce-mot
             window.__cortexThemePaletteInterval = window.setInterval(() => {
                 const currentLight = document.body.classList.contains("cortex-light-theme");
                 document.querySelectorAll("#sidebar > button, .headerActions button, #inputBox button, #loginBox button, #settingsPanel button:not(#settingsCloseBtn)").forEach((button) => {
-                    button.style.setProperty("background-color", currentLight ? "#12345b" : "#D4AF37", "important");
+                    button.style.setProperty("background-color", currentLight ? "#12345b" : "#183D70", "important");
                     button.style.setProperty("background-image", "none", "important");
-                    button.style.setProperty("color", currentLight ? "#ffffff" : "#17130a", "important");
+                    button.style.setProperty("color", "#ffffff", "important");
                 });
             }, 150);
         }
@@ -4169,7 +4169,7 @@ body.force-mobile-layout #chat > .ai {
 /* Font size slider */
 #settingsPanel > input[type="range"] {
     accent-color:
-        var(--main, #1e88e5);
+        var(--main, #183D70);
 
     cursor:
         pointer;
@@ -13449,7 +13449,7 @@ body.cortex-light-theme #msg { background:#ffffff !important; color:#10233f !imp
     <h2 id="settingsTitle">Settings</h2>
     <div class="cortex-authoritative-scroll">
         <section class="cortex-authoritative-row"><div><strong>Appearance</strong><small>Choose the application appearance.</small></div><select id="settingsAppearance"><option>Dark</option><option>Light</option><option>System</option></select></section>
-        <section class="cortex-authoritative-row"><div><strong>Theme</strong><small>Change the Question Bar colour immediately.</small></div><input id="settingsThemeColor" type="color" value="#1e88e5" aria-label="Theme colour"></section>
+        <section class="cortex-authoritative-row"><div><strong>Theme</strong><small>Change the Question Bar colour immediately.</small></div><input id="settingsThemeColor" type="color" value="#183D70" aria-label="Theme colour"></section>
         <section class="cortex-authoritative-row"><div><strong>Change Password</strong><small>Update your account password.</small></div><button class="cortex-authoritative-action" type="button" data-settings-form="password">Change Password</button></section>
         <form id="settingsPasswordForm" class="cortex-authoritative-form" hidden><input type="password" placeholder="Old Password" autocomplete="current-password"><input type="password" placeholder="New Password" autocomplete="new-password"><input type="password" placeholder="Confirm Password" autocomplete="new-password"><button class="cortex-authoritative-action" type="submit">Save Password</button><small role="status"></small></form>
         <section class="cortex-authoritative-danger"><strong>Danger Zone</strong><small>Account deletion is permanent.</small><button id="settingsDeleteAccountButton" class="cortex-authoritative-action" type="button" data-settings-form="delete">Delete My Account</button><form id="settingsDeleteForm" class="cortex-authoritative-form" hidden><input placeholder="Username or Email"><input placeholder="DELETE MY ACCOUNT"><input type="password" placeholder="Account Password" autocomplete="current-password"><button class="cortex-authoritative-action" type="submit">Delete My Account</button><small role="status"></small></form></section>
@@ -16677,6 +16677,11 @@ function sendOrStop(event) {
     send();
 }
 
+function dismissChatWelcome(container) {
+    const welcome = container?.querySelector("#miWelcomeV9");
+    welcome?.remove();
+}
+
 async function safeSendMessage(rawMessage) {
     const message = String(rawMessage ?? '').trim();
 
@@ -16817,6 +16822,8 @@ async function sendMessageInternal(msg) {
     userBubble.innerText = msg;
     chatBox.appendChild(userBubble);
     activeChat().push({ role: 'me', text: msg });
+    dismissChatWelcome(chatBox);
+    activeChat().isEmpty = false;
     activeChat().updatedAt = Date.now();
     activeChat().messageCount = (activeChat().messageCount || 0) + 1;
     activeChat().lastPreview = msg;
@@ -28752,11 +28759,9 @@ document.addEventListener(
                 )
             );
 
-        document
-            .getElementById(
-                "miWelcomeV9"
-            )
-            ?.remove();
+        dismissChatWelcome(
+            container
+        );
 
         const bubble =
             document.createElement(
@@ -38601,9 +38606,9 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 
         if (!/^[0-9a-f]{6}$/i.test(normalized)) {
             return {
-                red: 30,
-                green: 136,
-                blue: 229
+                red: 24,
+                green: 61,
+                blue: 112
             };
         }
 
@@ -38659,7 +38664,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
     function applyThemeColor(color, persist) {
         const normalized = validHexColor(color)
             ? String(color).toLowerCase()
-            : "#1e88e5";
+            : "#183D70";
 
         const rgb = hexToRgb(normalized);
 
@@ -38871,7 +38876,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
 
         const color = picker
             ? picker.value
-            : "#1e88e5";
+            : "#183D70";
 
         const fontSize = slider
             ? slider.value
@@ -39106,7 +39111,7 @@ body.mi-chat-selection-mode #chatList .chatItem::after {
     }
 
     function restoreSavedSettings() {
-        let color = "#1e88e5";
+        let color = "#183D70";
         let fontSize = 15;
         let language = "en";
 
@@ -42140,7 +42145,7 @@ if (false) {
 })();
 </script>
 <style id="cortex-final-theme-palette">
-:root { --main:#183D70; --bg:#000000; --panel:#000000; --ai:#292D33; --text:#FFFFFF; --input:#292D33; --cortex-midnight-blue:#183D70; --cortex-midnight-blue-hover:#24538B; --cortex-navy:#12345b; --cortex-navy-hover:#1b4d80; }
+:root { --main:#183D70; --bg:#000000; --panel:#000000; --ai:#292D33; --text:#FFFFFF; --input:#292D33; --mi-theme-color:#183D70; --mi-theme-rgb:24,61,112; --cortex-accent:#183D70; --cortex-accent-rgb:24,61,112; --cortex-panel:#000000; --cortex-panel-2:#292D33; --cortex-midnight-blue:#183D70; --cortex-midnight-blue-hover:#24538B; --cortex-navy:#12345b; --cortex-navy-hover:#1b4d80; }
 body.cortex-light-theme { --main:#12345b; --bg:#f1f5f9; --panel:#ffffff; --ai:#263238; --text:#0f172a; --input:#1c2b3a; }
 body.cortex-light-theme #sidebar > button, body.cortex-light-theme .headerActions button, body.cortex-light-theme #inputBox button, body.cortex-light-theme #loginBox button, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn) { background-color:#12345b !important; background-image:none !important; color:#fff !important; }
 body.cortex-light-theme #sidebar > button:hover, body.cortex-light-theme .headerActions button:hover, body.cortex-light-theme #inputBox button:hover, body.cortex-light-theme #loginBox button:hover, body.cortex-light-theme #settingsPanel button:not(#settingsCloseBtn):hover { background-color:#1b4d80 !important; background-image:none !important; }
@@ -42158,6 +42163,9 @@ body:not(.cortex-light-theme) #chat > .me a, body:not(.cortex-light-theme) #chat
 body:not(.cortex-light-theme) #chat > .me a:hover, body:not(.cortex-light-theme) #chat > .ai a:hover { color:#FFFFFF !important; }
 body:not(.cortex-light-theme) small, body:not(.cortex-light-theme) .muted, body:not(.cortex-light-theme) .text-muted, body:not(.cortex-light-theme) .secondary-text, body:not(.cortex-light-theme) .message-time, body:not(.cortex-light-theme) .timestamp { color:#C4CBD4 !important; }
 body:not(.cortex-light-theme) .material-symbols-outlined, body:not(.cortex-light-theme) .material-icons, body:not(.cortex-light-theme) .muted-icon, body:not(.cortex-light-theme) .icon { color:#AEB7C2 !important; }
+body:not(.cortex-light-theme) button:not(.danger):not(.delete-btn):not(#logoutBtn):not(.cortex-accent-preset):not([data-variant="danger"]), body:not(.cortex-light-theme) [role="button"]:not(.danger):not(.delete-btn):not(#logoutBtn):not(.cortex-accent-preset):not([data-variant="danger"]) { background:#183D70 !important; background-image:none !important; color:#FFFFFF !important; border-color:#454B54 !important; }
+body:not(.cortex-light-theme) button:not(.danger):not(.delete-btn):not(#logoutBtn):not(.cortex-accent-preset):not([data-variant="danger"]):hover, body:not(.cortex-light-theme) [role="button"]:not(.danger):not(.delete-btn):not(#logoutBtn):not(.cortex-accent-preset):not([data-variant="danger"]):hover { background:#24538B !important; }
+body:not(.cortex-light-theme) button:not(.danger):not(.delete-btn):not(#logoutBtn):not(.cortex-accent-preset):not([data-variant="danger"]):focus-visible, body:not(.cortex-light-theme) [role="button"]:not(.danger):not(.delete-btn):not(#logoutBtn):not(.cortex-accent-preset):not([data-variant="danger"]):focus-visible { outline:2px solid #C4CBD4 !important; outline-offset:2px; }
 body:not(.cortex-light-theme) #sidebar > button, body:not(.cortex-light-theme) .headerActions button, body:not(.cortex-light-theme) #inputBox button, body:not(.cortex-light-theme) #loginBox button, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn) { background:#183D70 !important; background-image:none !important; color:#FFFFFF !important; border-color:#454B54 !important; }
 body:not(.cortex-light-theme) #sidebar > button:hover, body:not(.cortex-light-theme) .headerActions button:hover, body:not(.cortex-light-theme) #inputBox button:hover, body:not(.cortex-light-theme) #loginBox button:hover, body:not(.cortex-light-theme) #settingsPanel button:not(#settingsCloseBtn):hover { background:#24538B !important; }
 body:not(.cortex-light-theme) #sidebar > button:focus-visible, body:not(.cortex-light-theme) .headerActions button:focus-visible, body:not(.cortex-light-theme) #inputBox button:focus-visible, body:not(.cortex-light-theme) #loginBox button:focus-visible, body:not(.cortex-light-theme) #settingsPanel button:focus-visible { outline:2px solid #C4CBD4 !important; outline-offset:2px; }
@@ -42189,7 +42197,7 @@ body:not(.cortex-light-theme) #sidebar > button:disabled, body:not(.cortex-light
 
     const STORAGE_KEY = "cortex_settings";
     const defaults = {
-        language: "en", theme: "dark", accentColor: "#1e88e5", fontSize: "medium",
+        language: "en", theme: "dark", accentColor: "#183D70", fontSize: "medium",
         chatAppearance: "comfortable", enterKeyBehavior: "send", animations: "full",
         aiResponseSound: true, notificationSound: true, responseStyle: "balanced",
         autoScroll: true, showTimestamps: false, confirmBeforeDelete: true,
