@@ -1135,6 +1135,9 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     font-size: 16px;
     font-weight: 900;
 }
+.mi-auth-provider-icon-apple {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Symbol", sans-serif;
+}
 .mi-auth-divider {
     display: flex;
     align-items: center;
@@ -14057,8 +14060,7 @@ body.mi-app-gated #settingsPanel {
   <section class="mi-auth-panel">
     <div class="mi-auth-card">
       <header class="mi-auth-heading">
-        <span class="mi-auth-kicker">CORTEX CORE AI ACCOUNT</span>
-        <h2>Welcome to CORTEX CORE AI</h2>
+        <h2 id="authHeading">Welcome back</h2>
       </header>
       <div class="mi-auth-tabs" role="tablist" aria-label="Authentication mode">
         <button id="signInTab" type="button" role="tab" aria-selected="true" onclick="setAuthMode('signin')">Sign In</button>
@@ -18253,7 +18255,7 @@ function openLogin(){
     box.classList.add('mi-auth-open');
     box.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    setAuthMode(authMode);
+    setAuthMode('signin');
     closeMobileMenu();
 }
 
@@ -18472,6 +18474,7 @@ function setAuthMode(mode) {
   authMode = mode;
   const signInTab = document.getElementById('signInTab');
   const registerTab = document.getElementById('registerTab');
+  const heading = document.getElementById('authHeading');
   const form = document.getElementById('authForm');
   const message = document.getElementById('authMessage');
   const signInText = t('auth.signIn', 'Sign In');
@@ -18484,6 +18487,9 @@ function setAuthMode(mode) {
   if (registerTab) {
     registerTab.textContent = registerText;
     registerTab.setAttribute('aria-selected', mode === 'register' ? 'true' : 'false');
+  }
+  if (heading) {
+    heading.textContent = mode === 'register' ? 'Create your account' : 'Welcome back';
   }
 
   if (!form) return;
@@ -18515,9 +18521,9 @@ function authProviderMarkup() {
   return `
     <div class="mi-auth-divider"><span>OR CONTINUE WITH</span></div>
     <div class="mi-auth-providers">
-      <button class="mi-auth-provider" type="button" onclick="handleGoogleAuth()" aria-label="Continue with Google"><span class="mi-auth-provider-icon" aria-hidden="true">G</span><span>Continue with Google</span></button>
-      <button class="mi-auth-provider" type="button" onclick="handleAppleAuth()" aria-label="Continue with Apple"><span class="mi-auth-provider-icon" aria-hidden="true">●</span><span>Continue with Apple</span></button>
-      <button class="mi-auth-provider" type="button" onclick="openPhoneAuth()" aria-label="Continue with Phone Number"><span class="mi-auth-provider-icon" aria-hidden="true">#</span><span>Continue with Phone Number</span></button>
+      <button class="mi-auth-provider" type="button" onclick="handleGoogleAuth()" aria-label="Continue with Google" title="Continue with Google"><span class="mi-auth-provider-icon" aria-hidden="true">G</span><span>Continue with Google</span></button>
+      <button class="mi-auth-provider" type="button" onclick="handleAppleAuth()" aria-label="Continue with Apple" title="Continue with Apple"><span class="mi-auth-provider-icon mi-auth-provider-icon-apple" aria-hidden="true">&#63743;</span><span>Continue with Apple</span></button>
+      <button class="mi-auth-provider" type="button" onclick="openPhoneAuth()" aria-label="Continue with Phone Number" title="Continue with Phone Number"><span class="mi-auth-provider-icon" aria-hidden="true">&#9742;</span><span>Continue with Phone Number</span></button>
     </div>
   `;
 }
