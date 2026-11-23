@@ -758,6 +758,279 @@ body.cortex-light-theme .mi-writing-block{background:rgba(255,255,255,.86);borde
 body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{background:rgba(248,250,252,.98);color:#0f172a;border-color:rgba(15,23,42,.16)}body.cortex-light-theme #miAccountMenu button{color:#0f172a}
 @media(max-width:600px){#miProfileBackdrop{padding:10px}#miProfilePanel{padding:18px;border-radius:18px}.mi-profile-avatar{width:96px;height:96px}}
 #loginBtn{display:inline-flex!important;align-items:center;justify-content:center;min-height:38px;margin:0;padding:8px 14px;border:1px solid rgba(125,211,252,.36);border-radius:999px;background:rgba(56,189,248,.14);color:#e0f2fe;cursor:pointer}
+.mi-auth-page {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: none;
+    grid-template-columns: minmax(0, 1.08fr) minmax(420px, .92fr);
+    min-height: 100dvh;
+    background: #07111e;
+    color: #f8fafc;
+    overflow: hidden;
+}
+.mi-auth-page.mi-auth-open {
+    display: grid;
+    animation: miAuthPageIn 320ms cubic-bezier(.22,.61,.36,1);
+}
+.mi-auth-brand {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    overflow: hidden;
+    border-right: 1px solid rgba(148, 163, 184, .12);
+    background:
+        radial-gradient(circle at 32% 26%, rgba(56, 189, 248, .24), transparent 25%),
+        radial-gradient(circle at 72% 68%, rgba(99, 102, 241, .16), transparent 28%),
+        linear-gradient(145deg, #0b1b30 0%, #091522 58%, #07101b 100%);
+}
+.mi-auth-brand::before,
+.mi-auth-brand::after {
+    content: "";
+    position: absolute;
+    border: 1px solid rgba(125, 211, 252, .12);
+    border-radius: 50%;
+    animation: miAuthOrbit 18s linear infinite;
+}
+.mi-auth-brand::before { width: 520px; height: 520px; }
+.mi-auth-brand::after { width: 720px; height: 720px; animation-direction: reverse; animation-duration: 26s; }
+.mi-auth-brand-orbit {
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(125, 211, 252, .08), transparent 68%);
+    filter: blur(2px);
+    animation: miAuthPulse 5s ease-in-out infinite;
+}
+.mi-auth-brand-content {
+    position: relative;
+    z-index: 2;
+    width: min(520px, 78%);
+    text-align: left;
+}
+.mi-auth-brand-content img {
+    width: 88px;
+    height: 88px;
+    border-radius: 24px;
+    object-fit: contain;
+    box-shadow: 0 28px 70px rgba(0, 0, 0, .38);
+}
+.mi-auth-kicker {
+    display: block;
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .16em;
+}
+.mi-auth-brand-content .mi-auth-kicker { margin-top: 28px; }
+.mi-auth-brand-content h1 {
+    margin: 10px 0 14px;
+    font-size: clamp(38px, 5vw, 64px);
+    line-height: .96;
+    letter-spacing: -.055em;
+}
+.mi-auth-brand-content p {
+    max-width: 470px;
+    margin: 0;
+    color: rgba(226, 232, 240, .72);
+    font-size: clamp(15px, 1.5vw, 18px);
+    line-height: 1.65;
+}
+.mi-auth-panel {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    overflow-y: auto;
+    background: linear-gradient(145deg, #0b1421, #07101b);
+}
+.mi-auth-card {
+    width: min(430px, calc(100% - 48px));
+    margin: 48px 24px;
+}
+.mi-auth-heading h2 {
+    margin: 8px 0 22px;
+    font-size: clamp(27px, 3vw, 38px);
+    letter-spacing: -.035em;
+    line-height: 1.08;
+}
+.mi-auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    min-height: 48px;
+    margin-bottom: 14px;
+    padding: 5px;
+    border: 1px solid rgba(148, 163, 184, .14);
+    border-radius: 14px;
+    background: rgba(2, 6, 23, .38);
+}
+.mi-auth-tabs button {
+    min-height: 38px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent !important;
+    color: #aebbd0;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.mi-auth-tabs button[aria-selected="true"] {
+    background: #e5edf6 !important;
+    color: #102036;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+}
+.mi-auth-message {
+    min-height: 20px;
+    margin: 8px 2px 10px;
+    color: #86efac;
+    font-size: 12px;
+    line-height: 1.45;
+}
+.mi-auth-message.mi-auth-error { color: #fda4af; }
+.mi-auth-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 20;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    border-radius: 50% !important;
+    background: rgba(7, 17, 30, .72) !important;
+    color: #dbeafe !important;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+.mi-auth-field {
+    display: grid;
+    gap: 7px;
+    margin: 10px 0;
+}
+.mi-auth-field label {
+    color: #b7c4d6;
+    font-size: 12px;
+    font-weight: 750;
+}
+.mi-auth-field input,
+.mi-auth-field select {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid rgba(148, 163, 184, .18);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, .76);
+    color: #f8fafc;
+    padding: 11px 13px;
+    font: inherit;
+    outline: none;
+}
+.mi-auth-field input:focus,
+.mi-auth-field select:focus {
+    border-color: rgba(125, 211, 252, .72);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, .10);
+}
+.mi-auth-password-wrap { position: relative; }
+.mi-auth-password-wrap input { padding-right: 48px; }
+.mi-auth-password-toggle {
+    position: absolute;
+    right: 7px;
+    top: 50%;
+    width: 36px;
+    height: 36px;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+.mi-auth-primary,
+.mi-auth-provider {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 850;
+    cursor: pointer;
+}
+.mi-auth-primary {
+    border: 1px solid rgba(125, 211, 252, .28);
+    background: linear-gradient(135deg, #38bdf8, #2563eb) !important;
+    color: #fff;
+}
+.mi-auth-primary:disabled,
+.mi-auth-provider:disabled { opacity: .62; cursor: wait; }
+.mi-auth-forgot {
+    float: right;
+    border: 0;
+    background: transparent;
+    color: #7dd3fc;
+    font-size: 12px;
+    cursor: pointer;
+}
+.mi-auth-providers {
+    display: grid;
+    gap: 9px;
+    margin-top: 16px;
+}
+.mi-auth-provider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    background: rgba(15, 23, 42, .72) !important;
+    color: #f8fafc;
+}
+.mi-auth-provider:hover { border-color: rgba(125, 211, 252, .42) !important; }
+.mi-auth-provider-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-grid;
+    place-items: center;
+    font-size: 16px;
+    font-weight: 900;
+}
+.mi-auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 2px;
+    color: #7b899c;
+    font-size: 11px;
+}
+.mi-auth-divider::before,
+.mi-auth-divider::after { content: ""; height: 1px; flex: 1; background: rgba(148, 163, 184, .12); }
+.mi-auth-phone-row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; }
+.mi-auth-phone-row select { min-width: 0; }
+.mi-auth-phone-actions { display: grid; gap: 8px; margin-top: 10px; }
+.mi-auth-recaptcha { min-height: 1px; }
+@keyframes miAuthPageIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes miAuthOrbit { to { transform: rotate(360deg); } }
+@keyframes miAuthPulse { 50% { transform: scale(1.12); opacity: .75; } }
+@media (max-width: 900px) {
+    .mi-auth-page { grid-template-columns: 1fr; overflow-y: auto; }
+    .mi-auth-brand { min-height: 190px; border-right: 0; border-bottom: 1px solid rgba(148, 163, 184, .12); }
+    .mi-auth-brand::before { width: 300px; height: 300px; }
+    .mi-auth-brand::after { width: 430px; height: 430px; }
+    .mi-auth-brand-content { width: calc(100% - 64px); display: grid; grid-template-columns: 58px 1fr; align-items: center; column-gap: 14px; }
+    .mi-auth-brand-content img { grid-row: 1 / 3; width: 58px; height: 58px; border-radius: 16px; }
+    .mi-auth-brand-content .mi-auth-kicker { margin: 0; }
+    .mi-auth-brand-content h1 { margin: 4px 0 0; font-size: 29px; }
+    .mi-auth-brand-content p { display: none; }
+    .mi-auth-panel { align-items: start; }
+    .mi-auth-card { width: min(470px, calc(100% - 32px)); margin: 28px 16px 48px; }
+    .mi-auth-close { top: 12px; right: 12px; background: rgba(7, 17, 30, .92) !important; }
+}
+@media (max-width: 480px) {
+    .mi-auth-brand { min-height: 150px; }
+    .mi-auth-brand-content h1 { font-size: 24px; }
+    .mi-auth-heading h2 { font-size: 27px; }
+    .mi-auth-card { width: calc(100% - 28px); margin: 18px 14px 36px; }
+    .mi-auth-phone-row { grid-template-columns: 96px 1fr; }
+}
 .mi-settings-nav{display:flex;flex-direction:column;gap:4px;padding:18px 12px;border-right:1px solid rgba(148,163,184,.14);background:rgba(2,8,23,.24)}.mi-settings-nav button{display:flex;align-items:center;gap:9px;width:100%;min-height:42px;margin:0;padding:9px 11px;border:1px solid transparent;border-radius:9px;background:transparent;color:#aebdd0;text-align:left;cursor:pointer}.mi-settings-nav button:hover,.mi-settings-nav button[aria-selected="true"]{background:rgba(56,189,248,.14);border-color:rgba(125,211,252,.32);color:#fff}.mi-settings-nav-icon{width:20px;text-align:center}.mi-settings-layout{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:0;flex:1}.mi-settings-content{min-width:0;min-height:0;overflow:auto;padding:18px 22px 28px;overscroll-behavior:contain}.mi-settings-content>.cortex-settings-group{display:none}.mi-settings-content>.cortex-settings-group.mi-settings-active{display:block}.mi-settings-mobile-select{display:none}
 #settingsPanel.mi-settings-large-ready #cortexSettingsSections{grid-template-columns:240px minmax(0,1fr)!important}.mi-settings-large-ready #cortexSettingsSections:before{display:none!important}.mi-settings-large-ready #cortexSettingsSections>.mi-settings-nav{grid-column:1!important;grid-row:1!important}.mi-settings-large-ready #cortexSettingsSections>.cortex-settings-group{grid-column:2!important}
 #settingsPanel{width:min(94vw,1180px)!important;height:min(90vh,820px)!important;max-height:90vh!important;display:none!important;overflow:hidden!important;padding:0!important;border-radius:24px!important;transform:translate(-50%,-48%) scale(.98)!important}.mi-settings-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:22px 24px 16px;border-bottom:1px solid rgba(148,163,184,.14)}.mi-settings-modal-head h3{margin:4px 0 5px!important}.mi-settings-modal-head p{margin:0;color:#91a1b8;font-size:12px}.mi-settings-modal-head .cortex-settings-kicker{color:#7dd3fc;font-size:10px;font-weight:800;letter-spacing:.18em}.mi-settings-modal-head button{flex:0 0 auto}.mi-settings-large-ready{display:flex!important;flex-direction:column!important;opacity:1!important;transform:translate(-50%,-50%) scale(1)!important;animation:miSettingsOpen 220ms cubic-bezier(.2,.8,.2,1)}
@@ -13526,10 +13799,31 @@ body.mi-app-gated #settingsPanel {
   </div>
 </div>
 
-<div id="loginBox" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#071426,#0f172a);padding:24px;border-radius:18px;z-index:9999;width:min(92vw,380px);box-shadow:0 24px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);">
-    <div style="display:flex;gap:6px;margin-bottom:18px;"><button id="signInTab" type="button" onclick="setAuthMode('signin')" style="flex:1;">Sign In</button><button id="registerTab" type="button" onclick="setAuthMode('register')" style="flex:1;">Register</button></div>
-    <div id="authMessage" style="min-height:30px;margin-bottom:12px;color:#fda4af;font-size:13px;"></div>
-    <div id="authForm"></div>
+<div id="loginBox" class="mi-auth-page" role="dialog" aria-modal="true" aria-label="CORTEX CORE AI authentication" aria-hidden="true">
+  <button id="authCloseBtn" class="mi-auth-close" type="button" aria-label="Close authentication" title="Close">&times;</button>
+  <section class="mi-auth-brand" aria-label="CORTEX CORE AI">
+    <div class="mi-auth-brand-orbit"></div>
+    <div class="mi-auth-brand-content">
+      <img src="/assets/Logo/Cortex.png" alt="CORTEX CORE AI">
+      <span class="mi-auth-kicker">INTELLIGENCE, ELEVATED</span>
+      <h1>CORTEX CORE AI</h1>
+      <p>One intelligent workspace for thoughtful answers, trusted tools, and faster ideas.</p>
+    </div>
+  </section>
+  <section class="mi-auth-panel">
+    <div class="mi-auth-card">
+      <header class="mi-auth-heading">
+        <span class="mi-auth-kicker">CORTEX CORE AI ACCOUNT</span>
+        <h2>Welcome to CORTEX CORE AI</h2>
+      </header>
+      <div class="mi-auth-tabs" role="tablist" aria-label="Authentication mode">
+        <button id="signInTab" type="button" role="tab" aria-selected="true" onclick="setAuthMode('signin')">Sign In</button>
+        <button id="registerTab" type="button" role="tab" aria-selected="false" onclick="setAuthMode('register')">Register</button>
+      </div>
+      <div id="authMessage" class="mi-auth-message" role="alert" aria-live="polite"></div>
+      <div id="authForm"></div>
+    </div>
+  </section>
 </div>
 
 <div id="authReminder" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.08);padding:12px 16px;border-radius:16px;color:#f8fafc;z-index:999;max-width:90vw;text-align:center;font-size:13px;"></div>
@@ -17714,8 +18008,13 @@ location.href="https://wa.me/94756390621";
 function openLogin(){
     const box = document.getElementById('loginBox');
     if (!box) return;
-    box.style.display = box.style.display === 'block' ? 'none' : 'block';
-    if (box.style.display === 'block') setAuthMode(authMode);
+    if (!box.classList.contains('mi-auth-open')) {
+        history.pushState({ miAuthPage: true }, '', window.location.href);
+    }
+    box.classList.add('mi-auth-open');
+    box.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setAuthMode(authMode);
     closeMobileMenu();
 }
 
@@ -17922,6 +18221,10 @@ document.addEventListener('visibilitychange', () => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
+    if (document.getElementById('loginBox')?.classList.contains('mi-auth-open')) {
+      closeAuthPage();
+      return;
+    }
     closeMobileMenu();
   }
 });
@@ -17934,24 +18237,14 @@ function setAuthMode(mode) {
   const message = document.getElementById('authMessage');
   const signInText = t('auth.signIn', 'Sign In');
   const registerText = t('auth.register', 'Register');
-  const fullNamePlaceholder = t('auth.fullName', 'Full Name');
-  const agePlaceholder = t('auth.age', 'Age');
-  const emailPlaceholder = t('auth.emailAddress', 'Email Address');
-  const newPasswordPlaceholder = t('auth.newPassword', 'New Password');
-  const confirmPasswordPlaceholder = t('auth.confirmPassword', 'Confirm Password');
-  const loginEmailPlaceholder = t('auth.email', 'Email');
-  const loginPasswordPlaceholder = t('auth.password', 'Password');
-  const resetPasswordText = t('auth.resetPassword', 'Reset password');
-  const registerButtonText = t('auth.register', 'Register');
-  const signInButtonText = t('auth.signIn', 'Sign In');
 
-  if (signInTab && registerTab) {
-    signInTab.style.background = mode === 'signin' ? '#38bdf8' : 'rgba(255,255,255,0.08)';
-    signInTab.style.color = mode === 'signin' ? '#0f172a' : '#cbd5e1';
-    registerTab.style.background = mode === 'register' ? '#38bdf8' : 'rgba(255,255,255,0.08)';
-    registerTab.style.color = mode === 'register' ? '#0f172a' : '#cbd5e1';
+  if (signInTab) {
     signInTab.textContent = signInText;
+    signInTab.setAttribute('aria-selected', mode === 'signin' ? 'true' : 'false');
+  }
+  if (registerTab) {
     registerTab.textContent = registerText;
+    registerTab.setAttribute('aria-selected', mode === 'register' ? 'true' : 'false');
   }
 
   if (!form) return;
@@ -17959,30 +18252,70 @@ function setAuthMode(mode) {
 
   if (mode === 'register') {
     form.innerHTML = `
-      <div style="margin-bottom:12px;">
-        <input id="fullName" placeholder="${fullNamePlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="age" type="number" placeholder="${agePlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="registerEmail" type="email" placeholder="${emailPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="registerPassword" type="password" placeholder="${newPasswordPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="confirmPassword" type="password" placeholder="${confirmPasswordPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-      </div>
-      <button onclick="handleRegister()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">${registerButtonText}</button>
+      <div class="mi-auth-field"><label for="fullName">Full Name</label><input id="fullName" autocomplete="name" placeholder="Your name"></div>
+      <div class="mi-auth-field"><label for="age">Age</label><input id="age" type="number" min="1" max="100" inputmode="numeric" placeholder="Age"></div>
+      <div class="mi-auth-field"><label for="registerEmail">Email Address</label><input id="registerEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
+      <div class="mi-auth-field"><label for="registerPassword">Password</label><div class="mi-auth-password-wrap"><input id="registerPassword" type="password" autocomplete="new-password" placeholder="Create a password"><button class="mi-auth-password-toggle" type="button" data-toggle-password="registerPassword" aria-label="Show password">◉</button></div></div>
+      <div class="mi-auth-field"><label for="confirmPassword">Confirm Password</label><div class="mi-auth-password-wrap"><input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm password"><button class="mi-auth-password-toggle" type="button" data-toggle-password="confirmPassword" aria-label="Show password">◉</button></div></div>
+      <button class="mi-auth-primary" type="button" onclick="handleRegister()">Register</button>
+      ${authProviderMarkup()}
     `;
   } else {
     form.innerHTML = `
-      <div style="margin-bottom:12px;">
-        <input id="loginEmail" type="email" placeholder="${loginEmailPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <input id="loginPassword" type="password" placeholder="${loginPasswordPlaceholder}" style="width:100%;padding:10px;margin:5px 0;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;" />
-        <div style="text-align:right;margin-top:4px;">
-          <button type="button" onclick="handlePasswordReset()" style="background:none;border:none;color:#7dd3fc;padding:0;font-size:12px;cursor:pointer;">${resetPasswordText}</button>
-        </div>
-      </div>
-      <button onclick="handleSignIn()" style="width:100%;padding:12px;border:none;border-radius:14px;background:#38bdf8;color:#0f172a;font-weight:700;">${signInButtonText}</button>
+      <div class="mi-auth-field"><label for="loginEmail">Email Address</label><input id="loginEmail" type="email" autocomplete="email" placeholder="name@example.com"></div>
+      <div class="mi-auth-field"><label for="loginPassword">Password <button type="button" class="mi-auth-forgot" onclick="handlePasswordReset()">Forgot password?</button></label><div class="mi-auth-password-wrap"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password"><button class="mi-auth-password-toggle" type="button" data-toggle-password="loginPassword" aria-label="Show password">◉</button></div></div>
+      <button class="mi-auth-primary" type="button" onclick="handleSignIn()">Sign In</button>
+      ${authProviderMarkup()}
     `;
   }
 
   updateTranslatedUi();
 }
+
+function authProviderMarkup() {
+  return `
+    <div class="mi-auth-divider"><span>OR CONTINUE WITH</span></div>
+    <div class="mi-auth-providers">
+      <button class="mi-auth-provider" type="button" onclick="handleGoogleAuth()"><span class="mi-auth-provider-icon">G</span>Continue with Google</button>
+      <button class="mi-auth-provider" type="button" onclick="handleAppleAuth()"><span class="mi-auth-provider-icon">●</span>Continue with Apple</button>
+      <button class="mi-auth-provider" type="button" onclick="openPhoneAuth()">Continue with phone number</button>
+    </div>
+  `;
+}
+
+function closeAuthPage({ restoreHistory = true } = {}) {
+  const box = document.getElementById('loginBox');
+  if (!box) return;
+  box.classList.remove('mi-auth-open');
+  box.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (restoreHistory && window.history.state?.miAuthPage) {
+    history.back();
+  }
+}
+
+document.addEventListener('click', function (event) {
+  const closeButton = event.target.closest?.('#authCloseBtn');
+  if (closeButton) closeAuthPage();
+
+  const toggle = event.target.closest?.('[data-toggle-password]');
+  if (toggle) {
+    const input = document.getElementById(toggle.dataset.togglePassword);
+    if (!input) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  }
+});
+
+window.addEventListener('popstate', function () {
+  const box = document.getElementById('loginBox');
+  if (box && box.classList.contains('mi-auth-open') && !history.state?.miAuthPage) {
+    box.classList.remove('mi-auth-open');
+    box.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+});
 
 function handleSignIn() {
     loginEmail();
@@ -17990,6 +18323,155 @@ function handleSignIn() {
 
 function handleRegister() {
     registerEmail();
+}
+
+function firebaseAuthError(error) {
+  const code = String(error?.code || '').toLowerCase();
+  if (code.includes('cancelled') || code.includes('popup-closed')) return 'Authentication was cancelled.';
+  if (code.includes('account-exists-with-different-credential')) return 'This account uses a different sign-in method. Sign in with that method first.';
+  if (code.includes('invalid-phone-number')) return 'Enter a valid phone number including the country code.';
+  if (code.includes('invalid-verification-code')) return 'The verification code is incorrect.';
+  if (code.includes('session-expired')) return 'The verification code expired. Request a new code.';
+  if (code.includes('too-many-requests')) return 'Too many attempts. Please wait and try again.';
+  if (code.includes('network-request-failed')) return 'Network connection failed. Check your connection and try again.';
+  return error?.message || 'Authentication failed.';
+}
+
+async function completeProviderLogin(firebaseUser) {
+  if (!firebaseUser) throw new Error('Authentication did not return a user.');
+  user = { id: firebaseUser.uid, email: firebaseUser.email || null };
+  const idToken = await firebaseUser.getIdToken();
+  localStorage.setItem('mi_supabase_token', idToken);
+  localStorage.setItem('mi_user_id', firebaseUser.uid);
+  localStorage.setItem('mi_user_email', firebaseUser.email || '');
+  window.dispatchEvent(new CustomEvent('mi-login-success', { detail: { email: firebaseUser.email || '', user: firebaseUser } }));
+  closeAuthPage({ restoreHistory: true });
+  await loadUserChats();
+  updateAuthControls();
+  window.dispatchEvent(new Event('mi-chat-user-changed'));
+}
+
+async function handleGoogleAuth() {
+  setAuthMessage('');
+  const providerButtons = document.querySelectorAll('.mi-auth-provider');
+  providerButtons.forEach(button => { button.disabled = true; });
+  try {
+    await window.miFirebaseReady;
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase authentication is unavailable.');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await auth.signInWithPopup(provider);
+    await completeProviderLogin(result.user);
+  } catch (error) {
+    setAuthMessage(firebaseAuthError(error), true);
+  } finally {
+    providerButtons.forEach(button => { button.disabled = false; });
+  }
+}
+
+async function handleAppleAuth() {
+  setAuthMessage('');
+  const providerButtons = document.querySelectorAll('.mi-auth-provider');
+  providerButtons.forEach(button => { button.disabled = true; });
+  try {
+    await window.miFirebaseReady;
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase authentication is unavailable.');
+    const provider = new firebase.auth.OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
+    const result = await auth.signInWithPopup(provider);
+    await completeProviderLogin(result.user);
+  } catch (error) {
+    setAuthMessage(firebaseAuthError(error), true);
+  } finally {
+    providerButtons.forEach(button => { button.disabled = false; });
+  }
+}
+
+let miPhoneConfirmation = null;
+let miPhoneRecaptcha = null;
+
+function openPhoneAuth() {
+  const form = document.getElementById('authForm');
+  if (!form) return;
+  form.innerHTML = `
+    <div class="mi-auth-field"><label for="phoneCountry">Country</label><select id="phoneCountry" aria-label="Country code">
+      <option value="+1">United States / Canada (+1)</option>
+      <option value="+44">United Kingdom (+44)</option>
+      <option value="+91">India (+91)</option>
+      <option value="+94">Sri Lanka (+94)</option>
+      <option value="+61">Australia (+61)</option>
+      <option value="+971">United Arab Emirates (+971)</option>
+      <option value="+65">Singapore (+65)</option>
+    </select></div>
+    <div class="mi-auth-field"><label for="phoneNumber">Phone Number</label><input id="phoneNumber" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="Phone number"></div>
+    <div id="miPhoneRecaptcha" class="mi-auth-recaptcha"></div>
+    <div class="mi-auth-phone-actions">
+      <button id="miSendOtpBtn" class="mi-auth-primary" type="button" onclick="sendPhoneOtp()">Send verification code</button>
+      <button class="mi-auth-provider" type="button" onclick="setAuthMode(authMode)">Back</button>
+    </div>
+  `;
+  setAuthMessage('', false);
+}
+
+async function sendPhoneOtp() {
+  setAuthMessage('');
+  const country = document.getElementById('phoneCountry')?.value || '+1';
+  const number = document.getElementById('phoneNumber')?.value.replace(/[^\d]/g, '') || '';
+  if (!number) {
+    setAuthMessage('Enter a valid phone number.', true);
+    return;
+  }
+  const button = document.getElementById('miSendOtpBtn');
+  if (button) button.disabled = true;
+  try {
+    await window.miFirebaseReady;
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase authentication is unavailable.');
+    if (!miPhoneRecaptcha) {
+      miPhoneRecaptcha = new firebase.auth.RecaptchaVerifier('miPhoneRecaptcha', {
+        size: 'normal'
+      });
+      await miPhoneRecaptcha.render();
+    }
+    const provider = new firebase.auth.PhoneAuthProvider(auth);
+    miPhoneConfirmation = await provider.verifyPhoneNumber(country + number, miPhoneRecaptcha);
+    document.getElementById('authForm').innerHTML = `
+      <div class="mi-auth-field"><label for="phoneOtp">Verification Code</label><input id="phoneOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></div>
+      <div class="mi-auth-phone-actions">
+        <button id="miVerifyOtpBtn" class="mi-auth-primary" type="button" onclick="verifyPhoneOtp()">Verify and continue</button>
+        <button class="mi-auth-provider" type="button" onclick="openPhoneAuth()">Change phone number</button>
+      </div>
+    `;
+    setAuthMessage('A verification code was sent to your phone.', false);
+  } catch (error) {
+    setAuthMessage(firebaseAuthError(error), true);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function verifyPhoneOtp() {
+  const code = document.getElementById('phoneOtp')?.value.replace(/\D/g, '') || '';
+  if (code.length !== 6) {
+    setAuthMessage('Enter the 6-digit verification code.', true);
+    return;
+  }
+  const button = document.getElementById('miVerifyOtpBtn');
+  if (button) button.disabled = true;
+  try {
+    await window.miFirebaseReady;
+    if (!miPhoneConfirmation) throw new Error('Request a new verification code first.');
+    const credential = firebase.auth.PhoneAuthProvider.credential(miPhoneConfirmation.verificationId, code);
+    const result = await window.miFirebaseAuth.signInWithCredential(credential);
+    await completeProviderLogin(result.user);
+  } catch (error) {
+    setAuthMessage(firebaseAuthError(error), true);
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 async function handlePasswordReset() {
@@ -18022,7 +18504,7 @@ function setAuthMessage(text, isError = true) {
   const message = document.getElementById('authMessage');
   if (!message) return;
   message.textContent = text;
-  message.style.color = isError ? '#fda4af' : '#86efac';
+  message.classList.toggle('mi-auth-error', isError);
 }
 
 function validateRegisterForm() {
