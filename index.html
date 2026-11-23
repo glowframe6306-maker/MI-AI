@@ -763,9 +763,11 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     inset: 0;
     z-index: 2147483000;
     display: none;
-    grid-template-columns: minmax(0, 1.08fr) minmax(420px, .92fr);
+    grid-template-columns: minmax(0, 55fr) minmax(420px, 45fr);
     min-height: 100dvh;
-    background: #07111e;
+    background:
+        radial-gradient(circle at 78% 45%, rgba(37, 99, 235, .12), transparent 30%),
+        linear-gradient(115deg, #07111f 0%, #091827 51%, #0a1524 51.1%, #070e18 100%);
     color: #f8fafc;
     overflow: hidden;
 }
@@ -775,15 +777,14 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
 }
 .mi-auth-brand {
     position: relative;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: stretch;
     min-width: 0;
     overflow: hidden;
-    border-right: 1px solid rgba(148, 163, 184, .12);
     background:
-        radial-gradient(circle at 32% 26%, rgba(56, 189, 248, .24), transparent 25%),
-        radial-gradient(circle at 72% 68%, rgba(99, 102, 241, .16), transparent 28%),
-        linear-gradient(145deg, #0b1b30 0%, #091522 58%, #07101b 100%);
+        radial-gradient(circle at 58% 48%, rgba(56, 189, 248, .16), transparent 19%),
+        radial-gradient(circle at 70% 68%, rgba(37, 99, 235, .12), transparent 25%),
+        linear-gradient(135deg, rgba(8, 24, 43, .92), rgba(7, 18, 31, .72));
 }
 .mi-auth-brand::before,
 .mi-auth-brand::after {
@@ -16211,11 +16212,6 @@ function closeAllOverlays(target) {
     settingsPanel.style.display = "none";
   }
 
-  if (loginBox && loginBox.style.display === "block" &&
-      !loginBox.contains(target) && target.id !== "loginBtn") {
-    loginBox.style.display = "none";
-  }
-
     if (supportOverlay && !supportOverlay.contains(target) && !nativeSelectInteraction && target.id !== "supportBtn") {
     supportOverlay.remove();
   }
@@ -18392,6 +18388,7 @@ async function handleAppleAuth() {
 
 let miPhoneConfirmation = null;
 let miPhoneRecaptcha = null;
+let miPhoneNumber = '';
 
 function openPhoneAuth() {
   const form = document.getElementById('authForm');
@@ -18436,12 +18433,13 @@ async function sendPhoneOtp() {
       });
       await miPhoneRecaptcha.render();
     }
-    const provider = new firebase.auth.PhoneAuthProvider(auth);
-    miPhoneConfirmation = await provider.verifyPhoneNumber(country + number, miPhoneRecaptcha);
+    miPhoneNumber = country + number;
+    miPhoneConfirmation = await auth.signInWithPhoneNumber(miPhoneNumber, miPhoneRecaptcha);
     document.getElementById('authForm').innerHTML = `
       <div class="mi-auth-field"><label for="phoneOtp">Verification Code</label><input id="phoneOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></div>
       <div class="mi-auth-phone-actions">
         <button id="miVerifyOtpBtn" class="mi-auth-primary" type="button" onclick="verifyPhoneOtp()">Verify and continue</button>
+        <button class="mi-auth-provider" type="button" onclick="resendPhoneOtp()">Resend verification code</button>
         <button class="mi-auth-provider" type="button" onclick="openPhoneAuth()">Change phone number</button>
       </div>
     `;
@@ -18464,13 +18462,29 @@ async function verifyPhoneOtp() {
   try {
     await window.miFirebaseReady;
     if (!miPhoneConfirmation) throw new Error('Request a new verification code first.');
-    const credential = firebase.auth.PhoneAuthProvider.credential(miPhoneConfirmation.verificationId, code);
-    const result = await window.miFirebaseAuth.signInWithCredential(credential);
+    const result = await miPhoneConfirmation.confirm(code);
     await completeProviderLogin(result.user);
   } catch (error) {
     setAuthMessage(firebaseAuthError(error), true);
   } finally {
     if (button) button.disabled = false;
+  }
+}
+
+async function resendPhoneOtp() {
+  if (!miPhoneNumber) {
+    openPhoneAuth();
+    setAuthMessage('Enter your phone number again.', true);
+    return;
+  }
+  try {
+    await window.miFirebaseReady;
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase authentication is unavailable.');
+    miPhoneConfirmation = await auth.signInWithPhoneNumber(miPhoneNumber, miPhoneRecaptcha);
+    setAuthMessage('A new verification code was sent.', false);
+  } catch (error) {
+    setAuthMessage(firebaseAuthError(error), true);
   }
 }
 
@@ -18645,7 +18659,11 @@ async function loginEmail() {
     await applyLanguage(getStoredLanguageCode(), false);
     updateAuthControls();
     const loginBox = document.getElementById('loginBox');
-    if (loginBox) loginBox.style.display = 'none';
+    if (loginBox) {
+      loginBox.classList.remove('mi-auth-open');
+      loginBox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
     setAuthMessage(t('auth.signInSuccess', 'Signed in successfully.'), false);
 
     window.dispatchEvent(
