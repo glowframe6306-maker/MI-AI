@@ -1,9 +1,31 @@
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from functools import wraps
 
 from flask import Blueprint, current_app, jsonify, request
+
+try:
+    from backend.chief_owner_identity import (
+        CHIEF_OWNER_EMAIL,
+        CHIEF_OWNER_UID,
+        CHIEF_OWNER_UID_CONFIGURED,
+        CHIEF_OWNER_UID_CONFIG_VALID,
+        is_chief_owner_candidate,
+        is_chief_owner_identity,
+        read_persisted_chief_owner_uid,
+    )
+except ImportError:
+    from chief_owner_identity import (
+        CHIEF_OWNER_EMAIL,
+        CHIEF_OWNER_UID,
+        CHIEF_OWNER_UID_CONFIGURED,
+        CHIEF_OWNER_UID_CONFIG_VALID,
+        is_chief_owner_candidate,
+        is_chief_owner_identity,
+        read_persisted_chief_owner_uid,
+    )
 
 try:
     from firebase_admin import auth as firebase_auth
@@ -13,24 +35,26 @@ except Exception:
     firestore = None
 
 
-CHIEF_OWNER_EMAIL = (
-    os.getenv(
-        "CHIEF_OWNER_EMAIL",
-        "teamofchatbot.miai@gmail.com",
-    )
-    .strip()
-    .lower()
-)
-
-CHIEF_OWNER_UID = os.getenv(
-    "CHIEF_OWNER_UID",
-    "",
-).strip()
-
 chief_owner_control = Blueprint(
     "chief_owner_control",
     __name__,
 )
+
+_WHATSAPP_FIRESTORE_INT64_MAX = (1 << 63) - 1
+
+
+def _is_whatsapp_coexistence_revision(value):
+    return (
+        type(value) is int
+        and 0 <= value <= _WHATSAPP_FIRESTORE_INT64_MAX
+    )
+
+
+def _whatsapp_coexistence_revision(data):
+    revision = (data or {}).get("coexistenceEventVersion", 0)
+    if not _is_whatsapp_coexistence_revision(revision):
+        raise ValueError("WhatsApp coexistence revision is invalid")
+    return revision
 
 
 def utc_now():
@@ -38,12 +62,27 @@ def utc_now():
 
 
 def database():
+    if os.getenv("MI_AI_TEST_MODE") == "1":
+        raise RuntimeError(
+            "Firestore access is disabled in test mode; inject a fake database."
+        )
+
     if firestore is None:
         raise RuntimeError(
             "Firebase Admin Firestore is unavailable."
         )
 
-    return firestore.client()
+    firebase_app = current_app.extensions.get("firebase_admin_app")
+    if firebase_app is None:
+        raise RuntimeError("Firebase Admin app is not configured.")
+    return firestore.client(app=firebase_app)
+
+
+def persisted_chief_owner_uid():
+    return read_persisted_chief_owner_uid(
+        database(),
+        configured_email=CHIEF_OWNER_EMAIL,
+    )
 
 
 def normalize_email(value):
@@ -98,21 +137,26 @@ def verify_identity():
     return {
         "uid": uid,
         "email": email,
+        "email_verified": bool(decoded.get("email_verified", False)),
         "token": decoded,
     }
 
 
-def is_chief_owner(identity):
-    if identity["email"] != CHIEF_OWNER_EMAIL:
-        return False
-
-    if (
-        CHIEF_OWNER_UID
-        and identity["uid"] != CHIEF_OWNER_UID
-    ):
-        return False
-
-    return True
+def is_chief_owner(identity, persisted_uid=None):
+    uid_configured = CHIEF_OWNER_UID_CONFIGURED or bool(CHIEF_OWNER_UID)
+    uid_config_valid = CHIEF_OWNER_UID_CONFIG_VALID and (
+        not CHIEF_OWNER_UID_CONFIGURED or bool(CHIEF_OWNER_UID)
+    )
+    return is_chief_owner_identity(
+        identity.get("email"),
+        identity.get("uid"),
+        persisted_uid=persisted_uid,
+        email_verified=identity.get("email_verified", False),
+        configured_email=CHIEF_OWNER_EMAIL,
+        configured_uid=CHIEF_OWNER_UID,
+        uid_configured=uid_configured,
+        uid_config_valid=uid_config_valid,
+    )
 
 
 def require_chief_owner(function):
@@ -121,12 +165,40 @@ def require_chief_owner(function):
         try:
             identity = verify_identity()
 
-            if not is_chief_owner(identity):
-                create_security_alert(
-                    "unauthorized_chief_owner_access",
-                    identity,
-                )
+            uid_configured = CHIEF_OWNER_UID_CONFIGURED or bool(
+                CHIEF_OWNER_UID
+            )
+            uid_config_valid = CHIEF_OWNER_UID_CONFIG_VALID and (
+                not CHIEF_OWNER_UID_CONFIGURED or bool(CHIEF_OWNER_UID)
+            )
+            if not is_chief_owner_candidate(
+                identity["email"],
+                identity["uid"],
+                identity["email_verified"],
+                configured_email=CHIEF_OWNER_EMAIL,
+                configured_uid=CHIEF_OWNER_UID,
+                uid_configured=uid_configured,
+                uid_config_valid=uid_config_valid,
+            ):
+                return jsonify({
+                    "ok": False,
+                    "message":
+                        "Chief Owner access is required.",
+                }), 403
 
+            try:
+                persisted_uid = persisted_chief_owner_uid()
+            except Exception:
+                current_app.logger.exception(
+                    "Chief Owner identity binding could not be verified."
+                )
+                return jsonify({
+                    "ok": False,
+                    "message":
+                        "Owner identity validation is unavailable.",
+                }), 503
+
+            if not is_chief_owner(identity, persisted_uid):
                 return jsonify({
                     "ok": False,
                     "message":
@@ -1033,6 +1105,458 @@ def mi_rbac_options():
         "ok": True,
         "roles": sorted(BUILT_IN_ROLES | set(custom)),
         "permissions": ALL_PERMISSIONS,
+    })
+
+
+def whatsapp_away_sender_id():
+    phone_number_id = str(
+        current_app.config.get("WHATSAPP_AWAY_PHONE_NUMBER_ID") or ""
+    ).strip()
+    sender_provider = current_app.config.get(
+        "WHATSAPP_SENDER_IDS_PROVIDER"
+    )
+    if not phone_number_id.isdigit() or not callable(sender_provider):
+        return ""
+    try:
+        if phone_number_id not in sender_provider():
+            return ""
+    except Exception:
+        return ""
+    return phone_number_id
+
+
+def whatsapp_coexistence_status(data):
+    account_update = (data or {}).get("coexistence_accountUpdate") or {}
+    if not isinstance(account_update, dict):
+        return "not_observed"
+    if data.get("manualReviewConfirmedAt"):
+        return "manual_review_completed_unverified"
+    allowed_states = {
+        "PARTNER_ADDED": "partner_added_unverified",
+        "PARTNER_APP_INSTALLED": "partner_app_installed_unverified",
+        "PARTNER_APP_UNINSTALLED": "partner_app_uninstalled_needs_review",
+        "PARTNER_REMOVED": "partner_removed",
+        "ACCOUNT_DELETED": "account_deleted",
+        "ACCOUNT_OFFBOARDED": "account_offboarded",
+        "ACCOUNT_RECONNECTED": "reconnected_needs_review",
+        "ACCOUNT_RESTRICTION": "account_restricted",
+        "ACCOUNT_VIOLATION": "account_violation",
+        "DISABLED_UPDATE": "disabled_state_changed_needs_review",
+        "UNRECOGNIZED": "manual_review_required",
+    }
+    event = str(account_update.get("event") or "").strip().upper()
+    status = str(account_update.get("status") or "").strip()
+    return status if allowed_states.get(event) == status else "not_observed"
+
+
+def whatsapp_manual_review_required(data):
+    if (data or {}).get("manualReviewRequired") is True:
+        return True
+    return (
+        isinstance((data or {}).get("coexistence_accountUpdate"), dict)
+        and not (data or {}).get("manualReviewConfirmedAt")
+    )
+
+
+def _run_whatsapp_availability_transaction(database_client, operation):
+    run_transaction = getattr(database_client, "run_transaction", None)
+    if callable(run_transaction):
+        return run_transaction(operation)
+
+    transactional = getattr(firestore, "transactional", None)
+    if not callable(transactional):
+        raise RuntimeError("WhatsApp availability storage is unavailable")
+    return transactional(operation)(database_client.transaction(max_attempts=5))
+
+
+def whatsapp_away_mode_response(phone_number_id):
+    if not phone_number_id:
+        return {
+            "ok": True,
+            "configured": False,
+            "mode": "AVAILABLE",
+            "persistedMode": None,
+            "effectiveMode": "AVAILABLE",
+            "stateSource": "unconfigured",
+            "coexistenceStatus": "not_configured",
+            "manualReviewRequired": False,
+            "reviewVersion": None,
+        }
+
+    try:
+        database_provider = current_app.config.get(
+            "WHATSAPP_FIRESTORE_PROVIDER"
+        )
+        database_client = database_provider() if callable(database_provider) else None
+        if database_client is None:
+            raise RuntimeError("WhatsApp availability storage is unavailable")
+        snapshot = (
+            database_client.collection("whatsappManualAvailability")
+            .document(phone_number_id)
+            .get()
+        )
+        exists = bool(snapshot.exists)
+        data = snapshot.to_dict() or {} if exists else {}
+    except Exception:
+        return {
+            "ok": True,
+            "configured": True,
+            "mode": "AVAILABLE",
+            "persistedMode": None,
+            "effectiveMode": "AVAILABLE",
+            "stateSource": "unavailable",
+            "coexistenceStatus": "unknown",
+            "manualReviewRequired": True,
+            "reviewVersion": None,
+        }
+
+    try:
+        revision = _whatsapp_coexistence_revision(data) if exists else 0
+    except ValueError:
+        return {
+            "ok": True,
+            "configured": True,
+            "mode": "AVAILABLE",
+            "persistedMode": None,
+            "effectiveMode": "AVAILABLE",
+            "stateSource": "invalid",
+            "coexistenceStatus": whatsapp_coexistence_status(data),
+            "manualReviewRequired": True,
+            "reviewVersion": None,
+        }
+
+    if not exists:
+        return {
+            "ok": True,
+            "configured": True,
+            "mode": "AVAILABLE",
+            "persistedMode": None,
+            "effectiveMode": "AVAILABLE",
+            "stateSource": "default",
+            "coexistenceStatus": "not_observed",
+            "manualReviewRequired": False,
+            "reviewVersion": None,
+        }
+
+    mode = str(data.get("mode") or "").strip().upper()
+    manual_review_required = whatsapp_manual_review_required(data)
+    if data.get("phoneNumberId") != phone_number_id or mode not in {"AVAILABLE", "AWAY"}:
+        return {
+            "ok": True,
+            "configured": True,
+            "mode": "AVAILABLE",
+            "persistedMode": None,
+            "effectiveMode": "AVAILABLE",
+            "stateSource": "invalid",
+            "coexistenceStatus": whatsapp_coexistence_status(data),
+            "manualReviewRequired": True,
+            "reviewVersion": revision,
+        }
+    return {
+        "ok": True,
+        "configured": True,
+        "mode": "AVAILABLE" if manual_review_required else mode,
+        "persistedMode": mode,
+        "effectiveMode": "AVAILABLE" if manual_review_required else mode,
+        "stateSource": "review_required" if manual_review_required else "persistent",
+        "coexistenceStatus": whatsapp_coexistence_status(data),
+        "manualReviewRequired": manual_review_required,
+        "reviewVersion": revision if manual_review_required else None,
+    }
+
+
+@chief_owner_control.route(
+    "/api/chief-owner/whatsapp-away-mode",
+    methods=["GET", "POST"],
+)
+@require_chief_owner
+def chief_owner_whatsapp_away_mode():
+    phone_number_id = whatsapp_away_sender_id()
+    if request.method == "GET":
+        return jsonify(whatsapp_away_mode_response(phone_number_id))
+    if not phone_number_id:
+        return jsonify({
+            "ok": False,
+            "message": "The designated WhatsApp Business sender is not configured.",
+        }), 503
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = {}
+    mode = str(payload.get("mode") or "").strip().upper()
+    if mode not in {"AVAILABLE", "AWAY"}:
+        return jsonify({
+            "ok": False,
+            "message": "Mode must be AVAILABLE or AWAY.",
+        }), 400
+
+    try:
+        database_provider = current_app.config.get(
+            "WHATSAPP_FIRESTORE_PROVIDER"
+        )
+        database_client = database_provider() if callable(database_provider) else None
+        if database_client is None:
+            raise RuntimeError("WhatsApp availability storage is unavailable")
+        reference = (
+            database_client.collection("whatsappManualAvailability")
+            .document(phone_number_id)
+        )
+        review_confirmed = payload.get("reviewConfirmed") is True
+        review_version = payload.get("reviewVersion")
+
+        def update_mode(transaction):
+            snapshot = reference.get(transaction=transaction)
+            previous_data = snapshot.to_dict() or {} if snapshot.exists else {}
+            current_revision = _whatsapp_coexistence_revision(previous_data)
+            manual_review_required = whatsapp_manual_review_required(
+                previous_data
+            )
+            if mode == "AWAY" and manual_review_required:
+                if not review_confirmed:
+                    return {"status": "manual_review_required"}
+                if not _is_whatsapp_coexistence_revision(review_version):
+                    return {"status": "invalid_review_version"}
+                if (
+                    review_version != current_revision
+                ):
+                    return {"status": "stale_review"}
+
+            updated_state = {
+                "phoneNumberId": phone_number_id,
+                "mode": mode,
+                "updatedAt": utc_now(),
+                "updatedByUid": request.chief_owner_identity["uid"],
+            }
+            if mode == "AWAY" and manual_review_required:
+                updated_state.update({
+                    "manualReviewRequired": False,
+                    "manualReviewConfirmedAt": utc_now(),
+                    "manualReviewConfirmedByUid": (
+                        request.chief_owner_identity["uid"]
+                    ),
+                })
+            transaction.set(reference, updated_state, merge=True)
+            return {
+                "status": "updated",
+                "previousMode": str(
+                    previous_data.get("mode") or "AVAILABLE"
+                ).upper(),
+                "manualReviewRequired": manual_review_required,
+            }
+
+        update_result = _run_whatsapp_availability_transaction(
+            database_client,
+            update_mode,
+        )
+        if update_result["status"] == "manual_review_required":
+            return jsonify({
+                "ok": False,
+                "code": "MANUAL_REVIEW_REQUIRED",
+                "message": (
+                    "Review the Meta account state and confirm its connection "
+                    "before re-enabling AWAY."
+                ),
+            }), 409
+        if update_result["status"] == "stale_review":
+            return jsonify({
+                "ok": False,
+                "code": "STALE_REVIEW_CONFIRMATION",
+                "message": (
+                    "The Meta account state changed. Reload and review the "
+                    "latest event before confirming AWAY."
+                ),
+            }), 409
+        if update_result["status"] == "invalid_review_version":
+            return jsonify({
+                "ok": False,
+                "code": "INVALID_REVIEW_VERSION",
+                "message": "A valid current review revision is required.",
+            }), 400
+
+        previous_mode = update_result["previousMode"]
+        manual_review_required = update_result["manualReviewRequired"]
+        persisted_snapshot = reference.get()
+        persisted_state = (
+            persisted_snapshot.to_dict() or {}
+            if persisted_snapshot.exists
+            else {}
+        )
+        if mode == "AWAY" and whatsapp_manual_review_required(persisted_state):
+            return jsonify({
+                "ok": False,
+                "code": "STALE_REVIEW_CONFIRMATION",
+                "message": (
+                    "The Meta account state changed. Reload and review the "
+                    "latest event before confirming AWAY."
+                ),
+            }), 409
+        if (
+            persisted_state.get("phoneNumberId") != phone_number_id
+            or persisted_state.get("mode") != mode
+            or (
+                mode == "AWAY"
+                and manual_review_required
+                and persisted_state.get("manualReviewRequired") is not False
+            )
+        ):
+            raise RuntimeError("WhatsApp availability write was not confirmed")
+    except Exception as exc:
+        current_app.logger.warning(
+            "WhatsApp away-mode update failed (%s)",
+            type(exc).__name__,
+        )
+        return jsonify({
+            "ok": False,
+            "message": "Availability update failed; verify the currently saved mode.",
+        }), 503
+
+    try:
+        create_audit(
+            "whatsapp.manual_away_mode",
+            "whatsapp_sender",
+            phone_number_id,
+            "Manual WhatsApp availability changed.",
+            {"mode": previous_mode},
+            {
+                "mode": mode,
+                "manualReviewConfirmed": (
+                    mode == "AWAY" and manual_review_required
+                ),
+            },
+        )
+    except Exception:
+        current_app.logger.warning("WhatsApp away-mode audit write failed.")
+
+    manual_review_required = whatsapp_manual_review_required(persisted_state)
+    return jsonify({
+        "ok": True,
+        "configured": True,
+        "mode": mode,
+        "persistedMode": mode,
+        "effectiveMode": "AVAILABLE" if manual_review_required else mode,
+        "stateSource": "persistent",
+        "manualReviewRequired": manual_review_required,
+        "coexistenceStatus": whatsapp_coexistence_status(persisted_state),
+        "reviewVersion": None,
+    })
+
+
+@chief_owner_control.get(
+    "/api/chief-owner/whatsapp-embedded-signup/readiness"
+)
+@require_chief_owner
+def chief_owner_whatsapp_embedded_signup_readiness():
+    required_settings = (
+        "META_APP_ID",
+        "META_EMBEDDED_SIGNUP_CONFIG_ID",
+        "META_EMBEDDED_SIGNUP_VERSION",
+        "META_EMBEDDED_SIGNUP_ENABLED",
+        "WHATSAPP_APP_SECRET",
+        "WHATSAPP_ID_HMAC_KEY",
+        "WHATSAPP_VERIFY_TOKEN",
+        "WHATSAPP_GRAPH_API_VERSION",
+        "WHATSAPP_WABA_ID",
+        "GROQ_API_KEY",
+    )
+    missing_settings = [
+        setting
+        for setting in required_settings
+        if not str(os.getenv(setting) or "").strip()
+    ]
+    invalid_settings = []
+    identifier_key = str(os.getenv("WHATSAPP_ID_HMAC_KEY") or "").strip()
+    if identifier_key and len(identifier_key.encode("utf-8")) < 32:
+        invalid_settings.append("WHATSAPP_ID_HMAC_KEY")
+    version = str(os.getenv("META_EMBEDDED_SIGNUP_VERSION") or "").strip()
+    unsupported_settings = (
+        ["META_EMBEDDED_SIGNUP_VERSION"]
+        if version and version not in {"v4", "v5"}
+        else []
+    )
+    graph_version = str(os.getenv("WHATSAPP_GRAPH_API_VERSION") or "").strip()
+    if graph_version and not re.fullmatch(r"v\d+\.\d+", graph_version):
+        invalid_settings.append("WHATSAPP_GRAPH_API_VERSION")
+
+    sender_provider = current_app.config.get("WHATSAPP_SENDER_IDS_PROVIDER")
+    senders = {}
+    sender_configuration_status = "not_configured"
+    if callable(sender_provider):
+        try:
+            senders = sender_provider()
+            sender_configuration_status = (
+                "configured" if senders else "not_configured"
+            )
+        except Exception:
+            sender_configuration_status = "configuration_error"
+            invalid_settings.append("WHATSAPP_SENDERS_JSON")
+    if not senders and "WHATSAPP_SENDERS_JSON" not in invalid_settings:
+        missing_settings.append("WHATSAPP_SENDERS_JSON")
+
+    designated_phone_number_id = str(
+        current_app.config.get("WHATSAPP_AWAY_PHONE_NUMBER_ID") or ""
+    ).strip()
+    designated_sender_configured = (
+        designated_phone_number_id.isdigit()
+        and designated_phone_number_id in senders
+    )
+    if not designated_phone_number_id:
+        missing_settings.append("WHATSAPP_AWAY_PHONE_NUMBER_ID")
+    elif not designated_sender_configured:
+        invalid_settings.append("WHATSAPP_AWAY_PHONE_NUMBER_ID")
+
+    local_webhook_ready = (
+        bool(str(os.getenv("WHATSAPP_APP_SECRET") or "").strip())
+        and len(str(os.getenv("WHATSAPP_ID_HMAC_KEY") or "").strip().encode("utf-8")) >= 32
+        and bool(str(os.getenv("WHATSAPP_VERIFY_TOKEN") or "").strip())
+        and bool(senders)
+        and bool(graph_version)
+        and "WHATSAPP_GRAPH_API_VERSION" not in invalid_settings
+    )
+    configuration_ready = not (
+        missing_settings or unsupported_settings or invalid_settings
+    )
+    enabled_by_configuration = str(
+        os.getenv("META_EMBEDDED_SIGNUP_ENABLED") or ""
+    ).strip().lower() in {"1", "true", "yes"}
+
+    if unsupported_settings or invalid_settings:
+        readiness_status = "configuration_error"
+    elif missing_settings:
+        readiness_status = "configuration_incomplete"
+    else:
+        readiness_status = "configuration_present_approval_unverified"
+
+    return jsonify({
+        "ok": True,
+        "status": readiness_status,
+        "missingSettings": missing_settings,
+        "unsupportedSettings": unsupported_settings,
+        "invalidSettings": invalid_settings,
+        "configurationReady": configuration_ready,
+        "enabledByConfiguration": enabled_by_configuration,
+        "senderConfigurationStatus": sender_configuration_status,
+        "designatedSenderConfigured": designated_sender_configured,
+        "localWebhookStatus": (
+            "configured" if local_webhook_ready else "configuration_incomplete"
+        ),
+        "webhookSubscriptionStatus": "unknown",
+        "eligibilityStatus": "unknown",
+        "signupStatus": "not_started",
+        "launchEnabled": False,
+        "metaApproval": "not_verified",
+        "connectionStatus": "not_verified",
+        "secureTokenStorageReady": False,
+        "secureTokenStorageStatus": "unavailable",
+        "requiredPermissions": [
+            "whatsapp_business_management",
+            "whatsapp_business_messaging",
+        ],
+        "businessManagementPermissionMayBeRequired": True,
+        "message": (
+            "Embedded Signup remains disabled until Meta approval, "
+            "account eligibility, secure server-side code exchange, "
+            "and approved token storage are verified."
+        ),
     })
 
 

@@ -1,0 +1,19 @@
+MI-AI WHATSAPP-ONLY UPDATE
+
+This is an overlay package containing only files changed for the WhatsApp Cloud API integration.
+
+IMPORTANT: backend/app.py is the COMPLETE backend application file with the WhatsApp changes integrated; it is not a small standalone WhatsApp module. Copying it replaces your existing backend/app.py. Only do this if your MI-AI project is based on the same original source archive you supplied for this integration. Back up your current project first. If your current backend/app.py has newer changes, do not overwrite it blindly.
+
+COPY STEPS
+1. Close any running MI-AI server/process.
+2. Make a backup copy of your current MI-AI folder.
+3. Open this package folder.
+4. Copy its backend folder and WHATSAPP_INTEGRATION_VALIDATION.md into your MI-AI project root.
+5. Allow folder merge. Replace matching files only after confirming your backup exists.
+6. Do not put secrets in source files or commit them.
+7. Read backend/WHATSAPP_CLOUD_API_SETUP.md before configuring Meta or deploying.
+
+ENVIRONMENT
+Required environment variable names and setup instructions are in backend/WHATSAPP_CLOUD_API_SETUP.md. Add secret values only to your private deployment environment or a local ignored .env file. Never share them.
+
+This package does not configure Meta, Firestore, Vercel, or production deployment automatically. The validation report explains which checks ran and which live checks remain outstanding.

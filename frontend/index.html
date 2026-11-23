@@ -11327,6 +11327,7 @@ span:nth-child(3) {
         isChiefOwner: false,
         permissions: {}
     };
+    var accessRequestId = 0;
 
     var ownerSelectors = [
         "[data-chief-owner]",
@@ -11453,7 +11454,11 @@ span:nth-child(3) {
     async function synchronizeChiefOwnerAccess(
         forceRefresh
     ) {
+        var requestId = ++accessRequestId;
         var user = await getFirebaseUser();
+        if (requestId !== accessRequestId) {
+            return window.miChiefOwnerAccess;
+        }
 
         if (!user || typeof user.getIdToken !== "function") {
             applyAccess({
@@ -11489,10 +11494,26 @@ span:nth-child(3) {
                     return {};
                 });
 
-            if (!response.ok) {
+            if (
+                !response.ok ||
+                payload.authenticated !== true ||
+                typeof payload.isChiefOwner !== "boolean" ||
+                !payload.permissions ||
+                typeof payload.permissions !== "object" ||
+                Array.isArray(payload.permissions)
+            ) {
                 throw new Error(
                     payload.error ||
                     "Chief Owner authorization failed."
+                );
+            }
+
+            if (requestId !== accessRequestId) {
+                return window.miChiefOwnerAccess;
+            }
+            if (await getFirebaseUser() !== user) {
+                throw new Error(
+                    "Authenticated account changed during authorization."
                 );
             }
 
@@ -11501,6 +11522,10 @@ span:nth-child(3) {
             return payload;
 
         } catch (error) {
+            if (requestId !== accessRequestId) {
+                return window.miChiefOwnerAccess;
+            }
+
             console.error(
                 "[MI Chief Owner] Authorization error:",
                 error
@@ -29768,6 +29793,7 @@ document.addEventListener(
         permissions: new Set(),
         allowedPages: new Set()
     };
+    let accessRequestId = 0;
 
     window.miAdminAccess = state;
 
@@ -29833,6 +29859,7 @@ document.addEventListener(
     }
 
     function clearAdminState() {
+        accessRequestId += 1;
         state.uid = "";
         state.tokenKey = "";
         state.loaded = false;
@@ -29851,7 +29878,9 @@ document.addEventListener(
         document.querySelectorAll(
             "[data-mi-chief-owner-control]"
         ).forEach(function (element) {
-            element.remove();
+            if (element.tagName !== "STYLE") {
+                element.remove();
+            }
         });
     }
 
@@ -30036,10 +30065,383 @@ document.addEventListener(
             '</div>' +
             '<button type="button" id="miChiefOwnerClose">├âΓÇö</button>' +
             '</div>' +
+            '<section class="mi-whatsapp-away-mode" aria-labelledby="miWhatsAppAwayTitle">' +
+            '<div class="mi-whatsapp-away-mode-head">' +
+            '<strong id="miWhatsAppAwayTitle">WhatsApp Business Availability</strong>' +
+            '<p id="miWhatsAppAwayStatus" aria-live="polite">Loading saved mode...</p>' +
+            '<small>AVAILABLE turns AI replies off; AWAY turns them on. The WhatsApp Business App remains usable.</small>' +
+            '<small id="miWhatsAppCoexistenceStatus" aria-live="polite">Meta account: not observed</small>' +
+            '</div>' +
+            '<div class="mi-whatsapp-away-mode-options" role="group" aria-label="WhatsApp AI reply mode">' +
+            '<button type="button" class="mi-whatsapp-away-option" data-whatsapp-mode="AVAILABLE" aria-pressed="false">AVAILABLE</button>' +
+            '<button type="button" class="mi-whatsapp-away-option" data-whatsapp-mode="AWAY" aria-pressed="false">AWAY</button>' +
+            '</div>' +
+            '<label id="miWhatsAppManualReview" class="mi-whatsapp-manual-review" hidden>' +
+            '<input type="checkbox" id="miWhatsAppManualReviewConfirmed">' +
+            ' I independently verified in Meta that is_on_biz_app is true and platform_type is CLOUD_API, and reviewed the latest account event.' +
+            '</label>' +
+            '</section>' +
+            '<section class="mi-whatsapp-embedded-readiness" aria-labelledby="miWhatsAppEmbeddedTitle">' +
+            '<div class="mi-whatsapp-embedded-readiness-head">' +
+            '<strong id="miWhatsAppEmbeddedTitle">Meta Embedded Signup</strong>' +
+            '<p id="miWhatsAppEmbeddedStatus" aria-live="polite">Checking local readiness...</p>' +
+            '<ul id="miWhatsAppEmbeddedMissing" hidden></ul>' +
+            '</div>' +
+            '<button type="button" id="miWhatsAppEmbeddedLaunch" disabled>Launch unavailable</button>' +
+            '</section>' +
             '<div id="miChiefOwnerActionGrid" class="mi-chief-owner-action-grid"></div>' +
             '</div>';
 
         document.body.appendChild(panel);
+
+        const awayStatus = panel.querySelector(
+            "#miWhatsAppAwayStatus"
+        );
+        const coexistenceStatus = panel.querySelector(
+            "#miWhatsAppCoexistenceStatus"
+        );
+        const awayModeButtons = Array.from(
+            panel.querySelectorAll("[data-whatsapp-mode]")
+        );
+        const manualReview = panel.querySelector(
+            "#miWhatsAppManualReview"
+        );
+        const manualReviewConfirmed = panel.querySelector(
+            "#miWhatsAppManualReviewConfirmed"
+        );
+        const embeddedStatus = panel.querySelector(
+            "#miWhatsAppEmbeddedStatus"
+        );
+        const embeddedMissing = panel.querySelector(
+            "#miWhatsAppEmbeddedMissing"
+        );
+        const embeddedLaunchButton = panel.querySelector(
+            "#miWhatsAppEmbeddedLaunch"
+        );
+        let currentAwayMode = null;
+        let awayModeConfigured = false;
+        let awayModeSaving = false;
+        let awayModeStateUnavailable = false;
+        let manualReviewRequired = false;
+        let manualReviewVersion = null;
+
+        function setAwayModeSelection(mode) {
+            const activeMode = mode === "AWAY" || mode === "AVAILABLE"
+                ? mode
+                : null;
+            awayModeButtons.forEach(function (button) {
+                const selected =
+                    button.dataset.whatsappMode === activeMode;
+                button.classList.toggle("is-selected", selected);
+                button.setAttribute(
+                    "aria-pressed",
+                    selected ? "true" : "false"
+                );
+            });
+        }
+
+        function updateAwayModeControls() {
+            awayModeButtons.forEach(function (button) {
+                button.disabled = (
+                    !awayModeConfigured ||
+                    awayModeStateUnavailable ||
+                    awayModeSaving ||
+                    (
+                        button.dataset.whatsappMode === "AWAY" &&
+                        manualReviewRequired &&
+                        !manualReviewConfirmed.checked
+                    )
+                );
+            });
+        }
+
+        function renderAwayMode(data, saved) {
+            awayModeConfigured = data.configured === true;
+            awayModeStateUnavailable = ["unavailable", "invalid"].includes(
+                data.stateSource
+            );
+            currentAwayMode = ["AVAILABLE", "AWAY"].includes(data.persistedMode)
+                ? data.persistedMode
+                : null;
+            const effectiveMode = ["AVAILABLE", "AWAY"].includes(data.effectiveMode)
+                ? data.effectiveMode
+                : data.mode;
+            setAwayModeSelection(
+                awayModeConfigured && !awayModeStateUnavailable
+                    ? effectiveMode
+                    : null
+            );
+            manualReviewRequired = data.manualReviewRequired === true;
+            manualReviewVersion = typeof data.reviewVersion === "string"
+                ? data.reviewVersion
+                : null;
+            manualReview.hidden = !manualReviewRequired;
+            manualReviewConfirmed.checked = false;
+            const coexistenceLabels = {
+                not_configured: "Not configured",
+                not_observed: "Not observed",
+                unknown: "Could not verify",
+                partner_added_unverified: "Partner added; onboarding unverified",
+                partner_app_installed_unverified: "App installed; onboarding unverified",
+                partner_app_uninstalled_needs_review: "App uninstalled; review required",
+                partner_removed: "Partner removed",
+                account_deleted: "Account deleted",
+                account_offboarded: "Account offboarded",
+                reconnected_needs_review: "Reconnected; review required",
+                account_restricted: "Account restricted",
+                account_violation: "Account violation reported",
+                disabled_state_changed_needs_review: "Account state changed; review required",
+                manual_review_required: "Unknown Meta account event; review required",
+                manual_review_completed_unverified: "Review acknowledged; connection not verified by this service"
+            };
+            coexistenceStatus.textContent = "Meta account: " + (
+                coexistenceLabels[data.coexistenceStatus] || "Not observed"
+            );
+            updateAwayModeControls();
+
+            if (!awayModeConfigured) {
+                awayStatus.textContent =
+                    "No designated sender is configured; the persisted mode is unavailable.";
+            } else if (awayModeStateUnavailable) {
+                awayStatus.textContent =
+                    "Mode could not be verified. AI replies are disabled; no mode is shown as active.";
+            } else if (manualReviewRequired && currentAwayMode === "AWAY") {
+                awayStatus.textContent =
+                    "Persisted mode: AWAY. Review is required; effective mode is AVAILABLE, so AI replies are OFF.";
+            } else if (saved && currentAwayMode) {
+                awayStatus.textContent =
+                    "Saved and verified. Persisted mode: " + currentAwayMode +
+                    ". AI automatic replies are " +
+                    (currentAwayMode === "AWAY" ? "ON (AWAY)." : "OFF (AVAILABLE).");
+            } else if (data.stateSource === "default" && !currentAwayMode) {
+                awayStatus.textContent =
+                    "No saved mode. Effective mode: AVAILABLE (default); AI replies are OFF.";
+            } else {
+                awayStatus.textContent =
+                    "Persisted mode: " + currentAwayMode +
+                    ". Effective mode: " + effectiveMode +
+                    (effectiveMode === "AWAY"
+                        ? "; AI automatic replies are ON."
+                        : "; AI automatic replies are OFF.");
+            }
+        }
+
+        async function requestAwayMode(method, mode, reviewConfirmed) {
+            const user = findCurrentFirebaseUser();
+            if (!user || typeof user.getIdToken !== "function") {
+                throw new Error("Chief Owner sign-in is required.");
+            }
+            const token = await user.getIdToken(true);
+            const options = {
+                method: method,
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "Accept": "application/json"
+                },
+                cache: "no-store",
+                credentials: "same-origin"
+            };
+            if (method === "POST") {
+                options.headers["Content-Type"] = "application/json";
+                const reviewVersionJson = reviewConfirmed === true &&
+                    typeof manualReviewVersion === "string" &&
+                    /^(0|[1-9]\d*)$/.test(manualReviewVersion)
+                    ? manualReviewVersion
+                    : "null";
+                options.body = JSON.stringify({
+                    mode: mode,
+                    reviewConfirmed: reviewConfirmed === true
+                }).slice(0, -1) +
+                    ',"reviewVersion":' + reviewVersionJson + "}";
+            }
+            const response = await fetch(
+                "/api/chief-owner/whatsapp-away-mode",
+                options
+            );
+            const responseText = await response.text();
+            let data = {};
+            try {
+                data = JSON.parse(responseText);
+            } catch (_) {
+                data = {};
+            }
+            const reviewVersionMatch = responseText.match(
+                /"reviewVersion"\s*:\s*(0|[1-9]\d*)\s*(?=[,}])/
+            );
+            if (
+                reviewVersionMatch &&
+                data &&
+                typeof data === "object"
+            ) {
+                data.reviewVersion = reviewVersionMatch[1];
+            }
+            if (!response.ok || data.ok !== true) {
+                throw new Error(
+                    data.message || "WhatsApp mode update failed."
+                );
+            }
+            return data;
+        }
+
+        async function loadAwayMode() {
+            awayStatus.textContent = "Loading mode...";
+            awayModeButtons.forEach(function (button) {
+                button.disabled = true;
+            });
+            try {
+                const data = await requestAwayMode("GET");
+                renderAwayMode(data, false);
+                return data;
+            } catch (_) {
+                awayModeConfigured = false;
+                currentAwayMode = null;
+                setAwayModeSelection(null);
+                awayModeButtons.forEach(function (button) {
+                    button.disabled = true;
+                });
+                awayStatus.textContent =
+                    "Mode could not be verified. AI replies are disabled; no mode is shown as active.";
+                coexistenceStatus.textContent = "Meta account: Could not verify";
+                return null;
+            }
+        }
+
+        async function loadEmbeddedSignupReadiness() {
+            embeddedLaunchButton.disabled = true;
+            try {
+                const user = findCurrentFirebaseUser();
+                if (!user || typeof user.getIdToken !== "function") {
+                    throw new Error("Chief Owner sign-in is required.");
+                }
+                const token = await user.getIdToken(true);
+                const response = await fetch(
+                    "/api/chief-owner/whatsapp-embedded-signup/readiness",
+                    {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + token,
+                            "Accept": "application/json"
+                        },
+                        cache: "no-store",
+                        credentials: "same-origin"
+                    }
+                );
+                const data = await response.json().catch(function () {
+                    return {};
+                });
+                if (!response.ok || data.ok !== true) {
+                    throw new Error("Readiness could not be loaded.");
+                }
+
+                const missingSettings = Array.isArray(data.missingSettings)
+                    ? data.missingSettings
+                    : [];
+                const configurationIssues = Array.from(new Set([
+                    ...missingSettings,
+                    ...(Array.isArray(data.unsupportedSettings)
+                        ? data.unsupportedSettings
+                        : []),
+                    ...(Array.isArray(data.invalidSettings)
+                        ? data.invalidSettings
+                        : [])
+                ]));
+                embeddedMissing.replaceChildren();
+                configurationIssues.forEach(function (setting) {
+                    const item = document.createElement("li");
+                    item.textContent = String(setting);
+                    embeddedMissing.appendChild(item);
+                });
+                embeddedMissing.hidden = configurationIssues.length === 0;
+                const readinessSummary = [
+                    "Eligibility: " + String(data.eligibilityStatus || "unknown"),
+                    "Signup: " + String(data.signupStatus || "unknown"),
+                    "Sender: " + String(data.senderConfigurationStatus || "unknown"),
+                    "Designated sender: " +
+                        (data.designatedSenderConfigured === true
+                            ? "configured"
+                            : "not configured"),
+                    "Local webhook: " + String(data.localWebhookStatus || "unknown"),
+                    "Meta webhook subscription: " +
+                        String(data.webhookSubscriptionStatus || "unknown"),
+                    "Token storage: " +
+                        String(data.secureTokenStorageStatus || "unknown"),
+                    "Connection: " + String(data.connectionStatus || "unknown")
+                ].join("; ");
+
+                if (configurationIssues.length) {
+                    embeddedStatus.textContent =
+                        "Launch disabled. Required, unsupported, or invalid setting names are listed below. " +
+                        readinessSummary;
+                } else if (data.enabledByConfiguration !== true) {
+                    embeddedStatus.textContent =
+                        "Launch disabled. Explicit local opt-in is not enabled. " +
+                        readinessSummary;
+                } else {
+                    embeddedStatus.textContent =
+                        "Launch remains disabled until required approvals and secure " +
+                        "token storage are ready. " + readinessSummary;
+                }
+            } catch (_) {
+                embeddedMissing.replaceChildren();
+                embeddedMissing.hidden = true;
+                embeddedStatus.textContent =
+                    "Readiness unavailable. Launch remains disabled.";
+            }
+        }
+
+        awayModeButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                if (!button.disabled && button.dataset.whatsappMode !== currentAwayMode) {
+                    saveAwayMode(button.dataset.whatsappMode);
+                }
+            });
+        });
+
+        manualReviewConfirmed.addEventListener("change", updateAwayModeControls);
+
+        async function saveAwayMode(mode) {
+            if (
+                !awayModeConfigured ||
+                awayModeSaving ||
+                awayModeStateUnavailable ||
+                mode === "AWAY" &&
+                    manualReviewRequired &&
+                    !manualReviewConfirmed.checked
+            ) {
+                return;
+            }
+            awayModeSaving = true;
+            updateAwayModeControls();
+            awayStatus.textContent =
+                "Saving " + mode + "; last verified mode: " +
+                (currentAwayMode || "none saved") + ".";
+            try {
+                const savedData = await requestAwayMode(
+                    "POST",
+                    mode,
+                    manualReviewConfirmed.checked
+                );
+                awayModeSaving = false;
+                renderAwayMode(savedData, true);
+            } catch (error) {
+                awayModeSaving = false;
+                const savedState = await loadAwayMode();
+                const stateVerified = savedState && savedState.configured &&
+                    !["unavailable", "invalid"].includes(
+                        savedState.stateSource
+                    );
+                const failureMessage = error && error.message
+                    ? error.message
+                    : "The requested mode could not be saved.";
+                awayStatus.textContent = stateVerified
+                    ? failureMessage + " Current saved mode: " + savedState.mode + "."
+                    : failureMessage +
+                        " Current mode could not be verified; AI replies remain disabled.";
+            }
+        }
+
+        loadAwayMode();
+        loadEmbeddedSignupReadiness();
 
         const actionGrid =
             panel.querySelector(
@@ -30180,22 +30582,26 @@ document.addEventListener(
             return;
         }
 
-        if (state.loading) {
-            return;
-        }
-
+        const requestId = ++accessRequestId;
         const uid = String(user.uid || "");
-
-        if (
-            state.loaded &&
-            state.uid === uid &&
-            state.isChiefOwner
-        ) {
-            ensureOwnerPanel();
-            return;
-        }
-
         state.loading = true;
+        state.loaded = false;
+        state.isStaff = false;
+        state.isChiefOwner = false;
+        state.role = "";
+        state.roleLabel = "";
+        state.permissions = new Set();
+        state.allowedPages = new Set();
+        document.documentElement.classList.remove(
+            "mi-chief-owner-active"
+        );
+        document.querySelectorAll(
+            "[data-mi-chief-owner-control]"
+        ).forEach(function (element) {
+            if (element.tagName !== "STYLE") {
+                element.remove();
+            }
+        });
 
         try {
             const token = await user.getIdToken(true);
@@ -30221,10 +30627,22 @@ document.addEventListener(
                     return {};
                 });
 
-            if (!response.ok) {
+            if (
+                !response.ok ||
+                data.authenticated !== true ||
+                typeof data.isChiefOwner !== "boolean"
+            ) {
                 throw new Error(
                     data.message ||
                     "Permission loading failed."
+                );
+            }
+            if (requestId !== accessRequestId) {
+                return;
+            }
+            if (findCurrentFirebaseUser() !== user) {
+                throw new Error(
+                    "Authenticated account changed during authorization."
                 );
             }
 
@@ -30233,8 +30651,7 @@ document.addEventListener(
             state.loading = false;
             state.isStaff =
                 data.isStaff === true;
-            state.isChiefOwner =
-                data.isChiefOwner === true;
+            state.isChiefOwner = data.isChiefOwner;
             state.role =
                 String(data.role || "");
             state.roleLabel =
@@ -30250,12 +30667,6 @@ document.addEventListener(
                     : []
             );
 
-            document.querySelectorAll(
-                "[data-mi-chief-owner-control]"
-            ).forEach(function (element) {
-                element.remove();
-            });
-
             if (state.isChiefOwner) {
                 ensureOwnerPanel();
 
@@ -30265,6 +30676,9 @@ document.addEventListener(
                 );
             }
         } catch (error) {
+            if (requestId !== accessRequestId) {
+                return;
+            }
             console.error(
                 "[MI Admin] Authorization error:",
                 error
@@ -30272,7 +30686,9 @@ document.addEventListener(
 
             clearAdminState();
         } finally {
-            state.loading = false;
+            if (requestId === accessRequestId) {
+                state.loading = false;
+            }
         }
     }
 
@@ -30280,16 +30696,7 @@ document.addEventListener(
         const user = findCurrentFirebaseUser();
 
         if (!user) {
-            if (
-                state.loaded ||
-                state.isChiefOwner ||
-                document.querySelector(
-                    "[data-mi-chief-owner-control]"
-                )
-            ) {
-                clearAdminState();
-            }
-
+            clearAdminState();
             return;
         }
 
@@ -30339,6 +30746,168 @@ document.addEventListener(
         .mi-chief-owner-badge {
             font-weight: 700;
             border-radius: 999px;
+        }
+
+        .mi-whatsapp-away-mode {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 14px;
+            border: 1px solid rgba(255, 210, 70, .28);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .035);
+        }
+
+        .mi-whatsapp-away-mode-head strong {
+            display: block;
+            color: #ffe5a0;
+        }
+
+        .mi-whatsapp-away-mode-head p {
+            margin: 5px 0 0;
+            color: rgba(255, 255, 255, .7);
+            font-size: 13px;
+        }
+
+        .mi-whatsapp-away-mode-head small {
+            display: block;
+            margin-top: 5px;
+            color: rgba(255, 255, 255, .52);
+            font-size: 12px;
+        }
+
+        .mi-whatsapp-away-mode-options {
+            display: inline-flex;
+            padding: 3px;
+            border-radius: 9px;
+            background: rgba(0, 0, 0, .35);
+        }
+
+        .mi-whatsapp-away-option {
+            min-width: 118px;
+            min-height: 44px;
+            border: 1px solid rgba(255, 255, 255, .16);
+            border-radius: 7px;
+            padding: 8px 14px;
+            color: #f2f3f5;
+            background: rgba(255, 255, 255, .055);
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition:
+                background .16s ease,
+                border-color .16s ease,
+                transform .16s ease;
+        }
+
+        .mi-whatsapp-away-option.is-selected {
+            color: #10251c;
+            background: #75d6a5;
+            border-color: #75d6a5;
+            font-weight: 700;
+        }
+
+        .mi-whatsapp-away-option[data-whatsapp-mode="AWAY"].is-selected {
+            color: #2b1d08;
+            background: #f2c56b;
+            border-color: #f2c56b;
+        }
+
+        .mi-whatsapp-away-option:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        .mi-whatsapp-manual-review {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: rgba(255, 255, 255, .72);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .mi-whatsapp-manual-review[hidden] {
+            display: none;
+        }
+
+        .mi-whatsapp-manual-review input {
+            flex: 0 0 auto;
+            margin-top: 2px;
+        }
+
+        .mi-whatsapp-embedded-readiness {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .025);
+        }
+
+        .mi-whatsapp-embedded-readiness-head strong {
+            display: block;
+            color: #f2f3f5;
+        }
+
+        .mi-whatsapp-embedded-readiness-head p {
+            margin: 5px 0 0;
+            color: rgba(255, 255, 255, .66);
+            font-size: 13px;
+        }
+
+        #miWhatsAppEmbeddedMissing {
+            margin: 6px 0 0;
+            padding-left: 18px;
+            color: rgba(255, 255, 255, .52);
+            font-size: 12px;
+        }
+
+        #miWhatsAppEmbeddedLaunch {
+            min-height: 36px;
+            border: 1px solid rgba(255, 255, 255, .16);
+            border-radius: 7px;
+            padding: 7px 10px;
+            color: rgba(255, 255, 255, .52);
+            background: rgba(255, 255, 255, .04);
+            font: inherit;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 640px) {
+            .mi-whatsapp-embedded-readiness {
+                grid-template-columns: 1fr;
+            }
+
+            #miWhatsAppEmbeddedLaunch {
+                justify-self: start;
+            }
+        }
+
+        .mi-whatsapp-away-option:disabled {
+            cursor: not-allowed;
+            opacity: .48;
+        }
+
+        @media (max-width: 640px) {
+            .mi-whatsapp-away-mode {
+                grid-template-columns: 1fr;
+            }
+
+            .mi-whatsapp-away-mode-head {
+                grid-column: 1 / -1;
+            }
+
+            .mi-whatsapp-away-mode-options {
+                justify-self: start;
+                max-width: 100%;
+            }
         }
 
         .mi-chief-owner-panel {
@@ -31787,12 +32356,13 @@ window.fetch=function(input,init){
 </style>
 <script>
 (function(){
-const API="/api/chief-owner";let meta={roles:[],permissions:[]};const $=x=>document.getElementById(x);const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-async function tok(){const a=window.miFirebaseAuth||(window.firebase&&firebase.auth?firebase.auth():null),u=(a&&a.currentUser)||window.miFirebaseUser||window.currentFirebaseUser;if(!u)throw new Error("Please login again.");return u.getIdToken(true)}
+const API="/api/chief-owner";let meta={roles:[],permissions:[]};const visibilityState=window.__miOwnerUiVisibility||(window.__miOwnerUiVisibility={requestId:0});const $=x=>document.getElementById(x);const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function currentUser(){const a=window.miFirebaseAuth||(window.firebase&&firebase.auth?firebase.auth():null);return(a&&a.currentUser)||window.miFirebaseUser||window.currentFirebaseUser||null}
+async function tok(){const u=currentUser();if(!u)throw new Error("Please login again.");return u.getIdToken(true)}
 async function api(p,o={}){const h=new Headers(o.headers||{});h.set("Authorization","Bearer "+await tok());h.set("Content-Type","application/json");const r=await fetch(API+p,{...o,headers:h,cache:"no-store"}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||"Request failed.");return d}
 function stat(m,e=false){const x=$("miFOStatus");if(x){x.textContent=m;x.style.color=e?"#ff9ba5":"#bdf5d7"}}
 function launcher(){const s=$("settingsPanel");if(!s)return;let b=$("miFinalOwnerBtn");if(!b){b=document.createElement("button");b.id="miFinalOwnerBtn";b.textContent="├â┬░├à┬╕├óΓé¼╦£├óΓé¼╦£ Chief Owner Permissions";b.onclick=open;s.appendChild(b)}return b}
-async function vis(){const b=launcher();if(!b)return;try{const r=await fetch("/api/admin/me",{headers:{Authorization:"Bearer "+await tok()}}),d=await r.json();b.style.display=r.ok&&d.isChiefOwner?"block":"none"}catch(_){b.style.display="none"}}
+async function vis(){const b=launcher();if(!b)return;const requestId=++visibilityState.requestId;const user=currentUser();b.style.display="none";const overlay=$("miFinalOwnerOverlay");if(overlay)overlay.classList.remove("open");if(!user||typeof user.getIdToken!=="function")return;try{const r=await fetch("/api/admin/me",{headers:{Authorization:"Bearer "+await user.getIdToken(true)},cache:"no-store",credentials:"same-origin"}),d=await r.json().catch(()=>({}));if(requestId!==visibilityState.requestId||currentUser()!==user)return;b.style.display=r.ok&&d.authenticated===true&&d.isChiefOwner===true?"block":"none"}catch(_){if(requestId===visibilityState.requestId)b.style.display="none"}}
 function opts(a){return a.map(x=>`<option value="${esc(x)}">${esc(x.replaceAll("_"," "))}</option>`).join("")}function checks(){return meta.permissions.map(x=>`<label><input type="checkbox" value="${esc(x)}"> ${esc(x)}</label>`).join("")}
 function panel(){if($("miFinalOwnerOverlay"))return;const o=document.createElement("div");o.id="miFinalOwnerOverlay";o.innerHTML=`<section id="miFinalOwnerPanel"><header class="miFOHead">
 <h2>Chief Owner Permissions</h2><button id="miFOClose">├â┬ó├àΓÇ£├óΓé¼┬ó</button></header><div class="miFOBody"><nav id="miFONav" class="miFONav"><button class="active" data-p="users">Users</button><button data-p="chats">Chats</button><button data-p="staff">Staff</button><button data-p="roles">New Role</button><button data-p="permissions">Permissions</button><button data-p="audit">Audit</button></nav><main class="miFOContent"><div id="miFOStatus" class="miFOStatus">Ready.</div>
@@ -31811,7 +32381,7 @@ async function roles(){try{const d=await api("/roles");$("frOut").innerHTML=tabl
 async function perm(a){try{const email=$("fpEmail").value.trim(),permission=$("fpPerm").value,reason=$("fpReason").value.trim();const d=await api("/permissions/action",{method:"POST",body:JSON.stringify({email,permission,reason,action:a})});$("fpOut").innerHTML=table([{email,permission,action:a,permissions:d.permissions}]);stat(d.message)}catch(e){stat(e.message,true)}}
 async function chats(){const email=$("fcEmail").value.trim(),reason=$("fcReason").value.trim();try{const d=await api("/chats?email="+encodeURIComponent(email)+"&reason="+encodeURIComponent(reason)),rows=d.chats||[];$("fcOut").innerHTML=rows.length?`<div class="miFOTableWrap"><table class="miFOTable"><tbody>${rows.map(r=>`<tr><td>${esc(r.title)}</td><td>${esc(r.id)}</td><td><button class="fdc" data-id="${esc(r.id)}" data-col="${esc(r.collection)}">Delete</button></td></tr>`).join("")}</tbody></table></div>`:"<p>No chats.</p>";document.querySelectorAll(".fdc").forEach(b=>b.onclick=async()=>{if(!confirm("Delete chat?"))return;const x=await api("/chats/delete",{method:"POST",body:JSON.stringify({email,reason,chatId:b.dataset.id,collection:b.dataset.col})});stat(x.message);chats()})}catch(e){stat(e.message,true)}}
 async function audit(){try{const d=await api("/audit-logs");$("faOut").innerHTML=table(d.logs||[],["timestamp","actorEmail","action","targetType","targetId","reason","success"])}catch(e){stat(e.message,true)}}
-new MutationObserver(launcher).observe(document.documentElement,{childList:true,subtree:true});document.addEventListener("DOMContentLoaded",()=>setTimeout(vis,700));window.addEventListener("mi-admin-access-loaded",()=>setTimeout(vis,100));setTimeout(vis,2200);
+new MutationObserver(launcher).observe(document.documentElement,{childList:true,subtree:true});document.addEventListener("DOMContentLoaded",()=>setTimeout(vis,700));window.addEventListener("mi-admin-access-loaded",()=>setTimeout(vis,100));window.addEventListener("mi-logout",vis);window.addEventListener("focus",vis);try{const a=window.miFirebaseAuth||(window.firebase&&firebase.auth?firebase.auth():null);if(a&&typeof a.onAuthStateChanged==="function")a.onAuthStateChanged(vis)}catch(_){}setTimeout(vis,2200);
 })();
 </script>
 <!-- CORTEX CORE AI FINAL CHIEF OWNER UI END -->
@@ -31903,7 +32473,9 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 (function () {
     "use strict";
 
-    const CHIEF_OWNER_EMAIL = "teamofchatbot.miai@gmail.com";
+    const visibilityState =
+        window.__miOwnerUiVisibility ||
+        (window.__miOwnerUiVisibility = { requestId: 0 });
 
     function authObject() {
         try {
@@ -31942,15 +32514,15 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         try {
             const response = await fetch("/api/admin/me", {
                 headers: { Authorization: "Bearer " + await user.getIdToken(true) },
-                cache: "no-store"
+                cache: "no-store",
+                credentials: "same-origin"
             });
             const data = await response.json().catch(function () { return {}; });
-            return Boolean(response.ok && (
-                data.isChiefOwner === true ||
-                data.is_chief_owner === true ||
-                data.role === "chief_owner" ||
-                data.role === "Chief Owner"
-            ));
+            return Boolean(
+                response.ok &&
+                data.authenticated === true &&
+                data.isChiefOwner === true
+            );
         } catch (_) {
             return false;
         }
@@ -31960,17 +32532,27 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         const button = putButtonInsideSettings();
         if (!button) return;
 
+        const requestId = ++visibilityState.requestId;
         const user = currentUser();
+        button.style.display = "none";
+        const overlay =
+            document.getElementById("miFinalOwnerOverlay") ||
+            document.getElementById("miOwnerOverlay") ||
+            document.getElementById("miChiefOwnerOverlay");
+        if (overlay) overlay.classList.remove("open");
+
         if (!user) {
-            button.style.display = "none";
             return;
         }
 
-        const email = String(user.email || "").trim().toLowerCase();
-        const emailMatch = email === CHIEF_OWNER_EMAIL;
         const backendMatch = await backendOwner(user);
-
-        button.style.display = (emailMatch || backendMatch) ? "block" : "none";
+        if (
+            requestId !== visibilityState.requestId ||
+            currentUser() !== user
+        ) {
+            return;
+        }
+        button.style.display = backendMatch ? "block" : "none";
     }
 
     function schedule() {
@@ -31986,6 +32568,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
     document.addEventListener("DOMContentLoaded", schedule);
     window.addEventListener("mi-firebase-ready", schedule);
     window.addEventListener("mi-admin-access-loaded", schedule);
+    window.addEventListener("mi-logout", repair);
     window.addEventListener("focus", repair);
     schedule();
 })();
@@ -32390,95 +32973,9 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 (function () {
     "use strict";
 
-    const OWNER_EMAIL = "teamofchatbot.miai@gmail.com";
-    const FALLBACK_ROLES = [
-        "sub_owner",
-        "chief_director",
-        "sub_director",
-        "chief_manager",
-        "sub_manager",
-        "chief_developer",
-        "sub_developer",
-        "admin",
-        "support_agent",
-        "moderator"
-    ];
-
-    const FALLBACK_PERMISSIONS = [
-        "users.view",
-        "users.search",
-        "users.edit",
-        "users.suspend",
-        "users.block",
-        "users.unblock",
-        "users.delete",
-        "users.restore",
-        "users.force_logout",
-        "chats.view_reported",
-        "chats.view_all",
-        "chats.search",
-        "chats.moderate",
-        "chats.delete_content",
-        "messages.view_reported",
-        "messages.view_all",
-        "staff.view",
-        "staff.create",
-        "staff.edit",
-        "staff.suspend",
-        "staff.remove",
-        "staff.promote",
-        "staff.demote",
-        "roles.view",
-        "roles.assign",
-        "roles.remove",
-        "roles.create_template",
-        "roles.edit_template",
-        "permissions.view",
-        "permissions.request",
-        "permissions.approve",
-        "permissions.reject",
-        "permissions.grant",
-        "permissions.revoke",
-        "support.view",
-        "support.assign",
-        "support.reply",
-        "support.close",
-        "support.escalate",
-        "moderation.view",
-        "moderation.warn",
-        "moderation.restrict",
-        "moderation.suspend",
-        "moderation.remove_content",
-        "analytics.view_basic",
-        "analytics.view_advanced",
-        "analytics.export",
-        "audit.view_own",
-        "audit.view_department",
-        "audit.view_all",
-        "audit.export",
-        "ai.view",
-        "ai.manage_models",
-        "ai.manage_prompts",
-        "ai.manage_limits",
-        "api.view_status",
-        "api.manage_configuration",
-        "api.rotate_credentials",
-        "system.view_status",
-        "system.manage_settings",
-        "system.manage_features",
-        "system.maintenance_mode",
-        "system.manage_branding",
-        "system.manage_announcements",
-        "system.backup",
-        "system.restore",
-        "security.view_alerts",
-        "security.manage_sessions",
-        "security.manage_devices",
-        "security.block_device",
-        "security.manage_ip_rules",
-        "ownership.view",
-        "ownership.transfer"
-    ];
+    const visibilityState =
+        window.__miOwnerUiVisibility ||
+        (window.__miOwnerUiVisibility = { requestId: 0 });
 
     function currentUser() {
         try {
@@ -32492,66 +32989,6 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
             window.miFirebaseUser ||
             null
         );
-    }
-
-    async function token() {
-        const user = currentUser();
-
-        if (!user || typeof user.getIdToken !== "function") {
-            throw new Error("Please login again.");
-        }
-
-        return user.getIdToken(false);
-    }
-
-    async function requestJson(url, options, timeoutMs) {
-        const controller = new AbortController();
-        const timeout = setTimeout(function () {
-            controller.abort();
-        }, timeoutMs || 10000);
-
-        try {
-            const headers = new Headers(
-                (options && options.headers) || {}
-            );
-
-            headers.set(
-                "Authorization",
-                "Bearer " + await token()
-            );
-
-            headers.set(
-                "Content-Type",
-                "application/json"
-            );
-
-            const response = await fetch(
-                url,
-                Object.assign({}, options || {}, {
-                    headers: headers,
-                    signal: controller.signal,
-                    cache: "no-store"
-                })
-            );
-
-            const data = await response
-                .json()
-                .catch(function () {
-                    return {};
-                });
-
-            if (!response.ok) {
-                throw new Error(
-                    data.message ||
-                    "Request failed: " + response.status
-                );
-            }
-
-            return data;
-        }
-        finally {
-            clearTimeout(timeout);
-        }
     }
 
     function ownerButton() {
@@ -32570,168 +33007,60 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         );
     }
 
-    function showOwnerOverlayImmediately() {
-        const overlay = ownerOverlay();
-
-        if (!overlay) {
-            return false;
-        }
-
-        overlay.classList.add("open");
-        overlay.hidden = false;
-        overlay.style.display = "flex";
-
-        const status =
-            document.getElementById("miFOStatus") ||
-            document.getElementById("miOwnerStatus");
-
-        if (status) {
-            status.textContent =
-                "Chief Owner panel opened. Loading latest roles...";
-        }
-
-        return true;
-    }
-
-    function applyFallbackMetadata() {
-        if (!window.miOwnerFallbackMetadata) {
-            window.miOwnerFallbackMetadata = {
-                roles: FALLBACK_ROLES.slice(),
-                permissions: FALLBACK_PERMISSIONS.slice()
-            };
-        }
-
-        const roleSelect =
-            document.getElementById("fsRole") ||
-            document.getElementById("miStaffRole");
-
-        if (roleSelect && roleSelect.options.length === 0) {
-            roleSelect.innerHTML = FALLBACK_ROLES.map(function (role) {
-                return (
-                    '<option value="' + role + '">' +
-                    role.replaceAll("_", " ") +
-                    "</option>"
-                );
-            }).join("");
-        }
-
-        const permissionSelect =
-            document.getElementById("fpPerm") ||
-            document.getElementById("miPermissionSelect");
-
-        if (
-            permissionSelect &&
-            permissionSelect.options.length === 0
-        ) {
-            permissionSelect.innerHTML =
-                FALLBACK_PERMISSIONS.map(function (permission) {
-                    return (
-                        '<option value="' + permission + '">' +
-                        permission +
-                        "</option>"
-                    );
-                }).join("");
-        }
-    }
-
-    async function refreshMetadataWithoutBlocking() {
-        applyFallbackMetadata();
-
-        try {
-            const data = await requestJson(
-                "/api/chief-owner/rbac-options",
-                {},
-                8000
-            );
-
-            window.miOwnerFallbackMetadata = {
-                roles: Array.isArray(data.roles)
-                    ? data.roles
-                    : FALLBACK_ROLES.slice(),
-                permissions: Array.isArray(data.permissions)
-                    ? data.permissions
-                    : FALLBACK_PERMISSIONS.slice()
-            };
-
-            const status =
-                document.getElementById("miFOStatus") ||
-                document.getElementById("miOwnerStatus");
-
-            if (status) {
-                status.textContent =
-                    "Chief Owner access verified.";
-            }
-        }
-        catch (error) {
-            console.error(
-                "[MI Chief Owner] Metadata load failed:",
-                error
-            );
-
-            const status =
-                document.getElementById("miFOStatus") ||
-                document.getElementById("miOwnerStatus");
-
-            if (status) {
-                status.textContent =
-                    "Panel opened with built-in roles. Backend metadata did not load.";
-            }
-        }
-    }
-
-    function attachRescueClick() {
-        const button = ownerButton();
-
-        if (!button || button.dataset.miLoadingRescue === "1") {
-            return;
-        }
-
-        button.dataset.miLoadingRescue = "1";
-
-        button.addEventListener(
-            "click",
-            function () {
-                setTimeout(function () {
-                    if (showOwnerOverlayImmediately()) {
-                        refreshMetadataWithoutBlocking();
-                    }
-                }, 0);
-            },
-            true
-        );
-    }
-
-    function forceOwnerButtonVisible() {
+    async function forceOwnerButtonVisible() {
+        const requestId = ++visibilityState.requestId;
         const user = currentUser();
         const button = ownerButton();
 
-        if (!user || !button) {
+        if (!button) {
             return;
         }
 
-        const email = String(user.email || "")
-            .trim()
-            .toLowerCase();
-
-        if (email === OWNER_EMAIL) {
-            button.style.display = "block";
+        button.style.display = "none";
+        const overlay = ownerOverlay();
+        if (overlay) {
+            overlay.classList.remove("open");
         }
 
-        attachRescueClick();
+        if (!user || typeof user.getIdToken !== "function") {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                "/api/admin/me",
+                {
+                    headers: {
+                        Authorization:
+                            "Bearer " + await user.getIdToken(true)
+                    },
+                    cache: "no-store",
+                    credentials: "same-origin"
+                }
+            );
+            const data = await response.json().catch(function () {
+                return {};
+            });
+
+            if (
+                requestId !== visibilityState.requestId ||
+                currentUser() !== user
+            ) {
+                return;
+            }
+
+            button.style.display =
+                response.ok &&
+                data.authenticated === true &&
+                data.isChiefOwner === true
+                    ? "block"
+                    : "none";
+        } catch (_) {
+            if (requestId === visibilityState.requestId) {
+                button.style.display = "none";
+            }
+        }
     }
-
-    const observer = new MutationObserver(function () {
-        forceOwnerButtonVisible();
-        applyFallbackMetadata();
-    });
-
-    observer.observe(
-        document.documentElement,
-        {
-            childList: true,
-            subtree: true
-        }
-    );
 
     document.addEventListener(
         "DOMContentLoaded",
@@ -32746,6 +33075,21 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         "mi-admin-access-loaded",
         forceOwnerButtonVisible
     );
+
+    window.addEventListener("mi-firebase-ready", forceOwnerButtonVisible);
+    window.addEventListener("mi-logout", forceOwnerButtonVisible);
+    window.addEventListener("focus", forceOwnerButtonVisible);
+
+    try {
+        const auth =
+            window.miFirebaseAuth ||
+            (window.firebase && typeof firebase.auth === "function"
+                ? firebase.auth()
+                : null);
+        if (auth && typeof auth.onAuthStateChanged === "function") {
+            auth.onAuthStateChanged(forceOwnerButtonVisible);
+        }
+    } catch (_) {}
 
     setTimeout(forceOwnerButtonVisible, 1000);
 })();
@@ -34309,6 +34653,7 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
   const roleSelect = document.getElementById("miStaffRole");
   const staffBody = document.getElementById("miRbacStaffBody");
   let currentStaff = null;
+  let authorizationRequestId = 0;
 
   function currentFirebaseUser(){
     try{
@@ -34359,25 +34704,48 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
   }
 
   async function synchronize(){
+    const requestId = ++authorizationRequestId;
     const user = currentFirebaseUser();
+    entry.style.display = "none";
+    currentStaff = null;
+    overlay.style.display = "none";
+    document.body.style.overflow = "";
     if(!user){
-      entry.style.display = "none";
-      currentStaff = null;
-      return;
+      return false;
     }
     try{
       const data = await api("/api/rbac/me");
-      currentStaff = data.staff;
-      if(data.staff.isChiefOwner){
+      if(
+        requestId !== authorizationRequestId ||
+        currentFirebaseUser() !== user
+      ){
+        return false;
+      }
+      const staff = data.staff;
+      const isChiefOwner = Boolean(
+        data.ok === true &&
+        staff &&
+        staff.isChiefOwner === true &&
+        staff.role === "chief_owner"
+      );
+      if(isChiefOwner){
+        currentStaff = staff;
         entry.style.display = "flex";
-        identity.textContent = data.staff.name + " ├óΓé¼┬ó " + data.staff.roleLabel;
+        identity.textContent = staff.name + " ├óΓé¼┬ó " + staff.roleLabel;
         installEntryInSettings();
+        return true;
       }else{
         entry.style.display = "none";
+        return false;
       }
     }catch(_){
-      currentStaff = null;
-      entry.style.display = "none";
+      if(requestId === authorizationRequestId){
+        currentStaff = null;
+        entry.style.display = "none";
+        overlay.style.display = "none";
+        document.body.style.overflow = "";
+      }
+      return false;
     }
   }
 
@@ -34422,6 +34790,9 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
   }
 
   entry.addEventListener("click", async () => {
+    if(!await synchronize()){
+      return;
+    }
     overlay.style.display = "block";
     document.body.style.overflow = "hidden";
     try{

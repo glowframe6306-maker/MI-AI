@@ -30,11 +30,11 @@
     },
     {
       "src": "/assets/(.*)",
-      "dest": "/assets/$1"
+      "dest": "/public/assets/$1"
     },
     {
       "src": "/(favicon\\.ico|favicon-[0-9]+x[0-9]+\\.png|apple-touch-icon\\.png)",
-      "dest": "/$1"
+      "dest": "/public/$1"
     },
     {
       "src": "/(.*)",

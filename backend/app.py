@@ -1,60 +1,20 @@
-﻿# MI_AI_SECURE_RBAC_IMPORT
-try:
-    from backend.chief_owner_rbac import register_rbac
-except ImportError:
-    from chief_owner_rbac import register_rbac
+﻿import os
+
+MI_AI_TEST_MODE = os.getenv("MI_AI_TEST_MODE") == "1"
 
 
-# CORTEX CORE AI CHIEF OWNER CONTROL IMPORT
-try:
-    from backend.chief_owner_control import register_chief_owner_control
-except ImportError:
-    from chief_owner_control import register_chief_owner_control
+def _test_mode_enabled():
+    return os.getenv("MI_AI_TEST_MODE") == "1"
 
 
-import os
 try:
     from dotenv import load_dotenv
 except ImportError:
     load_dotenv = None
 
-if load_dotenv:
-    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
-
-# ---------------------------------------------------------------------------
-# CORTEX CORE AI authoritative Chief Owner configuration
-# ---------------------------------------------------------------------------
-CHIEF_OWNER_EMAIL = os.getenv(
-    "CHIEF_OWNER_EMAIL",
-    "teamofchatbot.miai@gmail.com",
-).strip().lower()
-
-# Set CHIEF_OWNER_UID in the production environment after confirming the
-# Firebase UID belonging to the permanent Chief Owner account.
-CHIEF_OWNER_UID = os.getenv("CHIEF_OWNER_UID", "").strip()
-
-
 def normalize_identity_email(value):
     """Return a normalized email without trusting frontend role information."""
     return str(value or "").strip().lower()
-
-
-def is_configured_chief_owner(email, uid=None):
-    """
-    Validate the permanent Chief Owner identity from server configuration.
-
-    When CHIEF_OWNER_UID is configured, both the verified token email and UID
-    must match. Frontend-provided roles or permissions are never authoritative.
-    """
-    normalized_email = normalize_identity_email(email)
-
-    if not normalized_email or normalized_email != CHIEF_OWNER_EMAIL:
-        return False
-
-    if CHIEF_OWNER_UID:
-        return bool(uid) and str(uid).strip() == CHIEF_OWNER_UID
-
-    return True
 
 
 from flask import Flask, request, jsonify, send_from_directory, session, redirect, make_response, Response, stream_with_context
@@ -75,14 +35,24 @@ except ImportError:
     firebase_admin_credentials = None
     firebase_admin_firestore = None
 
+try:
+    from google.cloud.firestore_v1.client import Client as _GoogleFirestoreClient
+except ImportError:
+    _GOOGLE_FIRESTORE_CLIENT_TYPES = ()
+else:
+    _GOOGLE_FIRESTORE_CLIENT_TYPES = (_GoogleFirestoreClient,)
+
 import ssl
 import traceback
-from datetime import datetime, timedelta, date as calendar_date, time as clock_time
+from datetime import datetime, timedelta, timezone, date as calendar_date, time as clock_time
 import secrets
 
 import time
+import threading
+import click
 import hmac
 import hashlib
+import math
 import base64
 import random
 import smtplib
@@ -101,23 +71,157 @@ try:
 except ImportError:
     create_client = None
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
-except ImportError:
-    def load_dotenv(*args, **kwargs):
-        return False
+if not MI_AI_TEST_MODE and load_dotenv:
+    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
-for env_path in [
-    os.path.join(os.path.dirname(__file__), ".env"),
-    os.path.join(BASE_DIR, ".env"),
-]:
-    if os.path.exists(env_path):
-        load_dotenv(env_path, override=False)
+
+def _candidate_env_paths():
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(backend_dir)
+    candidates = [
+        os.path.join(backend_dir, ".env"),
+        os.path.join(root_dir, ".env"),
+        os.path.join(root_dir, "backend", ".env"),
+    ]
+    ordered = []
+    for candidate in candidates:
+        if candidate not in ordered:
+            ordered.append(candidate)
+    return ordered
+
+
+def _refresh_local_env():
+    if _test_mode_enabled() or not load_dotenv:
+        return False
+
+    loaded = False
+    for env_path in _candidate_env_paths():
+        try:
+            if os.path.exists(env_path):
+                loaded = load_dotenv(env_path, override=False) or loaded
+        except Exception:
+            continue
+    return loaded
+
+
+# Resolve configuration in a deterministic order: explicit environment variables
+# win first, then backend-local .env, then project-root .env.
+if not MI_AI_TEST_MODE:
+    for env_path in _candidate_env_paths():
+        if load_dotenv and os.path.exists(env_path):
+            load_dotenv(env_path, override=False)
+
+    _refresh_local_env()
+
+# Identity-bearing modules capture environment configuration during import.
+try:
+    from backend.chief_owner_identity import (
+        CHIEF_OWNER_EMAIL,
+        CHIEF_OWNER_UID,
+        CHIEF_OWNER_UID_CONFIGURED,
+        CHIEF_OWNER_UID_CONFIG_VALID,
+        is_chief_owner_candidate,
+        is_chief_owner_identity,
+        read_persisted_chief_owner_uid,
+    )
+except ImportError:
+    from chief_owner_identity import (
+        CHIEF_OWNER_EMAIL,
+        CHIEF_OWNER_UID,
+        CHIEF_OWNER_UID_CONFIGURED,
+        CHIEF_OWNER_UID_CONFIG_VALID,
+        is_chief_owner_candidate,
+        is_chief_owner_identity,
+        read_persisted_chief_owner_uid,
+    )
+
+try:
+    # MI_AI_SECURE_RBAC_IMPORT
+    from backend.chief_owner_rbac import register_rbac
+except ImportError:
+    from chief_owner_rbac import register_rbac
+
+try:
+    from backend.chief_owner_control import register_chief_owner_control
+except ImportError:
+    from chief_owner_control import register_chief_owner_control
+
+
+def _owner_identity_policy(
+    email,
+    uid,
+    persisted_uid=None,
+    email_verified=False,
+    configured_email=CHIEF_OWNER_EMAIL,
+    configured_uid=CHIEF_OWNER_UID,
+    uid_configured=None,
+):
+    uid_configured = (
+        CHIEF_OWNER_UID_CONFIGURED or bool(configured_uid)
+        if uid_configured is None
+        else uid_configured
+    )
+    uid_config_valid = CHIEF_OWNER_UID_CONFIG_VALID and (
+        not CHIEF_OWNER_UID_CONFIGURED or bool(configured_uid)
+    )
+    return is_chief_owner_identity(
+        email,
+        uid,
+        persisted_uid=persisted_uid,
+        email_verified=email_verified,
+        configured_email=configured_email,
+        configured_uid=configured_uid,
+        uid_configured=uid_configured,
+        uid_config_valid=uid_config_valid,
+    )
+
+
+def _owner_identity_candidate(
+    email,
+    uid,
+    email_verified=False,
+    configured_email=CHIEF_OWNER_EMAIL,
+    configured_uid=CHIEF_OWNER_UID,
+    uid_configured=None,
+):
+    uid_configured = (
+        CHIEF_OWNER_UID_CONFIGURED or bool(configured_uid)
+        if uid_configured is None
+        else uid_configured
+    )
+    uid_config_valid = CHIEF_OWNER_UID_CONFIG_VALID and (
+        not CHIEF_OWNER_UID_CONFIGURED or bool(configured_uid)
+    )
+    return is_chief_owner_candidate(
+        email,
+        uid,
+        email_verified,
+        configured_email=configured_email,
+        configured_uid=configured_uid,
+        uid_configured=uid_configured,
+        uid_config_valid=uid_config_valid,
+    )
+
+
+def is_configured_chief_owner(
+    email,
+    uid=None,
+    persisted_uid=None,
+    email_verified=False,
+):
+    return _owner_identity_policy(
+        email,
+        uid,
+        persisted_uid=persisted_uid,
+        email_verified=email_verified,
+        configured_email=CHIEF_OWNER_EMAIL,
+        configured_uid=CHIEF_OWNER_UID,
+    )
+
 
 app = Flask(
     __name__,
@@ -130,21 +234,117 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_SECURE=not bool(os.getenv('DEV_MODE', '').lower() in ['1', 'true', 'yes']),
+    WHATSAPP_AWAY_PHONE_NUMBER_ID=(
+        os.getenv("WHATSAPP_AWAY_PHONE_NUMBER_ID") or ""
+    ).strip(),
+    WHATSAPP_WABA_ID=(os.getenv("WHATSAPP_WABA_ID") or "").strip(),
 )
 CORS(app)
 
 
 MI_FIREBASE_AUTH_READY = False
 MI_FIREBASE_AUTH_ERROR = ""
+MI_FIREBASE_APP = None
 MI_FIREBASE_DB = None
-MI_FIREBASE_PROJECT_ID = (
-    os.getenv("FIREBASE_PROJECT_ID")
-    or os.getenv("GOOGLE_CLOUD_PROJECT")
-    or "mi-ai-99e6a"
-).strip()
+
+
+def _guard_firestore_database(database):
+    if _test_mode_enabled() and isinstance(
+        database,
+        _GOOGLE_FIRESTORE_CLIENT_TYPES,
+    ):
+        raise RuntimeError(
+            "Cached Firestore clients are disabled in test mode; "
+            "inject a fake database."
+        )
+    return database
+
+
+def _firestore_database():
+    return _guard_firestore_database(MI_FIREBASE_DB)
+
+
+MI_FIREBASE_STAGING_PROJECT_ID = "mi-ai-whatsapp-staging"
+MI_FIREBASE_LEGACY_PROJECT_ID = "mi-ai-99e6a"
+MI_FIREBASE_ENVIRONMENT = (
+    os.getenv("MI_FIREBASE_ENVIRONMENT") or ""
+).strip().lower()
+
+
+def _resolve_firebase_project_id(environment=None):
+    firebase_environment = (
+        str(os.getenv("MI_FIREBASE_ENVIRONMENT") or "").strip().lower()
+        if environment is None
+        else str(environment or "").strip().lower()
+    )
+    configured_project_id = str(
+        os.getenv("FIREBASE_PROJECT_ID") or ""
+    ).strip()
+
+    if firebase_environment == "staging":
+        if not configured_project_id:
+            raise RuntimeError(
+                "Staging requires an explicit FIREBASE_PROJECT_ID."
+            )
+        if configured_project_id != MI_FIREBASE_STAGING_PROJECT_ID:
+            raise RuntimeError(
+                "Staging FIREBASE_PROJECT_ID does not match the staging project."
+            )
+        return configured_project_id
+
+    if firebase_environment not in ("", "production"):
+        raise RuntimeError(
+            "MI_FIREBASE_ENVIRONMENT must be staging or production."
+        )
+
+    selected_project_id = str(
+        os.getenv("FIREBASE_PROJECT_ID")
+        or os.getenv("GOOGLE_CLOUD_PROJECT")
+        or MI_FIREBASE_LEGACY_PROJECT_ID
+    ).strip()
+    if selected_project_id == MI_FIREBASE_STAGING_PROJECT_ID:
+        raise RuntimeError(
+            "The staging project requires MI_FIREBASE_ENVIRONMENT=staging."
+        )
+    return selected_project_id
+
+
+MI_FIREBASE_PROJECT_ID = _resolve_firebase_project_id()
+
+
+def _validate_firebase_credential_project(credential_project_id):
+    if (
+        not isinstance(credential_project_id, str)
+        or not credential_project_id.strip()
+        or credential_project_id.strip() != MI_FIREBASE_PROJECT_ID
+    ):
+        raise RuntimeError(
+            "Firebase credential project does not match the configured project."
+        )
+
+
+def _create_firebase_certificate(certificate_source):
+    try:
+        credential = firebase_admin_credentials.Certificate(
+            certificate_source
+        )
+    except (AttributeError, OSError, TypeError, ValueError):
+        raise RuntimeError(
+            "Firebase service account credentials are invalid."
+        ) from None
+
+    _validate_firebase_credential_project(
+        getattr(credential, "project_id", None)
+    )
+    return credential
 
 
 def mi_load_firebase_credential():
+    if _test_mode_enabled():
+        raise RuntimeError(
+            "Firebase credential loading is disabled in test mode."
+        )
+
     raw_json = str(
         os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
         or ""
@@ -153,24 +353,17 @@ def mi_load_firebase_credential():
     if raw_json:
         try:
             service_account = json.loads(raw_json)
-        except json.JSONDecodeError as exc:
+        except json.JSONDecodeError:
             raise RuntimeError(
                 "FIREBASE_SERVICE_ACCOUNT_JSON is invalid JSON."
-            ) from exc
-
-        credential_project = str(
-            service_account.get("project_id") or ""
-        ).strip()
-
-        if credential_project != MI_FIREBASE_PROJECT_ID:
+            ) from None
+        if not isinstance(service_account, dict):
             raise RuntimeError(
-                "Firebase credential project mismatch: "
-                f"{credential_project or 'missing'} != "
-                f"{MI_FIREBASE_PROJECT_ID}"
+                "FIREBASE_SERVICE_ACCOUNT_JSON must contain a service-account object."
             )
 
-        return firebase_admin_credentials.Certificate(
-            service_account
+        return _create_firebase_certificate(
+            service_account,
         )
 
     credentials_path = str(
@@ -184,8 +377,8 @@ def mi_load_firebase_credential():
                 "GOOGLE_APPLICATION_CREDENTIALS file was not found."
             )
 
-        return firebase_admin_credentials.Certificate(
-            credentials_path
+        return _create_firebase_certificate(
+            credentials_path,
         )
 
     raise RuntimeError(
@@ -194,50 +387,91 @@ def mi_load_firebase_credential():
     )
 
 
-if (
-    firebase_admin is None
-    or firebase_admin_auth is None
-    or firebase_admin_credentials is None
-):
-    MI_FIREBASE_AUTH_ERROR = "firebase-admin is not installed."
-else:
+def _initialize_firebase_admin():
+    global MI_FIREBASE_AUTH_READY
+    global MI_FIREBASE_AUTH_ERROR
+    global MI_FIREBASE_APP
+    global MI_FIREBASE_DB
+
+    if MI_AI_TEST_MODE:
+        MI_FIREBASE_AUTH_ERROR = "Firebase Admin is disabled in test mode."
+        app.extensions["firebase_admin_app"] = None
+        return
+
+    if (
+        firebase_admin is None
+        or firebase_admin_auth is None
+        or firebase_admin_credentials is None
+        or firebase_admin_firestore is None
+    ):
+        MI_FIREBASE_AUTH_ERROR = "firebase-admin is not installed."
+        app.extensions["firebase_admin_app"] = None
+        if MI_FIREBASE_ENVIRONMENT == "staging":
+            raise RuntimeError(
+                "Firebase Admin is unavailable in staging."
+            )
+        return
+
     try:
         if not firebase_admin._apps:
             firebase_credential = mi_load_firebase_credential()
-
-            firebase_admin.initialize_app(
+            active_app = firebase_admin.initialize_app(
                 firebase_credential,
-                {
-                    "projectId": MI_FIREBASE_PROJECT_ID
-                }
+                {"projectId": MI_FIREBASE_PROJECT_ID},
             )
+        else:
+            if (
+                os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+                or os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+            ):
+                mi_load_firebase_credential()
+            active_app = firebase_admin.get_app()
+            active_credential_project = getattr(
+                getattr(active_app, "credential", None),
+                "project_id",
+                None,
+            )
+            if active_credential_project is None:
+                if MI_FIREBASE_ENVIRONMENT == "staging":
+                    raise RuntimeError(
+                        "Staging Firebase credential project cannot be verified."
+                    )
+            else:
+                _validate_firebase_credential_project(
+                    active_credential_project
+                )
 
-        active_app = firebase_admin.get_app()
-        active_project = str(
-            active_app.project_id or ""
-        ).strip()
-
+        active_project = str(active_app.project_id or "").strip()
         if active_project != MI_FIREBASE_PROJECT_ID:
             raise RuntimeError(
-                "Firebase Admin initialized with wrong project: "
-                f"{active_project or 'unknown'}"
+                "Firebase Admin initialized with the wrong project."
             )
 
+        MI_FIREBASE_APP = active_app
+        app.extensions["firebase_admin_app"] = active_app
+        MI_FIREBASE_DB = firebase_admin_firestore.client(
+            app=active_app
+        )
         MI_FIREBASE_AUTH_READY = True
-        if firebase_admin_firestore is not None:
-            MI_FIREBASE_DB = firebase_admin_firestore.client(
-                app=active_app
-            )
-
         app.logger.info(
             "Firebase Admin ready for project %s.",
             MI_FIREBASE_PROJECT_ID,
         )
-    except Exception as exc:
-        MI_FIREBASE_AUTH_ERROR = str(exc)
-        app.logger.exception(
-            "Firebase Admin initialization failed."
-        )
+    except Exception:
+        MI_FIREBASE_APP = None
+        MI_FIREBASE_DB = None
+        MI_FIREBASE_AUTH_READY = False
+        MI_FIREBASE_AUTH_ERROR = "Firebase Admin initialization failed."
+        app.extensions["firebase_admin_app"] = None
+        if MI_FIREBASE_ENVIRONMENT == "staging":
+            raise RuntimeError(
+                "Staging Firebase initialization failed."
+            ) from None
+        app.logger.error("Firebase Admin initialization failed.")
+
+
+_initialize_firebase_admin()
+app.extensions["firebase_admin_app"] = MI_FIREBASE_APP
 
 
 def mi_verify_firebase_id_token(token):
@@ -255,7 +489,7 @@ def mi_verify_firebase_id_token(token):
     try:
         decoded = firebase_admin_auth.verify_id_token(
             token,
-            app=firebase_admin.get_app(),
+            app=MI_FIREBASE_APP,
             check_revoked=False,
         )
     except Exception as exc:
@@ -441,9 +675,10 @@ def mi_get_verified_account():
 
 
 def mi_owner_ref(owner_id):
-    if MI_FIREBASE_DB is None:
+    database = _firestore_database()
+    if database is None:
         raise RuntimeError("Firestore is not configured.")
-    return MI_FIREBASE_DB.collection("owners").document(str(owner_id))
+    return database.collection("owners").document(str(owner_id))
 
 
 # CORTEX CORE AI - ONE UNIFIED OWNER FOR ALL AUTHENTICATED PROFILES
@@ -500,7 +735,10 @@ def mi_resolve_owner(account, create=True):
 
 def mi_migrate_uid_chats_to_owner(uid, owner_id):
     """Copy UID-scoped chats/messages into owner storage without deleting sources."""
-    source = MI_FIREBASE_DB.collection("users").document(uid).collection("chats")
+    database = _firestore_database()
+    if database is None:
+        raise RuntimeError("Firestore is not configured.")
+    source = database.collection("users").document(uid).collection("chats")
     target = mi_owner_ref(owner_id).collection("chats")
     for chat_doc in source.stream():
         target_ref = target.document(chat_doc.id)
@@ -516,7 +754,7 @@ def mi_migrate_uid_chats_to_owner(uid, owner_id):
                 "sourceUid": uid,
                 "ownerId": owner_id,
             }, merge=True)
-    settings_source = MI_FIREBASE_DB.collection("users").document(uid).collection("settings").document("general").get()
+    settings_source = database.collection("users").document(uid).collection("settings").document("general").get()
     if settings_source.exists:
         mi_owner_ref(owner_id).collection("settings").document("general").set({
             **(settings_source.to_dict() or {}),
@@ -529,7 +767,7 @@ def mi_owner_account():
     account, error = mi_get_verified_account()
     if error or not account:
         return None, (jsonify({"success": False, "message": error or "Please sign in again."}), 401)
-    if MI_FIREBASE_DB is None:
+    if _firestore_database() is None:
         return None, (jsonify({"success": False, "message": "Firestore is not configured."}), 503)
     try:
         return (account, mi_resolve_owner(account)), None
@@ -564,10 +802,13 @@ def mi_accept_owner_link_invite():
         return jsonify({"success": False, "message": error or "Please sign in again."}), 401
     payload = request.get_json(silent=True) or {}
     invite = str(payload.get("inviteToken") or "").strip()
-    if not invite or MI_FIREBASE_DB is None:
+    if not invite:
+        return jsonify({"success": False, "message": "A valid invite is required."}), 400
+    database = _firestore_database()
+    if database is None:
         return jsonify({"success": False, "message": "A valid invite is required."}), 400
     invite_hash = hashlib.sha256(invite.encode()).hexdigest()
-    matches = MI_FIREBASE_DB.collection_group("invitations").where("state", "==", "pending").stream()
+    matches = database.collection_group("invitations").where("state", "==", "pending").stream()
     invitation = next((doc for doc in matches if doc.id == invite_hash), None)
     if invitation is None:
         return jsonify({"success": False, "message": "Invite is invalid or expired."}), 404
@@ -687,9 +928,10 @@ def memory_forget_key(message):
 
 
 def memory_user_collection(uid):
-    if MI_FIREBASE_DB is None:
+    database = _firestore_database()
+    if database is None:
         raise RuntimeError("Memory persistence is unavailable.")
-    return MI_FIREBASE_DB.collection("users").document(uid).collection("memories")
+    return database.collection("users").document(uid).collection("memories")
 
 
 def memory_relevant_for_message(uid, message):
@@ -844,12 +1086,13 @@ def customer_service_identity():
 
 
 def customer_service_next_number(kind):
-    if MI_FIREBASE_DB is None or firebase_admin_firestore is None:
+    database = _firestore_database()
+    if database is None or firebase_admin_firestore is None:
         raise RuntimeError("Customer Service persistence is unavailable.")
     field = "reports" if kind == "report" else "appointments"
     prefix = "CCA-RP-" if kind == "report" else "CCA-AP-"
-    counter_ref = MI_FIREBASE_DB.collection("customer_service").document("counters")
-    transaction = MI_FIREBASE_DB.transaction()
+    counter_ref = database.collection("customer_service").document("counters")
+    transaction = database.transaction()
 
     @firebase_admin_firestore.transactional
     def increment(current_transaction):
@@ -888,16 +1131,18 @@ def customer_service_send_telegram(message, attachment=None):
 
 
 def customer_service_save(kind, reference, record):
-    if MI_FIREBASE_DB is None:
+    database = _firestore_database()
+    if database is None:
         raise RuntimeError("Customer Service persistence is unavailable.")
-    MI_FIREBASE_DB.collection("customer_service").document(kind).collection("submissions").document(reference).set(record)
+    database.collection("customer_service").document(kind).collection("submissions").document(reference).set(record)
 
 
 def customer_service_update(kind, reference, fields):
-    if MI_FIREBASE_DB is None:
+    database = _firestore_database()
+    if database is None:
         return
     try:
-        MI_FIREBASE_DB.collection("customer_service").document(kind).collection("submissions").document(reference).set(fields, merge=True)
+        database.collection("customer_service").document(kind).collection("submissions").document(reference).set(fields, merge=True)
     except Exception as exc:
         app.logger.exception("Customer Service status update failed for %s: %s", reference, exc)
 
@@ -1167,7 +1412,11 @@ You are CORTEX CORE AI, a helpful, highly intelligent, fast, friendly, accurate,
 OFFICIAL IDENTITY
 ==================================================
 
-Your official name is CORTEX CORE AI.
+Your official name is CORTEX CORE AI(MI AI).
+
+Your official identity is that of a virtual AI assistant created, owned, powered, built, and developed by M.I. Muhammadh.
+
+Your nickname is MI AI.
 
 Creator:
 M.I. Muhammadh
@@ -1184,14 +1433,19 @@ M.I. Muhammadh
 Developer:
 M.I. Muhammadh
 
+Owner of CORTEX CORE AI:
+M.I. Muhammadh
+
 Age of the creator:
-17 years old
+17 years old in 2026. (You should give the correct Age with the current year.)
 
 Mother company of CORTEX CORE AI:MI CORTEX X INC.
 
-Company of CORTEX CORE AI:MI CORTEX X INC.
+Company of CORTEX CORE AI:MI CORTEX CODEX
 
-Owned Company of CORTEX CORE AI:MI CORTEX X INC.
+Owned Company of CORTEX CORE AI:MI CORTEX CODEX
+
+MI CORTEX X INC. is the parent company of MI CORTEX CODEX, which is the company that owns and operates CORTEX CORE AI.
 
 Chief Executive Officer (CEO) of MI CORTEX X INC.: M.I. Muhammadh
 
@@ -1249,8 +1503,13 @@ OFFICIAL CONTACT INFORMATION
 ==================================================
 
 Customer-support email:
-
 miai.customerservice@gmail.com
+
+Contact Number:
++94 75 639 0621
+
+Parent Company Email:
+micortexx@gmail.com
 
 Use this email for:
 
@@ -1842,14 +2101,17 @@ else:
         app.logger.exception("Supabase initialization failed.")
 
 def _get_groq_api_key():
+    _refresh_local_env()
     return (os.getenv("GROQ_API_KEY") or "").strip()
 
 
 def _get_groq_model():
+    _refresh_local_env()
     return (os.getenv("GROQ_MODEL") or os.getenv("GROQ_FALLBACK_MODEL") or "llama-3.3-70b-versatile").strip()
 
 
 def _get_groq_fallback_model():
+    _refresh_local_env()
     return (os.getenv("GROQ_FALLBACK_MODEL") or os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile").strip()
 
 
@@ -1963,9 +2225,58 @@ If a link cannot be checked, state that briefly instead of guessing.
 # CORTEX CORE AI SMART GROQ MESSAGES V2 - END
 
 
+def _parse_json_payload(response):
+    if response is None:
+        return {}
+    if isinstance(response, (dict, list)):
+        return response
+
+    try:
+        json_method = getattr(response, "json", None)
+        if callable(json_method):
+            parsed = json_method()
+            if isinstance(parsed, (dict, list)):
+                return parsed
+    except Exception:
+        pass
+
+    raw_text = getattr(response, "text", None)
+    if isinstance(raw_text, (str, bytes)):
+        candidate = raw_text.decode("utf-8") if isinstance(raw_text, bytes) else raw_text
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, (dict, list)):
+                return parsed
+        except Exception:
+            pass
+
+    return {}
+
+
 def _extract_text_from_groq_response(response):
     if response is None:
         return ""
+
+    if isinstance(response, dict):
+        for key in ["content", "text", "reply", "response"]:
+            value = response.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if isinstance(value, list):
+                flattened = []
+                for item in value:
+                    if isinstance(item, dict):
+                        text_value = item.get("text") or item.get("content")
+                    else:
+                        text_value = getattr(item, "text", None) or getattr(item, "content", None)
+                    if text_value:
+                        flattened.append(str(text_value))
+                if flattened:
+                    return "\n".join(flattened).strip()
+
+    plain_text = getattr(response, "text", None)
+    if isinstance(plain_text, str) and plain_text.strip():
+        return plain_text.strip()
 
     try:
         choices = getattr(response, "choices", None) or []
@@ -2219,10 +2530,7 @@ def generate_ai_horde_image(prompt, width=1024, height=1024, steps=25, cfg_scale
             f"AI Horde request failed with status {response.status_code}: {response.text}"
         )
 
-    try:
-        response_payload = response.json()
-    except Exception:
-        response_payload = {}
+    response_payload = _parse_json_payload(response)
 
     generation_id = response_payload.get("id") or response_payload.get("gen_id")
     if not generation_id:
@@ -2249,10 +2557,7 @@ def wait_for_ai_horde_generation(generation_id, timeout_seconds=180, poll_interv
                 f"AI Horde check failed with status {check_response.status_code}: {check_response.text}"
             )
 
-        try:
-            check_payload = check_response.json()
-        except Exception:
-            check_payload = {}
+        check_payload = _parse_json_payload(check_response)
 
         if check_payload.get("done") is True or check_payload.get("finished") in {1, True}:
             break
@@ -2273,10 +2578,7 @@ def wait_for_ai_horde_generation(generation_id, timeout_seconds=180, poll_interv
             f"AI Horde status request failed with status {status_response.status_code}: {status_response.text}"
         )
 
-    try:
-        status_payload = status_response.json()
-    except Exception:
-        status_payload = {}
+    status_payload = _parse_json_payload(status_response)
 
     image_source, image_format = _finalize_ai_horde_image_result(status_payload)
     if image_source is None:
@@ -2497,8 +2799,9 @@ def _generate_ai_horde_image(prompt):
     )
 
 
-def _handle_chat_request():
-    payload = request.get_json(silent=True) or {}
+def _handle_chat_request(payload=None):
+    if not isinstance(payload, dict):
+        payload = request.get_json(silent=True) or {}
     user_message = str(payload.get("message") or payload.get("input") or payload.get("prompt") or "").strip()
     if not user_message:
         return jsonify({"response": "Please type a message.", "reply": "Please type a message."}), 400
@@ -2545,7 +2848,7 @@ def _handle_chat_request():
             normalized_messages.append({"role": role, "content": str(content)})
     live_context = _mi_prepare_live_context(
         user_message,
-        history,
+        [] if payload.get("_whatsapp_private_history") is True else history,
     )
 
     memory_context = memory_context_for_message(user_message)
@@ -3684,6 +3987,1552 @@ def api_chat():
 def api_chat_get():
     return jsonify({"response": "Method not allowed"}), 405
 
+
+_WHATSAPP_CONTEXT_LIMIT = 20
+_WHATSAPP_HISTORY_RETENTION_DAYS = 30
+_WHATSAPP_DEDUPE_TTL_SECONDS = 8 * 24 * 60 * 60
+_WHATSAPP_PROCESSING_LEASE_SECONDS = 5 * 60
+_WHATSAPP_AI_SLOT_LEASE_SECONDS = 10 * 60
+_WHATSAPP_LEASE_HEARTBEAT_SECONDS = 60
+_WHATSAPP_RATE_LIMIT_COUNT = 10
+_WHATSAPP_RATE_LIMIT_WINDOW_SECONDS = 60
+_WHATSAPP_AI_CONCURRENCY_LIMIT = 10
+_WHATSAPP_RECONCILIATION_GRACE_SECONDS = 15 * 60
+_WHATSAPP_CUSTOMER_SERVICE_WINDOW_SECONDS = 24 * 60 * 60
+_WHATSAPP_BUSINESS_CONTEXT = (
+    "Owner-provided company facts for relevant questions: MI CORTEX X INC is "
+    "a technology-focused initiative founded in 2026, dedicated to developing "
+    "innovative digital solutions. Its projects include CORTEX CORE AI, "
+    "AUTO-CARD-MARKING, CANVA PRO Digital Access Platform, and other "
+    "initiatives. Do not invent unprovided project details."
+)
+
+
+class _WhatsAppAIUnavailable(RuntimeError):
+    pass
+
+
+class _WhatsAppSendRejected(RuntimeError):
+    """The Graph API explicitly rejected the send request."""
+
+
+class _WhatsAppSendOutcomeUnknown(RuntimeError):
+    """The request may have reached Meta, so automatic retry is unsafe."""
+
+
+def _load_whatsapp_senders():
+    raw_senders = (os.getenv("WHATSAPP_SENDERS_JSON") or "").strip()
+    if raw_senders:
+        try:
+            sender_config = json.loads(raw_senders)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("WhatsApp sender configuration is invalid") from exc
+        if not isinstance(sender_config, dict):
+            raise ValueError("WhatsApp sender configuration is invalid")
+
+        senders = {}
+        for phone_number_id, access_token in sender_config.items():
+            phone_number_id = str(phone_number_id).strip()
+            if (
+                not phone_number_id.isdigit()
+                or not isinstance(access_token, str)
+                or not access_token.strip()
+            ):
+                raise ValueError("WhatsApp sender configuration is invalid")
+            senders[phone_number_id] = access_token.strip()
+        return senders
+
+    # Keep the previous single-number configuration working during migration.
+    phone_number_id = (os.getenv("WHATSAPP_PHONE_NUMBER_ID") or "").strip()
+    access_token = (os.getenv("WHATSAPP_ACCESS_TOKEN") or "").strip()
+    if bool(phone_number_id) != bool(access_token):
+        raise ValueError("WhatsApp sender configuration is incomplete")
+    if phone_number_id and not phone_number_id.isdigit():
+        raise ValueError("WhatsApp sender configuration is invalid")
+    return {phone_number_id: access_token} if phone_number_id else {}
+
+
+app.config["WHATSAPP_SENDER_IDS_PROVIDER"] = _load_whatsapp_senders
+app.config["WHATSAPP_FIRESTORE_PROVIDER"] = _firestore_database
+
+
+def _whatsapp_manual_mode(phone_number_id):
+    designated_phone_number_id = str(
+        app.config.get("WHATSAPP_AWAY_PHONE_NUMBER_ID") or ""
+    ).strip()
+    if not designated_phone_number_id or phone_number_id != designated_phone_number_id:
+        return None
+    database = _firestore_database()
+    if database is None:
+        return "AVAILABLE"
+
+    try:
+        snapshot = (
+            database.collection("whatsappManualAvailability")
+            .document(designated_phone_number_id)
+            .get()
+        )
+        if not snapshot.exists:
+            return "AVAILABLE"
+        data = snapshot.to_dict() or {}
+        if data.get("phoneNumberId") != designated_phone_number_id:
+            return "AVAILABLE"
+        has_account_update = isinstance(
+            data.get("coexistence_accountUpdate"), dict
+        )
+        if data.get("manualReviewRequired") is True or (
+            has_account_update and not data.get("manualReviewConfirmedAt")
+        ):
+            return "AVAILABLE"
+        mode = str(data.get("mode") or "").strip().upper()
+        return mode if mode in {"AVAILABLE", "AWAY"} else "AVAILABLE"
+    except Exception:
+        return "AVAILABLE"
+
+
+def _whatsapp_graph_api_version():
+    version = (os.getenv("WHATSAPP_GRAPH_API_VERSION") or "").strip()
+    if not re.fullmatch(r"v\d+\.\d+", version):
+        raise ValueError("WhatsApp Graph API version is not configured")
+    return version
+
+
+def _whatsapp_config_integer(name, default, minimum, maximum):
+    value = os.getenv(name)
+    try:
+        result = int(value) if value is not None else default
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("WhatsApp conversation storage configuration is invalid") from exc
+    if not minimum <= result <= maximum:
+        raise RuntimeError("WhatsApp conversation storage configuration is invalid")
+    return result
+
+
+def _whatsapp_firestore_database():
+    provider = app.config.get("WHATSAPP_FIRESTORE_PROVIDER")
+    database = provider() if callable(provider) else _firestore_database()
+    database = _guard_firestore_database(database)
+    if database is None:
+        raise RuntimeError("WhatsApp conversation storage is unavailable")
+    return database
+
+
+def _whatsapp_run_transaction(database, operation):
+    run_transaction = getattr(database, "run_transaction", None)
+    if callable(run_transaction):
+        return run_transaction(operation)
+
+    transactional = getattr(firebase_admin_firestore, "transactional", None)
+    if not callable(transactional):
+        raise RuntimeError("WhatsApp conversation storage is unavailable")
+    return transactional(operation)(database.transaction(max_attempts=5))
+
+
+def _whatsapp_hmac_identifier(namespace, values):
+    identifier_key = (os.getenv("WHATSAPP_ID_HMAC_KEY") or "").strip()
+    if len(identifier_key.encode("utf-8")) < 32:
+        raise RuntimeError("WhatsApp identifier storage is not configured")
+    value = json.dumps(values, ensure_ascii=True, separators=(",", ":"))
+    message = f"mi-cortex-whatsapp:{namespace}:{value}".encode("utf-8")
+    return hmac.new(
+        identifier_key.encode("utf-8"),
+        message,
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def _whatsapp_expiry_is_future(value, now):
+    if not isinstance(value, datetime):
+        return False
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value > now
+
+
+def _whatsapp_turn_sort_key(turn):
+    created_at = turn["createdAt"]
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    return (
+        turn["timestamp"],
+        created_at,
+        0 if turn["role"] == "user" else 1,
+    )
+
+
+def _whatsapp_stored_turns(data, now):
+    if not _whatsapp_expiry_is_future(data.get("expiresAt"), now):
+        return []
+    turns = data.get("turns", [])
+    if not isinstance(turns, list):
+        raise RuntimeError("WhatsApp conversation data is invalid")
+    normalized_turns = []
+    for turn in turns:
+        if (
+            not isinstance(turn, dict)
+            or turn.get("role") not in {"user", "assistant"}
+            or not isinstance(turn.get("content"), str)
+            or not isinstance(turn.get("timestamp"), int)
+            or not isinstance(turn.get("createdAt"), datetime)
+        ):
+            raise RuntimeError("WhatsApp conversation data is invalid")
+        normalized_turns.append(dict(turn))
+    normalized_turns.sort(key=_whatsapp_turn_sort_key)
+    return normalized_turns
+
+
+def _whatsapp_customer_identity(incoming):
+    business_scoped_id = incoming.get("from_user_id")
+    if business_scoped_id not in (None, ""):
+        identity_type = "bsuid"
+        customer_id = business_scoped_id
+    else:
+        identity_type = "phone"
+        customer_id = incoming.get("from")
+
+    if (
+        not isinstance(customer_id, str)
+        or not customer_id
+        or len(customer_id) > 256
+        or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in customer_id)
+    ):
+        raise ValueError("WhatsApp text message has an invalid customer identifier")
+    if identity_type == "phone" and not re.fullmatch(r"\+?\d{5,20}", customer_id):
+        raise ValueError("WhatsApp text message has an invalid customer identifier")
+    return identity_type, customer_id
+
+
+def _whatsapp_message_timestamp(incoming, now):
+    raw_timestamp = incoming.get("timestamp")
+    if raw_timestamp is None:
+        raise ValueError("WhatsApp text message has no timestamp")
+    if isinstance(raw_timestamp, bool):
+        raise ValueError("WhatsApp text message has an invalid timestamp")
+    if isinstance(raw_timestamp, int):
+        timestamp = raw_timestamp
+    elif isinstance(raw_timestamp, str) and re.fullmatch(r"\d{1,20}", raw_timestamp):
+        timestamp = int(raw_timestamp)
+    else:
+        raise ValueError("WhatsApp text message has an invalid timestamp")
+    if timestamp <= 0 or timestamp > 2**63 - 1:
+        raise ValueError("WhatsApp text message has an invalid timestamp")
+    return timestamp
+
+
+def _whatsapp_customer_service_window_open(message_timestamp, now):
+    message_age = now.timestamp() - message_timestamp
+    return 0 <= message_age < _WHATSAPP_CUSTOMER_SERVICE_WINDOW_SECONDS
+
+
+def _whatsapp_rate_timestamps(rate_data, now_timestamp):
+    raw_timestamps = rate_data.get("timestamps")
+    if raw_timestamps is not None:
+        if not isinstance(raw_timestamps, list):
+            raise RuntimeError("WhatsApp rate-limit storage is invalid")
+        parsed = []
+        for value in raw_timestamps:
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise RuntimeError("WhatsApp rate-limit storage is invalid")
+            parsed_value = float(value)
+            if not math.isfinite(parsed_value):
+                raise RuntimeError("WhatsApp rate-limit storage is invalid")
+            if parsed_value > now_timestamp - _WHATSAPP_RATE_LIMIT_WINDOW_SECONDS:
+                parsed.append(parsed_value)
+        return sorted(parsed)[-_WHATSAPP_RATE_LIMIT_COUNT:]
+
+    # Conservative one-time migration from the previous anchored-window schema.
+    legacy_count = rate_data.get("rateCount")
+    if legacy_count is None:
+        return []
+    if isinstance(legacy_count, bool) or not isinstance(legacy_count, int) or legacy_count < 0:
+        raise RuntimeError("WhatsApp legacy rate-limit storage is invalid")
+    if not legacy_count:
+        return []
+    started_at = rate_data.get("rateWindowStartedAt")
+    if isinstance(started_at, datetime):
+        if started_at.tzinfo is None:
+            started_at = started_at.replace(tzinfo=timezone.utc)
+        legacy_active = (
+            now_timestamp - started_at.timestamp()
+            < _WHATSAPP_RATE_LIMIT_WINDOW_SECONDS
+        )
+    elif isinstance(started_at, (int, float)) and not isinstance(started_at, bool):
+        legacy_active = (
+            now_timestamp - float(started_at)
+            < _WHATSAPP_RATE_LIMIT_WINDOW_SECONDS
+        )
+    else:
+        # Unknown legacy window state: preserve the count for one fresh window.
+        legacy_active = True
+    return [now_timestamp] * min(legacy_count, _WHATSAPP_RATE_LIMIT_COUNT) if legacy_active else []
+
+
+def _whatsapp_optout_ref(database, phone_number_id, identity_type, customer_id):
+    customer_key = _whatsapp_hmac_identifier(
+        "customer-optout",
+        [phone_number_id, identity_type, customer_id],
+    )
+    return database.collection("whatsappCustomerPreferences").document(customer_key)
+
+
+def _whatsapp_set_optout(phone_number_id, identity_type, customer_id, opted_out):
+    database = _whatsapp_firestore_database()
+    preference_ref = _whatsapp_optout_ref(
+        database, phone_number_id, identity_type, customer_id
+    )
+    now = datetime.now(timezone.utc)
+
+    def update(transaction):
+        snapshot = preference_ref.get(transaction=transaction)
+        data = snapshot.to_dict() or {}
+        transaction.set(
+            preference_ref,
+            {
+                "optedOut": bool(opted_out),
+                "updatedAt": now,
+                "expiresAt": None if opted_out else now + timedelta(days=30),
+            },
+            merge=True,
+        )
+        return bool(data.get("optedOut")) != bool(opted_out)
+
+    return _whatsapp_run_transaction(database, update)
+
+
+def _whatsapp_is_opted_out(phone_number_id, identity_type, customer_id):
+    database = _whatsapp_firestore_database()
+    preference_ref = _whatsapp_optout_ref(
+        database, phone_number_id, identity_type, customer_id
+    )
+    snapshot = preference_ref.get()
+    data = snapshot.to_dict() or {}
+    return data.get("optedOut") is True
+
+
+def _whatsapp_claim_message(
+    phone_number_id,
+    identity_type,
+    customer_id,
+    message_id,
+    message_timestamp,
+    *,
+    allow_ai,
+):
+    database = _whatsapp_firestore_database()
+    conversation_id = _whatsapp_hmac_identifier(
+        "conversation",
+        [phone_number_id, identity_type, customer_id],
+    )
+    receipt_id = _whatsapp_hmac_identifier(
+        "receipt",
+        [phone_number_id, identity_type, customer_id, message_id],
+    )
+    rate_id = _whatsapp_hmac_identifier(
+        "rate-limit",
+        [phone_number_id, identity_type, customer_id],
+    )
+    conversation_ref = database.collection(
+        "whatsappConversationMemory"
+    ).document(conversation_id)
+    receipt_ref = database.collection(
+        "whatsappMessageReceipts"
+    ).document(receipt_id)
+    rate_ref = database.collection("whatsappCustomerRateLimits").document(rate_id)
+    preference_ref = _whatsapp_optout_ref(
+        database, phone_number_id, identity_type, customer_id
+    )
+    slot_refs = [
+        database.collection("whatsappAiConcurrencySlots").document(
+            _whatsapp_hmac_identifier("ai-slot", [phone_number_id, slot_index])
+        )
+        for slot_index in range(_WHATSAPP_AI_CONCURRENCY_LIMIT)
+    ]
+    context_limit = _whatsapp_config_integer(
+        "WHATSAPP_CONTEXT_LIMIT",
+        _WHATSAPP_CONTEXT_LIMIT,
+        2,
+        50,
+    )
+    if context_limit % 2:
+        raise RuntimeError("WhatsApp conversation storage configuration is invalid")
+    retention_days = _whatsapp_config_integer(
+        "WHATSAPP_HISTORY_RETENTION_DAYS",
+        _WHATSAPP_HISTORY_RETENTION_DAYS,
+        1,
+        3650,
+    )
+
+    def claim(transaction):
+        now = datetime.now(timezone.utc)
+        now_timestamp = now.timestamp()
+        receipt_snapshot = receipt_ref.get(transaction=transaction)
+        receipt_data = receipt_snapshot.to_dict() or {}
+        receipt_status = receipt_data.get("status")
+        if receipt_status in {
+            "complete", "ignored_available", "rate_limited", "delivered",
+            "sending", "delivery_unknown",
+        }:
+            return {
+                "status": (
+                    "delivery_unknown"
+                    if receipt_status in {"sending", "delivery_unknown"}
+                    else "duplicate"
+                )
+            }
+        if (
+            receipt_status == "processing"
+            and _whatsapp_expiry_is_future(receipt_data.get("lockExpiresAt"), now)
+        ):
+            return {"status": "processing"}
+
+        conversation_snapshot = conversation_ref.get(transaction=transaction)
+        conversation_data = conversation_snapshot.to_dict() or {}
+
+        rate_snapshot = None
+        rate_data = {}
+        slot_snapshots = []
+        slot_data = []
+        if allow_ai:
+            rate_snapshot = rate_ref.get(transaction=transaction)
+            rate_data = rate_snapshot.to_dict() or {}
+            slot_snapshots = [
+                slot_ref.get(transaction=transaction) for slot_ref in slot_refs
+            ]
+            slot_data = [snapshot.to_dict() or {} for snapshot in slot_snapshots]
+
+        if not allow_ai:
+            transaction.set(
+                receipt_ref,
+                {
+                    "status": "ignored_available",
+                    "expiresAt": now + timedelta(seconds=_WHATSAPP_DEDUPE_TTL_SECONDS),
+                    "lockToken": None,
+                    "lockExpiresAt": None,
+                    "customerKey": conversation_id,
+                },
+            )
+            return {"status": "available"}
+
+        active_timestamps = _whatsapp_rate_timestamps(rate_data, now_timestamp)
+        rate_already_counted = receipt_data.get("rateCounted") is True
+        if (
+            not rate_already_counted
+            and len(active_timestamps) >= _WHATSAPP_RATE_LIMIT_COUNT
+        ):
+            transaction.set(
+                receipt_ref,
+                {
+                    "status": "rate_limited",
+                    "expiresAt": now + timedelta(seconds=_WHATSAPP_DEDUPE_TTL_SECONDS),
+                    "customerKey": conversation_id,
+                },
+            )
+            transaction.set(
+                rate_ref,
+                {
+                    "timestamps": active_timestamps,
+                    "updatedAt": now,
+                    "expiresAt": now + timedelta(days=2),
+                },
+                merge=True,
+            )
+            return {"status": "rate_limited"}
+
+        available_slot_index = None
+        for slot_index, data in enumerate(slot_data):
+            if not _whatsapp_expiry_is_future(data.get("lockExpiresAt"), now):
+                available_slot_index = slot_index
+                break
+        if available_slot_index is None:
+            return {"status": "busy"}
+
+        if _whatsapp_expiry_is_future(conversation_data.get("lockExpiresAt"), now):
+            return {"status": "processing"}
+
+        turns = _whatsapp_stored_turns(conversation_data, now)
+        expires_at = conversation_data.get("expiresAt")
+        if not _whatsapp_expiry_is_future(expires_at, now):
+            expires_at = now + timedelta(days=retention_days)
+        history_turns = [
+            turn for turn in turns if turn["timestamp"] <= message_timestamp
+        ]
+
+        lock_token = uuid.uuid4().hex
+        slot_token = uuid.uuid4().hex
+        lock_expires_at = now + timedelta(seconds=_WHATSAPP_PROCESSING_LEASE_SECONDS)
+        slot_expires_at = now + timedelta(seconds=_WHATSAPP_AI_SLOT_LEASE_SECONDS)
+        slot_ref = slot_refs[available_slot_index]
+        transaction.set(
+            conversation_ref,
+            {
+                "turns": turns,
+                "expiresAt": expires_at,
+                "lockToken": lock_token,
+                "lockExpiresAt": lock_expires_at,
+            },
+        )
+        transaction.set(
+            receipt_ref,
+            {
+                "status": "processing",
+                "expiresAt": now + timedelta(seconds=_WHATSAPP_DEDUPE_TTL_SECONDS),
+                "lockToken": lock_token,
+                "lockExpiresAt": lock_expires_at,
+                "customerKey": conversation_id,
+                "rateCounted": True,
+                "slotToken": slot_token,
+            },
+        )
+        if not rate_already_counted:
+            transaction.set(
+                rate_ref,
+                {
+                    "timestamps": [*active_timestamps, now_timestamp],
+                    "updatedAt": now,
+                    "expiresAt": now + timedelta(days=2),
+                },
+                merge=True,
+            )
+        transaction.set(
+            slot_ref,
+            {
+                "phoneNumberId": phone_number_id,
+                "lockToken": slot_token,
+                "lockExpiresAt": slot_expires_at,
+            },
+        )
+        return {
+            "status": "claimed",
+            "history": [
+                {"role": turn["role"], "content": turn["content"]}
+                for turn in history_turns[-context_limit:]
+            ],
+            "database": database,
+            "conversationRef": conversation_ref,
+            "receiptRef": receipt_ref,
+            "rateRef": rate_ref,
+            "preferenceRef": preference_ref,
+            "slotRef": slot_ref,
+            "lockToken": lock_token,
+            "slotToken": slot_token,
+            "contextLimit": context_limit,
+            "retentionDays": retention_days,
+        }
+
+    return _whatsapp_run_transaction(database, claim)
+
+
+def _whatsapp_renew_message_claim(claim):
+    now = datetime.now(timezone.utc)
+    lock_expires_at = now + timedelta(seconds=_WHATSAPP_PROCESSING_LEASE_SECONDS)
+    slot_expires_at = now + timedelta(seconds=_WHATSAPP_AI_SLOT_LEASE_SECONDS)
+    receipt_ref = claim["receiptRef"]
+    conversation_ref = claim["conversationRef"]
+    slot_ref = claim["slotRef"]
+    lock_token = claim["lockToken"]
+    slot_token = claim["slotToken"]
+
+    def renew(transaction):
+        receipt_snapshot = receipt_ref.get(transaction=transaction)
+        conversation_snapshot = conversation_ref.get(transaction=transaction)
+        slot_snapshot = slot_ref.get(transaction=transaction)
+        receipt_data = receipt_snapshot.to_dict() or {}
+        conversation_data = conversation_snapshot.to_dict() or {}
+        slot_data = slot_snapshot.to_dict() or {}
+        if (
+            receipt_data.get("status") != "processing"
+            or receipt_data.get("lockToken") != lock_token
+            or conversation_data.get("lockToken") != lock_token
+            or slot_data.get("lockToken") != slot_token
+        ):
+            return False
+        transaction.set(receipt_ref, {"lockExpiresAt": lock_expires_at}, merge=True)
+        transaction.set(
+            conversation_ref, {"lockExpiresAt": lock_expires_at}, merge=True
+        )
+        transaction.set(
+            slot_ref, {"lockExpiresAt": slot_expires_at}, merge=True
+        )
+        return True
+
+    return _whatsapp_run_transaction(claim["database"], renew)
+
+
+def _whatsapp_release_message(claim, status):
+    if status not in {"failed", "ignored_available"}:
+        raise ValueError("Invalid WhatsApp message receipt status")
+    now = datetime.now(timezone.utc)
+    receipt_ref = claim["receiptRef"]
+    conversation_ref = claim["conversationRef"]
+    slot_ref = claim["slotRef"]
+    lock_token = claim["lockToken"]
+    slot_token = claim["slotToken"]
+
+    def release(transaction):
+        receipt_snapshot = receipt_ref.get(transaction=transaction)
+        conversation_snapshot = conversation_ref.get(transaction=transaction)
+        slot_snapshot = slot_ref.get(transaction=transaction)
+        receipt_data = receipt_snapshot.to_dict() or {}
+        conversation_data = conversation_snapshot.to_dict() or {}
+        slot_data = slot_snapshot.to_dict() or {}
+        if (
+            receipt_data.get("status") != "processing"
+            or receipt_data.get("lockToken") != lock_token
+        ):
+            return False
+        transaction.set(
+            receipt_ref,
+            {
+                "status": status,
+                "expiresAt": now + timedelta(seconds=_WHATSAPP_DEDUPE_TTL_SECONDS),
+                "lockToken": None,
+                "lockExpiresAt": None,
+                "slotToken": None,
+            },
+            merge=True,
+        )
+        if conversation_data.get("lockToken") == lock_token:
+            transaction.set(
+                conversation_ref,
+                {"lockToken": None, "lockExpiresAt": None},
+                merge=True,
+            )
+        if slot_data.get("lockToken") == slot_token:
+            transaction.set(
+                slot_ref,
+                {"lockToken": None, "lockExpiresAt": None},
+                merge=True,
+            )
+        return True
+
+    return _whatsapp_run_transaction(claim["database"], release)
+
+
+def _whatsapp_authorize_send(claim, phone_number_id):
+    now = datetime.now(timezone.utc)
+    receipt_ref = claim["receiptRef"]
+    conversation_ref = claim["conversationRef"]
+    slot_ref = claim["slotRef"]
+    preference_ref = claim["preferenceRef"]
+    lock_token = claim["lockToken"]
+    slot_token = claim["slotToken"]
+    designated_phone_number_id = str(
+        app.config.get("WHATSAPP_AWAY_PHONE_NUMBER_ID") or ""
+    ).strip()
+    manual_ref = None
+    if designated_phone_number_id and phone_number_id == designated_phone_number_id:
+        manual_ref = claim["database"].collection(
+            "whatsappManualAvailability"
+        ).document(designated_phone_number_id)
+
+    def authorize(transaction):
+        receipt_snapshot = receipt_ref.get(transaction=transaction)
+        conversation_snapshot = conversation_ref.get(transaction=transaction)
+        slot_snapshot = slot_ref.get(transaction=transaction)
+        preference_snapshot = preference_ref.get(transaction=transaction)
+        manual_snapshot = (
+            manual_ref.get(transaction=transaction) if manual_ref is not None else None
+        )
+        receipt_data = receipt_snapshot.to_dict() or {}
+        conversation_data = conversation_snapshot.to_dict() or {}
+        slot_data = slot_snapshot.to_dict() or {}
+        preference_data = preference_snapshot.to_dict() or {}
+        now_inner = datetime.now(timezone.utc)
+        if preference_data.get("optedOut") is True:
+            return False
+        if (
+            receipt_data.get("status") != "processing"
+            or receipt_data.get("lockToken") != lock_token
+            or not _whatsapp_expiry_is_future(receipt_data.get("lockExpiresAt"), now_inner)
+            or conversation_data.get("lockToken") != lock_token
+            or not _whatsapp_expiry_is_future(conversation_data.get("lockExpiresAt"), now_inner)
+            or slot_data.get("lockToken") != slot_token
+            or not _whatsapp_expiry_is_future(slot_data.get("lockExpiresAt"), now_inner)
+        ):
+            return False
+
+        if manual_snapshot is not None:
+            manual_data = manual_snapshot.to_dict() or {}
+            if (
+                manual_data.get("phoneNumberId") != designated_phone_number_id
+                or str(manual_data.get("mode") or "").strip().upper() != "AWAY"
+                or manual_data.get("manualReviewRequired") is True
+                or (
+                    isinstance(manual_data.get("coexistence_accountUpdate"), dict)
+                    and not manual_data.get("manualReviewConfirmedAt")
+                )
+            ):
+                return False
+
+        transaction.set(
+            receipt_ref,
+            {
+                "status": "sending",
+                "sendStartedAt": now_inner,
+                "lockExpiresAt": now_inner + timedelta(
+                    seconds=_WHATSAPP_AI_SLOT_LEASE_SECONDS
+                ),
+            },
+            merge=True,
+        )
+        return True
+
+    return _whatsapp_run_transaction(claim["database"], authorize)
+
+
+def _whatsapp_finalize_send_failure(claim, status):
+    if status not in {"failed", "delivery_unknown"}:
+        raise ValueError("Invalid WhatsApp send failure status")
+    now = datetime.now(timezone.utc)
+    receipt_ref = claim["receiptRef"]
+    conversation_ref = claim["conversationRef"]
+    slot_ref = claim["slotRef"]
+    lock_token = claim["lockToken"]
+    slot_token = claim["slotToken"]
+
+    def finalize(transaction):
+        receipt_snapshot = receipt_ref.get(transaction=transaction)
+        conversation_snapshot = conversation_ref.get(transaction=transaction)
+        slot_snapshot = slot_ref.get(transaction=transaction)
+        receipt_data = receipt_snapshot.to_dict() or {}
+        conversation_data = conversation_snapshot.to_dict() or {}
+        slot_data = slot_snapshot.to_dict() or {}
+        if (
+            receipt_data.get("status") != "sending"
+            or receipt_data.get("lockToken") != lock_token
+        ):
+            return False
+        transaction.set(
+            receipt_ref,
+            {
+                "status": status,
+                "sendFinishedAt": now,
+                "expiresAt": now + timedelta(seconds=_WHATSAPP_DEDUPE_TTL_SECONDS),
+                "lockToken": None,
+                "lockExpiresAt": None,
+                "slotToken": None,
+            },
+            merge=True,
+        )
+        if conversation_data.get("lockToken") == lock_token:
+            transaction.set(
+                conversation_ref,
+                {"lockToken": None, "lockExpiresAt": None},
+                merge=True,
+            )
+        if slot_data.get("lockToken") == slot_token:
+            transaction.set(
+                slot_ref,
+                {"lockToken": None, "lockExpiresAt": None},
+                merge=True,
+            )
+        return True
+
+    return _whatsapp_run_transaction(claim["database"], finalize)
+
+
+def _whatsapp_complete_message(claim, user_message, assistant_message, message_timestamp):
+    now = datetime.now(timezone.utc)
+    receipt_ref = claim["receiptRef"]
+    conversation_ref = claim["conversationRef"]
+    slot_ref = claim["slotRef"]
+    lock_token = claim["lockToken"]
+    slot_token = claim["slotToken"]
+
+    def complete(transaction):
+        receipt_snapshot = receipt_ref.get(transaction=transaction)
+        conversation_snapshot = conversation_ref.get(transaction=transaction)
+        slot_snapshot = slot_ref.get(transaction=transaction)
+        receipt_data = receipt_snapshot.to_dict() or {}
+        conversation_data = conversation_snapshot.to_dict() or {}
+        slot_data = slot_snapshot.to_dict() or {}
+        if (
+            receipt_data.get("status") != "sending"
+            or receipt_data.get("lockToken") != lock_token
+            or conversation_data.get("lockToken") != lock_token
+            or slot_data.get("lockToken") != slot_token
+        ):
+            return False
+
+        turns = _whatsapp_stored_turns(conversation_data, now)
+        turns.extend([
+            {
+                "role": "user",
+                "content": user_message,
+                "timestamp": message_timestamp,
+                "createdAt": now,
+            },
+            {
+                "role": "assistant",
+                "content": assistant_message,
+                "timestamp": message_timestamp,
+                "createdAt": now,
+            },
+        ])
+        turns.sort(key=_whatsapp_turn_sort_key)
+        turns = turns[-claim["contextLimit"]:]
+        transaction.set(
+            conversation_ref,
+            {
+                "turns": turns,
+                "updatedAt": now,
+                "expiresAt": now + timedelta(days=claim["retentionDays"]),
+                "lockToken": None,
+                "lockExpiresAt": None,
+            },
+        )
+        transaction.set(
+            receipt_ref,
+            {
+                "status": "complete",
+                "completedAt": now,
+                "expiresAt": now + timedelta(seconds=_WHATSAPP_DEDUPE_TTL_SECONDS),
+                "lockToken": None,
+                "lockExpiresAt": None,
+                "slotToken": None,
+            },
+            merge=True,
+        )
+        if slot_data.get("lockToken") == slot_token:
+            transaction.set(
+                slot_ref,
+                {"lockToken": None, "lockExpiresAt": None},
+                merge=True,
+            )
+        return True
+
+    return _whatsapp_run_transaction(claim["database"], complete)
+
+
+def _whatsapp_ai_is_allowed(phone_number_id):
+    designated_phone_number_id = str(
+        app.config.get("WHATSAPP_AWAY_PHONE_NUMBER_ID") or ""
+    ).strip()
+    return (
+        phone_number_id != designated_phone_number_id
+        or _whatsapp_manual_mode(phone_number_id) == "AWAY"
+    )
+
+
+class _WhatsAppLeaseHeartbeat:
+    def __init__(self, claim):
+        self.claim = claim
+        self._stop = threading.Event()
+        self._lost = threading.Event()
+        self._thread = None
+
+    def _run(self):
+        while not self._stop.wait(_WHATSAPP_LEASE_HEARTBEAT_SECONDS):
+            try:
+                if not _whatsapp_renew_message_claim(self.claim):
+                    self._lost.set()
+                    return
+            except Exception:
+                self._lost.set()
+                return
+
+    def __enter__(self):
+        self._thread = threading.Thread(
+            target=self._run,
+            name="whatsapp-lease-heartbeat",
+            daemon=True,
+        )
+        self._thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback_value):
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2)
+
+    @property
+    def healthy(self):
+        return not self._lost.is_set()
+
+
+def _send_whatsapp_text(
+    phone_number_id,
+    recipient,
+    message,
+    *,
+    recipient_is_business_scoped_id=False,
+):
+    senders = _load_whatsapp_senders()
+    access_token = senders.get(phone_number_id)
+    if not access_token:
+        raise _WhatsAppSendRejected("WhatsApp sender is not approved")
+    graph_api_version = _whatsapp_graph_api_version()
+
+    recipient_field = "recipient" if recipient_is_business_scoped_id else "to"
+    try:
+        response = requests.post(
+            f"https://graph.facebook.com/{graph_api_version}/{phone_number_id}/messages",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                recipient_field: recipient,
+                "type": "text",
+                "text": {"preview_url": False, "body": message[:4096]},
+            },
+            timeout=15,
+        )
+    except requests.exceptions.RequestException as exc:
+        raise _WhatsAppSendOutcomeUnknown(
+            "WhatsApp delivery outcome is unknown"
+        ) from exc
+    if 400 <= response.status_code < 500:
+        raise _WhatsAppSendRejected(
+            f"WhatsApp Cloud API rejected the request with HTTP {response.status_code}"
+        )
+    if not 200 <= response.status_code < 300:
+        raise _WhatsAppSendOutcomeUnknown(
+            f"WhatsApp Cloud API returned HTTP {response.status_code}"
+        )
+    return response
+
+
+def _process_whatsapp_text(phone_number_id, incoming):
+    identity_type, sender_id = _whatsapp_customer_identity(incoming)
+    recipient_is_business_scoped_id = identity_type == "bsuid"
+    message_id = incoming.get("id")
+    if (
+        not isinstance(message_id, str)
+        or not message_id
+        or len(message_id) > 512
+        or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in message_id)
+    ):
+        raise ValueError("WhatsApp text message has an invalid message identifier")
+    text_payload = incoming.get("text")
+    if not isinstance(text_payload, dict) or not isinstance(text_payload.get("body"), str):
+        raise ValueError("WhatsApp text message is invalid")
+    message = text_payload["body"].strip()
+    if not message:
+        return "ignored"
+    if len(message) > 4096:
+        raise ValueError("WhatsApp text message exceeds the supported size")
+
+    received_at = datetime.now(timezone.utc)
+    message_timestamp = _whatsapp_message_timestamp(incoming, received_at)
+    normalized_command = re.sub(r"\s+", " ", message).strip().casefold()
+    if normalized_command in {
+        "stop", "stop all", "unsubscribe", "cancel", "end", "quit"
+    }:
+        _whatsapp_set_optout(
+            phone_number_id, identity_type, sender_id, True
+        )
+        return "opted_out"
+    is_opt_in_command = normalized_command in {"start", "unstop", "subscribe"}
+    if is_opt_in_command:
+        _whatsapp_set_optout(
+            phone_number_id, identity_type, sender_id, False
+        )
+    elif not _whatsapp_customer_service_window_open(message_timestamp, received_at):
+        return "outside_window"
+    elif _whatsapp_is_opted_out(phone_number_id, identity_type, sender_id):
+        return "opted_out"
+
+    if not _whatsapp_customer_service_window_open(message_timestamp, received_at):
+        return "outside_window"
+
+    allow_ai = _whatsapp_ai_is_allowed(phone_number_id)
+    claim = _whatsapp_claim_message(
+        phone_number_id,
+        identity_type,
+        sender_id,
+        message_id,
+        message_timestamp,
+        allow_ai=allow_ai,
+    )
+    if claim["status"] in {"duplicate", "available"}:
+        return claim["status"]
+    if claim["status"] in {"processing", "busy"}:
+        return "processing"
+    if claim["status"] in {"rate_limited", "delivery_unknown"}:
+        return claim["status"]
+
+    try:
+        with _WhatsAppLeaseHeartbeat(claim) as heartbeat:
+            if _is_image_generation_request(message):
+                reply = (
+                    "I can't generate or deliver images through WhatsApp yet. "
+                    "I can still help with text questions."
+                )
+            else:
+                ai_history = [
+                    {"role": "system", "content": _WHATSAPP_BUSINESS_CONTEXT},
+                    *claim["history"],
+                ]
+                chat_response = make_response(_handle_chat_request({
+                    "message": message,
+                    "history": ai_history,
+                    "_whatsapp_private_history": True,
+                }))
+                chat_payload = chat_response.get_json(silent=True) or {}
+                if chat_response.status_code >= 500 or chat_payload.get("error_code"):
+                    raise _WhatsAppAIUnavailable()
+                reply = str(
+                    chat_payload.get("reply") or chat_payload.get("response") or ""
+                ).strip()
+                if chat_payload.get("type") == "image" and not reply:
+                    reply = (
+                        "I can't generate or deliver images through WhatsApp yet. "
+                        "I can still help with text questions."
+                    )
+                if not reply:
+                    raise _WhatsAppAIUnavailable()
+
+            if not heartbeat.healthy:
+                _whatsapp_release_message(claim, "failed")
+                return "processing"
+
+            # Availability and delivery-state authorization are checked atomically.
+            if not _whatsapp_authorize_send(claim, phone_number_id):
+                _whatsapp_release_message(claim, "ignored_available")
+                return "available"
+
+            reply = reply[:4096]
+            try:
+                _send_whatsapp_text(
+                    phone_number_id,
+                    sender_id,
+                    reply,
+                    recipient_is_business_scoped_id=recipient_is_business_scoped_id,
+                )
+            except _WhatsAppSendRejected:
+                _whatsapp_finalize_send_failure(claim, "failed")
+                raise
+            except Exception:
+                # Never automatically retry after a request may have reached Meta.
+                _whatsapp_finalize_send_failure(claim, "delivery_unknown")
+                raise
+
+            try:
+                completed = _whatsapp_complete_message(
+                    claim,
+                    message,
+                    reply,
+                    message_timestamp,
+                )
+            except Exception:
+                _whatsapp_finalize_send_failure(claim, "delivery_unknown")
+                raise
+            if not completed:
+                _whatsapp_finalize_send_failure(claim, "delivery_unknown")
+                raise RuntimeError("WhatsApp conversation could not be persisted")
+            return "sent"
+    except (_WhatsAppSendRejected, _WhatsAppSendOutcomeUnknown):
+        raise
+    except Exception:
+        # Only a still-processing receipt is retryable. The release helper refuses
+        # to alter a receipt already transitioned to sending/delivery_unknown.
+        _whatsapp_release_message(claim, "failed")
+        raise
+
+
+def _whatsapp_reconcile_delivery(receipt_id, decision, operator):
+    if decision not in {"delivered", "not-delivered"}:
+        raise ValueError("Invalid WhatsApp reconciliation decision")
+    if not re.fullmatch(r"[0-9a-f]{64}", str(receipt_id or "")):
+        raise ValueError("Invalid WhatsApp receipt identifier")
+    database = _whatsapp_firestore_database()
+    receipt_ref = database.collection("whatsappMessageReceipts").document(receipt_id)
+    now = datetime.now(timezone.utc)
+
+    def reconcile(transaction):
+        snapshot = receipt_ref.get(transaction=transaction)
+        if not snapshot.exists:
+            return "not-found"
+        data = snapshot.to_dict() or {}
+        if data.get("status") != "delivery_unknown":
+            return "not-reconcilable"
+        send_started_at = data.get("sendStartedAt")
+        if not isinstance(send_started_at, datetime):
+            return "missing-send-time"
+        if send_started_at.tzinfo is None:
+            send_started_at = send_started_at.replace(tzinfo=timezone.utc)
+        if (
+            now - send_started_at
+        ).total_seconds() < _WHATSAPP_RECONCILIATION_GRACE_SECONDS:
+            return "too-recent"
+        if _whatsapp_expiry_is_future(data.get("lockExpiresAt"), now):
+            return "active-lease"
+        transaction.set(
+            receipt_ref,
+            {
+                "status": "delivered" if decision == "delivered" else "failed",
+                "reconciledAt": now,
+                "reconciledDecision": decision,
+                "reconciledBy": str(operator)[:128],
+                "expiresAt": now + timedelta(seconds=_WHATSAPP_DEDUPE_TTL_SECONDS),
+                "lockToken": None,
+                "lockExpiresAt": None,
+                "slotToken": None,
+            },
+            merge=True,
+        )
+        return "updated"
+
+    return _whatsapp_run_transaction(database, reconcile)
+
+
+@app.cli.command("whatsapp-reconcile-delivery")
+@click.argument("receipt_id")
+@click.option(
+    "--decision",
+    type=click.Choice(["delivered", "not-delivered"], case_sensitive=False),
+    required=True,
+)
+@click.option("--operator", required=True, help="Local operator identifier for the audit record.")
+def whatsapp_reconcile_delivery_command(receipt_id, decision, operator):
+    """Reconcile a stale ambiguous send after checking Meta delivery evidence."""
+    decision = decision.lower()
+    click.echo(
+        "This command never sends a WhatsApp message. Check Meta delivery records "
+        "for this exact message before choosing a decision."
+    )
+    click.confirm(
+        "Have you independently verified the final Meta delivery status?",
+        abort=True,
+    )
+    try:
+        result = _whatsapp_reconcile_delivery(receipt_id, decision, operator)
+    except Exception:
+        click.echo("Reconciliation failed; receipt state was not confirmed.", err=True)
+        raise click.ClickException("WhatsApp delivery reconciliation failed.")
+    if result != "updated":
+        click.echo(f"Receipt was not changed: {result}", err=True)
+        raise click.ClickException("WhatsApp receipt is not eligible for reconciliation.")
+    click.echo(
+        "Receipt updated. A not-delivered decision only makes a later Meta webhook "
+        "redelivery eligible for processing; this command does not send or retry."
+    )
+
+
+_WHATSAPP_COEXISTENCE_ACCOUNT_STATES = {
+    "PARTNER_ADDED": "partner_added_unverified",
+    "PARTNER_APP_INSTALLED": "partner_app_installed_unverified",
+    "PARTNER_APP_UNINSTALLED": "partner_app_uninstalled_needs_review",
+    "PARTNER_REMOVED": "partner_removed",
+    "ACCOUNT_DELETED": "account_deleted",
+    "ACCOUNT_OFFBOARDED": "account_offboarded",
+    "ACCOUNT_RECONNECTED": "reconnected_needs_review",
+    "ACCOUNT_RESTRICTION": "account_restricted",
+    "ACCOUNT_VIOLATION": "account_violation",
+    "DISABLED_UPDATE": "disabled_state_changed_needs_review",
+}
+
+
+def _safe_whatsapp_event_timestamp(value):
+    if isinstance(value, bool):
+        return None
+    try:
+        timestamp = int(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return timestamp if 0 < timestamp <= 4102444800 else None
+
+
+def _whatsapp_coexistence_binding(field, entry, value):
+    target_phone_number_id = str(
+        app.config.get("WHATSAPP_AWAY_PHONE_NUMBER_ID") or ""
+    ).strip()
+    target_waba_id = str(os.getenv("WHATSAPP_WABA_ID") or "").strip()
+    sender_provider = app.config.get("WHATSAPP_SENDER_IDS_PROVIDER")
+    if (
+        not target_phone_number_id.isdigit()
+        or not target_waba_id.isdigit()
+        or not callable(sender_provider)
+    ):
+        return None
+    try:
+        if target_phone_number_id not in sender_provider():
+            return None
+    except Exception:
+        return None
+
+    if field == "account_update":
+        waba_info = value.get("waba_info") or {}
+        if not isinstance(waba_info, dict):
+            return None
+        event_waba_id = str(
+            waba_info.get("waba_id") or entry.get("id") or ""
+        ).strip()
+        return target_phone_number_id if event_waba_id == target_waba_id else None
+
+    metadata = value.get("metadata") or {}
+    if not isinstance(metadata, dict):
+        return None
+    event_phone_number_id = str(metadata.get("phone_number_id") or "").strip()
+    event_waba_id = str(entry.get("id") or "").strip()
+    if (
+        event_phone_number_id != target_phone_number_id
+        or event_waba_id != target_waba_id
+    ):
+        return None
+    return target_phone_number_id
+
+
+def _coexistence_history_summary(value, entry):
+    batches = value.get("history")
+    if not isinstance(batches, list):
+        raise ValueError("Coexistence history must be a list")
+
+    thread_count = 0
+    message_count = 0
+    phases = set()
+    chunk_orders = set()
+    progress_values = []
+    error_codes = set()
+    for batch in batches:
+        if not isinstance(batch, dict):
+            raise ValueError("Coexistence history batch is invalid")
+        batch_metadata = batch.get("metadata") or {}
+        if not isinstance(batch_metadata, dict):
+            raise ValueError("Coexistence history metadata is invalid")
+
+        phase = batch_metadata.get("phase")
+        if isinstance(phase, int) and not isinstance(phase, bool) and phase in {0, 1, 2}:
+            phases.add(phase)
+        chunk_order = batch_metadata.get("chunk_order")
+        if isinstance(chunk_order, int) and not isinstance(chunk_order, bool) and chunk_order > 0:
+            chunk_orders.add(chunk_order)
+        progress = batch_metadata.get("progress")
+        if isinstance(progress, int) and not isinstance(progress, bool) and 0 <= progress <= 100:
+            progress_values.append(progress)
+
+        errors = batch.get("errors") or []
+        if not isinstance(errors, list):
+            raise ValueError("Coexistence history errors are invalid")
+        for error in errors:
+            if isinstance(error, dict):
+                code = error.get("code")
+                if isinstance(code, int) and not isinstance(code, bool):
+                    error_codes.add(code)
+
+        threads = batch.get("threads") or []
+        if not isinstance(threads, list):
+            raise ValueError("Coexistence history threads are invalid")
+        thread_count += len(threads)
+        for thread in threads:
+            if not isinstance(thread, dict):
+                raise ValueError("Coexistence history thread is invalid")
+            messages = thread.get("messages") or []
+            if not isinstance(messages, list):
+                raise ValueError("Coexistence history messages are invalid")
+            for historical_message in messages:
+                if not isinstance(historical_message, dict):
+                    raise ValueError("Coexistence historical message is invalid")
+                message_id = historical_message.get("id")
+                if not isinstance(message_id, str) or not message_id.strip() or len(message_id) > 512:
+                    raise ValueError("Coexistence historical message ID is invalid")
+                _safe_whatsapp_event_timestamp(historical_message.get("timestamp"))
+                message_count += 1
+
+    return {
+        "batchesObserved": len(batches),
+        "threadsObserved": thread_count,
+        "messagesObserved": message_count,
+        "phasesObserved": sorted(phases),
+        "chunkOrdersObserved": sorted(chunk_orders),
+        "maxProgressObserved": max(progress_values) if progress_values else None,
+        "errorCodes": sorted(error_codes)[:20],
+        "eventTimestamp": _safe_whatsapp_event_timestamp(entry.get("time")),
+    }
+
+
+def _coexistence_state_sync_summary(value, entry):
+    state_sync = value.get("state_sync")
+    if not isinstance(state_sync, list):
+        raise ValueError("Coexistence state_sync must be a list")
+
+    action_counts = {"add": 0, "remove": 0, "other": 0}
+    timestamps = []
+    for item in state_sync:
+        if not isinstance(item, dict):
+            raise ValueError("Coexistence state_sync item is invalid")
+        action = str(item.get("action") or "").strip().lower()
+        action_counts[action if action in {"add", "remove"} else "other"] += 1
+        metadata = item.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            raise ValueError("Coexistence state_sync metadata is invalid")
+        timestamp = _safe_whatsapp_event_timestamp(metadata.get("timestamp"))
+        if timestamp is not None:
+            timestamps.append(timestamp)
+
+    return {
+        "contactEventsObserved": len(state_sync),
+        "addEventsObserved": action_counts["add"],
+        "removeEventsObserved": action_counts["remove"],
+        "otherEventsObserved": action_counts["other"],
+        "lastItemTimestamp": max(timestamps) if timestamps else None,
+        "eventTimestamp": _safe_whatsapp_event_timestamp(entry.get("time")),
+    }
+
+
+def _coexistence_echo_summary(value, entry):
+    echoes = value.get("message_echoes")
+    if not isinstance(echoes, list):
+        raise ValueError("Coexistence message_echoes must be a list")
+
+    types = {"text": 0, "other": 0}
+    timestamps = []
+    for echo in echoes:
+        if not isinstance(echo, dict):
+            raise ValueError("Coexistence message echo is invalid")
+        message_id = echo.get("id")
+        if not isinstance(message_id, str) or not message_id.strip() or len(message_id) > 512:
+            raise ValueError("Coexistence echo message ID is invalid")
+        message_type = str(echo.get("type") or "").strip().lower()
+        types["text" if message_type == "text" else "other"] += 1
+        timestamp = _safe_whatsapp_event_timestamp(echo.get("timestamp"))
+        if timestamp is not None:
+            timestamps.append(timestamp)
+
+    return {
+        "echoesObserved": len(echoes),
+        "textEchoesObserved": types["text"],
+        "otherEchoesObserved": types["other"],
+        "lastEchoTimestamp": max(timestamps) if timestamps else None,
+        "eventTimestamp": _safe_whatsapp_event_timestamp(entry.get("time")),
+    }
+
+
+_WHATSAPP_FIRESTORE_INT64_MAX = (1 << 63) - 1
+
+
+def _whatsapp_coexistence_revision(data):
+    revision = (data or {}).get("coexistenceEventVersion", 0)
+    if (
+        type(revision) is not int
+        or revision < 0
+        or revision > _WHATSAPP_FIRESTORE_INT64_MAX
+    ):
+        raise RuntimeError("WhatsApp coexistence revision is invalid")
+    return revision
+
+
+def _save_whatsapp_coexistence_summary(
+    phone_number_id,
+    field,
+    summary,
+    mode=None,
+    manual_review_required=False,
+):
+    database = _firestore_database()
+    if database is None:
+        raise RuntimeError("WhatsApp coexistence state storage is unavailable")
+    fields = {
+        "phoneNumberId": phone_number_id,
+        f"coexistence_{field}": summary,
+    }
+    if mode == "AVAILABLE":
+        fields.update({
+            "mode": "AVAILABLE",
+            "modeUpdatedAt": datetime.now(timezone.utc).isoformat(),
+            "modeUpdatedBy": "meta_account_update",
+        })
+    if manual_review_required:
+        fields["manualReviewRequired"] = True
+        fields["manualReviewRequiredAt"] = datetime.now(timezone.utc).isoformat()
+        fields["manualReviewConfirmedAt"] = None
+        fields["manualReviewConfirmedByUid"] = None
+    reference = database.collection(
+        "whatsappManualAvailability"
+    ).document(phone_number_id)
+
+    def update(transaction):
+        snapshot = reference.get(transaction=transaction)
+        current_data = snapshot.to_dict() or {} if snapshot.exists else {}
+        current_revision = _whatsapp_coexistence_revision(current_data)
+        transaction_fields = fields
+        if manual_review_required:
+            if current_revision == _WHATSAPP_FIRESTORE_INT64_MAX:
+                raise RuntimeError(
+                    "WhatsApp coexistence revision is exhausted"
+                )
+            transaction_fields = {
+                **fields,
+                "coexistenceEventVersion": current_revision + 1,
+            }
+        transaction.set(reference, transaction_fields, merge=True)
+
+    _whatsapp_run_transaction(database, update)
+
+
+def _process_whatsapp_coexistence_event(field, entry, value):
+    phone_number_id = _whatsapp_coexistence_binding(field, entry, value)
+    if not phone_number_id:
+        return "ignored"
+
+    if field == "account_update":
+        event_name = str(value.get("event") or "").strip().upper()
+        state = _WHATSAPP_COEXISTENCE_ACCOUNT_STATES.get(event_name)
+        if not state:
+            event_name = "UNRECOGNIZED"
+            state = "manual_review_required"
+        summary = {
+            "event": event_name,
+            "status": state,
+            "eventTimestamp": _safe_whatsapp_event_timestamp(entry.get("time")),
+        }
+        _save_whatsapp_coexistence_summary(
+            phone_number_id,
+            "accountUpdate",
+            summary,
+            mode="AVAILABLE",
+            manual_review_required=True,
+        )
+        return "processed"
+
+    if field == "history":
+        summary = _coexistence_history_summary(value, entry)
+    elif field == "smb_app_state_sync":
+        summary = _coexistence_state_sync_summary(value, entry)
+    elif field == "smb_message_echoes":
+        summary = _coexistence_echo_summary(value, entry)
+    else:
+        return "ignored"
+
+    summary["status"] = "observed_summary_only"
+    _save_whatsapp_coexistence_summary(phone_number_id, field, summary)
+    return "processed"
+
+
+@app.route("/api/whatsapp/webhook", methods=["GET", "POST"])
+def whatsapp_cloud_webhook():
+    if request.method == "GET":
+        verify_token = (os.getenv("WHATSAPP_VERIFY_TOKEN") or "").strip()
+        if not verify_token:
+            return jsonify({"error": "WhatsApp webhook is not configured"}), 503
+
+        mode = request.args.get("hub.mode", "")
+        provided_token = request.args.get("hub.verify_token", "")
+        challenge = request.args.get("hub.challenge", "")
+        try:
+            token_matches = hmac.compare_digest(
+                provided_token.encode("utf-8"),
+                verify_token.encode("utf-8"),
+            )
+        except (AttributeError, UnicodeEncodeError):
+            token_matches = False
+        if mode != "subscribe" or not token_matches:
+            return jsonify({"error": "Webhook verification failed"}), 403
+        return challenge, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+    app_secret = (os.getenv("WHATSAPP_APP_SECRET") or "").strip()
+    if not app_secret:
+        return jsonify({"error": "WhatsApp webhook is not configured"}), 503
+    try:
+        senders = _load_whatsapp_senders()
+        _whatsapp_graph_api_version()
+    except ValueError:
+        return jsonify({"error": "WhatsApp Cloud API is not configured"}), 503
+    if not senders:
+        return jsonify({"error": "WhatsApp Cloud API is not configured"}), 503
+    max_webhook_body_bytes = 3 * 1024 * 1024
+    if request.content_length and request.content_length > max_webhook_body_bytes:
+        return jsonify({"error": "Webhook payload is too large"}), 413
+
+    # Read at most one byte beyond the limit, including chunked requests without
+    # Content-Length, before signature verification or JSON parsing.
+    raw_body = request.stream.read(max_webhook_body_bytes + 1)
+    if len(raw_body) > max_webhook_body_bytes:
+        return jsonify({"error": "Webhook payload is too large"}), 413
+    provided_signature = request.headers.get("X-Hub-Signature-256", "")
+    if not isinstance(provided_signature, str) or not re.fullmatch(
+        r"sha256=[0-9a-f]{64}", provided_signature
+    ):
+        return jsonify({"error": "Webhook signature is invalid"}), 403
+    expected_signature = "sha256=" + hmac.new(
+        app_secret.encode("utf-8"), raw_body, hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(
+        provided_signature.encode("ascii"),
+        expected_signature.encode("ascii"),
+    ):
+        return jsonify({"error": "Webhook signature is invalid"}), 403
+
+    try:
+        payload = json.loads(raw_body)
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+        return jsonify({"error": "Webhook payload must be valid JSON"}), 400
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Webhook payload must be a JSON object"}), 400
+    if payload.get("object") != "whatsapp_business_account":
+        return jsonify({"status": "ignored"}), 200
+    entries = payload.get("entry")
+    if not isinstance(entries, list):
+        return jsonify({"error": "Webhook entries must be a list"}), 400
+
+    try:
+        for entry in entries:
+            if not isinstance(entry, dict) or not isinstance(entry.get("changes"), list):
+                return jsonify({"error": "Webhook entry is invalid"}), 400
+            for change in entry["changes"]:
+                if not isinstance(change, dict):
+                    return jsonify({"error": "Webhook change is invalid"}), 400
+                field = str(change.get("field") or "")
+                value = change.get("value") or {}
+                if not isinstance(value, dict):
+                    return jsonify({"error": "Webhook value is invalid"}), 400
+
+                if field in {
+                    "account_update",
+                    "history",
+                    "smb_app_state_sync",
+                    "smb_message_echoes",
+                }:
+                    _process_whatsapp_coexistence_event(
+                        field,
+                        entry,
+                        value,
+                    )
+                    continue
+                if field != "messages":
+                    continue
+
+                metadata = value.get("metadata") or {}
+                if not isinstance(metadata, dict):
+                    return jsonify({"error": "Webhook metadata is invalid"}), 400
+                phone_number_id = str(metadata.get("phone_number_id") or "").strip()
+                access_token = senders.get(phone_number_id)
+                if not access_token:
+                    continue
+
+                messages = value.get("messages", [])
+                if not isinstance(messages, list):
+                    return jsonify({"error": "Webhook messages must be a list"}), 400
+                for incoming in messages:
+                    if not isinstance(incoming, dict):
+                        return jsonify({"error": "Webhook message is invalid"}), 400
+                    if incoming.get("type") != "text":
+                        continue
+                    result = _process_whatsapp_text(
+                        phone_number_id,
+                        incoming,
+                    )
+                    if result == "processing":
+                        return jsonify({"status": "retry"}), 503
+    except ValueError:
+        app.logger.warning("WhatsApp webhook rejected invalid message structure")
+        return jsonify({"error": "WhatsApp message could not be processed"}), 400
+    except _WhatsAppAIUnavailable:
+        app.logger.warning("WhatsApp webhook could not obtain an AI reply")
+        return jsonify({"error": "AI response is temporarily unavailable"}), 503
+    except RuntimeError as exc:
+        app.logger.warning(
+            "WhatsApp webhook processing failed (%s)", type(exc).__name__
+        )
+        return jsonify({"error": "WhatsApp message processing failed"}), 502
+    except Exception as exc:
+        app.logger.warning(
+            "WhatsApp webhook processing failed (%s)", type(exc).__name__
+        )
+        return jsonify({"error": "WhatsApp message processing failed"}), 502
+
+    return jsonify({"status": "ok"}), 200
+
 # CORTEX CORE AI UNIVERSAL LIVE SEARCH V6 - START
 
 LIVE_SEARCH_KEYWORDS = (
@@ -4447,14 +6296,9 @@ register_chief_owner_control(app)
 
 
 # CORTEX CORE AI CHIEF OWNER RESTORE V1 START
-import os as _mi_owner_os
 from functools import wraps as _mi_owner_wraps
 
-MI_CHIEF_OWNER_EMAIL = (
-    _mi_owner_os.getenv("CHIEF_OWNER_EMAIL")
-    or _mi_owner_os.getenv("MI_CHIEF_OWNER_EMAIL")
-    or "teamofchatbot.miai@gmail.com"
-).strip().lower()
+MI_CHIEF_OWNER_EMAIL = CHIEF_OWNER_EMAIL
 
 MI_CHIEF_OWNER_PERMISSIONS = {
     "viewAdminPanel": True,
@@ -4511,8 +6355,11 @@ def _mi_owner_verify_token():
 
         decoded = firebase_auth.verify_id_token(
             token,
-            check_revoked=False,
+            check_revoked=True,
         )
+
+        if not str(decoded.get("uid") or decoded.get("sub") or "").strip():
+            return None, "Authenticated account identity is incomplete."
 
         return decoded, None
 
@@ -4527,20 +6374,25 @@ def _mi_owner_normalize_email(value):
     return str(value or "").strip().lower()
 
 
-def _mi_owner_access_from_token(decoded):
+def _mi_owner_access_from_token(decoded, persisted_uid=None):
     decoded = decoded or {}
 
     email = _mi_owner_normalize_email(
         decoded.get("email")
     )
 
+    uid = str(decoded.get("uid") or decoded.get("sub") or "").strip()
     email_verified = bool(
         decoded.get("email_verified", False)
     )
 
-    is_chief_owner = bool(
-        email
-        and email == MI_CHIEF_OWNER_EMAIL
+    is_chief_owner = _owner_identity_policy(
+        email,
+        uid,
+        persisted_uid=persisted_uid,
+        email_verified=email_verified,
+        configured_email=MI_CHIEF_OWNER_EMAIL,
+        configured_uid=CHIEF_OWNER_UID,
     )
 
     role = "chief_owner" if is_chief_owner else "user"
@@ -4553,7 +6405,7 @@ def _mi_owner_access_from_token(decoded):
 
     return {
         "authenticated": True,
-        "uid": str(decoded.get("uid") or ""),
+        "uid": uid,
         "email": email,
         "emailVerified": email_verified,
         "role": role,
@@ -4609,7 +6461,38 @@ def _mi_owner_register_routes():
                         401,
                     )
 
-                access = _mi_owner_access_from_token(decoded)
+                uid = str(decoded.get("uid") or decoded.get("sub") or "").strip()
+                email = _mi_owner_normalize_email(decoded.get("email"))
+                email_verified = bool(decoded.get("email_verified", False))
+                try:
+                    persisted_uid = None
+                    if _owner_identity_candidate(
+                        email,
+                        uid,
+                        email_verified,
+                        configured_email=MI_CHIEF_OWNER_EMAIL,
+                        configured_uid=CHIEF_OWNER_UID,
+                    ):
+                        persisted_uid = read_persisted_chief_owner_uid(
+                            _firestore_database(),
+                            configured_email=CHIEF_OWNER_EMAIL,
+                        )
+                except Exception:
+                    app.logger.exception(
+                        "Chief Owner status validation failed."
+                    )
+                    return _mi_owner_json(
+                        {
+                            "authenticated": False,
+                            "isChiefOwner": False,
+                            "role": "guest",
+                            "permissions": {},
+                            "error": "Owner identity validation is unavailable.",
+                        },
+                        503,
+                    )
+
+                access = _mi_owner_access_from_token(decoded, persisted_uid)
 
                 return _mi_owner_json(access, 200)
 
@@ -4823,15 +6706,8 @@ def _mi_web_photo_search():
 # Server-authoritative Chief Owner and staff authorization bridge.
 # Never trust role or permissions submitted by frontend code.
 
-MI_AI_CHIEF_OWNER_EMAIL = os.getenv(
-    "CHIEF_OWNER_EMAIL",
-    "teamofchatbot.miai@gmail.com",
-).strip().lower()
-
-MI_AI_CHIEF_OWNER_UID = os.getenv(
-    "CHIEF_OWNER_UID",
-    "",
-).strip()
+MI_AI_CHIEF_OWNER_EMAIL = CHIEF_OWNER_EMAIL
+MI_AI_CHIEF_OWNER_UID = CHIEF_OWNER_UID
 
 MI_AI_ALL_PERMISSIONS = (
     "users.view",
@@ -5009,21 +6885,22 @@ def mi_ai_verify_firebase_token():
     }, None
 
 
-def mi_ai_is_chief_owner(identity):
+def mi_ai_is_chief_owner(identity, persisted_uid=None):
     if not identity:
         return False
 
-    if identity["email"] != MI_AI_CHIEF_OWNER_EMAIL:
-        return False
+    return _owner_identity_policy(
+        identity.get("email"),
+        identity.get("uid"),
+        persisted_uid=persisted_uid,
+        email_verified=identity.get("email_verified", False),
+        configured_email=MI_AI_CHIEF_OWNER_EMAIL,
+        configured_uid=MI_AI_CHIEF_OWNER_UID,
+    )
 
-    if MI_AI_CHIEF_OWNER_UID:
-        return identity["uid"] == MI_AI_CHIEF_OWNER_UID
 
-    return True
-
-
-def mi_ai_safe_admin_response(identity):
-    chief_owner = mi_ai_is_chief_owner(identity)
+def mi_ai_safe_admin_response(identity, persisted_uid=None):
+    chief_owner = mi_ai_is_chief_owner(identity, persisted_uid)
 
     if chief_owner:
         return {
@@ -5071,7 +6948,33 @@ def mi_ai_admin_me():
             "message": message,
         }), status
 
-    response = mi_ai_safe_admin_response(identity)
+    persisted_uid = None
+    if _owner_identity_candidate(
+        identity["email"],
+        identity["uid"],
+        identity["email_verified"],
+        configured_email=MI_AI_CHIEF_OWNER_EMAIL,
+        configured_uid=MI_AI_CHIEF_OWNER_UID,
+    ):
+        try:
+            persisted_uid = read_persisted_chief_owner_uid(
+                _firestore_database(),
+                configured_email=CHIEF_OWNER_EMAIL,
+            )
+        except Exception:
+            app.logger.exception(
+                "Admin identity status validation failed."
+            )
+            return jsonify({
+                "authenticated": False,
+                "isStaff": False,
+                "isChiefOwner": False,
+                "permissions": [],
+                "allowedPages": [],
+                "message": "Owner identity validation is unavailable.",
+            }), 503
+
+    response = mi_ai_safe_admin_response(identity, persisted_uid)
     return jsonify(response), 200
 
 
@@ -5097,7 +7000,29 @@ def mi_ai_admin_permission_check():
             "message": "Permission name is required.",
         }), 400
 
-    if not mi_ai_is_chief_owner(identity):
+    persisted_uid = None
+    if _owner_identity_candidate(
+        identity["email"],
+        identity["uid"],
+        identity["email_verified"],
+        configured_email=MI_AI_CHIEF_OWNER_EMAIL,
+        configured_uid=MI_AI_CHIEF_OWNER_UID,
+    ):
+        try:
+            persisted_uid = read_persisted_chief_owner_uid(
+                _firestore_database(),
+                configured_email=CHIEF_OWNER_EMAIL,
+            )
+        except Exception:
+            app.logger.exception(
+                "Admin permission validation failed."
+            )
+            return jsonify({
+                "allowed": False,
+                "message": "Owner identity validation is unavailable.",
+            }), 503
+
+    if not mi_ai_is_chief_owner(identity, persisted_uid):
         return jsonify({
             "allowed": False,
             "message": "Access denied.",

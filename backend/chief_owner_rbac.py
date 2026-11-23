@@ -17,7 +17,26 @@ from datetime import datetime, timezone
 from functools import wraps
 from typing import Any, Callable, Dict, Iterable, Optional, Set, Tuple
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
+
+try:
+    from backend.chief_owner_identity import (
+        CHIEF_OWNER_EMAIL,
+        CHIEF_OWNER_UID,
+        CHIEF_OWNER_UID_CONFIGURED,
+        CHIEF_OWNER_UID_CONFIG_VALID,
+        is_chief_owner_candidate,
+        validate_persisted_chief_owner_record,
+    )
+except ImportError:
+    from chief_owner_identity import (
+        CHIEF_OWNER_EMAIL,
+        CHIEF_OWNER_UID,
+        CHIEF_OWNER_UID_CONFIGURED,
+        CHIEF_OWNER_UID_CONFIG_VALID,
+        is_chief_owner_candidate,
+        validate_persisted_chief_owner_record,
+    )
 
 try:
     import firebase_admin
@@ -29,12 +48,6 @@ except Exception as exc:  # pragma: no cover
     FIREBASE_IMPORT_ERROR = exc
 else:
     FIREBASE_IMPORT_ERROR = None
-
-
-CHIEF_OWNER_EMAIL = os.getenv(
-    "CHIEF_OWNER_EMAIL",
-    "teamofchatbot.miai@gmail.com",
-).strip().lower()
 
 ROLE_ORDER = [
     "chief_owner",
@@ -200,8 +213,16 @@ def _firebase_ready() -> None:
 
 
 def db():
+    if os.getenv("MI_AI_TEST_MODE") == "1":
+        raise RuntimeError(
+            "Firestore access is disabled in test mode; inject a fake database."
+        )
+
     _firebase_ready()
-    return firestore.client()
+    firebase_app = current_app.extensions.get("firebase_admin_app")
+    if firebase_app is None:
+        raise RuntimeError("Firebase Admin app is not configured.")
+    return firestore.client(app=firebase_app)
 
 
 def normalize_email(value: Any) -> str:
@@ -305,46 +326,78 @@ def _load_staff_record(uid: str) -> Optional[Dict[str, Any]]:
 
 
 def _ensure_chief_owner(decoded: Dict[str, Any]) -> Dict[str, Any]:
-    uid = decoded["uid"]
+    uid = str(decoded.get("uid") or "").strip()
     email = normalize_email(decoded.get("email"))
-    if email != CHIEF_OWNER_EMAIL:
+    email_verified = bool(decoded.get("email_verified", False))
+    uid_configured = CHIEF_OWNER_UID_CONFIGURED or bool(CHIEF_OWNER_UID)
+    uid_config_valid = CHIEF_OWNER_UID_CONFIG_VALID and (
+        not CHIEF_OWNER_UID_CONFIGURED or bool(CHIEF_OWNER_UID)
+    )
+    if not is_chief_owner_candidate(
+        email,
+        uid,
+        email_verified,
+        configured_email=CHIEF_OWNER_EMAIL,
+        configured_uid=CHIEF_OWNER_UID,
+        uid_configured=uid_configured,
+        uid_config_valid=uid_config_valid,
+    ):
         raise AuthorizationError("Chief Owner identity mismatch.", 403, "owner_identity_mismatch")
 
-    owner_ref = db().collection("systemSettings").document("ownership")
-    staff_ref = db().collection("staffAccounts").document(uid)
-    transaction = db().transaction()
+    database = db()
+    owner_ref = database.collection("systemSettings").document("ownership")
+    staff_ref = database.collection("staffAccounts").document(uid)
+    transaction = database.transaction()
 
     @firestore.transactional
     def apply(transaction):
         owner_snap = owner_ref.get(transaction=transaction)
-        owner_data = owner_snap.to_dict() if owner_snap.exists else {}
+        try:
+            existing_uid = validate_persisted_chief_owner_record(
+                owner_snap.to_dict() if owner_snap.exists else None,
+                configured_email=CHIEF_OWNER_EMAIL,
+            )
+        except ValueError as error:
+            raise AuthorizationError(
+                "Persisted Chief Owner identity is invalid.",
+                409,
+                "chief_owner_conflict",
+            ) from error
 
-        existing_uid = owner_data.get("chiefOwnerUid")
-        existing_email = normalize_email(owner_data.get("chiefOwnerEmail"))
-
-        if existing_uid and existing_uid != uid:
+        if existing_uid is not None and existing_uid != uid:
             raise AuthorizationError(
                 "A different protected Chief Owner UID is already configured.",
                 409,
                 "chief_owner_conflict",
             )
-        if existing_email and existing_email != CHIEF_OWNER_EMAIL:
+        if not owner_snap.exists and not uid_configured:
             raise AuthorizationError(
-                "Protected Chief Owner email mismatch.",
-                409,
-                "chief_owner_email_conflict",
+                "A persisted or configured Chief Owner UID is required.",
+                403,
+                "owner_uid_required",
             )
 
-        transaction.set(
-            owner_ref,
-            {
-                "chiefOwnerUid": uid,
-                "chiefOwnerEmail": CHIEF_OWNER_EMAIL,
-                "protected": True,
-                "updatedAt": firestore.SERVER_TIMESTAMP,
-            },
-            merge=True,
-        )
+        staff_snap = staff_ref.get(transaction=transaction)
+        if staff_snap.exists:
+            staff_data = staff_snap.to_dict() or {}
+            if normalize_email(staff_data.get("email")) != CHIEF_OWNER_EMAIL:
+                raise AuthorizationError(
+                    "Chief Owner staff identity mismatch.",
+                    409,
+                    "owner_staff_identity_conflict",
+                )
+
+        if not owner_snap.exists:
+            transaction.set(
+                owner_ref,
+                {
+                    "chiefOwnerUid": uid,
+                    "chiefOwnerEmail": CHIEF_OWNER_EMAIL,
+                    "protected": True,
+                    "updatedAt": firestore.SERVER_TIMESTAMP,
+                },
+                merge=False,
+            )
         transaction.set(
             staff_ref,
             {
@@ -376,12 +429,19 @@ def _ensure_chief_owner(decoded: Dict[str, Any]) -> Dict[str, Any]:
 def load_actor() -> Dict[str, Any]:
     _firebase_ready()
     decoded = auth.verify_id_token(_extract_bearer_token(), check_revoked=True)
-    uid = decoded.get("uid")
+    uid = str(decoded.get("uid") or "").strip()
     if not uid:
         raise AuthorizationError("Invalid authentication token.", 401, "invalid_token")
 
     email = normalize_email(decoded.get("email"))
-    if email == CHIEF_OWNER_EMAIL:
+    if not email:
+        raise AuthorizationError(
+            "Authenticated account email is missing.",
+            401,
+            "invalid_token",
+        )
+
+    if CHIEF_OWNER_EMAIL and email == CHIEF_OWNER_EMAIL:
         staff = _ensure_chief_owner(decoded)
     else:
         staff = _load_staff_record(uid)
@@ -407,6 +467,14 @@ def load_actor() -> Dict[str, Any]:
         raise AuthorizationError("Staff identity mismatch.", 403, "identity_mismatch")
 
     role = normalize_role(staff.get("role"))
+    if role == "chief_owner" and (
+        not CHIEF_OWNER_EMAIL or email != CHIEF_OWNER_EMAIL
+    ):
+        raise AuthorizationError(
+            "Chief Owner identity mismatch.",
+            403,
+            "owner_identity_mismatch",
+        )
     permissions = effective_permissions(staff)
 
     return {
