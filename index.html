@@ -43088,6 +43088,81 @@ body:not(.cortex-light-theme) #header { isolation:isolate; overflow:hidden; back
 body:not(.cortex-light-theme) #header::before { height:55%; background:linear-gradient(180deg,rgba(196,203,212,.07),transparent) !important; pointer-events:none; }
 body:not(.cortex-light-theme) #header::after { width:min(64vw,560px); height:240px; top:-174px; right:-8%; background:radial-gradient(ellipse at 68% 50%,rgba(24,61,112,.38),transparent 68%),radial-gradient(ellipse at 28% 80%,rgba(196,203,212,.10),transparent 65%) !important; filter:blur(32px); transform-origin:65% 55%; animation:cortexHeaderAmbient 11s ease-in-out infinite alternate; pointer-events:none; }
 @keyframes cortexHeaderAmbient { from { transform:scale(.94); opacity:.72; } to { transform:scale(1.06); opacity:1; } }
+#miAuthLayoutReset.mi-auth-page,
+body:not(.cortex-light-theme) #loginBox.mi-auth-page,
+body.cortex-light-theme #loginBox.mi-auth-page {
+    grid-template-columns:55% 45%;
+    grid-template-areas:"brand auth";
+    width:100vw;
+    height:100dvh;
+    min-height:100dvh;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 78% 45%,rgba(37,99,235,.12),transparent 30%),
+        linear-gradient(115deg,#07111f 0%,#091827 51%,#0a1524 51.1%,#070e18 100%) !important;
+    border:0 !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-brand,
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-brand {
+    grid-area:brand;
+    background:
+        radial-gradient(circle at 58% 48%,rgba(56,189,248,.16),transparent 19%),
+        radial-gradient(circle at 70% 68%,rgba(37,99,235,.12),transparent 25%),
+        linear-gradient(135deg,rgba(8,24,43,.92),rgba(7,18,31,.72)) !important;
+    border:0 !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-panel,
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-panel {
+    grid-area:auth;
+    background:
+        radial-gradient(circle at 80% 18%,rgba(56,189,248,.07),transparent 22%),
+        linear-gradient(145deg,rgba(9,21,36,.94),rgba(7,14,24,.98)) !important;
+    border:0 !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-card,
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-card {
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-tabs,
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-tabs {
+    background:rgba(2,6,23,.18) !important;
+    border:0;
+    border-bottom:1px solid rgba(148,163,184,.16) !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-tabs button,
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-tabs button {
+    background:transparent !important;
+    color:#aebbd0 !important;
+    border:0 !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-tabs button[aria-selected="true"],
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-tabs button[aria-selected="true"] {
+    background:linear-gradient(135deg,rgba(56,189,248,.22),rgba(37,99,235,.18)) !important;
+    color:#eaf7ff !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-provider,
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-provider {
+    background:rgba(15,23,42,.56) !important;
+    color:#f8fafc !important;
+    border:1px solid rgba(148,163,184,.14) !important;
+}
+body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-primary,
+body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-primary {
+    background:linear-gradient(135deg,#38bdf8,#2563eb) !important;
+    color:#fff !important;
+    border:1px solid rgba(125,211,252,.28) !important;
+}
+@media(max-width:900px){
+    body:not(.cortex-light-theme) #loginBox.mi-auth-page,
+    body.cortex-light-theme #loginBox.mi-auth-page {
+        grid-template-columns:1fr;
+        grid-template-rows:auto 1fr;
+        grid-template-areas:"brand" "auth";
+        overflow-y:auto;
+    }
+}
 body #header > #headerLogo { display:block !important; width:30px !important; height:30px !important; min-width:30px !important; min-height:30px !important; max-width:30px !important; max-height:30px !important; flex:0 0 30px !important; object-fit:cover !important; object-position:center !important; aspect-ratio:1; border-radius:50% !important; background:#000000 !important; border:1px solid #454B54 !important; box-shadow:0 2px 10px rgba(0,0,0,.48),0 0 0 2px rgba(196,203,212,.08) !important; position:relative !important; z-index:2 !important; }
 body #header > #headerLogo + span { position:relative; z-index:2; color:#FFFFFF !important; text-shadow:0 1px 8px rgba(0,0,0,.45); white-space:nowrap; }
 body.cortex-light-theme #header > #headerLogo { background:#000000 !important; }
