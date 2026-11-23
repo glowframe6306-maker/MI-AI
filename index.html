@@ -816,6 +816,39 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     filter: drop-shadow(0 0 38px rgba(56, 189, 248, .10));
     animation: miAuthPulse 5s ease-in-out infinite;
 }
+.mi-auth-particles {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: .78;
+}
+.mi-auth-light-trail {
+    position: absolute;
+    z-index: 1;
+    width: 48%;
+    height: 1px;
+    pointer-events: none;
+    transform-origin: left center;
+    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, .16), rgba(125, 211, 252, .78), transparent);
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, .28));
+    opacity: .45;
+}
+.mi-auth-light-trail-one {
+    left: 12%;
+    top: 38%;
+    transform: rotate(-22deg);
+    animation: miAuthTrailOne 8s ease-in-out infinite;
+}
+.mi-auth-light-trail-two {
+    left: 28%;
+    bottom: 26%;
+    width: 38%;
+    transform: rotate(18deg);
+    animation: miAuthTrailTwo 10s ease-in-out infinite;
+}
 .mi-auth-brand-content {
     position: relative;
     z-index: 2;
@@ -828,12 +861,58 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     grid-template-columns: minmax(0, 1fr);
     text-align: left;
 }
-.mi-auth-brand-content img {
+.mi-auth-logo-shell {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    isolation: isolate;
+}
+.mi-auth-brand-content .mi-auth-logo-shell img {
+    position: relative;
+    z-index: 3;
     width: 64px;
     height: 64px;
     border-radius: 18px;
     object-fit: contain;
-    box-shadow: 0 18px 44px rgba(0, 0, 0, .34);
+    box-shadow:
+        0 18px 44px rgba(0, 0, 0, .34),
+        0 0 24px rgba(56, 189, 248, .12);
+    animation: miAuthLogoEnter 900ms cubic-bezier(.16, 1, .3, 1) both,
+        miAuthLogoBreath 5.4s ease-in-out 1s infinite;
+}
+.mi-auth-logo-glow {
+    position: absolute;
+    inset: -18px;
+    z-index: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56, 189, 248, .24), rgba(37, 99, 235, .08) 42%, transparent 68%);
+    filter: blur(8px);
+    animation: miAuthLogoGlow 4.2s ease-in-out infinite;
+}
+.mi-auth-logo-sweep {
+    position: absolute;
+    z-index: 4;
+    inset: 4px;
+    overflow: hidden;
+    border-radius: 14px;
+    pointer-events: none;
+}
+.mi-auth-logo-sweep::after {
+    content: "";
+    position: absolute;
+    top: -70%;
+    left: -130%;
+    width: 80%;
+    height: 240%;
+    transform: rotate(24deg);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .32), transparent);
+    animation: miAuthLogoSweep 7s ease-in-out 1.2s infinite;
+}
+.mi-auth-logo-shell:hover img {
+    transform: translateY(-2px) scale(1.018);
+    box-shadow:
+        0 22px 50px rgba(0, 0, 0, .38),
+        0 0 34px rgba(56, 189, 248, .22);
 }
 .mi-auth-kicker {
     display: block;
@@ -876,6 +955,12 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     width: min(420px, calc(100% - 96px));
     margin: 36px clamp(32px, 4vw, 64px) 36px 32px;
 }
+.mi-auth-card {
+    perspective: 900px;
+}
+.mi-auth-heading {
+    animation: miAuthContentReveal 720ms 180ms cubic-bezier(.16, 1, .3, 1) both;
+}
 .mi-auth-heading h2 {
     margin: 8px 0 18px;
     font-size: clamp(28px, 2.45vw, 36px);
@@ -904,11 +989,19 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     font-size: 13px;
     font-weight: 800;
     cursor: pointer;
+    transition:
+        color 180ms ease,
+        background 220ms ease,
+        box-shadow 220ms ease,
+        transform 180ms ease;
 }
 .mi-auth-tabs button[aria-selected="true"] {
     background: linear-gradient(135deg, rgba(56, 189, 248, .22), rgba(37, 99, 235, .18)) !important;
     color: #eaf7ff;
     box-shadow: inset 0 -2px 0 #38bdf8, 0 8px 24px rgba(0, 0, 0, .18);
+}
+.mi-auth-tabs button:active {
+    transform: scale(.985);
 }
 .mi-auth-message {
     min-height: 20px;
@@ -954,6 +1047,11 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     padding: 11px 13px;
     font: inherit;
     outline: none;
+    transition:
+        border-color 180ms ease,
+        background 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease;
 }
 .mi-auth-field input:focus,
 .mi-auth-field select:focus {
@@ -982,6 +1080,12 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     font: inherit;
     font-weight: 850;
     cursor: pointer;
+    transition:
+        transform 180ms cubic-bezier(.22, .61, .36, 1),
+        box-shadow 220ms ease,
+        border-color 180ms ease,
+        background 220ms ease,
+        opacity 180ms ease;
 }
 .mi-auth-primary {
     border: 1px solid rgba(125, 211, 252, .28);
@@ -1013,6 +1117,16 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     color: #f8fafc;
 }
 .mi-auth-provider:hover { border-color: rgba(125, 211, 252, .42) !important; }
+.mi-auth-provider:hover,
+.mi-auth-primary:hover {
+    transform: translateY(-2px);
+}
+.mi-auth-primary:hover {
+    box-shadow: 0 14px 34px rgba(37, 99, 235, .24);
+}
+.mi-auth-provider:hover {
+    box-shadow: 0 12px 28px rgba(2, 6, 23, .24);
+}
 .mi-auth-provider-icon {
     width: 18px;
     height: 18px;
@@ -1038,6 +1152,54 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
 @keyframes miAuthPageIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes miAuthOrbit { to { transform: rotate(360deg); } }
 @keyframes miAuthPulse { 50% { transform: scale(1.12); opacity: .75; } }
+@keyframes miAuthTrailOne {
+    0%, 100% { opacity: .12; transform: translateX(-8px) rotate(-22deg) scaleX(.72); }
+    50% { opacity: .48; transform: translateX(48px) rotate(-22deg) scaleX(1); }
+}
+@keyframes miAuthTrailTwo {
+    0%, 100% { opacity: .10; transform: translateX(18px) rotate(18deg) scaleX(.6); }
+    50% { opacity: .38; transform: translateX(-32px) rotate(18deg) scaleX(.92); }
+}
+@keyframes miAuthLogoEnter {
+    from { opacity: 0; transform: scale(.82) translateY(8px); filter: blur(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+@keyframes miAuthLogoBreath {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.018) translateY(-2px); }
+}
+@keyframes miAuthLogoGlow {
+    0%, 100% { opacity: .38; transform: scale(.88); }
+    50% { opacity: .78; transform: scale(1.08); }
+}
+@keyframes miAuthLogoSweep {
+    0%, 58%, 100% { left: -130%; opacity: 0; }
+    68% { opacity: .7; }
+    82% { left: 150%; opacity: 0; }
+}
+@keyframes miAuthContentReveal {
+    from { opacity: 0; transform: translateY(12px); filter: blur(5px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mi-auth-page,
+    .mi-auth-heading,
+    .mi-auth-brand::before,
+    .mi-auth-brand::after,
+    .mi-auth-brand-orbit,
+    .mi-auth-light-trail,
+    .mi-auth-logo-shell,
+    .mi-auth-brand-content .mi-auth-logo-shell img,
+    .mi-auth-logo-glow,
+    .mi-auth-logo-sweep,
+    .mi-auth-logo-sweep::after {
+        animation: none !important;
+        transition: none !important;
+    }
+    .mi-auth-particles {
+        display: none;
+    }
+}
 @media (max-width: 900px) {
     .mi-auth-page { grid-template-columns: 1fr; grid-template-areas: "brand" "auth"; height: 100dvh; overflow-y: auto; }
     .mi-auth-brand { min-height: 190px; border-right: 0; border-bottom: 0; }
@@ -13833,8 +13995,15 @@ body.mi-app-gated #settingsPanel {
   <button id="authCloseBtn" class="mi-auth-close" type="button" aria-label="Close authentication" title="Close">&times;</button>
   <section class="mi-auth-brand" aria-label="CORTEX CORE AI">
     <div class="mi-auth-brand-orbit"></div>
+    <canvas id="miAuthParticles" class="mi-auth-particles" aria-hidden="true"></canvas>
+    <div class="mi-auth-light-trail mi-auth-light-trail-one" aria-hidden="true"></div>
+    <div class="mi-auth-light-trail mi-auth-light-trail-two" aria-hidden="true"></div>
     <div class="mi-auth-brand-content">
-      <img src="/assets/Logo/Cortex.png" alt="CORTEX CORE AI">
+      <div class="mi-auth-logo-shell">
+        <span class="mi-auth-logo-glow" aria-hidden="true"></span>
+        <img src="/assets/Logo/Cortex.png" alt="CORTEX CORE AI">
+        <span class="mi-auth-logo-sweep" aria-hidden="true"></span>
+      </div>
       <span class="mi-auth-kicker">INTELLIGENCE, ELEVATED</span>
       <h1>CORTEX CORE AI</h1>
       <p>BEYOND INTELLIGENCE.<br>BEYOND LIMITS.</p>
@@ -18341,6 +18510,115 @@ window.addEventListener('popstate', function () {
     document.body.style.overflow = '';
   }
 });
+
+(function () {
+  "use strict";
+
+  const canvas = document.getElementById("miAuthParticles");
+  if (!canvas) return;
+
+  const context = canvas.getContext("2d", { alpha: true });
+  if (!context) return;
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let animationFrame = 0;
+  let running = false;
+  let particles = [];
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const density = Math.min(42, Math.max(18, Math.round(width / 24)));
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width = Math.max(1, Math.round(width * ratio));
+    canvas.height = Math.max(1, Math.round(height * ratio));
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    particles = Array.from({ length: density }, function (_, index) {
+      return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: index % 7 === 0 ? 1.25 : 0.65,
+        speed: 0.08 + Math.random() * 0.22,
+        drift: (Math.random() - 0.5) * 0.12,
+        alpha: 0.16 + Math.random() * 0.42
+      };
+    });
+  }
+
+  function draw() {
+    if (!running) return;
+
+    const rect = canvas.getBoundingClientRect();
+    context.clearRect(0, 0, rect.width, rect.height);
+
+    particles.forEach(function (particle) {
+      particle.y -= particle.speed;
+      particle.x += particle.drift;
+      if (particle.y < -4) {
+        particle.y = rect.height + 4;
+        particle.x = Math.random() * rect.width;
+      }
+      if (particle.x < -4) particle.x = rect.width + 4;
+      if (particle.x > rect.width + 4) particle.x = -4;
+
+      context.beginPath();
+      context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      context.fillStyle = "rgba(125, 211, 252," + particle.alpha + ")";
+      context.fill();
+    });
+
+    animationFrame = window.requestAnimationFrame(draw);
+  }
+
+  function start() {
+    if (running || reducedMotion.matches || document.hidden) return;
+    const box = document.getElementById("loginBox");
+    if (!box?.classList.contains("mi-auth-open")) return;
+    running = true;
+    resize();
+    animationFrame = window.requestAnimationFrame(draw);
+  }
+
+  function stop() {
+    if (!running) return;
+    running = false;
+    window.cancelAnimationFrame(animationFrame);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  window.addEventListener("resize", resize);
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) stop();
+    else start();
+  });
+
+  document.addEventListener("click", function () {
+    window.requestAnimationFrame(function () {
+      const box = document.getElementById("loginBox");
+      if (box?.classList.contains("mi-auth-open")) start();
+      else stop();
+    });
+  });
+
+  const box = document.getElementById("loginBox");
+  if (box) {
+    const observer = new MutationObserver(function () {
+      if (box.classList.contains("mi-auth-open")) start();
+      else stop();
+    });
+    observer.observe(box, { attributes: true, attributeFilter: ["class"] });
+  }
+
+  if (typeof reducedMotion.addEventListener === "function") {
+    reducedMotion.addEventListener("change", function (event) {
+      if (event.matches) stop();
+      else start();
+    });
+  }
+})();
 
 function handleSignIn() {
     loginEmail();
