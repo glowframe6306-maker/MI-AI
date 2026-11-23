@@ -14850,6 +14850,12 @@ let chatLoadSequence = 0;
 let authTransitionSequence = 0;
 let persistenceGeneration = 0;
 window.__miChatPersistence = window.__miChatPersistence || { restoring: false, logoutInProgress: false };
+window.__miChatLoadGuard = window.__miChatLoadGuard || {
+    inFlightUid: "",
+    promise: null,
+    lastLoadedUid: "",
+    lastLoadedAt: 0
+};
 window.__miExplicitChatDelete = window.__miExplicitChatDelete === true;
 
 function chatDataTrace(stage, details = {}) {
@@ -14956,7 +14962,7 @@ function isCurrentAuthenticatedUser(userId) {
     return Boolean(userId && currentUid && String(userId) === String(currentUid));
 }
 
-async function loadUserChats() {
+async function loadUserChatsInternal() {
   const token = localStorage.getItem('mi_supabase_token');
   const userId = localStorage.getItem('mi_user_id');
   const email = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
@@ -15090,6 +15096,34 @@ async function loadUserChats() {
   }
 }
 
+async function loadUserChats() {
+  const uid = String(localStorage.getItem('mi_user_id') || window.miFirebaseUser?.uid || '');
+  const guard = window.__miChatLoadGuard;
+
+  if (guard.inFlightUid === uid && guard.promise) {
+    return guard.promise;
+  }
+
+  if (guard.lastLoadedUid === uid && uid && (Date.now() - guard.lastLoadedAt) < 1500) {
+    return false;
+  }
+
+  guard.inFlightUid = uid;
+  guard.promise = (async () => {
+    try {
+      await loadUserChatsInternal();
+      guard.lastLoadedUid = uid;
+      guard.lastLoadedAt = Date.now();
+      return true;
+    } finally {
+      guard.inFlightUid = "";
+      guard.promise = null;
+    }
+  })();
+
+  return guard.promise;
+}
+
 async function initChat(){
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -15193,11 +15227,13 @@ try {
         ? await window.miFirebaseReady.catch(() => null)
         : null;
     const auth = window.miFirebaseAuth || firebaseReady?.auth;
+    let handledAuthUid = "";
     if (auth && typeof auth.onAuthStateChanged === 'function') {
         auth.onAuthStateChanged(async (firebaseUser) => {
             const authOperationGeneration = ++persistenceGeneration;
             chatLoadSequence += 1;
             if (!firebaseUser) {
+                handledAuthUid = "";
                 user = null;
                 updateAuthUI();
                 localStorage.removeItem('mi_supabase_token');
@@ -15218,6 +15254,11 @@ try {
                 window.dispatchEvent(new Event('mi-chat-user-changed'));
                 return;
             }
+
+            if (handledAuthUid === String(firebaseUser.uid) && localStorage.getItem('mi_supabase_token')) {
+                return;
+            }
+            handledAuthUid = String(firebaseUser.uid);
 
             const nextUser = { id: firebaseUser.uid, email: firebaseUser.email || null };
             const nextToken = await firebaseUser.getIdToken();
@@ -15477,6 +15518,24 @@ async function openChat(id){
             return;  // User cancelled the switch
         }
     }
+
+    const chatDataBeforeRender = chats[id] || [];
+    const stableSignature = Array.isArray(chatDataBeforeRender)
+        ? chatDataBeforeRender.map((message, index) => String(
+            message?.id || message?.messageId || index
+        ) + ":" + String(message?.role || "") + ":" + String(message?.text ?? message?.content ?? "")).join("|")
+        : "";
+
+    if (
+        chatBox &&
+        chatBox.dataset.renderedChatId === String(id) &&
+        chatBox.dataset.renderedSignature === stableSignature
+    ) {
+        localStorage.setItem("last_chat", id);
+        currentChat = id;
+        window.currentChat = id;
+        return;
+    }
     
     removeLoginPrompt();
     currentChat=id;
@@ -15487,6 +15546,10 @@ async function openChat(id){
     }
     chatBox.innerHTML="";
     const chatData = chats[id] || [];
+    chatBox.dataset.renderedChatId = String(id);
+    chatBox.dataset.renderedSignature = Array.isArray(chatData)
+        ? chatData.map((message, index) => String(message?.id || message?.messageId || index) + ":" + String(message?.role || "") + ":" + String(message?.text ?? message?.content ?? "")).join("|")
+        : "";
     const attachments = Array.isArray(chatData.attachments) ? chatData.attachments : [];
     if (attachments.length > 0) {
         const attachmentBox = document.createElement('div');
@@ -15499,13 +15562,16 @@ async function openChat(id){
         `).join('');
         chatBox.appendChild(attachmentBox);
     }
-    (Array.isArray(chatData) ? chatData : []).forEach(m => {
+    (Array.isArray(chatData) ? chatData : []).forEach((m, index) => {
+        const messageId = String(m.id || m.messageId || `${id}_message_${index}`);
         if (m.role === 'ai') {
-            appendAiMessage(chatBox, m.text);
+            const bubble = appendAiMessage(chatBox, m.text);
+            if (bubble) bubble.dataset.messageId = messageId;
         } else {
             let d = document.createElement("div");
             d.className = m.role;
             d.textContent = m.text;
+            d.dataset.messageId = messageId;
             chatBox.appendChild(d);
         }
     });
@@ -16826,8 +16892,10 @@ async function sendMessageInternal(msg) {
     const userBubble = document.createElement('div');
     userBubble.className = 'me';
     userBubble.innerText = msg;
+    const optimisticMessageId = `${finalConversationId}_message_${activeChat().length}`;
+    userBubble.dataset.messageId = optimisticMessageId;
     chatBox.appendChild(userBubble);
-    activeChat().push({ role: 'me', text: msg });
+    activeChat().push({ id: optimisticMessageId, role: 'me', text: msg });
     dismissChatWelcome(chatBox);
     activeChat().isEmpty = false;
     activeChat().updatedAt = Date.now();
@@ -32614,6 +32682,7 @@ window.fetch=function(input,init){
     const GUEST_KEY = "mi_guest_single_chat_v2";
     let restoreVersion = 0;
     let saveTimer = 0;
+    let lastAuthUid = "";
 
     function auth() {
         try { return window.firebase.auth(); } catch (error) { return null; }
@@ -32874,8 +32943,10 @@ window.fetch=function(input,init){
     if (authInstance) {
         authInstance.onAuthStateChanged(async function (user) {
             restoreVersion += 1;
-            clearVisibleData();
             if (!user) {
+                if (lastAuthUid === "") return;
+                lastAuthUid = "";
+                clearVisibleData();
                 window.__miStrictAccountUid = "";
                 window.__miStrictAccountEmail = "";
                 if (!localStorage.getItem(GUEST_KEY)) {
@@ -32883,6 +32954,11 @@ window.fetch=function(input,init){
                 }
                 return;
             }
+            if (lastAuthUid === String(user.uid)) {
+                return;
+            }
+            lastAuthUid = String(user.uid);
+            clearVisibleData();
             window.__miStrictAccountUid = user.uid;
             window.__miStrictAccountEmail = String(user.email || "").toLowerCase();
             await restoreExactSnapshot(user).catch(function (error) {
