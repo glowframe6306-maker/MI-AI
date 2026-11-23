@@ -16905,7 +16905,8 @@ async function sendMessageInternal(msg) {
     const optimisticMessageId = `${finalConversationId}_message_${activeChat().length}`;
     userBubble.dataset.messageId = optimisticMessageId;
     chatBox.appendChild(userBubble);
-    activeChat().push({ id: optimisticMessageId, role: 'me', text: msg });
+    activeChat().push({ role: 'me', text: msg });
+    activeChat()[activeChat().length - 1].id = optimisticMessageId;
     dismissChatWelcome(chatBox);
     activeChat().isEmpty = false;
     activeChat().updatedAt = Date.now();
