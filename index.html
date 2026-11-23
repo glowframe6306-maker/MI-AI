@@ -13285,9 +13285,219 @@ textarea:disabled,
     border-bottom: 0;
 }
 </style>
+<style id="mi-iphone-startup-gate">
+html.mi-app-gated,
+body.mi-app-gated {
+    height: 100%;
+    overflow: hidden;
+}
+body.mi-app-gated #sidebar,
+body.mi-app-gated #main,
+body.mi-app-gated #mobileMenuBackdrop,
+body.mi-app-gated #loginBox,
+body.mi-app-gated #settingsPanel {
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+#miStartupGate {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 38%, rgba(64, 133, 194, .16), transparent 24%),
+        linear-gradient(145deg, #07111f 0%, #091522 58%, #050b12 100%);
+    color: #f8fafc;
+    opacity: 1;
+    transition: opacity .52s cubic-bezier(.22, .61, .36, 1),
+        visibility .52s cubic-bezier(.22, .61, .36, 1),
+        transform .52s cubic-bezier(.22, .61, .36, 1);
+}
+#miStartupGate.mi-startup-leaving {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.018);
+    pointer-events: none;
+}
+#miStartupGateCard {
+    width: min(360px, calc(100vw - 48px));
+    display: grid;
+    justify-items: center;
+    text-align: center;
+}
+#miStartupGateLogo {
+    width: 82px;
+    height: 82px;
+    border-radius: 22px;
+    object-fit: contain;
+    filter: drop-shadow(0 18px 32px rgba(0, 0, 0, .38));
+    animation: miStartupBreath 2.4s ease-in-out infinite;
+}
+#miStartupGateBrand {
+    margin-top: 20px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: .095em;
+}
+#miStartupGateStatus {
+    min-height: 20px;
+    margin-top: 28px;
+    color: rgba(226, 232, 240, .78);
+    font-size: 13px;
+    letter-spacing: .025em;
+}
+#miStartupGateDots {
+    display: flex;
+    gap: 7px;
+    margin-top: 18px;
+}
+#miStartupGateDots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(125, 211, 252, .38);
+    animation: miStartupDot 1.25s ease-in-out infinite;
+}
+#miStartupGateDots span:nth-child(2) { animation-delay: .16s; }
+#miStartupGateDots span:nth-child(3) { animation-delay: .32s; }
+#miStartupGateError {
+    display: none;
+    margin-top: 24px;
+}
+#miStartupGate.is-error #miStartupGateDots { display: none; }
+#miStartupGate.is-error #miStartupGateStatus { color: #fecaca; }
+#miStartupGate.is-error #miStartupGateError {
+    display: grid;
+    gap: 12px;
+}
+#miStartupGateError p {
+    max-width: 320px;
+    margin: 0;
+    color: rgba(226, 232, 240, .72);
+    font-size: 12px;
+    line-height: 1.55;
+}
+#miStartupGateRetry {
+    min-height: 44px;
+    border: 1px solid rgba(125, 211, 252, .32);
+    border-radius: 999px;
+    padding: 0 24px;
+    background: rgba(125, 211, 252, .12);
+    color: #e0f2fe;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+@keyframes miStartupBreath {
+    0%, 100% { opacity: .82; transform: scale(.96); }
+    50% { opacity: 1; transform: scale(1); }
+}
+@keyframes miStartupDot {
+    0%, 100% { opacity: .32; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    #miStartupGateLogo,
+    #miStartupGateDots span { animation: none; }
+}
+</style>
 </head>
 
-<body>
+<body class="mi-app-gated">
+<div id="miStartupGate" role="dialog" aria-modal="true" aria-label="CORTEX CORE AI initializing">
+  <div id="miStartupGateCard">
+    <img id="miStartupGateLogo" src="/assets/Logo/Cortex.png" alt="CORTEX CORE AI">
+    <div id="miStartupGateBrand">CORTEX CORE AI</div>
+    <div id="miStartupGateStatus" aria-live="polite">Starting CORTEX CORE AI...</div>
+    <div id="miStartupGateDots" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div id="miStartupGateError">
+      <p id="miStartupGateErrorText"></p>
+      <button id="miStartupGateRetry" type="button">Retry</button>
+    </div>
+  </div>
+  <script id="mi-iphone-startup-gate-script">
+  (function () {
+      "use strict";
+
+      if (window.__miStartupGate) return;
+
+      const gate = document.getElementById("miStartupGate");
+      const status = document.getElementById("miStartupGateStatus");
+      const errorText = document.getElementById("miStartupGateErrorText");
+      const retry = document.getElementById("miStartupGateRetry");
+      const input = () => document.getElementById("msg");
+
+      function setInputLocked(locked) {
+          const field = input();
+          if (field) {
+              field.disabled = locked;
+              field.setAttribute("aria-disabled", locked ? "true" : "false");
+          }
+          const send = document.getElementById("sendBtn");
+          if (send) send.disabled = locked;
+      }
+
+      document.documentElement.classList.add("mi-app-gated");
+      document.body.classList.add("mi-app-gated");
+      setInputLocked(true);
+
+      const api = {
+          started: false,
+          completed: false,
+          begin() {
+              this.started = true;
+              this.completed = false;
+              document.documentElement.classList.add("mi-app-gated");
+              document.body.classList.add("mi-app-gated");
+              document.body.classList.remove("mi-app-ready");
+              gate.classList.remove("mi-startup-leaving", "is-error");
+              gate.setAttribute("aria-busy", "true");
+              gate.style.display = "";
+              status.textContent = "Starting CORTEX CORE AI...";
+              setInputLocked(true);
+          },
+          stage(message) {
+              if (!gate.classList.contains("is-error")) {
+                  status.textContent = message;
+              }
+          },
+          fail(message) {
+              this.started = false;
+              gate.classList.add("is-error");
+              gate.removeAttribute("aria-busy");
+              status.textContent = "Initialization needs attention";
+              errorText.textContent = String(message || "CORTEX CORE AI could not complete initialization. Please retry.");
+              setInputLocked(true);
+          },
+          success() {
+              if (this.completed) return;
+              this.completed = true;
+              this.started = false;
+              gate.removeAttribute("aria-busy");
+              status.textContent = "Ready";
+              document.documentElement.classList.remove("mi-app-gated");
+              document.body.classList.remove("mi-app-gated");
+              document.body.classList.add("mi-app-ready");
+              gate.classList.add("mi-startup-leaving");
+              setInputLocked(false);
+              window.setTimeout(function () {
+                  gate.style.display = "none";
+              }, 560);
+          }
+      };
+
+      retry.addEventListener("click", function () {
+          api.begin();
+          window.dispatchEvent(new CustomEvent("mi-app-startup-retry"));
+      });
+
+      window.__miStartupGate = api;
+  })();
+  </script>
+</div>
 <div id="mobileMenuBackdrop" onclick="closeMobileMenu()"></div>
 <!-- SIDEBAR -->
 <div id="sidebar">
@@ -14989,7 +15199,11 @@ async function loadUserChatsInternal() {
         chatDataTrace('BEFORE_LOAD', { count: Object.keys(existingChats).length, ids: Object.keys(existingChats), source: 'authenticated-load-start' });
 
   try {
-        await migrateAuthenticatedChatCaches(token, userId, email);
+        try {
+            await migrateAuthenticatedChatCaches(token, userId, email);
+        } catch (migrationError) {
+            console.warn('[CHAT-DATA] Optional authenticated chat-cache migration skipped:', migrationError);
+        }
     const res = await fetch('/conversations', {
       headers: {
         Authorization: 'Bearer ' + token,
@@ -14998,6 +15212,9 @@ async function loadUserChatsInternal() {
       },
     });
     const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json?.error || json?.message || 'Conversation history could not be loaded.');
+    }
 
     let loadedChats = {};
     if (requestId !== chatLoadSequence || !isCurrentAuthenticatedUser(requestedUserId) || operationGeneration !== persistenceGeneration) return;
@@ -15035,9 +15252,11 @@ async function loadUserChatsInternal() {
             chatMessages.updatedAt = conversation.updated_at || conversation.created_at || Date.now();
             chatMessages.lastPreview = mappedMessages[mappedMessages.length - 1]?.text || conversation.last_preview || '';
             chatMessages.messageCount = mappedMessages.length;
+          } else {
+            throw new Error(messagesJson?.error || messagesJson?.message || 'Chat history could not be loaded.');
           }
         } catch (e) {
-          // keep the conversation metadata
+          throw e;
         }
 
         try {
@@ -15093,6 +15312,7 @@ async function loadUserChatsInternal() {
     } else if (chatBox) {
       chatBox.innerHTML = '';
     }
+    throw e;
   }
 }
 
@@ -15345,6 +15565,7 @@ if (input) {
     console.warn('Chat input element not found');
 }
 
+return { success: true };
 };
 
 /* NEW CHAT */
@@ -17554,60 +17775,125 @@ function applyForcedLayout() {
 
     let miStartupStarted = false;
 
-    async function miStartApplication() {
+    async function waitForAuthRestoration(timeoutMs = 15000) {
+        const firebaseReady = await window.miFirebaseReady;
+        const auth = window.miFirebaseAuth || firebaseReady?.auth;
+        if (!auth) throw new Error("Authentication service is unavailable.");
+        if (auth.currentUser) return auth.currentUser;
+
+        return new Promise(function (resolve, reject) {
+            let settled = false;
+            let unsubscribe = null;
+            const timeout = window.setTimeout(function () {
+                if (settled) return;
+                settled = true;
+                if (typeof unsubscribe === "function") unsubscribe();
+                reject(new Error("Authentication restoration timed out."));
+            }, timeoutMs);
+
+            unsubscribe = auth.onAuthStateChanged(function (firebaseUser) {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timeout);
+                if (typeof unsubscribe === "function") unsubscribe();
+                resolve(firebaseUser || null);
+            });
+        });
+    }
+
+    async function loadStartupProfile(firebaseUser) {
+        if (!firebaseUser) return;
+        await firebaseUser.getIdToken(true);
+
+        const token = await firebaseUser.getIdToken();
+        const response = await fetch("/api/admin/me", {
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + token,
+                Accept: "application/json"
+            },
+            cache: "no-store",
+            credentials: "same-origin"
+        });
+
+        if (response.status === 401 || response.status === 403) return;
+        if (!response.ok) throw new Error("Profile and permissions could not be loaded.");
+    }
+
+    async function checkBackendConnectivity() {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(function () {
+            controller.abort();
+        }, 15000);
+
+        try {
+            const response = await fetch("/api/account-service-health", {
+                method: "GET",
+                cache: "no-store",
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+            if (!response.ok) throw new Error("Backend connectivity check failed.");
+        } catch (error) {
+            if (error && error.name === "AbortError") {
+                throw new Error("Backend connectivity timed out.");
+            }
+            throw error;
+        } finally {
+            window.clearTimeout(timeout);
+        }
+    }
+
+    async function miStartApplication(isRetry) {
         if (miStartupStarted) {
             return;
         }
 
         miStartupStarted = true;
+        if (window.__miStartupGate) window.__miStartupGate.begin();
 
         try {
+            if (window.__miStartupGate) window.__miStartupGate.stage("Preparing application...");
             applyForcedLayout();
-        } catch (error) {
-            console.error("[CORTEX CORE AI] Layout startup failed:", error);
-        }
-
-        try {
             populateLanguageSelector();
-        } catch (error) {
-            console.error("[CORTEX CORE AI] Language selector startup failed:", error);
-        }
-
-        try {
             await applyLanguage("en", false);
-        } catch (error) {
-            console.error("[CORTEX CORE AI] Language startup failed:", error);
-        }
-
-        try {
+            if (window.__miStartupGate) window.__miStartupGate.stage("Restoring authentication...");
+            const firebaseUser = await waitForAuthRestoration();
+            if (window.__miStartupGate) window.__miStartupGate.stage("Loading profile and permissions...");
+            await loadStartupProfile(firebaseUser);
+            if (window.__miStartupGate) window.__miStartupGate.stage("Connecting to CORTEX CORE AI...");
+            await checkBackendConnectivity();
+            if (window.__miStartupGate) window.__miStartupGate.stage("Loading conversations and chat history...");
             await initChat();
-        } catch (error) {
-            console.error("[CORTEX CORE AI] Chat startup failed:", error);
-        }
+            if (window.__miStartupGate) window.__miStartupGate.stage("Synchronizing the interface...");
 
-        document.documentElement.classList.remove(
-            "loading",
-            "is-loading",
-            "app-loading",
-            "mi-app-booting",
-            "mi-smooth-loading"
-        );
-
-        if (document.body) {
-            document.body.classList.remove(
+            document.documentElement.classList.remove(
                 "loading",
                 "is-loading",
                 "app-loading",
                 "mi-app-booting",
                 "mi-smooth-loading"
             );
+            if (document.body) {
+                document.body.classList.remove(
+                    "loading",
+                    "is-loading",
+                    "app-loading",
+                    "mi-app-booting",
+                    "mi-smooth-loading"
+                );
+                document.body.removeAttribute("aria-busy");
+            }
 
-            document.body.removeAttribute("aria-busy");
+            window.dispatchEvent(new CustomEvent("mi-ai-startup-complete"));
+            if (window.__miStartupGate) window.__miStartupGate.success();
+        } catch (error) {
+            miStartupStarted = false;
+            console.error("[CORTEX CORE AI] Startup initialization failed:", error);
+            if (window.__miStartupGate) {
+                window.__miStartupGate.fail(error?.message || "CORTEX CORE AI could not finish initialization.");
+            }
         }
-
-        window.dispatchEvent(
-            new CustomEvent("mi-ai-startup-complete")
-        );
     }
 
     if (document.readyState === "loading") {
@@ -17619,8 +17905,10 @@ function applyForcedLayout() {
     } else {
         miStartApplication();
     }
-
-    window.setTimeout(miStartApplication, 1500);
+    window.addEventListener("mi-app-startup-retry", function () {
+        miStartupStarted = false;
+        miStartApplication(true);
+    });
 })();
 
 
