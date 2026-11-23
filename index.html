@@ -16715,7 +16715,17 @@ function finalizeStreamingReplyBubble(contentBox, text, conversationId, sources 
     contentBox.dataset.finalText = text;
     const existingText = String(text || '').trim();
     if (conversationId && chats[conversationId]) {
-        chats[conversationId].push({ role: 'ai', text: existingText });
+        const aiMessageId = `${conversationId}_ai_${chats[conversationId].length}`;
+        const lastMessage = chats[conversationId][chats[conversationId].length - 1];
+        if (
+            !lastMessage ||
+            lastMessage.role !== 'ai' ||
+            String(lastMessage.text || '') !== existingText
+        ) {
+            chats[conversationId].push({ id: aiMessageId, role: 'ai', text: existingText });
+        }
+        const bubble = contentBox.closest('.ai');
+        if (bubble) bubble.dataset.messageId = aiMessageId;
         chats[conversationId].updatedAt = Date.now();
         chats[conversationId].messageCount = (chats[conversationId].messageCount || 0) + 1;
         chats[conversationId].lastPreview = existingText;
@@ -16944,6 +16954,10 @@ async function sendMessageInternal(msg) {
     if (!streamResponse.ok) throw new Error('Server returned ' + streamResponse.status);
 
     streamBubble = createStreamingReplyBubble('');
+    if (streamBubble?.container) {
+      streamBubble.container.dataset.messageId =
+        `${finalConversationId}_ai_${activeChat().length}`;
+    }
     const { contentBox } = streamBubble;
     let fullText = '';
     let liveSources = [];
