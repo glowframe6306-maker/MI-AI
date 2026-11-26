@@ -46,12 +46,15 @@
         var term = String(query || "").trim().toLocaleLowerCase();
         if (!term) return getCountries();
 
-        var callingCodeTerm = term.replace(/^\+/, "").replace(/\D/g, "");
+        var isCallingCode = /^\+?\d+$/.test(term);
+        var callingCodeTerm = term.replace(/^\+/, "");
         return getCountries().filter(function (country) {
             return country.name.toLocaleLowerCase().includes(term) ||
                 country.iso.toLocaleLowerCase() === term ||
                 country.iso.toLocaleLowerCase().includes(term) ||
-                (callingCodeTerm && country.callingCode.includes(callingCodeTerm));
+                (isCallingCode && (term.startsWith("+")
+                    ? country.callingCode.startsWith(callingCodeTerm)
+                    : country.callingCode.includes(callingCodeTerm)));
         });
     }
 

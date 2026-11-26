@@ -21,6 +21,9 @@ assert.ok(phone.searchCountries("sRi LaNkA").some(country => country.iso === "LK
 assert.ok(phone.searchCountries("+91").some(country => country.iso === "IN"));
 assert.ok(phone.searchCountries("gb").some(country => country.iso === "GB"));
 assert.ok(phone.searchCountries("United States").some(country => country.iso === "US"));
+assert.ok(phone.searchCountries("+1").some(country => country.iso === "CA"));
+assert.ok(!phone.searchCountries("+44").some(country => country.iso === "AO"),
+    "calling-code searches do not match unrelated codes containing the same digits");
 assert.equal(phone.searchCountries("not-a-real-place").length, 0);
 
 assert.equal(phone.inferCountry("+919876543210", "LK"), "IN");

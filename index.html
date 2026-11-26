@@ -18528,6 +18528,7 @@ function authProviderMarkup() {
 function closeAuthPage({ restoreHistory = true } = {}) {
   const box = document.getElementById('loginBox');
   if (!box) return;
+  closeMiPhoneCountryMenu(false);
   box.classList.remove('mi-auth-open');
   box.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
@@ -19060,7 +19061,7 @@ function openPhoneAuth() {
   setAuthMessage('', false);
 
   ensureMiPhoneMetadata().then(phone => {
-    if (document.getElementById('authForm') !== form) return;
+    if (document.getElementById('authForm') !== form || !form.querySelector('#phoneNumber')) return;
     const countries = phone.getCountries();
     if (!countries.some(country => country.iso === 'LK')) {
       throw new Error('Sri Lanka is missing from the phone-number metadata.');
@@ -19074,7 +19075,7 @@ function openPhoneAuth() {
     document.getElementById('miPhoneCountryButton').addEventListener('click', openMiPhoneCountryMenu);
     document.getElementById('phoneNumber').addEventListener('input', handleMiPhoneInput);
   }).catch(error => {
-    if (document.getElementById('authForm') !== form) return;
+    if (document.getElementById('authForm') !== form || !form.querySelector('#phoneNumber')) return;
     console.error('[CORTEX CORE AI] Phone-number metadata initialization failed:', error);
     setAuthMessage('Country numbering data could not be loaded. Please try opening Phone Number again.', true);
   });
