@@ -18743,38 +18743,362 @@ async function handleGoogleAuth() {
 let miPhoneConfirmation = null;
 let miPhoneRecaptcha = null;
 let miPhoneNumber = '';
+var miPhoneSelectedRegion = 'LK';
+var miPhoneMetadataPromise = null;
+var miPhoneCountryMenuCleanup = null;
+var miPhoneCountryMatches = [];
+var miPhoneCountryActiveIndex = -1;
+
+function loadMiPhoneScript(source, isReady) {
+  if (isReady()) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = source;
+    script.async = true;
+    script.onload = () => {
+      if (isReady()) resolve();
+      else {
+        script.remove();
+        reject(new Error('Phone-number metadata did not initialize.'));
+      }
+    };
+    script.onerror = () => {
+      script.remove();
+      reject(new Error('Phone-number metadata could not be loaded.'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function ensureMiPhoneMetadata() {
+  if (window.CortexPhoneNumber) return Promise.resolve(window.CortexPhoneNumber);
+  if (!miPhoneMetadataPromise) {
+    miPhoneMetadataPromise = loadMiPhoneScript(
+      '/vendor/libphonenumber-js.min.js',
+      () => Boolean(window.libphonenumber?.getCountries)
+    ).then(() => loadMiPhoneScript(
+      '/vendor/mi-phone-number.js',
+      () => Boolean(window.CortexPhoneNumber?.normalizeNumber)
+    )).then(() => window.CortexPhoneNumber).catch(error => {
+      miPhoneMetadataPromise = null;
+      throw error;
+    });
+  }
+  return miPhoneMetadataPromise;
+}
+
+function getMiPhoneCountry(region) {
+  return window.CortexPhoneNumber?.getCountries().find(country => country.iso === region);
+}
+
+function updateMiPhoneCountryDisplay() {
+  const country = getMiPhoneCountry(miPhoneSelectedRegion);
+  if (!country) return;
+  const flag = document.getElementById('miPhoneCountryFlag');
+  const label = document.getElementById('miPhoneCountryLabel');
+  const prefix = document.getElementById('miPhonePrefix');
+  const trigger = document.getElementById('miPhoneCountryButton');
+  if (flag) flag.textContent = country.flag;
+  if (label) label.textContent = country.name + ' (+' + country.callingCode + ')';
+  if (prefix) {
+    prefix.textContent = '+' + country.callingCode;
+    prefix.setAttribute('aria-label', 'International dialing code +' + country.callingCode);
+  }
+  if (trigger) trigger.setAttribute('aria-label', country.name + ', +' + country.callingCode + '. Choose country or region.');
+}
+
+function formatMiPhoneInput() {
+  const input = document.getElementById('phoneNumber');
+  if (!input || !window.CortexPhoneNumber) return;
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  input.value = window.CortexPhoneNumber.formatInput(input.value, miPhoneSelectedRegion);
+  if (document.activeElement === input && start === end) {
+    const cursor = input.value.length;
+    input.setSelectionRange(cursor, cursor);
+  }
+}
+
+function createMiPhoneCountryMenu() {
+  let menu = document.getElementById('miPhoneCountryMenu');
+  if (menu) return menu;
+  const loginBox = document.getElementById('loginBox');
+  if (!loginBox) return null;
+
+  menu = document.createElement('div');
+  menu.id = 'miPhoneCountryMenu';
+  menu.className = 'mi-auth-country-menu';
+  menu.hidden = true;
+  menu.setAttribute('role', 'dialog');
+  menu.setAttribute('aria-label', 'Search countries and dialing codes');
+  menu.innerHTML = `
+    <div class="mi-auth-country-search-wrap">
+      <input id="miPhoneCountrySearch" type="search" role="combobox" aria-label="Search countries, dialing codes, or ISO codes" aria-autocomplete="list" aria-controls="miPhoneCountryOptions" aria-expanded="true" placeholder="Search country, +code, or ISO">
+    </div>
+    <ul id="miPhoneCountryOptions" class="mi-auth-country-list" role="listbox" aria-label="Countries and dialing codes"></ul>
+  `;
+  loginBox.appendChild(menu);
+
+  const search = menu.querySelector('#miPhoneCountrySearch');
+  const options = menu.querySelector('#miPhoneCountryOptions');
+  search.addEventListener('input', () => {
+    miPhoneCountryActiveIndex = -1;
+    renderMiPhoneCountryOptions(search.value);
+  });
+  options.addEventListener('click', event => {
+    const option = event.target.closest('[data-region-code]');
+    if (option) selectMiPhoneCountry(option.dataset.regionCode);
+  });
+  search.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMiPhoneCountryMenu(true);
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      const count = miPhoneCountryMatches.length;
+      if (!count) return;
+      miPhoneCountryActiveIndex = (miPhoneCountryActiveIndex + direction + count) % count;
+      updateMiPhoneCountryActiveOption();
+    } else if (event.key === 'Home' || event.key === 'End') {
+      if (!miPhoneCountryMatches.length) return;
+      event.preventDefault();
+      miPhoneCountryActiveIndex = event.key === 'Home' ? 0 : miPhoneCountryMatches.length - 1;
+      updateMiPhoneCountryActiveOption();
+    } else if (event.key === 'Enter') {
+      const country = miPhoneCountryMatches[miPhoneCountryActiveIndex] ||
+        (miPhoneCountryMatches.length === 1 ? miPhoneCountryMatches[0] : null);
+      if (country) {
+        event.preventDefault();
+        selectMiPhoneCountry(country.iso);
+      }
+    }
+  });
+  return menu;
+}
+
+function renderMiPhoneCountryOptions(query) {
+  const menu = document.getElementById('miPhoneCountryMenu');
+  const list = menu?.querySelector('#miPhoneCountryOptions');
+  if (!list || !window.CortexPhoneNumber) return;
+  miPhoneCountryMatches = window.CortexPhoneNumber.searchCountries(query);
+  list.replaceChildren();
+
+  if (!miPhoneCountryMatches.length) {
+    const empty = document.createElement('li');
+    empty.className = 'mi-auth-country-empty';
+    empty.setAttribute('role', 'status');
+    empty.textContent = 'No countries found. Try a name, dialing code, or ISO code.';
+    list.appendChild(empty);
+    document.getElementById('miPhoneCountrySearch')?.removeAttribute('aria-activedescendant');
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  miPhoneCountryMatches.forEach(country => {
+    const item = document.createElement('li');
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.className = 'mi-auth-country-option';
+    option.id = 'miPhoneCountryOption-' + country.iso;
+    option.dataset.regionCode = country.iso;
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', country.iso === miPhoneSelectedRegion ? 'true' : 'false');
+    option.innerHTML = '<span class="mi-auth-country-option-flag"></span><span class="mi-auth-country-option-name"></span><span class="mi-auth-country-option-code"></span>';
+    option.querySelector('.mi-auth-country-option-flag').textContent = country.flag;
+    option.querySelector('.mi-auth-country-option-name').textContent = country.name;
+    option.querySelector('.mi-auth-country-option-code').textContent = '+' + country.callingCode;
+    item.appendChild(option);
+    fragment.appendChild(item);
+  });
+  list.appendChild(fragment);
+  updateMiPhoneCountryActiveOption();
+}
+
+function updateMiPhoneCountryActiveOption() {
+  const menu = document.getElementById('miPhoneCountryMenu');
+  const search = menu?.querySelector('#miPhoneCountrySearch');
+  if (!menu || !search) return;
+  menu.querySelectorAll('[data-region-code]').forEach(option => {
+    option.dataset.active = option.dataset.regionCode === miPhoneCountryMatches[miPhoneCountryActiveIndex]?.iso
+      ? 'true'
+      : 'false';
+  });
+  const active = miPhoneCountryMatches[miPhoneCountryActiveIndex];
+  if (active) {
+    search.setAttribute('aria-activedescendant', 'miPhoneCountryOption-' + active.iso);
+    menu.querySelector('#miPhoneCountryOption-' + active.iso)?.scrollIntoView({ block: 'nearest' });
+  } else {
+    search.removeAttribute('aria-activedescendant');
+  }
+}
+
+function positionMiPhoneCountryMenu() {
+  const menu = document.getElementById('miPhoneCountryMenu');
+  const trigger = document.getElementById('miPhoneCountryButton');
+  if (!menu || menu.hidden || !trigger) return;
+  const bounds = trigger.getBoundingClientRect();
+  const margin = 12;
+  const width = Math.min(420, window.innerWidth - margin * 2);
+  const maxHeight = Math.max(180, Math.min(440, window.innerHeight - margin * 2));
+  menu.style.width = width + 'px';
+  menu.style.maxHeight = maxHeight + 'px';
+  const height = Math.min(menu.scrollHeight, maxHeight);
+  const left = Math.max(margin, Math.min(bounds.left, window.innerWidth - width - margin));
+  const below = bounds.bottom + 8;
+  const top = below + height <= window.innerHeight - margin
+    ? below
+    : Math.max(margin, bounds.top - height - 8);
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+}
+
+function closeMiPhoneCountryMenu(restoreFocus) {
+  const menu = document.getElementById('miPhoneCountryMenu');
+  if (menu) menu.hidden = true;
+  document.getElementById('miPhoneCountryButton')?.setAttribute('aria-expanded', 'false');
+  if (miPhoneCountryMenuCleanup) {
+    miPhoneCountryMenuCleanup();
+    miPhoneCountryMenuCleanup = null;
+  }
+  if (restoreFocus) document.getElementById('miPhoneCountryButton')?.focus();
+}
+
+function openMiPhoneCountryMenu() {
+  const menu = createMiPhoneCountryMenu();
+  const trigger = document.getElementById('miPhoneCountryButton');
+  if (!menu || !trigger) return;
+  if (!menu.hidden) {
+    closeMiPhoneCountryMenu(false);
+    return;
+  }
+  const search = menu.querySelector('#miPhoneCountrySearch');
+  search.value = '';
+  miPhoneCountryActiveIndex = -1;
+  renderMiPhoneCountryOptions('');
+  menu.hidden = false;
+  trigger.setAttribute('aria-expanded', 'true');
+  positionMiPhoneCountryMenu();
+
+  const closeOnOutsidePointer = event => {
+    if (!menu.contains(event.target) && !trigger.contains(event.target)) {
+      closeMiPhoneCountryMenu(false);
+    }
+  };
+  const reposition = () => positionMiPhoneCountryMenu();
+  document.addEventListener('pointerdown', closeOnOutsidePointer, true);
+  window.addEventListener('resize', reposition);
+  window.addEventListener('scroll', reposition, true);
+  miPhoneCountryMenuCleanup = () => {
+    document.removeEventListener('pointerdown', closeOnOutsidePointer, true);
+    window.removeEventListener('resize', reposition);
+    window.removeEventListener('scroll', reposition, true);
+  };
+  search.focus();
+}
+
+function selectMiPhoneCountry(region) {
+  const country = getMiPhoneCountry(region);
+  if (!country) return;
+  miPhoneSelectedRegion = country.iso;
+  miPhoneNumber = '';
+  miPhoneConfirmation = null;
+  updateMiPhoneCountryDisplay();
+  formatMiPhoneInput();
+  closeMiPhoneCountryMenu(true);
+}
+
+function handleMiPhoneInput() {
+  const input = document.getElementById('phoneNumber');
+  if (!input || !window.CortexPhoneNumber) return;
+  const inferred = window.CortexPhoneNumber.inferCountry(input.value, miPhoneSelectedRegion);
+  if (inferred !== miPhoneSelectedRegion && getMiPhoneCountry(inferred)) {
+    miPhoneSelectedRegion = inferred;
+    updateMiPhoneCountryDisplay();
+  }
+  formatMiPhoneInput();
+}
+
+function getMiPhoneValidationMessage(result) {
+  const country = getMiPhoneCountry(result.country || miPhoneSelectedRegion);
+  const label = country ? country.name : 'selected country';
+  if (result.reason === 'empty') return 'Enter your phone number.';
+  if (result.reason === 'characters') return 'Use digits and standard phone-number separators only.';
+  if (result.reason === 'length') return 'Check the number length for ' + label + '.';
+  if (result.reason === 'country') return 'Choose a supported country or territory.';
+  return 'This phone number is not valid for ' + label + '. Check the number and country code.';
+}
 
 function openPhoneAuth() {
+  closeMiPhoneCountryMenu(false);
   const form = document.getElementById('authForm');
   if (!form) return;
   form.innerHTML = `
-    <div class="mi-auth-field"><label for="phoneCountry">Country</label><select id="phoneCountry" aria-label="Country code">
-      <option value="+1">United States / Canada (+1)</option>
-      <option value="+44">United Kingdom (+44)</option>
-      <option value="+91">India (+91)</option>
-      <option value="+94">Sri Lanka (+94)</option>
-      <option value="+61">Australia (+61)</option>
-      <option value="+971">United Arab Emirates (+971)</option>
-      <option value="+65">Singapore (+65)</option>
-    </select></div>
-    <div class="mi-auth-field"><label for="phoneNumber">Phone Number</label><input id="phoneNumber" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="Phone number"></div>
+    <div class="mi-auth-field">
+      <label for="miPhoneCountryButton">Country or region</label>
+      <button id="miPhoneCountryButton" class="mi-auth-country-trigger" type="button" aria-haspopup="dialog" aria-controls="miPhoneCountryMenu" aria-expanded="false" disabled>
+        <span id="miPhoneCountryFlag" class="mi-auth-country-flag" aria-hidden="true"></span>
+        <span id="miPhoneCountryLabel" class="mi-auth-country-trigger-label">Loading country metadata…</span>
+        <span class="mi-auth-country-chevron" aria-hidden="true">⌄</span>
+      </button>
+    </div>
+    <div class="mi-auth-field">
+      <label for="phoneNumber">Phone number</label>
+      <div class="mi-auth-phone-row">
+        <span id="miPhonePrefix" class="mi-auth-phone-prefix" aria-label="International dialing code loading">…</span>
+        <input id="phoneNumber" type="tel" autocomplete="tel-national" inputmode="tel" placeholder="National phone number" aria-describedby="miPhoneNumberHint" disabled>
+      </div>
+      <div id="miPhoneNumberHint" class="mi-auth-phone-hint">The selected country code is added automatically.</div>
+    </div>
     <div id="miPhoneRecaptcha" class="mi-auth-recaptcha"></div>
     <div class="mi-auth-phone-actions">
-      <button id="miSendOtpBtn" class="mi-auth-primary" type="button" onclick="sendPhoneOtp()">Send verification code</button>
+      <button id="miSendOtpBtn" class="mi-auth-primary" type="button" onclick="sendPhoneOtp()" disabled>Send verification code</button>
       <button class="mi-auth-provider" type="button" onclick="setAuthMode(authMode)">Back</button>
     </div>
   `;
   setAuthMessage('', false);
+
+  ensureMiPhoneMetadata().then(phone => {
+    if (document.getElementById('authForm') !== form) return;
+    const countries = phone.getCountries();
+    if (!countries.some(country => country.iso === 'LK')) {
+      throw new Error('Sri Lanka is missing from the phone-number metadata.');
+    }
+    if (!countries.some(country => country.iso === miPhoneSelectedRegion)) miPhoneSelectedRegion = 'LK';
+    createMiPhoneCountryMenu();
+    updateMiPhoneCountryDisplay();
+    document.getElementById('miPhoneCountryButton').disabled = false;
+    document.getElementById('phoneNumber').disabled = false;
+    document.getElementById('miSendOtpBtn').disabled = false;
+    document.getElementById('miPhoneCountryButton').addEventListener('click', openMiPhoneCountryMenu);
+    document.getElementById('phoneNumber').addEventListener('input', handleMiPhoneInput);
+  }).catch(error => {
+    if (document.getElementById('authForm') !== form) return;
+    console.error('[CORTEX CORE AI] Phone-number metadata initialization failed:', error);
+    setAuthMessage('Country numbering data could not be loaded. Please try opening Phone Number again.', true);
+  });
 }
 
 async function sendPhoneOtp() {
   setAuthMessage('');
-  const country = document.getElementById('phoneCountry')?.value || '+1';
-  const number = document.getElementById('phoneNumber')?.value.replace(/[^\d]/g, '') || '';
-  if (!number) {
-    setAuthMessage('Enter a valid phone number.', true);
+  try {
+    const phone = await ensureMiPhoneMetadata();
+    const input = document.getElementById('phoneNumber');
+    const normalized = phone.normalizeNumber(input?.value || '', miPhoneSelectedRegion);
+    if (!normalized.ok) {
+      setAuthMessage(getMiPhoneValidationMessage(normalized), true);
+      return;
+    }
+    miPhoneSelectedRegion = normalized.country;
+    updateMiPhoneCountryDisplay();
+    miPhoneNumber = normalized.e164;
+  } catch (error) {
+    console.error('[CORTEX CORE AI] Phone-number validation is unavailable:', error);
+    setAuthMessage('Phone-number validation is unavailable. Please try again.', true);
     return;
   }
+
   const button = document.getElementById('miSendOtpBtn');
   if (button) button.disabled = true;
   try {
@@ -18787,7 +19111,6 @@ async function sendPhoneOtp() {
       });
       await miPhoneRecaptcha.render();
     }
-    miPhoneNumber = country + number;
     miPhoneConfirmation = await auth.signInWithPhoneNumber(miPhoneNumber, miPhoneRecaptcha);
     document.getElementById('authForm').innerHTML = `
       <div class="mi-auth-field"><label for="phoneOtp">Verification Code</label><input id="phoneOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></div>
@@ -43786,6 +44109,132 @@ body #loginBox.mi-auth-page .mi-auth-divider::after { background:rgba(145, 174, 
 body #loginBox.mi-auth-page .mi-auth-phone-row { grid-template-columns:minmax(112px, .72fr) minmax(0, 1.7fr); }
 body #loginBox.mi-auth-page .mi-auth-phone-actions { gap:10px; margin-top:2px; }
 body #loginBox.mi-auth-page .mi-auth-light-trail { opacity:.58; }
+body #loginBox.mi-auth-page .mi-auth-country-trigger,
+body #loginBox.mi-auth-page .mi-auth-phone-prefix {
+    box-sizing:border-box;
+    min-height:49px;
+    border:1px solid rgba(140, 180, 214, .24) !important;
+    border-radius:13px;
+    background:rgba(3, 13, 25, .62) !important;
+    color:#f3f8ff !important;
+}
+body #loginBox.mi-auth-page .mi-auth-country-trigger {
+    display:flex;
+    align-items:center;
+    gap:11px;
+    width:100%;
+    padding:0 14px;
+    text-align:left;
+    cursor:pointer;
+    box-shadow:inset 0 1px 2px rgba(0, 0, 0, .20);
+    transition:border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+body #loginBox.mi-auth-page .mi-auth-country-trigger:hover,
+body #loginBox.mi-auth-page .mi-auth-country-trigger[aria-expanded="true"] {
+    border-color:rgba(93, 190, 245, .72) !important;
+    box-shadow:0 0 0 3px rgba(56, 189, 248, .10);
+}
+.mi-auth-country-flag { flex:0 0 auto; font-size:20px; line-height:1; }
+.mi-auth-country-trigger-label { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mi-auth-country-chevron { flex:0 0 auto; color:#8dd9ff; font-size:12px; transition:transform 180ms ease; }
+body #loginBox.mi-auth-page .mi-auth-country-trigger[aria-expanded="true"] .mi-auth-country-chevron { transform:rotate(180deg); }
+body #loginBox.mi-auth-page .mi-auth-phone-row {
+    grid-template-columns:88px minmax(0, 1fr);
+    align-items:stretch;
+    gap:9px;
+}
+body #loginBox.mi-auth-page .mi-auth-phone-prefix {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 9px;
+    color:#bfe9ff !important;
+    font-variant-numeric:tabular-nums;
+    font-weight:750;
+    letter-spacing:.02em;
+}
+body #loginBox.mi-auth-page .mi-auth-phone-row input { min-width:0; }
+.mi-auth-phone-hint { color:#8fa4b8; font-size:11px; line-height:1.45; }
+#miPhoneCountryMenu {
+    position:fixed;
+    z-index:2147483600;
+    display:grid;
+    grid-template-rows:auto minmax(0, 1fr);
+    min-width:240px;
+    max-height:min(420px, calc(100dvh - 24px));
+    overflow:hidden;
+    border:1px solid rgba(111, 190, 235, .38);
+    border-radius:17px;
+    background:linear-gradient(150deg, rgba(14, 34, 54, .99), rgba(6, 18, 32, .99));
+    box-shadow:0 24px 70px rgba(0, 0, 0, .58), 0 0 28px rgba(56, 189, 248, .12), inset 0 1px 0 rgba(255, 255, 255, .08);
+    -webkit-backdrop-filter:blur(22px) saturate(135%);
+    backdrop-filter:blur(22px) saturate(135%);
+    animation:miAuthCountryMenuIn 150ms cubic-bezier(.16, 1, .3, 1) both;
+}
+#miPhoneCountryMenu[hidden] { display:none !important; }
+.mi-auth-country-search-wrap { padding:10px; border-bottom:1px solid rgba(148, 181, 207, .15); }
+body #loginBox.mi-auth-page #miPhoneCountrySearch {
+    box-sizing:border-box;
+    width:100%;
+    min-height:43px;
+    padding:10px 12px;
+    border:1px solid rgba(125, 190, 228, .24) !important;
+    border-radius:11px;
+    outline:0;
+    background:rgba(2, 11, 22, .76) !important;
+    color:#f3f8ff !important;
+    font:inherit;
+    font-size:13px;
+}
+body #loginBox.mi-auth-page #miPhoneCountrySearch:focus {
+    border-color:#65c7fa !important;
+    box-shadow:0 0 0 3px rgba(56, 189, 248, .14);
+}
+body #loginBox.mi-auth-page #miPhoneCountrySearch::placeholder { color:#8fa4b8 !important; opacity:1; }
+.mi-auth-country-list {
+    min-height:0;
+    margin:0;
+    padding:6px;
+    overflow:auto;
+    overscroll-behavior:contain;
+    list-style:none;
+    scrollbar-color:rgba(93, 159, 200, .55) transparent;
+}
+.mi-auth-country-list li { margin:0; padding:0; }
+body #loginBox.mi-auth-page .mi-auth-country-option {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    min-height:42px;
+    padding:7px 10px;
+    border:1px solid transparent !important;
+    border-radius:10px;
+    background:transparent !important;
+    color:#dceaf7 !important;
+    text-align:left;
+    font:inherit;
+    font-size:13px;
+    cursor:pointer;
+}
+body #loginBox.mi-auth-page .mi-auth-country-option:hover,
+body #loginBox.mi-auth-page .mi-auth-country-option[data-active="true"] {
+    border-color:rgba(92, 178, 226, .20) !important;
+    background:rgba(42, 114, 165, .20) !important;
+    color:#fff !important;
+}
+body #loginBox.mi-auth-page .mi-auth-country-option[aria-selected="true"] {
+    background:rgba(35, 101, 151, .30) !important;
+    color:#fff !important;
+}
+.mi-auth-country-option-flag { width:24px; flex:0 0 24px; font-size:18px; text-align:center; }
+.mi-auth-country-option-name { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mi-auth-country-option-code { flex:0 0 auto; color:#9edbff; font-variant-numeric:tabular-nums; font-weight:700; }
+.mi-auth-country-empty { padding:16px 12px; color:#aabbd0; font-size:13px; text-align:center; }
+@keyframes miAuthCountryMenuIn {
+    from { opacity:0; transform:translateY(-4px) scale(.99); }
+    to { opacity:1; transform:translateY(0) scale(1); }
+}
 @keyframes miAuthOrbit {
     from { transform:translate(-50%, -50%) rotate(0deg); }
     to { transform:translate(-50%, -50%) rotate(360deg); }
@@ -43844,7 +44293,9 @@ body #loginBox.mi-auth-page .mi-auth-light-trail { opacity:.58; }
     body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-panel { padding:16px 14px 28px; }
     body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-card,
     body.cortex-light-theme #loginBox.mi-auth-page .mi-auth-card { border-radius:21px; }
-    body #loginBox.mi-auth-page .mi-auth-phone-row { grid-template-columns:minmax(96px, .7fr) minmax(0, 1.5fr); }
+    body #loginBox.mi-auth-page .mi-auth-phone-row { grid-template-columns:78px minmax(0, 1fr); gap:7px; }
+    #miPhoneCountryMenu { min-width:0; max-height:min(440px, calc(100dvh - 24px)); border-radius:14px; }
+    .mi-auth-country-search-wrap { padding:8px; }
 }
 @media (max-height:760px) and (min-width:981px) {
     body:not(.cortex-light-theme) #loginBox.mi-auth-page .mi-auth-card,
@@ -43858,6 +44309,8 @@ body #loginBox.mi-auth-page .mi-auth-light-trail { opacity:.58; }
     body #loginBox.mi-auth-page .mi-auth-field input,
     body #loginBox.mi-auth-page .mi-auth-field select { min-height:44px; }
     body #loginBox.mi-auth-page .mi-auth-primary { min-height:44px; }
+    body #loginBox.mi-auth-page .mi-auth-country-trigger,
+    body #loginBox.mi-auth-page .mi-auth-phone-prefix { min-height:44px; }
 }
 @media (prefers-reduced-motion:reduce) {
     body #loginBox.mi-auth-page *,
@@ -43869,6 +44322,7 @@ body #loginBox.mi-auth-page .mi-auth-light-trail { opacity:.58; }
         transition-duration:.01ms !important;
     }
     body #loginBox.mi-auth-page .mi-auth-particles { display:none !important; }
+    #miPhoneCountryMenu { animation:none !important; }
 }
 </style>
 <script id="cortex-settings-row-dropdown-bridge">
