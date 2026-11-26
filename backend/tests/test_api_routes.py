@@ -386,9 +386,10 @@ def test_whatsapp_webhook_rejects_invalid_signature(monkeypatch):
     assert response.status_code == 403
 
 
-def test_whatsapp_webhook_generates_and_sends_ai_reply(monkeypatch):
+def test_whatsapp_webhook_generates_and_sends_ai_reply(monkeypatch, caplog):
     app_module = import_module("backend.app")
     app_secret = "test-app-secret"
+    caplog.set_level("INFO", logger=app_module.app.logger.name)
     monkeypatch.setenv("WHATSAPP_APP_SECRET", app_secret)
     monkeypatch.setenv("WHATSAPP_ID_HMAC_KEY", "test-stable-id-hmac-key-0123456789")
     monkeypatch.setenv("WHATSAPP_ACCESS_TOKEN", "test-access-token")
@@ -446,10 +447,22 @@ def test_whatsapp_webhook_generates_and_sends_ai_reply(monkeypatch):
         "15551234567",
         "Hello from CORTEX CORE AI",
     )]
+    assert "WHATSAPP_WEBHOOK_RECEIVED" in caplog.text
+    assert "WHATSAPP_PAYLOAD_VALIDATED" in caplog.text
+    assert "WHATSAPP_MESSAGE_EXTRACTED" in caplog.text
+    assert "WHATSAPP_AI_REQUEST_STARTED" in caplog.text
+    assert "WHATSAPP_AI_RESPONSE_RECEIVED" in caplog.text
+    assert "WHATSAPP_SEND_REQUEST_STARTED" in caplog.text
+    assert "WHATSAPP_MESSAGE_PROCESSING_COMPLETED" in caplog.text
+    assert "WHATSAPP_WEBHOOK_COMPLETED" in caplog.text
+    assert "Hi there" not in caplog.text
+    assert "15551234567" not in caplog.text
+    assert "test-access-token" not in caplog.text
 
 
-def test_whatsapp_sender_uses_configured_cloud_api(monkeypatch):
+def test_whatsapp_sender_uses_configured_cloud_api(monkeypatch, caplog):
     app_module = import_module("backend.app")
+    caplog.set_level("INFO", logger=app_module.app.logger.name)
     monkeypatch.setenv("WHATSAPP_ACCESS_TOKEN", "test-access-token")
     monkeypatch.setenv("WHATSAPP_PHONE_NUMBER_ID", "15550000001")
     monkeypatch.setenv("WHATSAPP_GRAPH_API_VERSION", "v99.0")
@@ -473,6 +486,90 @@ def test_whatsapp_sender_uses_configured_cloud_api(monkeypatch):
     assert calls[0][1]["headers"]["Authorization"] == "Bearer test-access-token"
     assert calls[0][1]["json"]["to"] == "15551234567"
     assert calls[0][1]["json"]["text"]["body"] == "Test reply"
+    assert "WHATSAPP_SEND_SUCCESS" in caplog.text
+    assert "test-access-token" not in caplog.text
+
+
+def test_whatsapp_sender_logs_only_meta_error_code_on_rejection(monkeypatch, caplog):
+    app_module = import_module("backend.app")
+    caplog.set_level("WARNING", logger=app_module.app.logger.name)
+    monkeypatch.setenv("WHATSAPP_ACCESS_TOKEN", "test-access-token")
+    monkeypatch.setenv("WHATSAPP_PHONE_NUMBER_ID", "15550000001")
+    monkeypatch.setenv("WHATSAPP_GRAPH_API_VERSION", "v99.0")
+
+    class FakeResponse:
+        status_code = 400
+
+        def json(self):
+            return {
+                "error": {
+                    "code": 131026,
+                    "message": "Sensitive provider diagnostic",
+                }
+            }
+
+    monkeypatch.setattr(
+        app_module.requests,
+        "post",
+        lambda *args, **kwargs: FakeResponse(),
+    )
+
+    with pytest.raises(app_module._WhatsAppSendRejected):
+        app_module._send_whatsapp_text(
+            "15550000001",
+            "15551234567",
+            "Private reply",
+            correlation_id="test-correlation",
+        )
+
+    assert "WHATSAPP_SEND_FAILED" in caplog.text
+    assert "http_status=400" in caplog.text
+    assert "meta_error_code=131026" in caplog.text
+    assert "Sensitive provider diagnostic" not in caplog.text
+    assert "15551234567" not in caplog.text
+    assert "test-access-token" not in caplog.text
+
+
+def test_whatsapp_webhook_logs_meta_delivery_status_without_recipient_data(
+    monkeypatch,
+    caplog,
+):
+    app_module = import_module("backend.app")
+    phone_id = "15550000001"
+    _configure_whatsapp(monkeypatch, app_module, {phone_id: "test-access-token"})
+    caplog.set_level("INFO", logger=app_module.app.logger.name)
+    event = {
+        "object": "whatsapp_business_account",
+        "entry": [{
+            "changes": [{
+                "field": "messages",
+                "value": {
+                    "metadata": {"phone_number_id": phone_id},
+                    "messages": [],
+                    "statuses": [{
+                        "id": "wamid.private-status-id",
+                        "status": "failed",
+                        "recipient_id": "15551234567",
+                        "errors": [{
+                            "code": 131026,
+                            "message": "Sensitive delivery explanation",
+                        }],
+                    }],
+                },
+            }],
+        }],
+    }
+
+    response = _post_whatsapp_event(app_module.app.test_client(), event)
+
+    assert response.status_code == 200
+    assert "WHATSAPP_DELIVERY_STATUS" in caplog.text
+    assert "status=failed" in caplog.text
+    assert "meta_error_codes=131026" in caplog.text
+    assert "15551234567" not in caplog.text
+    assert "wamid.private-status-id" not in caplog.text
+    assert "Sensitive delivery explanation" not in caplog.text
+    assert "test-access-token" not in caplog.text
 
 
 def _configure_whatsapp(monkeypatch, app_module, senders):
@@ -1108,8 +1205,9 @@ def test_whatsapp_deduplicates_completed_webhook_delivery(monkeypatch):
     assert receipts[0]["status"] == "complete"
 
 
-def test_whatsapp_ignores_unknown_phone_number_id(monkeypatch):
+def test_whatsapp_retries_unknown_phone_number_id(monkeypatch, caplog):
     app_module = import_module("backend.app")
+    caplog.set_level("WARNING", logger=app_module.app.logger.name)
     _configure_whatsapp(monkeypatch, app_module, {"15550000031": "approved-token"})
     ai_requests = []
     monkeypatch.setattr(
@@ -1123,8 +1221,13 @@ def test_whatsapp_ignores_unknown_phone_number_id(monkeypatch):
 
     response = _post_whatsapp_event(app_module.app.test_client(), event)
 
-    assert response.status_code == 200
+    assert response.status_code == 503
     assert ai_requests == []
+    assert "reason=unconfigured_sender" in caplog.text
+    assert "15559999999" not in caplog.text
+    assert "15553330002" not in caplog.text
+    assert "Do not reply" not in caplog.text
+    assert "approved-token" not in caplog.text
 
 
 def test_whatsapp_missing_sender_configuration_is_sanitized(monkeypatch):

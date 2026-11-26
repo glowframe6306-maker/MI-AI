@@ -4856,6 +4856,7 @@ def _send_whatsapp_text(
     message,
     *,
     recipient_is_business_scoped_id=False,
+    correlation_id="-",
 ):
     senders = _load_whatsapp_senders()
     access_token = senders.get(phone_number_id)
@@ -4878,21 +4879,60 @@ def _send_whatsapp_text(
             timeout=15,
         )
     except requests.exceptions.RequestException as exc:
+        app.logger.warning(
+            "WHATSAPP_SEND_FAILED correlation_id=%s outcome=unknown "
+            "failure=request_exception",
+            correlation_id,
+        )
         raise _WhatsAppSendOutcomeUnknown(
             "WhatsApp delivery outcome is unknown"
         ) from exc
-    if 400 <= response.status_code < 500:
-        raise _WhatsAppSendRejected(
-            f"WhatsApp Cloud API rejected the request with HTTP {response.status_code}"
-        )
     if not 200 <= response.status_code < 300:
+        meta_error_code = "unavailable"
+        try:
+            response_data = response.json()
+            error_data = (
+                response_data.get("error")
+                if isinstance(response_data, dict)
+                else None
+            )
+            error_code = (
+                error_data.get("code")
+                if isinstance(error_data, dict)
+                else None
+            )
+            if isinstance(error_code, int) and not isinstance(error_code, bool):
+                meta_error_code = str(error_code)
+            elif isinstance(error_code, str) and re.fullmatch(r"\d{1,20}", error_code):
+                meta_error_code = error_code
+        except (AttributeError, TypeError, ValueError):
+            pass
+
+        rejected = 400 <= response.status_code < 500
+        app.logger.warning(
+            "WHATSAPP_SEND_FAILED correlation_id=%s outcome=%s "
+            "http_status=%s meta_error_code=%s",
+            correlation_id,
+            "rejected" if rejected else "unknown",
+            response.status_code,
+            meta_error_code,
+        )
+        if rejected:
+            raise _WhatsAppSendRejected(
+                f"WhatsApp Cloud API rejected the request with HTTP {response.status_code}"
+            )
         raise _WhatsAppSendOutcomeUnknown(
             f"WhatsApp Cloud API returned HTTP {response.status_code}"
         )
+    app.logger.info(
+        "WHATSAPP_SEND_SUCCESS correlation_id=%s http_status=%s",
+        correlation_id,
+        response.status_code,
+    )
     return response
 
 
-def _process_whatsapp_text(phone_number_id, incoming):
+def _process_whatsapp_text(phone_number_id, incoming, correlation_id="-"):
     identity_type, sender_id = _whatsapp_customer_identity(incoming)
     recipient_is_business_scoped_id = identity_type == "bsuid"
     message_id = incoming.get("id")
@@ -4953,7 +4993,8 @@ def _process_whatsapp_text(phone_number_id, incoming):
 
     try:
         with _WhatsAppLeaseHeartbeat(claim) as heartbeat:
-            if _is_image_generation_request(message):
+            image_request = _is_image_generation_request(message)
+            if image_request:
                 reply = (
                     "I can't generate or deliver images through WhatsApp yet. "
                     "I can still help with text questions."
@@ -4963,14 +5004,16 @@ def _process_whatsapp_text(phone_number_id, incoming):
                     {"role": "system", "content": _WHATSAPP_BUSINESS_CONTEXT},
                     *claim["history"],
                 ]
+                app.logger.info(
+                    "WHATSAPP_AI_REQUEST_STARTED correlation_id=%s",
+                    correlation_id,
+                )
                 chat_response = make_response(_handle_chat_request({
                     "message": message,
                     "history": ai_history,
                     "_whatsapp_private_history": True,
                 }))
                 chat_payload = chat_response.get_json(silent=True) or {}
-                if chat_response.status_code >= 500 or chat_payload.get("error_code"):
-                    raise _WhatsAppAIUnavailable()
                 reply = str(
                     chat_payload.get("reply") or chat_payload.get("response") or ""
                 ).strip()
@@ -4979,9 +5022,29 @@ def _process_whatsapp_text(phone_number_id, incoming):
                         "I can't generate or deliver images through WhatsApp yet. "
                         "I can still help with text questions."
                     )
-                if not reply:
+                ai_succeeded = (
+                    chat_response.status_code < 500
+                    and not chat_payload.get("error_code")
+                    and bool(reply)
+                )
+                app.logger.info(
+                    "WHATSAPP_AI_RESPONSE_RECEIVED correlation_id=%s "
+                    "http_status=%s success=%s reply_length=%s",
+                    correlation_id,
+                    chat_response.status_code,
+                    str(ai_succeeded).lower(),
+                    len(reply),
+                )
+                if not ai_succeeded:
                     raise _WhatsAppAIUnavailable()
 
+            if image_request:
+                app.logger.info(
+                    "WHATSAPP_AI_RESPONSE_RECEIVED correlation_id=%s "
+                    "source=image_fallback reply_length=%s",
+                    correlation_id,
+                    len(reply),
+                )
             if not heartbeat.healthy:
                 _whatsapp_release_message(claim, "failed")
                 return "processing"
@@ -4992,12 +5055,17 @@ def _process_whatsapp_text(phone_number_id, incoming):
                 return "available"
 
             reply = reply[:4096]
+            app.logger.info(
+                "WHATSAPP_SEND_REQUEST_STARTED correlation_id=%s",
+                correlation_id,
+            )
             try:
                 _send_whatsapp_text(
                     phone_number_id,
                     sender_id,
                     reply,
                     recipient_is_business_scoped_id=recipient_is_business_scoped_id,
+                    correlation_id=correlation_id,
                 )
             except _WhatsAppSendRejected:
                 _whatsapp_finalize_send_failure(claim, "failed")
@@ -5420,29 +5488,65 @@ def whatsapp_cloud_webhook():
             return jsonify({"error": "Webhook verification failed"}), 403
         return challenge, 200, {"Content-Type": "text/plain; charset=utf-8"}
 
+    correlation_id = uuid.uuid4().hex
+    app.logger.info(
+        "WHATSAPP_WEBHOOK_RECEIVED correlation_id=%s",
+        correlation_id,
+    )
     app_secret = (os.getenv("WHATSAPP_APP_SECRET") or "").strip()
     if not app_secret:
+        app.logger.error(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=configuration reason=missing_app_secret",
+            correlation_id,
+        )
         return jsonify({"error": "WhatsApp webhook is not configured"}), 503
     try:
         senders = _load_whatsapp_senders()
         _whatsapp_graph_api_version()
-    except ValueError:
+    except ValueError as exc:
+        app.logger.error(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=configuration exception_type=%s",
+            correlation_id,
+            type(exc).__name__,
+        )
         return jsonify({"error": "WhatsApp Cloud API is not configured"}), 503
     if not senders:
+        app.logger.error(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=configuration reason=no_senders",
+            correlation_id,
+        )
         return jsonify({"error": "WhatsApp Cloud API is not configured"}), 503
     max_webhook_body_bytes = 3 * 1024 * 1024
     if request.content_length and request.content_length > max_webhook_body_bytes:
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=payload reason=body_too_large",
+            correlation_id,
+        )
         return jsonify({"error": "Webhook payload is too large"}), 413
 
     # Read at most one byte beyond the limit, including chunked requests without
     # Content-Length, before signature verification or JSON parsing.
     raw_body = request.stream.read(max_webhook_body_bytes + 1)
     if len(raw_body) > max_webhook_body_bytes:
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=payload reason=body_too_large",
+            correlation_id,
+        )
         return jsonify({"error": "Webhook payload is too large"}), 413
     provided_signature = request.headers.get("X-Hub-Signature-256", "")
     if not isinstance(provided_signature, str) or not re.fullmatch(
         r"sha256=[0-9a-f]{64}", provided_signature
     ):
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=signature reason=malformed_signature",
+            correlation_id,
+        )
         return jsonify({"error": "Webhook signature is invalid"}), 403
     expected_signature = "sha256=" + hmac.new(
         app_secret.encode("utf-8"), raw_body, hashlib.sha256
@@ -5451,30 +5555,81 @@ def whatsapp_cloud_webhook():
         provided_signature.encode("ascii"),
         expected_signature.encode("ascii"),
     ):
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=signature reason=signature_mismatch",
+            correlation_id,
+        )
         return jsonify({"error": "Webhook signature is invalid"}), 403
 
     try:
         payload = json.loads(raw_body)
     except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=payload reason=invalid_json",
+            correlation_id,
+        )
         return jsonify({"error": "Webhook payload must be valid JSON"}), 400
     if not isinstance(payload, dict):
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=payload reason=not_object",
+            correlation_id,
+        )
         return jsonify({"error": "Webhook payload must be a JSON object"}), 400
     if payload.get("object") != "whatsapp_business_account":
+        app.logger.info(
+            "WHATSAPP_PAYLOAD_IGNORED correlation_id=%s reason=unsupported_object",
+            correlation_id,
+        )
         return jsonify({"status": "ignored"}), 200
     entries = payload.get("entry")
     if not isinstance(entries, list):
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=payload reason=entries_not_list",
+            correlation_id,
+        )
         return jsonify({"error": "Webhook entries must be a list"}), 400
+    app.logger.info(
+        "WHATSAPP_PAYLOAD_VALIDATED correlation_id=%s entry_count=%s",
+        correlation_id,
+        len(entries),
+    )
 
     try:
-        for entry in entries:
+        for entry_index, entry in enumerate(entries):
             if not isinstance(entry, dict) or not isinstance(entry.get("changes"), list):
+                app.logger.warning(
+                    "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                    "stage=payload reason=invalid_entry entry_index=%s",
+                    correlation_id,
+                    entry_index,
+                )
                 return jsonify({"error": "Webhook entry is invalid"}), 400
-            for change in entry["changes"]:
+            for change_index, change in enumerate(entry["changes"]):
                 if not isinstance(change, dict):
+                    app.logger.warning(
+                        "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                        "stage=payload reason=invalid_change entry_index=%s "
+                        "change_index=%s",
+                        correlation_id,
+                        entry_index,
+                        change_index,
+                    )
                     return jsonify({"error": "Webhook change is invalid"}), 400
                 field = str(change.get("field") or "")
                 value = change.get("value") or {}
                 if not isinstance(value, dict):
+                    app.logger.warning(
+                        "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                        "stage=payload reason=invalid_change_value "
+                        "entry_index=%s change_index=%s",
+                        correlation_id,
+                        entry_index,
+                        change_index,
+                    )
                     return jsonify({"error": "Webhook value is invalid"}), 400
 
                 if field in {
@@ -5483,54 +5638,190 @@ def whatsapp_cloud_webhook():
                     "smb_app_state_sync",
                     "smb_message_echoes",
                 }:
-                    _process_whatsapp_coexistence_event(
+                    coexistence_result = _process_whatsapp_coexistence_event(
                         field,
                         entry,
                         value,
                     )
+                    app.logger.info(
+                        "WHATSAPP_WEBHOOK_EVENT_PROCESSED correlation_id=%s "
+                        "event_type=coexistence outcome=%s",
+                        correlation_id,
+                        coexistence_result,
+                    )
                     continue
                 if field != "messages":
+                    app.logger.info(
+                        "WHATSAPP_WEBHOOK_EVENT_IGNORED correlation_id=%s "
+                        "reason=unsupported_change",
+                        correlation_id,
+                    )
                     continue
 
                 metadata = value.get("metadata") or {}
                 if not isinstance(metadata, dict):
+                    app.logger.warning(
+                        "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                        "stage=payload reason=invalid_metadata",
+                        correlation_id,
+                    )
                     return jsonify({"error": "Webhook metadata is invalid"}), 400
                 phone_number_id = str(metadata.get("phone_number_id") or "").strip()
                 access_token = senders.get(phone_number_id)
                 if not access_token:
-                    continue
+                    app.logger.warning(
+                        "WHATSAPP_MESSAGE_SKIPPED correlation_id=%s "
+                        "reason=unconfigured_sender entry_index=%s change_index=%s",
+                        correlation_id,
+                        entry_index,
+                        change_index,
+                    )
+                    return jsonify({"error": "WhatsApp sender is not configured"}), 503
 
                 messages = value.get("messages", [])
                 if not isinstance(messages, list):
+                    app.logger.warning(
+                        "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                        "stage=payload reason=messages_not_list",
+                        correlation_id,
+                    )
                     return jsonify({"error": "Webhook messages must be a list"}), 400
-                for incoming in messages:
+                statuses = value.get("statuses", [])
+                if not isinstance(statuses, list):
+                    app.logger.warning(
+                        "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                        "stage=payload reason=statuses_not_list",
+                        correlation_id,
+                    )
+                    return jsonify({"error": "Webhook statuses must be a list"}), 400
+                app.logger.info(
+                    "WHATSAPP_WEBHOOK_MESSAGES_EXTRACTED correlation_id=%s "
+                    "message_count=%s status_count=%s",
+                    correlation_id,
+                    len(messages),
+                    len(statuses),
+                )
+                for status_index, status_event in enumerate(statuses):
+                    if not isinstance(status_event, dict):
+                        app.logger.warning(
+                            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                            "stage=delivery_status reason=status_not_object "
+                            "status_index=%s",
+                            correlation_id,
+                            status_index,
+                        )
+                        return jsonify({"error": "Webhook status is invalid"}), 400
+                    status_value = status_event.get("status")
+                    safe_status = (
+                        status_value
+                        if isinstance(status_value, str)
+                        and status_value in {
+                            "accepted", "sent", "delivered", "read", "failed"
+                        }
+                        else "other"
+                    )
+                    errors = status_event.get("errors", [])
+                    error_codes = []
+                    if isinstance(errors, list):
+                        for error in errors:
+                            if not isinstance(error, dict):
+                                continue
+                            code = error.get("code")
+                            if isinstance(code, int) and not isinstance(code, bool):
+                                error_codes.append(str(code))
+                            elif isinstance(code, str) and re.fullmatch(r"\d{1,20}", code):
+                                error_codes.append(code)
+                    app.logger.info(
+                        "WHATSAPP_DELIVERY_STATUS correlation_id=%s "
+                        "status=%s meta_error_codes=%s",
+                        correlation_id,
+                        safe_status,
+                        ",".join(error_codes[:5]) if error_codes else "none",
+                    )
+                for message_index, incoming in enumerate(messages):
                     if not isinstance(incoming, dict):
+                        app.logger.warning(
+                            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                            "stage=message_extraction reason=message_not_object "
+                            "message_index=%s",
+                            correlation_id,
+                            message_index,
+                        )
                         return jsonify({"error": "Webhook message is invalid"}), 400
                     if incoming.get("type") != "text":
+                        app.logger.info(
+                            "WHATSAPP_MESSAGE_SKIPPED correlation_id=%s "
+                            "reason=unsupported_message_type message_index=%s",
+                            correlation_id,
+                            message_index,
+                        )
                         continue
+                    app.logger.info(
+                        "WHATSAPP_MESSAGE_EXTRACTED correlation_id=%s "
+                        "message_index=%s message_type=text",
+                        correlation_id,
+                        message_index,
+                    )
                     result = _process_whatsapp_text(
                         phone_number_id,
                         incoming,
+                        correlation_id,
+                    )
+                    if result == "duplicate":
+                        app.logger.info(
+                            "WHATSAPP_DUPLICATE_DETECTED correlation_id=%s "
+                            "message_index=%s",
+                            correlation_id,
+                            message_index,
+                        )
+                    app.logger.info(
+                        "WHATSAPP_MESSAGE_PROCESSING_COMPLETED "
+                        "correlation_id=%s message_index=%s outcome=%s",
+                        correlation_id,
+                        message_index,
+                        result,
                     )
                     if result == "processing":
+                        app.logger.warning(
+                            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+                            "stage=message_processing outcome=retry",
+                            correlation_id,
+                        )
                         return jsonify({"status": "retry"}), 503
     except ValueError:
-        app.logger.warning("WhatsApp webhook rejected invalid message structure")
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=message_processing reason=invalid_structure",
+            correlation_id,
+        )
         return jsonify({"error": "WhatsApp message could not be processed"}), 400
     except _WhatsAppAIUnavailable:
-        app.logger.warning("WhatsApp webhook could not obtain an AI reply")
+        app.logger.warning(
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s stage=ai_generation",
+            correlation_id,
+        )
         return jsonify({"error": "AI response is temporarily unavailable"}), 503
     except RuntimeError as exc:
         app.logger.warning(
-            "WhatsApp webhook processing failed (%s)", type(exc).__name__
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=processing exception_type=%s",
+            correlation_id,
+            type(exc).__name__,
         )
         return jsonify({"error": "WhatsApp message processing failed"}), 502
     except Exception as exc:
         app.logger.warning(
-            "WhatsApp webhook processing failed (%s)", type(exc).__name__
+            "WHATSAPP_PROCESSING_FAILED correlation_id=%s "
+            "stage=processing exception_type=%s",
+            correlation_id,
+            type(exc).__name__,
         )
         return jsonify({"error": "WhatsApp message processing failed"}), 502
 
+    app.logger.info(
+        "WHATSAPP_WEBHOOK_COMPLETED correlation_id=%s http_status=200",
+        correlation_id,
+    )
     return jsonify({"status": "ok"}), 200
 
 # CORTEX CORE AI UNIVERSAL LIVE SEARCH V6 - START
