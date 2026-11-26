@@ -90,6 +90,7 @@ class _FakeAuth:
             PHONE_NUMBER: SimpleNamespace(
                 uid="existing-firebase-uid",
                 phone_number=PHONE_NUMBER,
+                disabled=False,
             )
         }
         self.users_by_uid = {
@@ -288,10 +289,37 @@ def test_unlinked_uid_cannot_receive_code_or_gain_owner_membership(whatsapp_otp)
     assert not whatsapp_otp.auth.created_tokens
 
 
-def test_verify_creates_token_only_for_existing_uid_and_consumes_session(whatsapp_otp):
+def test_disabled_firebase_user_cannot_request_or_verify_code(whatsapp_otp):
+    whatsapp_otp.auth.users_by_phone[PHONE_NUMBER].disabled = True
+    ineligible_response = _request_code(whatsapp_otp)
+
+    assert ineligible_response.status_code == 202
+    assert not whatsapp_otp.meta_calls
+
+    whatsapp_otp.auth.users_by_phone[PHONE_NUMBER].disabled = False
     request_response = _request_code(whatsapp_otp)
     session_id = request_response.get_json()["sessionId"]
     code = _sent_code(whatsapp_otp)
+    whatsapp_otp.auth.users_by_uid["existing-firebase-uid"].disabled = True
+
+    response = _client(whatsapp_otp).post(
+        "/api/auth/whatsapp/verify",
+        json={"sessionId": session_id, "code": code},
+    )
+
+    assert response.status_code == 401
+    assert not whatsapp_otp.auth.created_tokens
+
+
+def test_verify_creates_token_only_for_existing_uid_and_consumes_session(
+    monkeypatch,
+    whatsapp_otp,
+):
+    monkeypatch.setattr(whatsapp_otp.module.secrets, "randbelow", lambda _bound: 42)
+    request_response = _request_code(whatsapp_otp)
+    session_id = request_response.get_json()["sessionId"]
+    code = _sent_code(whatsapp_otp)
+    assert code == "00000042"
 
     response = _client(whatsapp_otp).post(
         "/api/auth/whatsapp/verify",
@@ -422,6 +450,45 @@ def test_meta_rejection_does_not_activate_or_claim_delivery(whatsapp_otp):
     assert "sent" not in response.get_json()["message"].lower()
     assert ("whatsappOtpSessions", session_id) not in whatsapp_otp.database.values
     assert not whatsapp_otp.auth.created_tokens
+
+
+def test_unknown_meta_delivery_preserves_previous_active_code(
+    monkeypatch,
+    whatsapp_otp,
+):
+    now = [datetime(2026, 11, 26, tzinfo=timezone.utc)]
+    monkeypatch.setattr(whatsapp_otp.module, "_utcnow", lambda: now[0])
+    first_response = _request_code(whatsapp_otp)
+    first_session_id = first_response.get_json()["sessionId"]
+    whatsapp_otp.meta_response[0] = _MetaResponse(status_code=503)
+    now[0] += timedelta(seconds=61)
+
+    second_response = _client(whatsapp_otp).post(
+        "/api/auth/whatsapp/resend",
+        json={"phoneNumber": PHONE_NUMBER},
+    )
+    second_session_id = second_response.get_json()["sessionId"]
+
+    assert second_response.status_code == 202
+    assert second_session_id != first_session_id
+    assert _active_session(whatsapp_otp, first_session_id)["status"] == "active"
+    assert ("whatsappOtpSessions", second_session_id) not in whatsapp_otp.database.values
+
+
+def test_phone_send_rate_limit_caps_meta_requests_after_cooldown(
+    monkeypatch,
+    whatsapp_otp,
+):
+    now = [datetime(2026, 11, 26, tzinfo=timezone.utc)]
+    monkeypatch.setattr(whatsapp_otp.module, "_utcnow", lambda: now[0])
+
+    for _ in range(5):
+        assert _request_code(whatsapp_otp).status_code == 202
+        now[0] += timedelta(seconds=61)
+
+    limited = _request_code(whatsapp_otp)
+    assert limited.status_code == 202
+    assert len(whatsapp_otp.meta_calls) == 5
 
 
 def test_invalid_phone_is_rejected_without_meta_request(whatsapp_otp):

@@ -207,8 +207,9 @@ Firestore stores a keyed HMAC of the code, a protected phone lookup key, the
 existing Firebase UID, timestamps, attempt count, status, and login purpose;
 it never stores the phone number or plaintext code. Verification and single-use
 consumption use Firestore transactions. A replacement invalidates the previous
-active session only after the new delivery attempt is accepted or its outcome
-is ambiguous.
+active session only after Meta confirms the new message request was accepted.
+If delivery is rejected or its outcome is unknown, the candidate session is
+not activated and the previous active code remains usable.
 
 Only a Firebase user whose Firebase Auth record already has the matching
 verified phone number and who already has active membership in the configured
@@ -250,7 +251,7 @@ collection's `expiresAt` field for cleanup. Expiration is always checked by the
 backend and does not rely on TTL deletion. No Firestore rules or TTL settings
 are changed by this source implementation.
 
-Initial durable hourly limits are five requests per phone, 30 requests per IP,
+Initial durable hourly limits are ten requests per phone, 30 requests per IP,
 500 total requests, five send attempts per phone, 20 send attempts per IP, and
 100 total send attempts. Verification also has the five-attempt session limit,
 plus 30 attempts per phone and 60 per IP per hour. Vercel's overwritten

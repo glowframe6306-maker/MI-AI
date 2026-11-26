@@ -19125,7 +19125,9 @@ async function sendPhoneOtp() {
   if (!phoneNumber) return;
 
   const button = document.getElementById('miSendOtpBtn');
+  const whatsappButton = document.getElementById('miSendWhatsAppOtpBtn');
   if (button) button.disabled = true;
+  if (whatsappButton) whatsappButton.disabled = true;
   try {
     await window.miFirebaseReady;
     const auth = window.miFirebaseAuth;
@@ -19150,6 +19152,7 @@ async function sendPhoneOtp() {
     setAuthMessage(firebaseAuthError(error), true);
   } finally {
     if (button) button.disabled = false;
+    if (whatsappButton) whatsappButton.disabled = false;
   }
 }
 
@@ -19228,7 +19231,9 @@ async function sendWhatsAppOtp() {
   if (!phoneNumber) return;
 
   const button = document.getElementById('miSendWhatsAppOtpBtn');
+  const smsButton = document.getElementById('miSendOtpBtn');
   if (button) button.disabled = true;
+  if (smsButton) smsButton.disabled = true;
   try {
     const response = await fetch('/api/auth/whatsapp/request', {
       method: 'POST',
@@ -19253,6 +19258,7 @@ async function sendWhatsAppOtp() {
     setAuthMessage('The request could not be completed. Check your connection and try again.', true);
   } finally {
     if (button?.isConnected) button.disabled = false;
+    if (smsButton?.isConnected) smsButton.disabled = false;
   }
 }
 

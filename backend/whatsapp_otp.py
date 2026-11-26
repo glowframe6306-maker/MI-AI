@@ -17,7 +17,7 @@ OTP_SESSION_TTL_SECONDS = 5 * 60
 OTP_RESEND_COOLDOWN_SECONDS = 60
 OTP_MAX_VERIFICATION_ATTEMPTS = 5
 OTP_RATE_WINDOW_SECONDS = 60 * 60
-OTP_REQUESTS_PER_PHONE_PER_HOUR = 5
+OTP_REQUESTS_PER_PHONE_PER_HOUR = 10
 OTP_REQUESTS_PER_IP_PER_HOUR = 30
 OTP_GLOBAL_REQUESTS_PER_HOUR = 500
 OTP_SENDS_PER_PHONE_PER_HOUR = 5
@@ -116,7 +116,11 @@ def _otp_digest(secret, session_id, phone_key, code):
 
 
 def _get_snapshot_data(reference, transaction=None):
-    snapshot = reference.get(transaction=transaction) if transaction else reference.get()
+    snapshot = (
+        reference.get(transaction=transaction)
+        if transaction is not None
+        else reference.get()
+    )
     if not snapshot.exists:
         return None
     return snapshot.to_dict() or {}
@@ -395,6 +399,7 @@ def _send_authentication_template(config, phone_number, code):
             timeout=15,
         )
     except requests.RequestException:
+        current_app.logger.warning("WhatsApp OTP delivery outcome is unknown.")
         return "unknown"
 
     if 400 <= response.status_code < 500:
@@ -408,6 +413,9 @@ def _send_authentication_template(config, phone_number, code):
         try:
             response_data = response.json()
         except ValueError:
+            current_app.logger.warning(
+                "WhatsApp OTP delivery response could not be confirmed."
+            )
             return "unknown"
         messages = response_data.get("messages") if isinstance(response_data, dict) else None
         if (
@@ -417,6 +425,15 @@ def _send_authentication_template(config, phone_number, code):
             and messages[0].get("id")
         ):
             return "accepted"
+        current_app.logger.warning(
+            "WhatsApp OTP delivery response did not confirm acceptance."
+        )
+        return "unknown"
+    if response.status_code >= 500:
+        current_app.logger.warning(
+            "WhatsApp OTP delivery outcome is unknown (HTTP %s).",
+            response.status_code,
+        )
     return "unknown"
 
 
@@ -506,7 +523,11 @@ def _consume_verify_attempt(
 
     phone_key = str(session_data.get("phoneKey") or "")
     if not phone_key:
-        return "invalid", None, None
+        return (
+            "rate_limited"
+            if not _generic_invalid_verify(database, secret, ip_key, run_transaction)
+            else "invalid"
+        ), None, None
 
     ip_reference = _rate_reference(database, secret, "ip", ip_key)
     phone_reference = _rate_reference(database, secret, "phone", phone_key)
@@ -597,6 +618,8 @@ def _session_phone_is_current(auth, auth_app, uid, phone_key, secret):
         user_record = auth.get_user(uid, app=auth_app)
     except UserNotFoundError:
         return False
+    if getattr(user_record, "disabled", False):
+        return False
     phone_number = str(getattr(user_record, "phone_number", "") or "")
     if not phone_number:
         return False
@@ -678,6 +701,7 @@ def register_whatsapp_otp_routes(app, dependencies):
             associated_phone = str(getattr(user_record, "phone_number", "") or "")
             if (
                 not uid
+                or getattr(user_record, "disabled", False)
                 or associated_phone != phone_number
                 or not dependencies["active_member_provider"](uid)
             ):
@@ -706,7 +730,7 @@ def register_whatsapp_otp_routes(app, dependencies):
             except requests.RequestException:
                 delivery_state = "unknown"
 
-            if delivery_state not in {"accepted", "unknown"}:
+            if delivery_state != "accepted":
                 _finish_dispatch(
                     database,
                     config["secret"],
@@ -733,8 +757,11 @@ def register_whatsapp_otp_routes(app, dependencies):
                 "Authentication service is temporarily unavailable.",
                 503,
             )
-        except Exception:
-            current_app.logger.exception("WhatsApp OTP request could not be completed.")
+        except Exception as exc:
+            current_app.logger.error(
+                "WhatsApp OTP request could not be completed (%s).",
+                type(exc).__name__,
+            )
             return _public_error(
                 "Authentication service is temporarily unavailable.",
                 503,
@@ -827,8 +854,11 @@ def register_whatsapp_otp_routes(app, dependencies):
                 "Authentication service is temporarily unavailable.",
                 503,
             )
-        except Exception:
-            current_app.logger.exception("WhatsApp OTP verification could not be completed.")
+        except Exception as exc:
+            current_app.logger.error(
+                "WhatsApp OTP verification could not be completed (%s).",
+                type(exc).__name__,
+            )
             return _public_error(
                 "Authentication service is temporarily unavailable.",
                 503,
