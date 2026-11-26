@@ -1135,9 +1135,6 @@ body.cortex-light-theme #miAccountMenu,body.cortex-light-theme #miProfilePanel{b
     font-size: 16px;
     font-weight: 900;
 }
-.mi-auth-provider-icon-apple {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Symbol", sans-serif;
-}
 .mi-auth-divider {
     display: flex;
     align-items: center;
@@ -18523,7 +18520,6 @@ function authProviderMarkup() {
     <div class="mi-auth-divider"><span>OR CONTINUE WITH</span></div>
     <div class="mi-auth-providers">
       <button class="mi-auth-provider" type="button" onclick="handleGoogleAuth()" aria-label="Continue with Google" title="Continue with Google"><span class="mi-auth-provider-icon" aria-hidden="true">G</span><span>Continue with Google</span></button>
-      <button class="mi-auth-provider" type="button" onclick="handleAppleAuth()" aria-label="Continue with Apple" title="Continue with Apple"><span class="mi-auth-provider-icon mi-auth-provider-icon-apple" aria-hidden="true">&#63743;</span><span>Continue with Apple</span></button>
       <button class="mi-auth-provider" type="button" onclick="openPhoneAuth()" aria-label="Continue with Phone Number" title="Continue with Phone Number"><span class="mi-auth-provider-icon" aria-hidden="true">&#9742;</span><span>Continue with Phone Number</span></button>
     </div>
   `;
@@ -18735,26 +18731,6 @@ async function handleGoogleAuth() {
     if (!auth) throw new Error('Firebase authentication is unavailable.');
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    const result = await auth.signInWithPopup(provider);
-    await completeProviderLogin(result.user);
-  } catch (error) {
-    setAuthMessage(firebaseAuthError(error), true);
-  } finally {
-    providerButtons.forEach(button => { button.disabled = false; });
-  }
-}
-
-async function handleAppleAuth() {
-  setAuthMessage('');
-  const providerButtons = document.querySelectorAll('.mi-auth-provider');
-  providerButtons.forEach(button => { button.disabled = true; });
-  try {
-    await window.miFirebaseReady;
-    const auth = window.miFirebaseAuth;
-    if (!auth) throw new Error('Firebase authentication is unavailable.');
-    const provider = new firebase.auth.OAuthProvider('apple.com');
-    provider.addScope('email');
-    provider.addScope('name');
     const result = await auth.signInWithPopup(provider);
     await completeProviderLogin(result.user);
   } catch (error) {
