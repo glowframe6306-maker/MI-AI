@@ -7069,6 +7069,35 @@ def mi_ai_remove_unverified_links(response):
     return sanitize_flask_json_response(response)
 # CORTEX CORE AI VERIFIED LINKS GUARD V1 - END
 
+
+def mi_whatsapp_otp_has_active_membership(uid):
+    database = _whatsapp_firestore_database()
+    member = (
+        database.collection("owners")
+        .document(MI_UNIFIED_OWNER_ID)
+        .collection("members")
+        .document(str(uid))
+        .get()
+    )
+    return member.exists and (member.to_dict() or {}).get("state") == "active"
+
+
+from backend.whatsapp_otp import register_whatsapp_otp_routes
+
+
+register_whatsapp_otp_routes(
+    app,
+    {
+        "database_provider": _whatsapp_firestore_database,
+        "transaction_runner": _whatsapp_run_transaction,
+        "firebase_auth_provider": lambda: firebase_admin_auth,
+        "firebase_app_provider": lambda: MI_FIREBASE_APP,
+        "graph_api_version_provider": _whatsapp_graph_api_version,
+        "active_member_provider": mi_whatsapp_otp_has_active_membership,
+        "client_ip_provider": get_client_ip,
+    },
+)
+
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",

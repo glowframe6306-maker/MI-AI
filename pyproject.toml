@@ -9,6 +9,7 @@ dependencies = [
     "google-genai>=1.0.0",
     "supabase>=2.4.0",
     "firebase-admin>=6.5.0",
+    "phonenumbers>=8.13.55",
     "requests>=2.31.0"
 ]
 requires-python = "~=3.13.0"

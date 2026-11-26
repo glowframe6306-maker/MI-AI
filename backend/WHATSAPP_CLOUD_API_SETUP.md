@@ -193,6 +193,75 @@ Do not register, migrate, disconnect, or start Embedded Signup for the existing 
 - Meta webhook redelivery is deduplicated by the durable receipt ID. `processing` with a live lease returns a retry response; `sending` and `delivery_unknown` are acknowledged without another send; `failed` may be retried after a known pre-delivery failure or operator-confirmed not-delivered reconciliation. A stale `sending` receipt is intentionally not reopened. Eight-day receipt deletion still depends on the separately configured Firestore TTL policy.
 - The manual mode, conversation history, and webhook receipts are persisted in Firestore and shared across backend instances. No process-local message-deduplication fallback is used if Firestore is unavailable. Coexistence summary events do not have a durable event-receipt ledger.
 
+## WhatsApp OTP Authentication
+
+The separate `/api/auth/whatsapp/request`, `/api/auth/whatsapp/resend`, and
+`/api/auth/whatsapp/verify` routes provide an additional login path. They do
+not replace Firebase SMS Phone Auth. The frontend uses the existing country
+selector and server-side `phonenumbers` metadata validation.
+
+An OTP is an eight-character numeric string, including leading zeroes. It is
+generated with Python's `secrets` module, expires five minutes after activation,
+allows at most five incorrect attempts, and can be resent after 60 seconds.
+Firestore stores a keyed HMAC of the code, a protected phone lookup key, the
+existing Firebase UID, timestamps, attempt count, status, and login purpose;
+it never stores the phone number or plaintext code. Verification and single-use
+consumption use Firestore transactions. A replacement invalidates the previous
+active session only after the new delivery attempt is accepted or its outcome
+is ambiguous.
+
+Only a Firebase user whose Firebase Auth record already has the matching
+verified phone number and who already has active membership in the configured
+shared owner space is eligible. The endpoints do not create Firebase users,
+link phone numbers, assign roles, or add owner members. The UID is resolved
+server-side and never accepted from the request. Firebase Admin creates a
+custom token only for that existing UID after OTP consumption and a second
+phone-association check.
+
+All valid requests return the same generic response shape and wording whether
+or not the number is eligible. A 2xx Meta response with a message ID is treated
+as accepted; timeouts and server errors have an unknown outcome and are not
+retried automatically. The response never claims that a message was delivered.
+The authentication template must be approved by Meta before use.
+
+Configure these values only in the backend secret manager:
+
+| Variable | Description |
+| --- | --- |
+| `WHATSAPP_OTP_ACCESS_TOKEN` | Server-only Meta token authorized to send from the dedicated OTP sender. |
+| `WHATSAPP_OTP_PHONE_NUMBER_ID` | Numeric Cloud API ID of the approved OTP sender; not the visible phone number. |
+| `WHATSAPP_OTP_TEMPLATE_NAME` | Name of the approved authentication template with a copy-code OTP button. |
+| `WHATSAPP_OTP_TEMPLATE_LANGUAGE` | Approved template locale, such as `en_US`. |
+| `WHATSAPP_OTP_HMAC_SECRET` | Random private key of at least 32 UTF-8 bytes for OTP and protected lookup HMACs. |
+| `WHATSAPP_GRAPH_API_VERSION` | Existing Graph API version setting, which must be currently supported. |
+
+The sending operation uses `/{phone-number-id}/messages`; it does not require
+the WABA ID in the message request. Do not configure the active personal-style
+WhatsApp Messenger number as the OTP sender. A separate Meta-approved Cloud API
+sender and its approved authentication template are prerequisites. This
+implementation does not set credentials, create templates, change Meta
+settings, or send test messages.
+
+OTP sessions, active-session pointers, and rate-limit records are stored in the
+server-only `whatsappOtpSessions`, `whatsappOtpActiveSessions`, and
+`whatsappOtpRateLimits` collections. Existing Firestore rules deny browser
+access; Admin SDK access is server-side. Configure Firestore TTL on each
+collection's `expiresAt` field for cleanup. Expiration is always checked by the
+backend and does not rely on TTL deletion. No Firestore rules or TTL settings
+are changed by this source implementation.
+
+Initial durable hourly limits are five requests per phone, 30 requests per IP,
+500 total requests, five send attempts per phone, 20 send attempts per IP, and
+100 total send attempts. Verification also has the five-attempt session limit,
+plus 30 attempts per phone and 60 per IP per hour. Vercel's overwritten
+`X-Forwarded-For` header is used as the client IP source; do not put an
+untrusted proxy in front of this deployment without reviewing its IP-header
+handling.
+
+Users must explicitly request a WhatsApp code and be told that it will be sent
+to the number they enter. Obtain and retain any additional opt-in required by
+Meta or applicable law before enabling customer traffic.
+
 ## Local Tests
 
 Run the backend tests with:

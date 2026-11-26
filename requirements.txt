@@ -5,5 +5,6 @@ python-dotenv
 
 supabase>=2.4.0
 firebase-admin>=6.5.0
+phonenumbers>=8.13.55
 
 requests>=2.31.0

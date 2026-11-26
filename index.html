@@ -18469,6 +18469,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 function setAuthMode(mode) {
+  clearMiWhatsAppOtpCountdown();
   authMode = mode;
   const signInTab = document.getElementById('signInTab');
   const registerTab = document.getElementById('registerTab');
@@ -18528,6 +18529,7 @@ function authProviderMarkup() {
 function closeAuthPage({ restoreHistory = true } = {}) {
   const box = document.getElementById('loginBox');
   if (!box) return;
+  clearMiWhatsAppOtpCountdown();
   closeMiPhoneCountryMenu(false);
   box.classList.remove('mi-auth-open');
   box.setAttribute('aria-hidden', 'true');
@@ -18744,11 +18746,23 @@ async function handleGoogleAuth() {
 let miPhoneConfirmation = null;
 let miPhoneRecaptcha = null;
 let miPhoneNumber = '';
+var miWhatsAppOtpSessionId = '';
+var miWhatsAppOtpCountdown = null;
+var miWhatsAppOtpExpiresAt = 0;
+var miWhatsAppOtpResendAt = 0;
 var miPhoneSelectedRegion = 'LK';
 var miPhoneMetadataPromise = null;
 var miPhoneCountryMenuCleanup = null;
 var miPhoneCountryMatches = [];
 var miPhoneCountryActiveIndex = -1;
+
+function clearMiWhatsAppOtpCountdown() {
+  if (miWhatsAppOtpCountdown) window.clearInterval(miWhatsAppOtpCountdown);
+  miWhatsAppOtpCountdown = null;
+  miWhatsAppOtpSessionId = '';
+  miWhatsAppOtpExpiresAt = 0;
+  miWhatsAppOtpResendAt = 0;
+}
 
 function loadMiPhoneScript(source, isReady) {
   if (isReady()) return Promise.resolve();
@@ -19032,6 +19046,7 @@ function getMiPhoneValidationMessage(result) {
 }
 
 function openPhoneAuth() {
+  clearMiWhatsAppOtpCountdown();
   closeMiPhoneCountryMenu(false);
   const form = document.getElementById('authForm');
   if (!form) return;
@@ -19055,8 +19070,10 @@ function openPhoneAuth() {
     <div id="miPhoneRecaptcha" class="mi-auth-recaptcha"></div>
     <div class="mi-auth-phone-actions">
       <button id="miSendOtpBtn" class="mi-auth-primary" type="button" onclick="sendPhoneOtp()" disabled>Send verification code</button>
+      <button id="miSendWhatsAppOtpBtn" class="mi-auth-provider" type="button" onclick="sendWhatsAppOtp()" disabled>Continue with WhatsApp</button>
       <button class="mi-auth-provider" type="button" onclick="setAuthMode(authMode)">Back</button>
     </div>
+    <div class="mi-auth-phone-hint">WhatsApp sends a one-time sign-in code only when you request it. Use a number you control.</div>
   `;
   setAuthMessage('', false);
 
@@ -19072,6 +19089,7 @@ function openPhoneAuth() {
     document.getElementById('miPhoneCountryButton').disabled = false;
     document.getElementById('phoneNumber').disabled = false;
     document.getElementById('miSendOtpBtn').disabled = false;
+    document.getElementById('miSendWhatsAppOtpBtn').disabled = false;
     document.getElementById('miPhoneCountryButton').addEventListener('click', openMiPhoneCountryMenu);
     document.getElementById('phoneNumber').addEventListener('input', handleMiPhoneInput);
   }).catch(error => {
@@ -19081,15 +19099,14 @@ function openPhoneAuth() {
   });
 }
 
-async function sendPhoneOtp() {
-  setAuthMessage('');
+async function normalizeMiPhoneInput() {
   try {
     const phone = await ensureMiPhoneMetadata();
     const input = document.getElementById('phoneNumber');
     const normalized = phone.normalizeNumber(input?.value || '', miPhoneSelectedRegion);
     if (!normalized.ok) {
       setAuthMessage(getMiPhoneValidationMessage(normalized), true);
-      return;
+      return '';
     }
     miPhoneSelectedRegion = normalized.country;
     updateMiPhoneCountryDisplay();
@@ -19097,8 +19114,15 @@ async function sendPhoneOtp() {
   } catch (error) {
     console.error('[CORTEX CORE AI] Phone-number validation is unavailable:', error);
     setAuthMessage('Phone-number validation is unavailable. Please try again.', true);
-    return;
+    return '';
   }
+  return miPhoneNumber;
+}
+
+async function sendPhoneOtp() {
+  setAuthMessage('');
+  const phoneNumber = await normalizeMiPhoneInput();
+  if (!phoneNumber) return;
 
   const button = document.getElementById('miSendOtpBtn');
   if (button) button.disabled = true;
@@ -19112,7 +19136,7 @@ async function sendPhoneOtp() {
       });
       await miPhoneRecaptcha.render();
     }
-    miPhoneConfirmation = await auth.signInWithPhoneNumber(miPhoneNumber, miPhoneRecaptcha);
+    miPhoneConfirmation = await auth.signInWithPhoneNumber(phoneNumber, miPhoneRecaptcha);
     document.getElementById('authForm').innerHTML = `
       <div class="mi-auth-field"><label for="phoneOtp">Verification Code</label><input id="phoneOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></div>
       <div class="mi-auth-phone-actions">
@@ -19126,6 +19150,189 @@ async function sendPhoneOtp() {
     setAuthMessage(firebaseAuthError(error), true);
   } finally {
     if (button) button.disabled = false;
+  }
+}
+
+function renderWhatsAppOtpForm(payload) {
+  const form = document.getElementById('authForm');
+  if (!form) return;
+  form.innerHTML = `
+    <div class="mi-auth-field">
+      <label for="miWhatsAppOtpCode">WhatsApp verification code</label>
+      <input id="miWhatsAppOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="8-digit code" aria-describedby="miWhatsAppOtpStatus">
+    </div>
+    <div id="miWhatsAppOtpStatus" class="mi-auth-phone-hint" role="status" aria-live="polite"></div>
+    <div class="mi-auth-phone-actions">
+      <button id="miVerifyWhatsAppOtpBtn" class="mi-auth-primary" type="button" onclick="verifyWhatsAppOtp()">Verify and continue</button>
+      <button id="miResendWhatsAppOtpBtn" class="mi-auth-provider" type="button" onclick="resendWhatsAppOtp()" disabled>Resend code in 01:00</button>
+      <button class="mi-auth-provider" type="button" onclick="openPhoneAuth()">Change phone number</button>
+    </div>
+  `;
+  const codeInput = document.getElementById('miWhatsAppOtpCode');
+  codeInput.addEventListener('input', () => {
+    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 8);
+  });
+  codeInput.focus();
+  startMiWhatsAppOtpCountdown(payload);
+}
+
+function formatMiWhatsAppCountdown(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return String(minutes).padStart(2, '0') + ':' + String(remainingSeconds).padStart(2, '0');
+}
+
+function startMiWhatsAppOtpCountdown(payload) {
+  if (miWhatsAppOtpCountdown) window.clearInterval(miWhatsAppOtpCountdown);
+  const now = Date.now();
+  const expirySeconds = Number(payload?.expiresInSeconds) || 300;
+  const resendSeconds = Number(payload?.resendCooldownSeconds) || 60;
+  miWhatsAppOtpExpiresAt = now + expirySeconds * 1000;
+  miWhatsAppOtpResendAt = now + resendSeconds * 1000;
+
+  const update = () => {
+    const status = document.getElementById('miWhatsAppOtpStatus');
+    const verifyButton = document.getElementById('miVerifyWhatsAppOtpBtn');
+    const resendButton = document.getElementById('miResendWhatsAppOtpBtn');
+    if (!status || !verifyButton || !resendButton) {
+      window.clearInterval(miWhatsAppOtpCountdown);
+      miWhatsAppOtpCountdown = null;
+      return;
+    }
+
+    const currentTime = Date.now();
+    const expiryRemaining = Math.max(0, Math.ceil((miWhatsAppOtpExpiresAt - currentTime) / 1000));
+    const resendRemaining = Math.max(0, Math.ceil((miWhatsAppOtpResendAt - currentTime) / 1000));
+    status.textContent = expiryRemaining
+      ? 'Enter the code if it arrives. It expires in ' + formatMiWhatsAppCountdown(expiryRemaining) + '.'
+      : 'This code has expired. Request a new one.';
+    verifyButton.disabled = expiryRemaining === 0;
+    resendButton.disabled = resendRemaining > 0;
+    resendButton.textContent = resendRemaining
+      ? 'Resend code in ' + formatMiWhatsAppCountdown(resendRemaining)
+      : 'Resend code';
+
+    if (expiryRemaining === 0) {
+      window.clearInterval(miWhatsAppOtpCountdown);
+      miWhatsAppOtpCountdown = null;
+    }
+  };
+
+  update();
+  miWhatsAppOtpCountdown = window.setInterval(update, 1000);
+}
+
+async function sendWhatsAppOtp() {
+  setAuthMessage('');
+  const phoneNumber = await normalizeMiPhoneInput();
+  if (!phoneNumber) return;
+
+  const button = document.getElementById('miSendWhatsAppOtpBtn');
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch('/api/auth/whatsapp/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !/^[0-9a-f]{32}$/.test(String(payload.sessionId || ''))) {
+      setAuthMessage(
+        response.status === 429
+          ? 'Too many requests. Wait before trying again.'
+          : 'The request could not be completed. Try again shortly.',
+        true
+      );
+      return;
+    }
+
+    miWhatsAppOtpSessionId = payload.sessionId;
+    renderWhatsAppOtpForm(payload);
+    setAuthMessage(payload.message || 'If this number is linked to an eligible account, check WhatsApp for a verification code.', false);
+  } catch (_) {
+    setAuthMessage('The request could not be completed. Check your connection and try again.', true);
+  } finally {
+    if (button?.isConnected) button.disabled = false;
+  }
+}
+
+async function resendWhatsAppOtp() {
+  if (!miPhoneNumber) {
+    openPhoneAuth();
+    setAuthMessage('Enter your phone number again.', true);
+    return;
+  }
+
+  const button = document.getElementById('miResendWhatsAppOtpBtn');
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch('/api/auth/whatsapp/resend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber: miPhoneNumber }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !/^[0-9a-f]{32}$/.test(String(payload.sessionId || ''))) {
+      setAuthMessage(
+        response.status === 429
+          ? 'Too many requests. Wait before trying again.'
+          : 'A new code could not be requested. Try again shortly.',
+        true
+      );
+      if (button) button.disabled = false;
+      return;
+    }
+
+    miWhatsAppOtpSessionId = payload.sessionId;
+    const codeInput = document.getElementById('miWhatsAppOtpCode');
+    if (codeInput) codeInput.value = '';
+    startMiWhatsAppOtpCountdown(payload);
+    setAuthMessage(payload.message || 'If this number is linked to an eligible account, check WhatsApp for a verification code.', false);
+  } catch (_) {
+    setAuthMessage('A new code could not be requested. Check your connection and try again.', true);
+    if (button) button.disabled = false;
+  }
+}
+
+async function verifyWhatsAppOtp() {
+  const code = document.getElementById('miWhatsAppOtpCode')?.value || '';
+  if (!/^\d{8}$/.test(code)) {
+    setAuthMessage('Enter the complete 8-digit code.', true);
+    return;
+  }
+  if (!miWhatsAppOtpSessionId) {
+    setAuthMessage('Request a new verification code first.', true);
+    return;
+  }
+
+  const button = document.getElementById('miVerifyWhatsAppOtpBtn');
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch('/api/auth/whatsapp/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: miWhatsAppOtpSessionId, code }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || typeof payload.customToken !== 'string' || !payload.customToken) {
+      setAuthMessage(
+        response.status === 429
+          ? 'Too many attempts. Wait before trying again.'
+          : 'The code could not be verified. Check it or request another.',
+        true
+      );
+      return;
+    }
+
+    await window.miFirebaseReady;
+    const auth = window.miFirebaseAuth;
+    if (!auth) throw new Error('Firebase authentication is unavailable.');
+    const result = await auth.signInWithCustomToken(payload.customToken);
+    await completeProviderLogin(result.user);
+  } catch (_) {
+    setAuthMessage('Sign-in could not be completed. Please try again.', true);
+  } finally {
+    if (button?.isConnected) button.disabled = false;
   }
 }
 
