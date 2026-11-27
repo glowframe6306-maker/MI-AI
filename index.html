@@ -13961,6 +13961,28 @@ body.mi-app-gated #settingsPanel {
     text-indent: .15em;
     animation: miStartupBrandReveal 1.35s .88s cubic-bezier(.16, .72, .24, 1) both;
 }
+#miStartupGateStatus {
+    position: absolute;
+    right: 0;
+    bottom: clamp(22px, 5vh, 42px);
+    left: 0;
+    z-index: 3;
+    box-sizing: border-box;
+    padding: 0 24px;
+    color: rgba(177, 211, 239, .62);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .19em;
+    line-height: 1.6;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: 0 0 18px rgba(32, 142, 223, .22);
+    transition: opacity .24s ease;
+}
+#miStartupGate.is-error #miStartupGateStatus {
+    visibility: hidden;
+    opacity: 0;
+}
 #miStartupGateError {
     display: none;
     justify-items: center;
@@ -14036,6 +14058,7 @@ body.mi-app-gated #settingsPanel {
     #miStartupGateCard { width: calc(100vw - 32px); }
     #miStartupGateBrand { margin-top: 28px; }
     #miStartupGateTagline { max-width: 300px; }
+    #miStartupGateStatus { font-size: 9px; letter-spacing: .14em; }
 }
 @media (prefers-reduced-motion: reduce) {
     #miStartupGate,
@@ -14070,6 +14093,7 @@ body.mi-app-gated #settingsPanel {
       <button id="miStartupGateRetry" type="button">Try again</button>
     </div>
   </div>
+  <div id="miStartupGateStatus" role="status" aria-live="polite" aria-atomic="true">Preparing your experience</div>
   <script id="mi-iphone-startup-gate-script">
   (function () {
       "use strict";
@@ -14079,6 +14103,7 @@ body.mi-app-gated #settingsPanel {
       const gate = document.getElementById("miStartupGate");
       const canvas = document.getElementById("miStartupParticles");
       const context = canvas && canvas.getContext("2d");
+      const status = document.getElementById("miStartupGateStatus");
       const retry = document.getElementById("miStartupGateRetry");
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
       const input = () => document.getElementById("msg");
@@ -14227,6 +14252,7 @@ body.mi-app-gated #settingsPanel {
               gate.setAttribute("aria-busy", "true");
               gate.removeAttribute("aria-hidden");
               gate.style.display = "";
+              status.textContent = "Preparing your experience";
               if (hideTimer) {
                   window.clearTimeout(hideTimer);
                   hideTimer = 0;
@@ -14234,10 +14260,16 @@ body.mi-app-gated #settingsPanel {
               startParticles();
               setInputLocked(true);
           },
+          stage(message) {
+              if (!gate.classList.contains("is-error")) {
+                  status.textContent = message;
+              }
+          },
           fail() {
               this.started = false;
               gate.classList.add("is-error");
               gate.removeAttribute("aria-busy");
+              status.textContent = "";
               setInputLocked(true);
           },
           success() {
@@ -14245,6 +14277,7 @@ body.mi-app-gated #settingsPanel {
               this.completed = true;
               this.started = false;
               gate.removeAttribute("aria-busy");
+              status.textContent = "";
               gate.setAttribute("aria-hidden", "true");
               document.documentElement.classList.remove("mi-app-gated");
               document.body.classList.remove("mi-app-gated");
@@ -18614,30 +18647,6 @@ function applyForcedLayout() {
         if (!response.ok) throw new Error("Profile and permissions could not be loaded.");
     }
 
-    async function checkBackendConnectivity() {
-        const controller = new AbortController();
-        const timeout = window.setTimeout(function () {
-            controller.abort();
-        }, 15000);
-
-        try {
-            const response = await fetch("/api/account-service-health", {
-                method: "GET",
-                cache: "no-store",
-                credentials: "same-origin",
-                signal: controller.signal
-            });
-            if (!response.ok) throw new Error("Backend connectivity check failed.");
-        } catch (error) {
-            if (error && error.name === "AbortError") {
-                throw new Error("Backend connectivity timed out.");
-            }
-            throw error;
-        } finally {
-            window.clearTimeout(timeout);
-        }
-    }
-
     async function miStartApplication(isRetry) {
         if (miStartupStarted) {
             return;
@@ -18647,12 +18656,17 @@ function applyForcedLayout() {
         if (window.__miStartupGate) window.__miStartupGate.begin();
 
         try {
+            if (window.__miStartupGate) window.__miStartupGate.stage("Preparing your experience");
             applyForcedLayout();
             populateLanguageSelector();
             await applyLanguage("en", false);
+            if (window.__miStartupGate) window.__miStartupGate.stage("Securing your session");
             const firebaseUser = await waitForAuthRestoration();
+            if (firebaseUser && window.__miStartupGate) {
+                window.__miStartupGate.stage("Loading account permissions");
+            }
             await loadStartupProfile(firebaseUser);
-            await checkBackendConnectivity();
+            if (window.__miStartupGate) window.__miStartupGate.stage("Preparing your workspace");
             await initChat();
 
             document.documentElement.classList.remove(
