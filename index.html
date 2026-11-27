@@ -18006,6 +18006,13 @@ async function sendMessageInternal(msg) {
     chatBox.appendChild(t);
     scroll();
     let streamBubble = null;
+    let streamRenderFrame = null;
+    const cancelScheduledStreamRender = () => {
+        if (streamRenderFrame !== null) {
+            cancelAnimationFrame(streamRenderFrame);
+            streamRenderFrame = null;
+        }
+    };
     try {
                 /*
          * CORTEX CORE AI RESPONSE TIMEOUT POLICY
@@ -18043,6 +18050,15 @@ async function sendMessageInternal(msg) {
     let fullText = '';
     let liveSources = [];
     let buffer = '';
+    const scheduleStreamRender = () => {
+      if (streamRenderFrame !== null) return;
+      streamRenderFrame = requestAnimationFrame(() => {
+        streamRenderFrame = null;
+        if (!isCurrentGeneration() || !contentBox.isConnected) return;
+        contentBox.innerHTML = renderAIResponse(fullText);
+        scroll();
+      });
+    };
     const reader = streamResponse.body && streamResponse.body.getReader ? streamResponse.body.getReader() : null;
 
     if (!reader) {
@@ -18078,13 +18094,10 @@ async function sendMessageInternal(msg) {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.innerHTML = renderAIResponse(fullText);
-                    scroll();
+                    scheduleStreamRender();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
                     if (Array.isArray(payload.sources)) liveSources = payload.sources;
-                    contentBox.innerHTML = renderAIResponse(fullText);
-                    scroll();
                     streamCompleted = true;
                 } else if (eventType === 'error') {
                     throw new Error(payload.error || 'Stream failed');
@@ -18112,13 +18125,10 @@ async function sendMessageInternal(msg) {
                 if (eventType === 'delta') {
                     if (typeof payload.delta !== 'string') throw new Error('Stream delta is invalid.');
                     fullText += payload.delta;
-                    contentBox.innerHTML = renderAIResponse(fullText);
-                    scroll();
+                    scheduleStreamRender();
                 } else if (eventType === 'done') {
                     if (typeof payload.reply === 'string' && payload.reply) fullText = payload.reply;
                     if (Array.isArray(payload.sources)) liveSources = payload.sources;
-                    contentBox.innerHTML = renderAIResponse(fullText);
-                    scroll();
                 } else if (eventType === 'error') {
                     throw new Error(payload.error || 'Stream failed');
                 }
@@ -18134,11 +18144,12 @@ async function sendMessageInternal(msg) {
       throw new Error('No response received');
     }
 
-    contentBox.innerHTML = renderAIResponse(fullText);
+    cancelScheduledStreamRender();
     finalizeStreamingReplyBubble(contentBox, fullText, finalConversationId, liveSources);
     if (!explicitMemorySave) extractPermanentMemory(msg);
     finishReplyGeneration(generationController);
   } catch (e) {
+    cancelScheduledStreamRender();
     if (e && e.name === 'AbortError') {
       console.warn("[CORTEX CORE AI] Request was aborted.");
 
