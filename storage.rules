@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/profilePhotos/{objectName} {
+      function ownsProfile() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+
+      allow read: if ownsProfile();
+      allow create, update: if ownsProfile()
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+      allow delete: if ownsProfile();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
