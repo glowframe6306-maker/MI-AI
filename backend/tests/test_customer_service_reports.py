@@ -237,7 +237,7 @@ def test_attachment_is_sent_only_after_report_message(report_context):
     assert response.status_code == 200
     assert len(sent_requests) == 2
     assert sent_requests[0]["data"]["parse_mode"] == "HTML"
-    assert sent_requests[1]["files"]["document"][0] == "issue-log-.txt"
+    assert sent_requests[1]["files"]["document"][0] == "issue_log.txt"
     assert sent_requests[1]["url"].endswith("/sendDocument")
 
 
