@@ -17826,6 +17826,17 @@ function send() {
     return safeSendMessage(input && input.value);
 }
 
+function finishReplyGeneration(controller) {
+    if (replyAbortController !== controller) {
+        return;
+    }
+
+    replyAbortController = null;
+    replyInProgress = false;
+    setReplyControlState(false);
+    window.dispatchEvent(new CustomEvent('mi-ai-reply-finished'));
+}
+
 async function sendMessageInternal(msg) {
     if (replyInProgress) return;
     if (sharedChatData && sharedChatData.permission === 'view') {
@@ -17849,6 +17860,18 @@ async function sendMessageInternal(msg) {
     const storedEmail = (localStorage.getItem('mi_user_email') || '').trim().toLowerCase();
     input.value = '';
     replyInProgress = true;
+    const generationController = new AbortController();
+    replyAbortController = generationController;
+    const isCurrentGeneration = () =>
+        replyAbortController === generationController &&
+        !generationController.signal.aborted;
+    const ensureGenerationActive = () => {
+        if (!isCurrentGeneration()) {
+            const error = new Error('Reply generation was stopped.');
+            error.name = 'AbortError';
+            throw error;
+        }
+    };
     setReplyControlState(true);
     
         let finalConversationId = conversationId;
@@ -17858,8 +17881,7 @@ async function sendMessageInternal(msg) {
             // Guard against double-click or race conditions
             if (chats[conversationId]._isCreatingConversation) {
                 console.warn('[Chat Lifecycle] Conversation creation already in progress, skipping duplicate');
-                replyInProgress = false;
-                setReplyControlState(false);
+                finishReplyGeneration(generationController);
                 return;
             }
             
@@ -17869,10 +17891,13 @@ async function sendMessageInternal(msg) {
             const firebaseToken = window.miFirebaseUser
                 ? await (window.miFirebaseUser.getIdToken && window.miFirebaseUser.getIdToken(true)).catch(() => null)
                 : null;
+            if (!isCurrentGeneration()) {
+                chats[conversationId]._isCreatingConversation = false;
+                return;
+            }
             if (!firebaseToken) {
                 chats[conversationId]._isCreatingConversation = false;
-                replyInProgress = false;
-                setReplyControlState(false);
+                finishReplyGeneration(generationController);
                 return;
             }
             try {
@@ -17882,9 +17907,16 @@ async function sendMessageInternal(msg) {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + firebaseToken
                     },
-                    body: JSON.stringify({ title: chats[conversationId].title || 'New chat' })
+                    body: JSON.stringify({ title: chats[conversationId].title || 'New chat' }),
+                    signal: generationController.signal
                 });
                 const result = await createResponse.json().catch(() => ({}));
+                if (!isCurrentGeneration()) {
+                    if (chats[conversationId]) {
+                        chats[conversationId]._isCreatingConversation = false;
+                    }
+                    return;
+                }
                 if (!createResponse.ok || !result?.conversation?.id) {
                     throw new Error('Unable to create conversation');
                 }
@@ -17899,10 +17931,14 @@ async function sendMessageInternal(msg) {
                 save();
                 renderList();
             } catch (error) {
+                if (chats[conversationId]) {
+                    chats[conversationId]._isCreatingConversation = false;
+                }
+                if (!isCurrentGeneration()) {
+                    return;
+                }
                 console.error('[Chat Lifecycle] Lazy conversation creation failed:', error);
-                chats[conversationId]._isCreatingConversation = false;
-                replyInProgress = false;
-                setReplyControlState(false);
+                finishReplyGeneration(generationController);
                 return;
             }
         }
@@ -17911,17 +17947,17 @@ async function sendMessageInternal(msg) {
         const activeChat = () => chats[finalConversationId] || chats[conversationId];
     try {
         const uploadResult = pendingAttachments.length ? await uploadPendingAttachments() : { attachments: [], errors: [] };
+        if (!isCurrentGeneration()) return;
         uploadedAttachments = uploadResult.attachments || [];
         uploadErrors = uploadResult.errors || [];
         if (pendingAttachments.length && !uploadedAttachments.length) {
-            replyInProgress = false;
-            setReplyControlState(false);
+            finishReplyGeneration(generationController);
             setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
             return;
         }
     } catch (err) {
-        replyInProgress = false;
-        setReplyControlState(false);
+        if (!isCurrentGeneration()) return;
+        finishReplyGeneration(generationController);
         setAttachmentUiState(true, '<div style="color:#fda4af;">Unable to upload the selected file.</div>', '');
         console.error(err);
         return;
@@ -17959,6 +17995,7 @@ async function sendMessageInternal(msg) {
     const explicitMemorySave = isExplicitMemoryRequest(msg)
         ? await extractPermanentMemory(msg)
         : null;
+    if (!isCurrentGeneration()) return;
     
     // Note: Message persistence to Firestore happens via the /messages endpoint
     // which is called in the chat reply handler
@@ -17970,7 +18007,6 @@ async function sendMessageInternal(msg) {
     scroll();
     let streamBubble = null;
     try {
-        replyAbortController = new AbortController();
                 /*
          * CORTEX CORE AI RESPONSE TIMEOUT POLICY
          *
@@ -17993,8 +18029,9 @@ async function sendMessageInternal(msg) {
             attachment_ids: uploadedAttachments.length
                 ? uploadedAttachments.map((a) => a.id)
                 : []
-        }, replyAbortController.signal);
+        }, generationController.signal);
 
+    ensureGenerationActive();
     if (!streamResponse.ok) throw new Error('Server returned ' + streamResponse.status);
 
     streamBubble = createStreamingReplyBubble('');
@@ -18017,6 +18054,7 @@ async function sendMessageInternal(msg) {
 
     while (!streamCompleted) {
       const { value, done } = await reader.read();
+      ensureGenerationActive();
       if (done) {
         streamCompleted = true;
         break;
@@ -18029,6 +18067,7 @@ async function sendMessageInternal(msg) {
         const lines = chunk.split('\n').map((line) => line.trim());
         const eventLine = lines.find((line) => line.startsWith('event:'));
         const dataLine = lines.find((line) => line.startsWith('data:'));
+        ensureGenerationActive();
         if (!eventLine || !dataLine) {
           boundary = buffer.indexOf('\n\n');
           continue;
@@ -18057,6 +18096,7 @@ async function sendMessageInternal(msg) {
       }
     }
 
+    ensureGenerationActive();
     const trailingText = decoder.decode();
     if (trailingText) {
       buffer += trailingText;
@@ -18066,6 +18106,7 @@ async function sendMessageInternal(msg) {
       const eventLine = lines.find((line) => line.startsWith('event:'));
       const dataLine = lines.find((line) => line.startsWith('data:'));
       if (eventLine && dataLine) {
+                ensureGenerationActive();
                 const eventType = eventLine.replace(/^event:\s*/, '');
                 const payload = JSON.parse(dataLine.replace(/^data:\s*/, ''));
                 if (eventType === 'delta') {
@@ -18084,6 +18125,7 @@ async function sendMessageInternal(msg) {
       }
     }
 
+    ensureGenerationActive();
     clearTimeout(firstTokenTimeoutId);
     clearTimeout(overallTimeoutId);
     t.remove();
@@ -18095,7 +18137,7 @@ async function sendMessageInternal(msg) {
     contentBox.innerHTML = renderAIResponse(fullText);
     finalizeStreamingReplyBubble(contentBox, fullText, finalConversationId, liveSources);
     if (!explicitMemorySave) extractPermanentMemory(msg);
-    replyInProgress = false; setReplyControlState(false);
+    finishReplyGeneration(generationController);
   } catch (e) {
     if (e && e.name === 'AbortError') {
       console.warn("[CORTEX CORE AI] Request was aborted.");
@@ -18119,8 +18161,7 @@ async function sendMessageInternal(msg) {
         message is intentionally NOT displayed or saved.
       */
 
-      replyInProgress = false;
-      setReplyControlState(false);
+      finishReplyGeneration(generationController);
 
       return;
     }
@@ -18144,8 +18185,7 @@ async function sendMessageInternal(msg) {
         scroll();
     }
 
-    replyInProgress = false;
-    setReplyControlState(false);
+    finishReplyGeneration(generationController);
   }
 }
 /* SCROLL */
@@ -18246,6 +18286,7 @@ function setReplyControlState(isActive) {
 }
 
 function stopReply() {
+    const wasReplyInProgress = replyInProgress;
     if (replyAbortController) {
         replyAbortController.abort();
         replyAbortController = null;
@@ -18256,6 +18297,9 @@ function stopReply() {
     }
     if (replyInProgress) {
         replyInProgress = false;
+    }
+    if (wasReplyInProgress) {
+        window.dispatchEvent(new CustomEvent('mi-ai-reply-finished'));
     }
     const thinking = document.querySelector('.thinking');
     if (thinking) {
@@ -35241,7 +35285,6 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
 
     var originalFetch = window.fetch.bind(window);
     var activeControllers = new Set();
-    var activeChatRequests = 0;
     var isStopping = false;
 
     var SEND_TEXT = "Send";
@@ -35406,7 +35449,15 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
     }
 
     function updateSendButtons() {
-        var generating = activeChatRequests > 0;
+        var generating = false;
+
+        try {
+            generating =
+                typeof replyInProgress !== "undefined" &&
+                Boolean(replyInProgress);
+        } catch (error) {
+            generating = Boolean(window.replyInProgress);
+        }
 
         findSendButtons().forEach(function (button) {
             if (generating) {
@@ -35492,7 +35543,10 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         });
 
         activeControllers.clear();
-        activeChatRequests = 0;
+
+        if (typeof stopReply === "function") {
+            stopReply();
+        }
 
         updateSendButtons();
 
@@ -35525,7 +35579,6 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         );
 
         activeControllers.add(controller);
-        activeChatRequests += 1;
         updateSendButtons();
 
         window.dispatchEvent(
@@ -35535,52 +35588,9 @@ new MutationObserver(launcher).observe(document.documentElement,{childList:true,
         return originalFetch(input, requestInit)
             .finally(function () {
                 activeControllers.delete(controller);
-
-                activeChatRequests = Math.max(
-                    0,
-                    activeChatRequests - 1
-                );
-
                 updateSendButtons();
-
-                if (activeChatRequests === 0) {
-                    window.dispatchEvent(
-                        new CustomEvent(
-                            "mi-ai-reply-finished"
-                        )
-                    );
-                }
             });
     };
-
-    window.addEventListener(
-        "mi-ai-generation-start",
-        function () {
-            activeChatRequests += 1;
-            updateSendButtons();
-        }
-    );
-
-    window.addEventListener(
-        "mi-ai-generation-end",
-        function () {
-            activeChatRequests = Math.max(
-                0,
-                activeChatRequests - 1
-            );
-
-            updateSendButtons();
-        }
-    );
-
-    window.addEventListener(
-        "mi-ai-generation-error",
-        function () {
-            activeChatRequests = 0;
-            activeControllers.clear();
-            updateSendButtons();
-        }
-    );
 
     function observeNewButtons() {
         if (!window.MutationObserver) {
