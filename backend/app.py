@@ -22,6 +22,7 @@ from flask_cors import CORS
 import re
 import uuid
 import json
+import html
 import requests
 
 try:
@@ -60,6 +61,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from urllib.parse import urlsplit
 
 try:
     from groq import Groq
@@ -535,12 +538,12 @@ OTP_EMAIL_ADDRESS = os.getenv("OTP_EMAIL_ADDRESS", "").strip()
 OTP_EMAIL_PASSWORD = os.getenv("OTP_EMAIL_PASSWORD", "").replace(" ", "").strip()
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
-CUSTOMER_SERVICE_BOT_TOKEN = os.getenv("CUSTOMER_SERVICE_BOT_TOKEN", "").strip()
-CUSTOMER_SERVICE_BOT_ID = os.getenv("CUSTOMER_SERVICE_BOT_ID", "").strip()
+CUSTOMER_SERVICE_BOT = os.getenv("CUSTOMER_SERVICE_BOT", "").strip()
+CUSTOMER_SERVICE_CHAT_ID = os.getenv("CUSTOMER_SERVICE_CHAT_ID", "").strip()
 app.logger.info(
     "Customer Service Telegram configured: token=%s chat_id=%s",
-    bool(CUSTOMER_SERVICE_BOT_TOKEN),
-    bool(CUSTOMER_SERVICE_BOT_ID),
+    bool(CUSTOMER_SERVICE_BOT),
+    bool(CUSTOMER_SERVICE_CHAT_ID),
 )
 CUSTOMER_SERVICE_REPORT_REASONS = (
     "Technical Issue",
@@ -1106,27 +1109,36 @@ def customer_service_next_number(kind):
 
 
 def customer_service_send_telegram(message, attachment=None):
-    if not CUSTOMER_SERVICE_BOT_TOKEN or not CUSTOMER_SERVICE_BOT_ID:
+    if not CUSTOMER_SERVICE_BOT or not CUSTOMER_SERVICE_CHAT_ID:
         raise RuntimeError("Customer Service Telegram is not configured.")
-    endpoint = f"https://api.telegram.org/bot{CUSTOMER_SERVICE_BOT_TOKEN}/sendMessage"
-    chunks = [message[index:index + 3800] for index in range(0, len(message), 3800)] or [message]
-    for chunk in chunks:
-        response = requests.post(endpoint, data={"chat_id": CUSTOMER_SERVICE_BOT_ID, "text": chunk}, timeout=20)
+    endpoint = f"https://api.telegram.org/bot{CUSTOMER_SERVICE_BOT}/sendMessage"
+    messages = message if isinstance(message, (list, tuple)) else [message]
+    for chunk in messages:
+        message_data = {
+            "chat_id": CUSTOMER_SERVICE_CHAT_ID,
+            "text": chunk,
+        }
+        if isinstance(message, (list, tuple)):
+            message_data["parse_mode"] = "HTML"
+        response = requests.post(endpoint, data=message_data, timeout=20)
         response.raise_for_status()
         telegram_result = response.json()
-        if not telegram_result.get("ok"):
+        if not isinstance(telegram_result, dict) or telegram_result.get("ok") is not True:
             raise RuntimeError("Telegram rejected the customer service message.")
     if attachment and attachment.get("content"):
-        document_endpoint = f"https://api.telegram.org/bot{CUSTOMER_SERVICE_BOT_TOKEN}/sendDocument"
+        document_endpoint = f"https://api.telegram.org/bot{CUSTOMER_SERVICE_BOT}/sendDocument"
         response = requests.post(
             document_endpoint,
-            data={"chat_id": CUSTOMER_SERVICE_BOT_ID, "caption": attachment["filename"]},
+            data={
+                "chat_id": CUSTOMER_SERVICE_CHAT_ID,
+                "caption": attachment["filename"],
+            },
             files={"document": (attachment["filename"], attachment["content"], attachment.get("content_type") or "application/octet-stream")},
             timeout=30,
         )
         response.raise_for_status()
         telegram_result = response.json()
-        if not telegram_result.get("ok"):
+        if not isinstance(telegram_result, dict) or telegram_result.get("ok") is not True:
             raise RuntimeError("Telegram rejected the customer service attachment.")
 
 
@@ -1157,11 +1169,82 @@ def customer_service_format_message(kind, record):
     return "\n".join(lines + ["", "━━━━━━━━━━━━━━━━━━━━", "CORTEX CORE AI", "Customer Service", "━━━━━━━━━━━━━━━━━━━━"])
 
 
+def customer_service_format_report_messages(record):
+    def escaped(value):
+        return html.escape(str(value or ""), quote=True)
+
+    description_chunks = []
+    current_chunk = ""
+    for character in record["description"]:
+        escaped_character = escaped(character)
+        if current_chunk and len(current_chunk) + len(escaped_character) > 2800:
+            description_chunks.append(current_chunk)
+            current_chunk = ""
+        current_chunk += escaped_character
+    description_chunks.append(current_chunk)
+
+    reference = escaped(record["reference"])
+    report_header = (
+        "<b>🔔 CORTEX CORE AI</b>\n"
+        "<b>CUSTOMER SERVICE REPORT</b>\n"
+        "━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>📌 REPORT INFORMATION</b>\n"
+        f"Report ID: <code>{reference}</code>\n"
+        f"Report Category: {escaped(record['reason'])}\n"
+        f"Submission Date: {escaped(record['submitted_date'])}\n"
+        f"Submission Time: {escaped(record['submitted_time'])}"
+    )
+    user_information = (
+        "<b>👤 USER INFORMATION</b>\n"
+        f"User Name: {escaped(record['name'])}\n"
+        f"User Email: {escaped(record['email'])}\n"
+        f"User ID: <code>{escaped(record['uid'])}</code>\n"
+        f"WhatsApp: {escaped(record['whatsapp'])}"
+    )
+    application_details = (
+        "<b>🌐 APPLICATION INFORMATION</b>\n"
+        "Application: CORTEX CORE AI\n"
+        "Platform: Web Application\n"
+        f"Current Page: {escaped(record['current_page'])}\n"
+        f"Browser: {escaped(record['browser'])}\n"
+        f"Device Type: {escaped(record['device_type'])}"
+    )
+    attachment_details = (
+        "<b>📎 ATTACHMENTS</b>\n"
+        f"{escaped(record['attachment'])}\n\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        "<b>📥 REPORT STATUS: RECEIVED</b>\n"
+        "━━━━━━━━━━━━━━━━━━"
+    )
+    blocks = [
+        report_header,
+        user_information,
+        "<b>📝 PROBLEM DESCRIPTION</b>",
+        *description_chunks,
+        application_details,
+        attachment_details,
+    ]
+    messages = []
+    current_message = ""
+    for block in blocks:
+        candidate = f"{current_message}\n\n{block}" if current_message else block
+        if current_message and len(candidate) > 3900:
+            messages.append(current_message)
+            current_message = block
+        else:
+            current_message = candidate
+    if current_message:
+        messages.append(current_message)
+    return messages
+
+
 @app.route("/api/customer-service/reports", methods=["POST"])
 def customer_service_report():
     identity, error_response = customer_service_identity()
     if error_response:
         return error_response
+    if request.content_length and request.content_length > 12 * 1024 * 1024:
+        return jsonify({"success": False, "message": "The report or attachment is too large."}), 413
     data = request.form.to_dict(flat=True)
     name = str(data.get("name") or "").strip()
     whatsapp = str(data.get("whatsapp") or "").strip()
@@ -1170,6 +1253,8 @@ def customer_service_report():
     digits = re.sub(r"\D", "", whatsapp)
     if not name or not whatsapp or not reason or not description:
         return jsonify({"success": False, "message": "Name, WhatsApp number, reason, and issue description are required."}), 400
+    if len(name) > 120 or len(whatsapp) > 40 or len(description) > 20000:
+        return jsonify({"success": False, "message": "Please shorten the report fields and try again."}), 400
     if len(digits) < 7 or len(digits) > 15:
         return jsonify({"success": False, "message": "Enter a valid WhatsApp number."}), 400
     if reason not in CUSTOMER_SERVICE_REPORT_REASONS:
@@ -1181,26 +1266,75 @@ def customer_service_report():
         content = attachment_file.read()
         if len(content) > 10 * 1024 * 1024:
             return jsonify({"success": False, "message": "Attachments must be 10 MB or smaller."}), 400
-        attachment = {"filename": attachment_file.filename[:180], "content_type": attachment_file.mimetype, "content": content}
+        safe_name = secure_filename(attachment_file.filename) or "attachment"
+        attachment = {"filename": safe_name[:180], "content_type": attachment_file.mimetype, "content": content}
         attachment_label = attachment["filename"]
     now = datetime.now()
     try:
-        reference = customer_service_next_number("report")
-        record = {"reference": reference, "uid": identity["uid"], "name": name, "email": identity["email"], "username": identity["username"], "whatsapp": whatsapp, "reason": reason, "description": description, "attachment": attachment_label, "submitted_date": now.strftime("%d %B %Y"), "submitted_time": now.strftime("%H:%M"), "created_at": now.isoformat()}
-        persisted_record = {key: value for key, value in record.items() if key != "content"}
-        persisted_record["telegram_status"] = "pending"
-        customer_service_save("reports", reference, persisted_record)
+        reference = f"CCA-RP-{uuid.uuid4().hex[:8].upper()}"
+        user_agent = request.headers.get("User-Agent", "")[:300]
         try:
-            customer_service_send_telegram(customer_service_format_message("report", record), attachment)
-            customer_service_update("reports", reference, {"telegram_status": "sent"})
-            notification_status = "sent"
+            current_page = urlsplit(request.headers.get("Referer", "")).path or "Not provided"
+        except ValueError:
+            current_page = "Not provided"
+        if re.search(r"\b(?:ipad|tablet)\b", user_agent, re.IGNORECASE):
+            device_type = "Tablet"
+        elif re.search(r"\b(?:android|iphone|ipod|mobile)\b", user_agent, re.IGNORECASE):
+            device_type = "Mobile"
+        else:
+            device_type = "Desktop or unknown"
+        record = {
+            "reference": reference,
+            "uid": str(identity["uid"])[:128],
+            "name": name,
+            "email": str(identity["email"])[:254],
+            "username": str(identity["username"])[:100],
+            "whatsapp": whatsapp,
+            "reason": reason,
+            "description": description,
+            "attachment": attachment_label,
+            "current_page": current_page[:150],
+            "browser": user_agent[:220] or "Not provided",
+            "device_type": device_type,
+            "submitted_date": now.strftime("%d %B %Y"),
+            "submitted_time": now.strftime("%H:%M"),
+            "created_at": now.isoformat(),
+        }
+        try:
+            customer_service_send_telegram(
+                customer_service_format_report_messages(record),
+                attachment,
+            )
         except Exception as notification_error:
-            app.logger.exception("Customer Service report Telegram notification failed for %s: %s", reference, notification_error)
-            customer_service_update("reports", reference, {"telegram_status": "failed"})
-            notification_status = "failed"
-        return jsonify({"success": True, "reference": reference, "report_number": reference, "notification_status": notification_status})
-    except Exception as exc:
-        app.logger.exception("Customer Service report failed: %s", exc)
+            app.logger.error(
+                "Customer Service report Telegram delivery failed reference=%s error_type=%s",
+                reference,
+                type(notification_error).__name__,
+            )
+            return jsonify({
+                "success": False,
+                "message": "We could not deliver your report right now. Please try again.",
+            }), 503
+        persisted_record = {**record, "telegram_status": "sent"}
+        try:
+            customer_service_save("reports", reference, persisted_record)
+        except Exception as persistence_error:
+            app.logger.warning(
+                "Customer Service report persistence failed reference=%s error_type=%s",
+                reference,
+                type(persistence_error).__name__,
+            )
+        return jsonify({
+            "success": True,
+            "reference": reference,
+            "report_number": reference,
+            "notification_status": "sent",
+        })
+    except Exception as report_error:
+        app.logger.error(
+            "Customer Service report processing failed error_type=%s",
+            type(report_error).__name__,
+        )
         return jsonify({"success": False, "message": "The report could not be submitted right now."}), 503
 
 
